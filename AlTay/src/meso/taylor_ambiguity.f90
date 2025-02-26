@@ -18,9 +18,9 @@ contains
     !           stress exceeds the critical resolved shear stress. From this we can determine if Taylor ambiguity is occuring.
     subroutine assess_slip_system_activity(grain_, rss, slip_rates, n_active, ind_overstressed)
         class(Grain), intent(in):: grain_    !> The grain
-        real(DP), dimension(size(grain_%slip_systems)), intent(in):: rss !> The resolved shear stress on each of the slip systems of
+        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: rss !> The resolved shear stress on each of the slip systems of
                                                                          !> the grain (as calculated by simplex)
-        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates  !> Slip rates for each slip system
+        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: slip_rates  !> Slip rates for each slip system
                                                                                  !> according to simplex. Max. 5 nonzero
                                                                                  !> components
         integer, intent(out):: n_active !> The number of active systems (systems with nonzero slip rate)
@@ -39,9 +39,9 @@ contains
         !resolving it
         n_overstressed = 0
         n_active = 0
-        do i = 1, size(grain_%slip_systems)
+        do i = 1, size(grain_%model%taylor_coeffs, 2)
             !Overstress is the difference between the resolved shear stress and critical resolved shear stress on a system.
-            overstress = merge(rss(i)-grain_%slip_systems(i)%crss(1), -rss(i)-grain_%slip_systems(i)%crss(2), rss(i)>0._DP)
+            overstress = merge(rss(i)-grain_%state%crss(1, i), -rss(i)-grain_%state%crss(2, i), rss(i)>0._DP)
             !Overstress should never exceed 0 because then the solution found by simplex is not optimal.
             if (abs(overstress) < TOLERANCE) then
                 n_overstressed = n_overstressed+1

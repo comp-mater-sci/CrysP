@@ -1,18 +1,15 @@
 module dsh
     use utils
-    use hardening_model
-    use altayConfig
+    use constitutive_model
     use parameters
     use logging
     use slip_systems
-    use omp_lib
-    use grain_module
 
     implicit none
 
     private
     public:: CBBNORMAL, &           !Different DSH models use the CBB normal vectors to derive the dislocation movement vectors
-             HardeningModelDSH      !Each DSH model extends this base model.
+             ConstitutiveModelDSH      !Each DSH model extends this base model.
 
     real(DP), parameter:: MINFRAC = 2.0D-3,   &
                           LOWFRAC = 10.0D-3
@@ -38,7 +35,7 @@ module dsh
     !steel during sheet forming'). Several variants of this model have been formulated, each of which considers different types of
     !dislocations.
     !Note that only the BCC24 slip system set is supported.
-    type, extends(HardeningModel), abstract:: HardeningModelDSH
+    type, extends(ConstitutiveModel), abstract:: ConstitutiveModelDSH
         real(DP):: b,                      &
                    G,                      &
                    alfa,                   &
@@ -137,13 +134,15 @@ contains
     !>@Brief Main model initialization procedure common to all variants of the DSH model family.
     !>@Details The only difference between the variants of DSH is the interaction coefficients between dislocations and cell block
     !!         boundaries. Thus, each model defines its own coefficients and calls this common initialization procedure with them.
-    subroutine init_common(this, grains, params, eff)
-        class(HardeningModelDSH), intent(inout):: this             !> DSH model variant to be initialized.
-        type(Grain), dimension(:), intent(inout):: grains          !> List of grains using this hardening model.
+    function init_common(this, miller_indices, params, eff) result(initial_state)
+        class(ConstitutiveModelDSH), intent(inout):: this             !> DSH model variant to be initialized.
+        integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params !> Model parameters. Must pass dsh_validate_parameters(params)
         real(DP), dimension(24, 6), intent(in):: eff               !> 'Wall-effectivity' matrix == cosines of the angle between dislocation movement vectors and the cell block boundary normals.
+        class(HardeningState), allocatable:: initial_state
 
-        integer:: i
+        allocate(DSHState:: initial_state)
+        call this%base_init(miller_indices, initial_state)
 
         this%b     = (params .find. 'b')    * 1.e6_DP ![m] -> [um]
         this%G     =  params .find. 'G'
@@ -172,32 +171,26 @@ contains
         this%effslashb       = eff/this%b
         this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
 
-        !Initialize grain-specific state variables
-        do i = 1, size(grains)
-            allocate(DSHState:: grains(i)%hardening_state)
-            associate (grain_state => grains(i)%hardening_state)
-                !Fortran semantics dictate the use of 'select type' here even though the type is obvious
-                select type (grain_state)
-                    type is (DSHState)
-                        grain_state%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
-                        grain_state%CBB%RHOwd        = this%RHOwdMIN
-                        grain_state%CBB%RHOwp        = 0._DP
-                        grain_state%CBB%RHOwdHOM     = this%RHOwdMIN
-                        grain_state%CBB%accGAMMA_new = 0._DP
-                        grain_state%CBB%RHOwd_ini    = this%RHOwdMIN
-                        grain_state%ActiveCBB        = 0
-                end select
-            end associate
+        !Select type is required here due to Fortran semantics even though the type is obvious
+        select type (initial_state)
+            type is (DSHState)
+                initial_state%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
+                initial_state%CBB%RHOwd        = this%RHOwdMIN
+                initial_state%CBB%RHOwp        = 0._DP
+                initial_state%CBB%RHOwdHOM     = this%RHOwdMIN
+                initial_state%CBB%accGAMMA_new = 0._DP
+                initial_state%CBB%RHOwd_ini    = this%RHOwdMIN
+                initial_state%ActiveCBB        = 0
 
-            call this%update_crss(grains(i))
-        end do
-    end subroutine
+                call this%update_crss(initial_state)
+        end select
+    end function
 
-    subroutine dsh_deform(this, grain_, time, slip_rates)
-        class(HardeningModelDSH), intent(inout)                   :: this
-        type(Grain), target, intent(inout)                           :: grain_
+    subroutine dsh_deform(this, state, time, slip_rates)
+        class(ConstitutiveModelDSH), intent(inout)                   :: this
+        class(HardeningState), target, intent(inout)              :: state
         real(DP), intent(in)                                      :: time
-        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
+        real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 
         logical::  flux_reversal
         integer::  i, &
@@ -210,7 +203,7 @@ contains
                    sum_slip_rates_110(6)
         type(DSHState), pointer:: state_ptr !> Pointer to grain_%hardening_state of type DSHState for easy access to DSH-specific fields
 
-        state_ptr => to_dsh_state(grain_%hardening_state)
+        state_ptr => to_dsh_state(state)
 
         !>Calculate quantities of slip rates and slips
         !>Identify currently generated and non-currently generated walls
@@ -302,7 +295,7 @@ contains
         state_ptr%activecbb = r(:2)
 
         !Update CRSS of grain based on new dislocation densities
-        call this%update_crss(grain_)
+        call this%update_crss(state_ptr)
     contains
         !Unfortunately, this is the only way to formulate 'partial function application' that IFX can handle.
         !Refer to PhD thesis by Bart Peters for the meaning of this function.
@@ -328,48 +321,43 @@ contains
     end function
 
     !>@Brief update the CRSS of a given grain.
-    subroutine update_crss(this, grain_)
-        class(HardeningModelDSH), intent(in):: this !> Hardening model
-        type(Grain), target, intent(inout):: grain_    !> Grain for which to update CRSS.
+    subroutine update_crss(this, state)
+        class(ConstitutiveModelDSH), intent(in):: this !> Hardening model
+        type(DSHState), intent(inout):: state
 
         integer:: j, s, i                           !> Iterators
         real(DP):: tau_CB, &
                    CRSS_0_CB, &
-                   tau_CBB(2, size(grain_%slip_systems)), &
+                   tau_CBB(2, size(this%taylor_coeffs, 2)), &
                    wpcontr(6), &
                    wdcontr(6)
-        type(DSHState), pointer:: state_ptr !> Pointer to grain state of type DSHState for easy access to DSH-specific fields.
-
-        state_ptr => to_dsh_state(grain_%hardening_state)
 
         !Some systems are not allowed to become active
-        do i = 1, size(grain_%slip_systems)
-            grain_%slip_systems(i)%crss = REAL_DP_MAX_VAL
-        end do
+        state%crss = REAL_DP_MAX_VAL
 
         !CRSS within cells & CBs
-        tau_CB = this%alfa*this%G*this%b*sqrt(state_ptr%RHOcb)
+        tau_CB = this%alfa*this%G*this%b*sqrt(state%RHOcb)
 
         !contributions from tau_0 and CBs to CRSS
         CRSS_0_CB = this%tau0 + (1.D0-this%f) * tau_CB
 
         !Calc. CRSS for each slip system s, for the sense of slip j
         do j = 1, 2
-            do s = 1, size(grain_%slip_systems)
+            do s = 1, size(state%crss, 2)
                 !wp-and wd-contributions from all CBBs i
                 do i = 1, 6
-                    wpcontr(i)= sqrt(abs(state_ptr%CBB(i)%RHOwp)) &
+                    wpcontr(i)= sqrt(abs(state%CBB(i)%RHOwp)) &
                                 * (-1)**(j-1) &
                                 * this%alfa_G_b_eff(s, i) &
-                                * sign(1.D0, state_ptr%CBB(i)%RHOwp)
+                                * sign(1.D0, state%CBB(i)%RHOwp)
                     if (wpcontr(i) < 0.0_DP) &
                         wpcontr(i) = 0._DP  ! Heaviside bracket
-                    wdcontr(i)=sqrt(state_ptr%CBB(i)%RHOwd)*abs(this%alfa_G_b_eff(s, i))
+                    wdcontr(i)=sqrt(state%CBB(i)%RHOwd)*abs(this%alfa_G_b_eff(s, i))
                 end do
                 !CRSS within CBB = wp-and wd-contributions for all 6 walls
                 tau_CBB(j, s)=sum(wpcontr)+sum(wdcontr)
                 !C.R.S.S. for the "two-phase composite"
-                grain_%slip_systems(s)%crss(j)= CRSS_0_CB+this%f*tau_CBB(j, s)
+                state%crss(j, s)= CRSS_0_CB+this%f*tau_CBB(j, s)
             end do
         end do
     end subroutine

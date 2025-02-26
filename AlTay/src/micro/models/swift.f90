@@ -1,7 +1,7 @@
 module swift
     use utils, only: dp
     use altayConfig
-    use hardening_model
+    use constitutive_model
     use logging
     use parameters
     use grain_module
@@ -9,7 +9,7 @@ module swift
     implicit none
 
     private
-    public:: HardeningModelSwift
+    public:: ConstitutiveModelSwift
 
 
     !> Grain-specific hardening state data needed by the SWIFT hardening law.
@@ -18,7 +18,7 @@ module swift
     end type
 
     !> Classic isotropic SWIFT hardening model.
-    type, extends(HardeningModel):: HardeningModelSwift
+    type, extends(ConstitutiveModel):: ConstitutiveModelSwift
         !Model parameters
         real(DP)    ::  k,      &
                         gamma0, &
@@ -66,47 +66,34 @@ contains
     end subroutine swift_validate_parameters
 
     !> @Brief See hardening_model_init
-    subroutine swift_init(this, grains, params)
-        class(HardeningModelSwift),   intent(inout):: this
-        type(Grain), dimension(:), intent(inout)::    grains
+    function swift_init(this, miller_indices, params) result(initial_state)
+        class(ConstitutiveModelSwift),   intent(inout):: this
+        integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), target, intent(in):: params
+        class(HardeningState), allocatable:: initial_state
 
-        integer:: i, j  !> Iterators
-        real(DP):: crss !> Buffer for crss so that we do not have to recalculate it for every slip system of every grain.
+        allocate(SwiftState:: initial_state)
+        call this%base_init(miller_indices, initial_state)
 
         this%gamma0 = params .find. 'gamma0'
         this%n = params .find. 'n'
         this%k = (params .find. 'crss0') / (this%gamma0**this%n)
 
-        crss = this%k*this%gamma0**this%n
-
-        !Initialize grain-specific state
-        do i = 1, size(grains)
-            allocate(SwiftState:: grains(i)%hardening_state)
-            do j = 1, size(grains(i)%slip_systems)
-                grains(i)%slip_systems(j)%crss = crss
-            end do
-        end do
-    end subroutine swift_init
+        initial_state%crss = this%k*this%gamma0**this%n
+    end function
 
     !> @Brief See hardening_model_update_crss
-    subroutine swift_deform(this, grain_, time, slip_rates)
-        class(HardeningModelSwift), intent(inout)::                  this
-        type(Grain), target, intent(inout)::                        grain_
+    subroutine swift_deform(this, state, time, slip_rates)
+        class(ConstitutiveModelSwift), intent(inout)::               this
+        class(HardeningState), target, intent(inout)::               state
         real(DP), intent(in)::                                       time
-        real(DP), dimension(size(grain_%slip_systems)), intent(in):: slip_rates
+        real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 
-        integer:: i
-        real(DP):: crss
         type(SwiftState), pointer:: state_ptr
 
-        state_ptr => to_swift_state(grain_%hardening_state)
+        state_ptr => to_swift_state(state)
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
 
-        crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)
-
-        do i = 1, size(grain_%slip_systems)
-            grain_%slip_systems(i)%crss = crss
-        end do
+        state_ptr%crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)
     end subroutine
 end module swift

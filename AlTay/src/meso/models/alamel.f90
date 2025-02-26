@@ -81,7 +81,7 @@ contains
                   n_systems_grain
         real(DP), dimension(:,:), allocatable:: boundaries
 
-        n_systems_grain = size(grains(1)%slip_systems)
+        n_systems_grain = size(grains(1)%model%taylor_coeffs, 2)
         ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_systems_grain == 12)
 
         allocate(boundaries(3, parameter_size(params(1))))
@@ -121,6 +121,25 @@ contains
         this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
 
+    pure function get_n_systems(cluster_) result(n_systems)
+        class(Cluster), intent(in):: cluster_
+        integer, dimension(2):: n_systems
+
+        integer:: i
+
+        do i = 1, size(cluster_%grains)
+            n_systems(i) = size(cluster_%grains(i)%state%crss, 2)
+        end do
+    end function
+
+    pure function total_systems(cluster_) result(n_systems)
+        class(Cluster), intent(in):: cluster_
+        integer:: n_systems
+
+        n_systems = size(cluster_%grains(1)%model%taylor_coeffs, 2) + size(cluster_%grains(2)%model%taylor_coeffs, 2) + 2
+    end function
+
+
     !>@Brief Calculate the imposed strain rate vector corresponding to a certain velocity gradient for a cluster
     !>@Details Projects the velocity gradient onto the crystal frames of the grains comprising the cluster.
     function calc_imposed_strain_rate(alamel_cluster, v_grad) result(imposed_strain_rate)
@@ -146,41 +165,32 @@ contains
 
     pure function get_taylor_coeffs(alamel_cluster) result(coeffs)
         type(AlamelCluster), intent(in):: alamel_cluster
-        real(DP), dimension(10, size(alamel_cluster%grains(1)%slip_systems)+size(alamel_cluster%grains(2)%slip_systems)+2):: coeffs
+        real(DP), dimension(10, total_systems(alamel_cluster)):: coeffs
 
         integer:: i, &
                   n_systems(2)
 
-        do i = 1, 2
-            n_systems(i) = size(alamel_cluster%grains(i)%slip_systems)
-        end do
+        n_systems = get_n_systems(alamel_cluster)
 
-        do i = 1, n_systems(1)
-            coeffs(1:5, i) = alamel_cluster%grains(1)%slip_systems(i)%taylor_coeffs
-            coeffs(6:10, i) = 0._DP
-        end do
-        do i = n_systems(1)+1, sum(n_systems)
-            coeffs(1:5, i) = 0._DP
-            coeffs(6:10, i) = alamel_cluster%grains(2)%slip_systems(i-n_systems(1))%taylor_coeffs
-        end do
-        do i = 1, 2
-            coeffs(:,sum(n_systems)+i) = alamel_cluster%relaxations(i)%taylor_coeffs
-        end do
+        coeffs(1:5, 1:n_systems(1))                 = alamel_cluster%grains(1)%model%taylor_coeffs
+        coeffs(6:10, 1:n_systems(1))                = 0._DP
+        coeffs(1:5, n_systems(1)+1:sum(n_systems))  = 0._DP
+        coeffs(6:10, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%model%taylor_coeffs
+        coeffs(:,sum(n_systems)+1)                  = alamel_cluster%relaxations(1)%taylor_coeffs
+        coeffs(:,sum(n_systems)+2)                  = alamel_cluster%relaxations(2)%taylor_coeffs
     end function
 
     pure function get_crss(alamel_cluster) result(crss)
         type(AlamelCluster), intent(in):: alamel_cluster
-        real(DP), dimension(2, size(alamel_cluster%grains(1)%slip_systems)+size(alamel_cluster%grains(2)%slip_systems)+2):: crss
+        real(DP), dimension(2, total_systems(alamel_cluster)):: crss
 
-        integer:: i, j
+        integer:: n_systems(2)
 
-        do i = 1, 2
-            do j = 1, size(alamel_cluster%grains(i)%slip_systems)
-                crss(:,(i-1)*size(alamel_cluster%grains(1)%slip_systems)+j) = alamel_cluster%grains(i)%slip_systems(j)%crss
-            end do
-        end do
-        crss(:,size(crss, 2)-1) = 0._DP
-        crss(:,size(crss, 2)) = 0._DP
+        n_systems = get_n_systems(alamel_cluster)
+
+        crss(:,1:n_systems(1)) = alamel_cluster%grains(1)%state%crss
+        crss(:, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%state%crss
+        crss(:, sum(n_systems)+1:) = 0._DP
     end function
 
     !>@Brief Get stress state for a cluster
@@ -191,7 +201,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: v_grad !> Imposed velocity gradient
         real(DP), dimension(3, 3):: stress
 
-        real(DP), dimension(size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)+size(cluster_%grains(2)%model%taylor_coeffs, 2)+2):: slip_rates, &
                                                                                                                    rss
         real(DP), dimension(10):: stress_cluster
         type(AlamelCluster), pointer:: cluster_ptr
@@ -235,7 +245,8 @@ contains
                                     strain_relaxations(5), &
                                     slip_grain, &
                                     spin_coeffs_relaxations(3, 2), &
-                                    taylor_coeffs(10, size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2)
+                                    taylor_coeffs(10, &
+                                size(cluster_%grains(1)%model%taylor_coeffs, 2)+size(cluster_%grains(2)%model%taylor_coeffs, 2)+2)
         integer::                   i, j, &
                                     n_systems_grain, &
                                     n_active_simplex, &
@@ -243,7 +254,7 @@ contains
                                     offset_systems, &
                                     offset_relaxations
         integer, dimension(:), allocatable:: ind_overstressed_slip_systems
-        real(DP), dimension(size(cluster_%grains(1)%slip_systems)+size(cluster_%grains(2)%slip_systems)+2):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)+size(cluster_%grains(2)%model%taylor_coeffs, 2)+2):: slip_rates, &
                                                                                                              rss
         real(DP), dimension(10):: stress_cluster, &
                                   imposed_strain_rate
@@ -251,7 +262,7 @@ contains
 
         cluster_ptr => to_alamel_cluster(cluster_)
 
-        n_systems_grain = size(cluster_%grains(1)%slip_systems)
+        n_systems_grain = size(cluster_%grains(1)%model%taylor_coeffs, 2)
         offset_relaxations = 2*n_systems_grain
 
         call update_relaxations(cluster_ptr, this%deformation_gradient_during_time_step)
@@ -294,7 +305,7 @@ contains
                     slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
                         rss(ind_overstressed_slip_systems+offset_systems), &
                         strain_grain, &
-                        grain_%get_taylor_coeffs(), &
+                        grain_%model%taylor_coeffs, &
                         n_active_simplex)
                 end if
 
@@ -311,11 +322,9 @@ contains
 
                 orientation_increment = UNIT_MATRIX_3X3 &
                                         -(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                        +convert_spin(matmul(grain_%get_spin_coeffs(), slip_rates_grain)) &   !>Spin induced by activation of slip systems
+                                        +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &   !>Spin induced by activation of slip systems
                                         +convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
                 grain_%orientation = matmul(orientation_increment, grain_%orientation)
-
-
             end associate
         end do
 
@@ -356,21 +365,21 @@ contains
         real(DP), dimension(10, 10):: basis
 
         integer:: i, &
-                  n_systems_grain, &
+                  n_systems(2), &
                   ind_basis_system
 
-        n_systems_grain = size(alamel_cluster%grains(1)%slip_systems)
+        n_systems = get_n_systems(alamel_cluster)
 
         do i = 1, 10
             ind_basis_system = alamel_cluster%ind_basis_systems(i)
-            if (ind_basis_system <= n_systems_grain) then
-                basis(1:5, i) = alamel_cluster%grains(1)%slip_systems(ind_basis_system)%taylor_coeffs
+            if (ind_basis_system <= n_systems(1)) then
+                basis(1:5, i) = alamel_cluster%grains(1)%model%taylor_coeffs(:,ind_basis_system)
                 basis(6:10, i) = 0._DP
-            else if (ind_basis_system <= 2*n_systems_grain) then
+            else if (ind_basis_system <= sum(n_systems)) then
                 basis(1:5, i) = 0._DP
-                basis(6:10, i) = alamel_cluster%grains(2)%slip_systems(ind_basis_system-n_systems_grain)%taylor_coeffs
+                basis(6:10, i) = alamel_cluster%grains(2)%model%taylor_coeffs(:,ind_basis_system-n_systems(1))
             else
-                basis(:,i) = alamel_cluster%relaxations(ind_basis_system-2*n_systems_grain)%taylor_coeffs
+                basis(:,i) = alamel_cluster%relaxations(ind_basis_system-sum(n_systems))%taylor_coeffs
             end if
         end do
     end function
@@ -406,7 +415,7 @@ contains
         end do
 
         basis = get_basis(alamel_cluster)
-        n_systems_grains = size(alamel_cluster%grains(1)%slip_systems)+size(alamel_cluster%grains(2)%slip_systems)
+        n_systems_grains = size(alamel_cluster%grains(1)%model%taylor_coeffs, 2)+size(alamel_cluster%grains(2)%model%taylor_coeffs, 2)
         do i = 1, 10
             if (alamel_cluster%ind_basis_systems(i)> n_systems_grains)then
                 new_vec = matmul(alamel_cluster%inverse_basis, basis(:,i))
