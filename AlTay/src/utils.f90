@@ -419,6 +419,10 @@ contains
             next_col = next_col+1
             mat_lu = mat(:,ind_basis)
 
+            print *, ind_basis
+            print '(12f6.2)', mat
+            print '(5f6.2)', mat_lu
+
             call dgetrf(m, m, mat_lu, m, ipiv, info)
         end do
     end function

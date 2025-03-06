@@ -27,7 +27,9 @@ gcc:
     AR=xiar ./build.sh -c gfortran -b release
     cd test
     export OMP_NUM_THREADS=3
-    pytest --update=logout -v
+    pytest -m integration -k ADP-ALAMEL-fcc12-NONE
+    cd run
+    ../../VEF/bin/alamDMC ADP test.cfg
 ifx:
   image: intel/hpckit:latest
   script: |
