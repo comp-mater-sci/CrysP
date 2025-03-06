@@ -388,4 +388,36 @@ contains
 
         rk = x0 + (k(1) + 2.D0*k(2) + 2.D0*k(3) + k(4)) / 6.D0
     end function
+
+    !>@Brief Determine the indices of a basis for a matrix
+    !>@Details Uses LAPACK routine dgetrf. Assumes that the column rank is at least equal to the number of rows.
+    function basis_indices(mat) result(ind_basis)
+        real(DP), dimension(:,:), intent(in):: mat
+        integer, dimension(size(mat, 1)):: ind_basis
+
+        integer:: m, &
+                  ipiv(size(mat, 1)), &
+                  next_col, &
+                  j, &
+                  info
+        real(DP):: mat_lu(size(mat, 1), size(mat, 1)), &
+                   col_buffer
+
+        m = size(mat, 1)
+
+        do j = 1, m-1
+            ind_basis(j) = j
+        end do
+
+        info = m
+        next_col = m
+
+        do while (info > 0)
+            ind_basis(info) = next_col
+            next_col = next_col+1
+            mat_lu = mat(:,ind_basis)
+
+            call dgetrf(m, m, mat_lu, m, ipiv, info)
+        end do
+    end function
 end module
