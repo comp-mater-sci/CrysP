@@ -65,7 +65,7 @@ contains
                 do i = 1, size(clusters)
                     clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
-                    clusters(i)%ind_basis_systems = basis_indices(grains(1)%model%taylor_coeffs)
+                    clusters(i)%ind_basis_systems = grains(1)%model%basis
                     taylor_coeffs = clusters(i)%grains(1)%model%taylor_coeffs
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
                 end do

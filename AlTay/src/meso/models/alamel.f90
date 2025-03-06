@@ -15,8 +15,6 @@ module alamel
     public:: AlamelModel
 
     character(*), parameter:: MOD_NAME = 'alamel'
-    integer, dimension(5), parameter::   INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
-                                         INITIAL_BASIS_SYSTEMS_BCC = [1, 2, 4, 5, 7]
 
     !> Cluster used by the ALAMEL model.
     type, extends(Cluster):: AlamelCluster
@@ -98,7 +96,7 @@ contains
                 clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(from_euler_angles(boundaries(:,j))))
                 n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
                 do k = 1, 2
-                    ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(clusters(i)%grains(k)%model%taylor_coeffs, 2) == 12)
+                    ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
                     clusters(i)%ind_basis_systems((k-1)*5+1:k*5) = ind_basis_systems_grain + (k-1)*n_systems_first_grain
                     call clusters(i)%relaxations(k)%init(k)
                 end do
