@@ -429,10 +429,14 @@ contains
             print *, ind_basis
             print '(12f6.2)', mat
             print '(5f6.2)', mat_lu
+            print *, m
+            print *, ipiv
+            print *, info
 
             call dgetrf(m, m, mat_lu, m, ipiv, info)
-            print *, 'Info: ', info
+            print *, mat_lu
             print  *,  'ipiv: ', ipiv
+            print *, 'Info: ', info
         end do
     end function
 end module
