@@ -405,42 +405,30 @@ contains
                   info
         real(DP):: mat_lu(size(mat, 1), size(mat, 1))
 
-        real(DP):: test
-        double precision:: test2
-        integer:: major, minor, ver
-
-
         m = size(mat, 1)
         ind_basis =  (/(i, i = 1, m)/)
         info = m
         next_col = m
         ipiv = m
 
-        print *, 'real(DP):', storage_size(test)
-        print *, 'double precision: ', storage_size(test2)
-
-        call ilaver(major, minor, ver)
-        print *, 'LAPACK: ', major, minor, ver
-
         !Dgetrf performs LU factorization. If this fails (info > 0), at least the column at index info is dependent on the
         !preceding columns. Therefore, we keep replacing the column at info by the next column of the input matrix until dgetrf
         !returns successfully.
         do while (info > 0)
-            ind_basis(ipiv(info)) = next_col
+            ind_basis(info) = next_col
             next_col = next_col+1
             mat_lu = mat(:,ind_basis)
 
-            print *, ind_basis
-            print '(12f6.2)', mat
-            print '(5f6.2)', mat_lu
-            print *, m
-            print *, ipiv
-            print *, info
-
             call dgetrf(m, m, mat_lu, m, ipiv, info)
-            print *, mat_lu
-            print  *,  'ipiv: ', ipiv
-            print *, 'Info: ', info
+
+            !Because LAPACK uses much lower tolerances than we do, we must check the diagonal elements of U even when accorording to
+            !dgetrf the matrix is not singular
+            i = 0
+            do while (info == 0 .and. i < m)
+                i = i+1
+                if (mat_lu(i, i) < TOLERANCE) &
+                    info = i
+            end do
         end do
     end function
 end module
