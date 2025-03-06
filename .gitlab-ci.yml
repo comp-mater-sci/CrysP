@@ -16,6 +16,8 @@ gcc:
     apt-get install --allow-unauthenticated -y \
     intel-oneapi-mkl-devel \
     cmake \
+    libblas-dev \
+    liblapack-dev  \
     python3-pytest \
     python3-pandas \
     python3-numpy
@@ -32,6 +34,8 @@ ifx:
     apt-get update --allow-insecure-repositories
     apt-get install --allow-unauthenticated -y \
     cmake \
+    libblas-dev \
+    liblapack-dev \
     python3-pip
     pip install pandas pytest numpy
     export PATH=${PATH}:${PWD}/VEF/bin
