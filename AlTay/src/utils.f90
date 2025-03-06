@@ -405,11 +405,18 @@ contains
                   info
         real(DP):: mat_lu(size(mat, 1), size(mat, 1))
 
+        real(DP):: test
+        double precision:: test2
+
+
         m = size(mat, 1)
         ind_basis =  (/(i, i = 1, m)/)
         info = m
         next_col = m
         ipiv = m
+
+        print *, 'real(DP):', storage_size(test)
+        print *, 'double precision: ', storage_size(test2)
 
         !Dgetrf performs LU factorization. If this fails (info > 0), at least the column at index info is dependent on the
         !preceding columns. Therefore, we keep replacing the column at info by the next column of the input matrix until dgetrf
