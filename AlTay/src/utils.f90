@@ -407,6 +407,7 @@ contains
 
         real(DP):: test
         double precision:: test2
+        integer:: major, minor, ver
 
 
         m = size(mat, 1)
@@ -417,6 +418,9 @@ contains
 
         print *, 'real(DP):', storage_size(test)
         print *, 'double precision: ', storage_size(test2)
+
+        call ilaver(major, minor, ver)
+        print *, 'LAPACK: ', major, minor, ver
 
         !Dgetrf performs LU factorization. If this fails (info > 0), at least the column at index info is dependent on the
         !preceding columns. Therefore, we keep replacing the column at info by the next column of the input matrix until dgetrf
