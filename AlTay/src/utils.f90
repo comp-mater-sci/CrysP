@@ -425,6 +425,7 @@ contains
 
             call dgetrf(m, m, mat_lu, m, ipiv, info)
             print *, 'Info: ', info
+            print  *,  'ipiv: ', ipiv
         end do
     end function
 end module
