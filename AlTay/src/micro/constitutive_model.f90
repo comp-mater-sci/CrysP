@@ -97,7 +97,7 @@ contains
             schmid_matrix = normalized(:,2) .outer. normalized(:,1)
             this%taylor_coeffs(:,i) = convert_stress_strain_space(schmid_matrix)
             this%spin_coeffs(:,i) = convert_spin(schmid_matrix)
-            this%basis = basis_indices(this%taylor_coeffs)
         end do
+        this%basis = basis_indices(this%taylor_coeffs)
     end subroutine
 end module

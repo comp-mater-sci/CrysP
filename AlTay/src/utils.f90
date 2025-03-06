@@ -409,12 +409,13 @@ contains
         ind_basis =  (/(i, i = 1, m-1)/)
         info = m
         next_col = m
+        ipiv = m
 
         !Dgetrf performs LU factorization. If this fails (info > 0), at least the column at index info is dependent on the
         !preceding columns. Therefore, we keep replacing the column at info by the next column of the input matrix until dgetrf
         !returns successfully.
         do while (info > 0)
-            ind_basis(info) = next_col
+            ind_basis(ipiv(info)) = next_col
             next_col = next_col+1
             mat_lu = mat(:,ind_basis)
 
