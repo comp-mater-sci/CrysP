@@ -23,8 +23,8 @@ gcc:
     python3-numpy
     source /opt/intel/oneapi/setvars.sh
     export PATH=${PATH}:${PWD}/VEF/bin
-    AR=xiar ./build.sh -c gfortran -b debug
-    AR=xiar ./build.sh -c gfortran -b release
+    ./build.sh -c gfortran -b debug
+    ./build.sh -c gfortran -b release
     cd test
     export OMP_NUM_THREADS=3
     pytest -m integration -k ADP-ALAMEL-fcc12-NONE
