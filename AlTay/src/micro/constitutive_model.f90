@@ -15,7 +15,7 @@ module constitutive_model
     type, abstract:: ConstitutiveModel
         real(DP), dimension(:,:), allocatable:: taylor_coeffs
         real(DP), dimension(:,:), allocatable:: spin_coeffs
-        real(DP), dimension(5):: basis
+        integer, dimension(5):: basis
     contains
         procedure(cm_get_parameters), deferred, nopass::      get_parameters
         procedure(cm_validate_parameters), deferred, nopass:: validate_parameters
