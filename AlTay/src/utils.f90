@@ -406,7 +406,7 @@ contains
         real(DP):: mat_lu(size(mat, 1), size(mat, 1))
 
         m = size(mat, 1)
-        ind_basis =  (/(i, i = 1, m-1)/)
+        ind_basis =  (/(i, i = 1, m)/)
         info = m
         next_col = m
         ipiv = m
