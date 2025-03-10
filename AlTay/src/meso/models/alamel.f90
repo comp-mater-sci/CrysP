@@ -15,8 +15,6 @@ module alamel
     public:: AlamelModel
 
     character(*), parameter:: MOD_NAME = 'alamel'
-    integer, dimension(5), parameter::   INITIAL_BASIS_SYSTEMS_FCC = [2, 5, 6, 7, 8], &
-                                         INITIAL_BASIS_SYSTEMS_BCC = [1, 2, 4, 5, 7]
 
     !> Cluster used by the ALAMEL model.
     type, extends(Cluster):: AlamelCluster
@@ -78,11 +76,9 @@ contains
 
         integer:: i, j, k, &
                   ind_basis_systems_grain(5), &
-                  n_systems_grain
+                  n_systems_first_grain
         real(DP), dimension(:,:), allocatable:: boundaries
 
-        n_systems_grain = size(grains(1)%model%taylor_coeffs, 2)
-        ind_basis_systems_grain = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, n_systems_grain == 12)
 
         allocate(boundaries(3, parameter_size(params(1))))
         boundaries = params(1)
@@ -98,9 +94,10 @@ contains
             do i = 1, size(clusters)
                 clusters(i)%grains = grains(2*(i-1)+1:2*i)
                 clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(from_euler_angles(boundaries(:,j))))
-                clusters(i)%ind_basis_systems(1:5) = ind_basis_systems_grain
-                clusters(i)%ind_basis_systems(6:10) = ind_basis_systems_grain+n_systems_grain
+                n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
                 do k = 1, 2
+                    ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
+                    clusters(i)%ind_basis_systems((k-1)*5+1:k*5) = ind_basis_systems_grain + (k-1)*n_systems_first_grain
                     call clusters(i)%relaxations(k)%init(k)
                 end do
                 clusters(i)%inverse_basis = invert(get_basis(clusters(i)))
@@ -248,7 +245,7 @@ contains
                                     taylor_coeffs(10, &
                                 size(cluster_%grains(1)%model%taylor_coeffs, 2)+size(cluster_%grains(2)%model%taylor_coeffs, 2)+2)
         integer::                   i, j, &
-                                    n_systems_grain, &
+                                    n_systems(2), &
                                     n_active_simplex, &
                                     offset_grain, &
                                     offset_systems, &
@@ -262,8 +259,8 @@ contains
 
         cluster_ptr => to_alamel_cluster(cluster_)
 
-        n_systems_grain = size(cluster_%grains(1)%model%taylor_coeffs, 2)
-        offset_relaxations = 2*n_systems_grain
+        n_systems = get_n_systems(cluster_)
+        offset_relaxations = sum(n_systems)
 
         call update_relaxations(cluster_ptr, this%deformation_gradient_during_time_step)
         imposed_strain_rate = calc_imposed_strain_rate(cluster_ptr, this%velocity_gradient)
@@ -284,15 +281,15 @@ contains
         slip = 0._DP
         do j = 1, 2
             offset_grain = (j-1)*5
-            offset_systems = (j-1)*n_systems_grain
+            offset_systems = (j-1)*n_systems(1)
 
             associate (grain_ => cluster_ptr%grains(j), &
-                       slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems_grain), &
+                       slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems(j)), &
                        slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
                        taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
                 call  assess_slip_system_activity(cluster_ptr%grains(j), &
-                                                  rss(offset_systems+1:offset_systems+n_systems_grain), &
+                                                  rss(offset_systems+1:offset_systems+n_systems(j)), &
                                                   slip_rates_grain, &
                                                   n_active_simplex, &
                                                   ind_overstressed_slip_systems)
@@ -393,8 +390,7 @@ contains
                    dummy(10), &
                    new_boundary_frame(3, 3), &
                    basis(10, 10)
-        integer:: i, &
-                  n_systems_grains
+        integer:: i
 
         !Calculate current boundary reference frame
         new_boundary_frame = matmul(def_grad, alamel_cluster%initial_boundary_orientation)
@@ -415,9 +411,8 @@ contains
         end do
 
         basis = get_basis(alamel_cluster)
-        n_systems_grains = size(alamel_cluster%grains(1)%model%taylor_coeffs, 2)+size(alamel_cluster%grains(2)%model%taylor_coeffs, 2)
         do i = 1, 10
-            if (alamel_cluster%ind_basis_systems(i)> n_systems_grains)then
+            if (alamel_cluster%ind_basis_systems(i)> sum(get_n_systems(alamel_cluster)))then
                 new_vec = matmul(alamel_cluster%inverse_basis, basis(:,i))
                 call update_inverse_basis(alamel_cluster%inverse_basis, new_vec, i, dummy)
             end if
