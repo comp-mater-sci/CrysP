@@ -1,9 +1,6 @@
 # Generic sets of Fortran compiler and linker flag
 
-if (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-    set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -Warn all -stand f18 -qopenmp")
-    set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check all,noarg_temp_created -ftrapuv -debug-parameters all -traceback -fp-stack-check -debug all -fpe0")
-elseif (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+if (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
     set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -Warn all -stand f18 -qopenmp")
     set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check all,noarg_temp_created,nouninit -ftrapuv -debug all -debug-parameters all -traceback -fpe0")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
