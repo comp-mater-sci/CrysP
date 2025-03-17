@@ -8,6 +8,8 @@ module nllsTR
     use altayconfig
     use logging
 
+    character(*), parameter:: MOD_NAME = 'nllstr'
+
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
       type:: SolutionPoint
             !> Dimensionality of vector X (argument)
@@ -57,13 +59,6 @@ module nllsTR
             !> See remarks in IF_objectiveFx_stateful for a guidance how to implement it.
             procedure(IF_objectiveFx_stateful), deferred, pass(this)     :: objectiveEval
 
-            !> Evaluation of Jacobi matrix for the objective function.
-            !>
-            !> See remarks in IF_JacobiObjFx_stateful for a guidance how to implement it.
-            procedure(IF_JacobiObjFx_stateful), deferred, pass(this)     :: jacobiMatrixEval
-
-            !>@}
-
             procedure, pass(this)                            :: getProblemSize
             procedure, pass(this)                            :: getXSize
             procedure, pass(this)                            :: getFSize
@@ -88,10 +83,7 @@ module nllsTR
       contains
 
             procedure:: objectiveEval => trackableObjFunc_objectiveEval
-            procedure:: jacobiMatrixEval => trackableObjFunc_jacobiMatrixEval
-
             procedure, pass(this):: track => trackableObjFunc_track
-
       end type
 
 
@@ -166,11 +158,6 @@ module nllsTR
 
       end type
 
-
-      !> Default step for finite difference evaluation of Jacobi matrix
-      real(DP), parameter                        :: nllsTR_jacobi_eps = 1.D-7
-
-
       !>@{ \name Other parameters
       !>  These parameters are not directly accessible. Use \ref nlls_TR_init to control them. \sa nlls_TR_init
 
@@ -192,13 +179,6 @@ module nllsTR
             integer                             :: stop_criterion = 0   !< Identifier of stop criterion, see MKL documentation
             real(DP)                    :: r1 = 0.D0            !< Initial norm of residual
             real(DP)                    :: r2 = 0.D0            !< Final norm of residual
-      end type
-
-
-      type, abstract, extends(objectiveFunction):: MKLFDJacobiObjFunction
-            real(DP)                          ::  jacobi_eps = nllsTR_jacobi_eps
-      contains
-            procedure:: jacobiMatrixEval => JacobiObjEval_djacobi
       end type
 
 
@@ -260,6 +240,10 @@ contains
       ! Other variables
       integer                        :: ierr, i
       character(len = 512)             :: message
+      real(DP):: jacobi_interval
+
+      jacobi_interval = 1.E-8
+
       !---------------------------------------------------
             RCI_Req = 0; next_solve = .true.
             info = -1
@@ -289,14 +273,7 @@ contains
             !
             if ((config%constJacobi) .and. (.not. config%use_init_state)) then
                   ! Calculate Jacobi matrix
-                  call objFx%jacobiMatrixEval(vX, linfo)
-                  if ( (linfo == 0) .and. (config%use_input_checks) ) &
-                        call checkSolverInput(mJ = objFx%state%mJ, info = linfo)
-                  if (linfo /= 0) then
-                        write(nllsTR_ounit, fmt = 100) 'Cannot calculate initial Jacobi matrix.'
-                        info = -1
-                        return
-                  endif
+                  call calc_jacobi(vx, jacobi_interval, objfx%state%mj)
                   if (nllsTR_iw > 3) then
                         write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  -->'
                         call writeMatrix(objFx%state%mJ, nllsTR_ounit)
@@ -358,13 +335,26 @@ contains
                         where (vX > vUP) vX = vUP
                         ! RCI status
                         select case (RCI_Req)
+                              case (-6)
+                                    next_solve = .false.
+                              case (-5)
+                                    next_solve = .false.
+                              case (-4)
+                                  if (jacobi_interval < 10._DP) then
+                                    jacobi_interval = 8*jacobi_interval
+                                    call calc_jacobi(vfval, jacobi_interval, mjacobi)
+                                    next_solve = .true.
+                                  else
+                                      next_solve = .false.
+                                  end if
+                              case (-3)
+                                    next_solve = .false.
+                              case (-2)
+                                    next_solve = .false.
+
                               !!-----------------------------------------------------------------------
                               case(-1)          ! Iteration count has been exceeded
                                     next_solve = .false.
-                              !!-----------------------------------------------------------------------
-                              case(-6:-2)       ! Epsilon has been reached
-                                    next_solve = .false.
-
                               !!-----------------------------------------------------------------------
                               case(0)           ! Successful
                                     next_solve = .true.
@@ -404,9 +394,7 @@ contains
                                           if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the Jacobi matrix'
                                           linfo = 0
                                           if (.not. use_init_mJacobi) then
-                                                call objFx%jacobiMatrixEval(vX, linfo)
-                                                if ((linfo == 0) .and. (config%use_input_checks)) &
-                                                      call checkSolverInput(mJ = mJacobi, info = linfo)
+                                                call calc_jacobi(vx, jacobi_interval, objfx%state%mj)
                                           endif
                                           ! Terminate the RCI loop on error in Jacobi
                                           if (linfo /= 0) then
@@ -568,14 +556,25 @@ contains
       !
       end function
 
-    function jacobi(strain_mode) result(jac)
+    recursive subroutine calc_jacobi(strain_mode, interval, jacobi)
         real(DP), dimension(5), intent(in):: strain_mode
-        real(DP), dimension(5, 5):: jac
+        real(DP), intent(inout):: interval
+        real(DP), dimension(5, 5), intent(out):: jacobi
 
         integer:: res
 
-        res = djacobi(altay_wrapper, 5, 5, jac, strain_mode, 0.2_DP)
+        res = djacobi(altay_wrapper, 5, 5, jacobi, strain_mode, interval)
 
+        !Jacobi calculation may fail due to the nature of the objective function. If so and the interval is not unreasonably large,
+        !double the interval and try again.
+        if (res /= TR_SUCCESS) then
+            if (interval < 10._DP) then
+                interval = 2*interval
+                call calc_jacobi(strain_mode, interval, jacobi)
+            else
+                call log_error(MOD_NAME, 'calc_jacobi', ERR_VAL, 'Could not calculate Jacobi')
+            end if
+        end if
     contains
         subroutine altay_wrapper(m, n, strain_mode, stress_mode)
             integer, intent(in):: m !> Needed by MKL
@@ -591,7 +590,7 @@ contains
             call initstepdata(1, astate, info)
 
             associate (input => astate%simulCalls(1)%input)
-                input%dgf = Atens
+                input%dgf = v_grad
                 input%keep_texture = .true.
                 input%keep_state = .true.
                 input%full_model = .false.
@@ -606,101 +605,7 @@ contains
             !Round to TOLERANCE to compensate for variations in the results due to scheduling. The underlying model can never nearly as accurate anyway.
             stress_mode = anint(-stress_mode/norm2(stress_mode)/TOLERANCE) * TOLERANCE
         end subroutine
-    end function
-
-
-      !> Calculation of Jacobi matrix by means of central difference method.
-      !>
-      !> This subroutine uses djacobi_solve RCI subroutine from MKL.
-      subroutine JacobiObjEval_djacobi(this, vX, info)
-      implicit none
-      class(MKLFDJacobiObjFunction), target, intent(inout)     :: this
-      real(DP), dimension(5), intent(in)        :: vX       !< Dimension must be: [n_X_dim]
-      integer, intent(out)                             :: info
-
-      integer     :: res
-      integer*8   :: handle
-      integer, target     :: RCI_Req
-      logical     :: next_solve
-      ! Temporary arrays f1 & f2 which contain: f1 = f(x+eps) | f2 = f(x-eps)
-      real(DP), dimension(5), target  :: f1, f2, f0
-      real(DP), dimension(5), target  :: tmp_vX
-      real(DP), dimension(5, 5), target:: jac
-      real(DP), dimension(5, 5):: jac2, jac_diff
-      integer, target:: n
-      real(DP), target:: eps
-      !
-      handle = 0
-      info = 1
-      ! Protect the initial vaue of state%vF
-      f0 = this%state%vF
-      f1 = 0._DP
-      f2 = 0._DP
-
-      this%state%mj = 0._DP
-      this%jacobi_eps = 0.2_DP
-
-      tmp_vX = vX
-      n = 5
-      eps = 0.2_DP
-
-      jac = 0._DP
-      res =  djacobi_init(handle, n, n, tmp_vX, jac, eps)
-
-      ! detect error conditions
-      if (checkMKLRescode(res, 'recalculation of Jacobi matrix', nllsTR_ounit) /= 0) then
-            info = 1
-            return
-      endif
-      !
-      ! Enter RCI loop
-      info = 2
-      next_solve = .true.
-      RCI_Req = 0
-      do while (next_solve)
-            res = djacobi_solve(handle, f1, f2, RCI_Req)
-            if (res /= TR_SUCCESS) exit
-            ! RCI status
-            select case (RCI_Req)
-                  !!-----------------------------------------------------------------------
-                  case(1)
-                        this%state%mj = jac
-                        call this%objectiveEval(tmp_vX, info)
-                        if (info /= 0) exit
-                        ! Grab the state
-                        f1 = this%state%vF
-                  !!-----------------------------------------------------------------------
-                  case(2)
-                        this%state%mj = jac
-                        call this%objectiveEval(tmp_vX, info)
-                        if (info /= 0) exit
-                        ! Grab the state
-                        f2 = this%state%vF
-                  !!-----------------------------------------------------------------------
-                  case(0)           ! Successful
-                        info = 0
-                        next_solve = .false.
-                  case default           ! Unknown error conditionn
-                        info = 3
-                        exit
-            end select
-      enddo
-
-      jac2 = jacobi(vx)
-
-
-      ! Restore the initial value of state%vF
-      this%state%mj = jac
-      this%state%vF = f0
-      ! Finalize Jacobi solver, release resources
-      res = djacobi_delete(handle)
-      if ((info /= 0) .or. (checkMKLRescode(res, 'recalculation of Jacobi matrix', nllsTR_ounit) /= 0)) then
-            info = 1
-      else
-            info = 0
-      endif
-      end subroutine
-
+    end subroutine
 
 !----------------------------------------------------------------------------------------------------------------------------------
 ! Private components

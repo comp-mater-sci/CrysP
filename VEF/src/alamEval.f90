@@ -9,7 +9,7 @@ implicit none
 
       !> Objective function: difference between the searched-for normalized stress and the normalized
       !> stress given by the multilevel model.
-      type, extends(MKLFDJacobiObjFunction):: NormalizedV5DComp
+      type, extends(ObjectiveFunction):: NormalizedV5DComp
 
             !NOTE: [n_X_dim] must be 5
             !      [m_F_dim] must be 5
