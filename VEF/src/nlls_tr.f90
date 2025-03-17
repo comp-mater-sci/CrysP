@@ -4,31 +4,34 @@ include 'mkl_rci.f90'
 module nllsTR
     use utils
     use mkl_rci
+    use altay
+    use altayconfig
+    use logging
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
-      type :: SolutionPoint
+      type:: SolutionPoint
             !> Dimensionality of vector X (argument)
             integer                                         :: n_X_dim = 0
 
             !> Dimensionality of objective function
             integer                                         :: m_F_dim = 0
 
-            real(DP),dimension(:),allocatable       :: vX       !< The point
-            real(DP),dimension(:),allocatable       :: vF       !< Function at vX
-            real(DP),dimension(:,:),allocatable     :: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
+            real(DP), dimension(:), allocatable       :: vX       !< The point
+            real(DP), dimension(:), allocatable       :: vF       !< Function at vX
+            real(DP), dimension(:,:), allocatable     :: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
 
       contains
             !> Constructor: initialization guided by the dimensions n_X_dim and m_F_dim
-            procedure,pass(this)       :: init => SolutionPoint_Init
+            procedure, pass(this)       :: init => SolutionPoint_Init
 
             !> Constructor: copy from other SolutionPoint object
-            procedure,pass(this)       :: copy => SolutionPoint_Copy
+            procedure, pass(this)       :: copy => SolutionPoint_Copy
 
             !> Destructor: state of the object is changed to uninitialized.
-            procedure,pass(this)       :: finalize => SolutionPoint_Finalize
+            procedure, pass(this)       :: finalize => SolutionPoint_Finalize
 
             !> Generic name for constructors
-            generic,public :: construct => init, copy
+            generic, public:: construct => init, copy
 
       end type
 
@@ -37,7 +40,7 @@ module nllsTR
       !>
       !> It is assumed that every objective function contains a state variable that
       !> represents the value of the function and its Jacobian.
-      type,abstract :: objectiveFunction
+      type, abstract:: objectiveFunction
 
             !> State variable
             type(SolutionPoint)                               :: state
@@ -45,61 +48,61 @@ module nllsTR
 
       contains
             !> Initialization function
-            procedure,pass(this)                 :: initFx => objectiveFunction_initFx
+            procedure, pass(this)                 :: initFx => objectiveFunction_initFx
 
             !>@{ \name Stateful interface
 
             !> Evaluation of objective function vector.
             !>
             !> See remarks in IF_objectiveFx_stateful for a guidance how to implement it.
-            procedure(IF_objectiveFx_stateful),deferred,pass(this)     :: objectiveEval
+            procedure(IF_objectiveFx_stateful), deferred, pass(this)     :: objectiveEval
 
             !> Evaluation of Jacobi matrix for the objective function.
             !>
             !> See remarks in IF_JacobiObjFx_stateful for a guidance how to implement it.
-            procedure(IF_JacobiObjFx_stateful),deferred,pass(this)     :: jacobiMatrixEval
+            procedure(IF_JacobiObjFx_stateful), deferred, pass(this)     :: jacobiMatrixEval
 
             !>@}
 
-            procedure,pass(this)                            :: getProblemSize
-            procedure,pass(this)                            :: getXSize
-            procedure,pass(this)                            :: getFSize
+            procedure, pass(this)                            :: getProblemSize
+            procedure, pass(this)                            :: getXSize
+            procedure, pass(this)                            :: getFSize
 
 
       end type
 
       !> Named constants for trackableObjFunc
-      integer,parameter       :: TOF_None = 0, TOF_Function = 1, TOF_Jacobian = 2, TOF_All = 4
+      integer, parameter       :: TOF_None = 0, TOF_Function = 1, TOF_Jacobian = 2, TOF_All = 4
 
       !> Objective function with tacking of the last evaluations.
       !>
       !> vX corresponding to the last evaluation of the function is stored in state%vX
       !> (member of the parent class)
       !> vX that corresponds to the last evaluation of the Jacobian is stored in vXofJacobi
-      type,abstract,extends(objectiveFunction) :: trackableObjFunc
+      type, abstract, extends(objectiveFunction):: trackableObjFunc
 
             integer                                         :: tracking_level = TOF_None
 
-            real(DP),dimension(:),allocatable       :: vXofJacobi
+            real(DP), dimension(:), allocatable       :: vXofJacobi
 
       contains
 
-            procedure :: objectiveEval => trackableObjFunc_objectiveEval
-            procedure :: jacobiMatrixEval => trackableObjFunc_jacobiMatrixEval
+            procedure:: objectiveEval => trackableObjFunc_objectiveEval
+            procedure:: jacobiMatrixEval => trackableObjFunc_jacobiMatrixEval
 
-            procedure,pass(this) :: track => trackableObjFunc_track
+            procedure, pass(this):: track => trackableObjFunc_track
 
       end type
 
 
       abstract interface
             !> Abstract interface for initalization of an instance of objectiveFunction object.
-            subroutine IF_initFx(this,n_X_dim,m_F_dim,info)
+            subroutine IF_initFx(this, n_X_dim, m_F_dim, info)
                   import  ::  objectiveFunction
-                  class(objectiveFunction),intent(inout)      :: this         !< Instance of the object.
-                  integer,intent(in)                          :: n_X_dim      !< Requested dimensionality of the function argument.
-                  integer,intent(in)                          :: m_F_dim      !< Requested dimensionality of the function value.
-                  integer,intent(out)                         :: info   !< Set to 0 on success
+                  class(objectiveFunction), intent(inout)      :: this         !< Instance of the object.
+                  integer, intent(in)                          :: n_X_dim      !< Requested dimensionality of the function argument.
+                  integer, intent(in)                          :: m_F_dim      !< Requested dimensionality of the function value.
+                  integer, intent(out)                         :: info   !< Set to 0 on success
             end subroutine
 
             !> Abstract interface for stateful-style objective function calculations.
@@ -109,9 +112,9 @@ module nllsTR
             !> \note This function must not modify any component of SolutionPoint except for vX and vF.
             subroutine IF_objectiveFx_stateful(this, vX, info)
                   import  ::  objectiveFunction, DP
-                  class(objectiveFunction),intent(inout)      :: this   !< Instance of the object.
-                  real(DP),dimension(:),intent(in)    :: vX     !< Dimension must be: [n_X_dim]
-                  integer,intent(out)                         :: info   !< Set to 0 on success
+                  class(objectiveFunction), intent(inout)      :: this   !< Instance of the object.
+                  real(DP), dimension(:), intent(in)    :: vX     !< Dimension must be: [n_X_dim]
+                  integer, intent(out)                         :: info   !< Set to 0 on success
             end subroutine
 
             !> Abstract interface for a function that calculates Jacobi matrix in a stateful-style.
@@ -120,10 +123,10 @@ module nllsTR
             !> \note It is user's responsibility to provide a function that complies with this interface.
             !> \note This function must not modify any component of SolutionPoint except for vX and mJ.
             subroutine IF_JacobiObjFx_stateful(this, vX, info)
-                  import :: objectiveFunction, DP
-                  class(objectiveFunction),intent(inout)          :: this     !< Instance of the object.
-                  real(DP),dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
-                  integer,intent(out)                             :: info     !< Set to 0 on success
+                  import:: objectiveFunction, DP
+                  class(objectiveFunction), target, intent(inout)          :: this     !< Instance of the object.
+                  real(DP), dimension(5), intent(in)        :: vX       !< Dimension must be: [n_X_dim]
+                  integer, intent(out)                             :: info     !< Set to 0 on success
             end subroutine
 
       end interface
@@ -134,7 +137,7 @@ module nllsTR
             !> Array of parameters controling stop criteria
             !>
             !> Various convergence criteria are evaluated, see MKL documentation for details
-            real(DP),dimension(6)                :: eps = 1.e-10_DP
+            real(DP), dimension(6)                :: eps = 1.e-10_DP
             integer                                      :: iter1 = 300 !< Maximum number of iterations
             integer                                      :: iter2 = 50  !< Maximum number of trial steps
             real(DP)                             :: init_step = 100.0_DP  !< Initial step bound factor
@@ -165,22 +168,22 @@ module nllsTR
 
 
       !> Default step for finite difference evaluation of Jacobi matrix
-      real(DP),parameter                        :: nllsTR_jacobi_eps = 1.D-7
+      real(DP), parameter                        :: nllsTR_jacobi_eps = 1.D-7
 
 
       !>@{ \name Other parameters
       !>  These parameters are not directly accessible. Use \ref nlls_TR_init to control them. \sa nlls_TR_init
 
       !> Output unit
-      integer,private                            :: nllsTR_ounit = 6
+      integer, private                            :: nllsTR_ounit = 6
 
       !> Verbosity level.
       !>
       !> The following values of verbosity are allowed:
-      !>   -  0 - only error messages,
-      !>   -  1 - some diagnostic informations,
-      !>   -  2 and higher - detailed informations (huge amount of output is expected!)
-      integer,private                            :: nllsTR_iw = 0
+      !>   -  0-only error messages,
+      !>   -  1-some diagnostic informations,
+      !>   -  2 and higher-detailed informations (huge amount of output is expected!)
+      integer, private                            :: nllsTR_iw = 0
 
      !>@}
 
@@ -192,10 +195,10 @@ module nllsTR
       end type
 
 
-      type,abstract,extends(objectiveFunction) :: MKLFDJacobiObjFunction
+      type, abstract, extends(objectiveFunction):: MKLFDJacobiObjFunction
             real(DP)                          ::  jacobi_eps = nllsTR_jacobi_eps
       contains
-            procedure :: jacobiMatrixEval => JacobiObjEval_djacobi
+            procedure:: jacobiMatrixEval => JacobiObjEval_djacobi
       end type
 
 
@@ -208,10 +211,10 @@ contains
 
 
       !> Initialization of nlls_TR module.
-      subroutine nlls_TR_init(ounit,verbose)
+      subroutine nlls_TR_init(ounit, verbose)
       implicit none
-      integer,optional,intent(in)         ::  ounit  !< IO unit number for outputs
-      integer,optional,intent(in)         ::  verbose !< Verbosity level, \sa nllsTR_iw
+      integer, optional, intent(in)         ::  ounit  !< IO unit number for outputs
+      integer, optional, intent(in)         ::  verbose !< Verbosity level, \sa nllsTR_iw
       !!
       if (present(ounit)) nllsTR_ounit = ounit
       if (present(verbose)) nllsTR_iw = verbose
@@ -221,30 +224,30 @@ contains
       !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
       !> \param objFx Objective function to minimize
       !> \param jacobiFx Function that calculates Jacobi matrix of objective function
-      subroutine nlls_TR_solve(objFx,vX,config,r1,r2,info,resInfo,SolutionInitOut)
-      use, intrinsic :: IEEE_EXCEPTIONS
-      use, intrinsic :: IEEE_ARITHMETIC
+      subroutine nlls_TR_solve(objFx, vX, config, r1, r2, info, resInfo, SolutionInitOut)
+      use, intrinsic:: IEEE_EXCEPTIONS
+      use, intrinsic:: IEEE_ARITHMETIC
       implicit none
       ! Formal parameters
-      class(objectiveFunction),intent(inout)          :: objFx    !< objective function
+      class(objectiveFunction), target, intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
-      real(DP),dimension(:),intent(inout)     :: vX
-      type(nllsTRConf),intent(in)                     :: config   !< Configuration of nllsTR
-      real(DP),intent(out)                    :: r1       !< Initial residual of the solution
-      real(DP),intent(out)                    :: r2       !< Final residual of the solution
+      real(DP), dimension(:), target, intent(inout)     :: vX
+      type(nllsTRConf), intent(in)                     :: config   !< Configuration of nllsTR
+      real(DP), intent(out)                    :: r1       !< Initial residual of the solution
+      real(DP), intent(out)                    :: r2       !< Final residual of the solution
       !> Exit code: 0 on success, < 0 on error, > 0 on failure/warning
-      integer,intent(out)                             :: info
+      integer, intent(out)                             :: info
       !> Full termination status of the TR solver
-      type(nllsTRRes),intent(inout),optional          :: resInfo
+      type(nllsTRRes), intent(inout), optional          :: resInfo
       !> Initial solution to be stored after initial evaluation
-      type(SolutionPoint),intent(out),optional        :: SolutionInitOut
+      type(SolutionPoint), intent(out), optional        :: SolutionInitOut
       !!!! Local variables
       integer                              :: n        !< Dimension of design vector
       integer                              :: m        !< Dimension of objective function vector
       type(HANDLE_TR)   :: handle
       integer           :: res, linfo
       !
-      real(DP),allocatable,dimension(:)    :: vLW, vUP   ! would be of size
+      real(DP), allocatable, dimension(:), target    :: vLW, vUP   ! would be of size
       ! Variables for TR query
       type(nllsTRRes)                :: resultInfo
       ! RCI loop control
@@ -256,7 +259,7 @@ contains
       !
       ! Other variables
       integer                        :: ierr, i
-      character(len=512)             :: message
+      character(len = 512)             :: message
       !---------------------------------------------------
             RCI_Req = 0; next_solve = .true.
             info = -1
@@ -266,7 +269,7 @@ contains
             m = objFx%state%m_F_dim        ! Dimensionality of objective function
             !
             !! Allocate memory
-            allocate(vLW(n),vUP(n),stat=ierr)
+            allocate(vLW(n), vUP(n), stat = ierr)
             if (ierr /= 0) return
             ! Set square box constraints
             vLW =  config%lo_limit
@@ -288,24 +291,24 @@ contains
                   ! Calculate Jacobi matrix
                   call objFx%jacobiMatrixEval(vX, linfo)
                   if ( (linfo == 0) .and. (config%use_input_checks) ) &
-                        call checkSolverInput(mJ=objFx%state%mJ,info=linfo)
+                        call checkSolverInput(mJ = objFx%state%mJ, info = linfo)
                   if (linfo /= 0) then
-                        write(nllsTR_ounit,fmt=100) 'Cannot calculate initial Jacobi matrix.'
+                        write(nllsTR_ounit, fmt = 100) 'Cannot calculate initial Jacobi matrix.'
                         info = -1
                         return
                   endif
                   if (nllsTR_iw > 3) then
-                        write( nllsTR_ounit,fmt=100)  'Jacobi matrix  -->'
+                        write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  -->'
                         call writeMatrix(objFx%state%mJ, nllsTR_ounit)
-                        write( nllsTR_ounit,fmt=100)  'Jacobi matrix  <--'
+                        write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  <--'
                         flush(nllsTR_ounit)
                   endif
             endif
             !
             if ( (config%use_input_checks) .and. (config%use_init_state) ) then
-                  call checkSolverInput(objFx%state%vF, objFx%state%mJ,linfo)
+                  call checkSolverInput(objFx%state%vF, objFx%state%mJ, linfo)
                   if (linfo /= 0) then
-                        write(nllsTR_ounit,fmt=100) 'Initial state contains invalid values.'
+                        write(nllsTR_ounit, fmt = 100) 'Initial state contains invalid values.'
                         info = -1
                         return
                   endif
@@ -316,17 +319,17 @@ contains
             is_firstJacobi = .true.
             !! Check if it is requested to preserve the initial solution, allocate storage if so.
             if (present(SolutionInitOut)) then
-                  linfo = SolutionInitOut%init(n,m)
+                  linfo = SolutionInitOut%init(n, m)
                   SolutionInitOut%vX = vX
             endif
             !
             !! Initialize MKL solver
             res = dtrnlspbc_init(handle, n, m, vX, vLW, vUP, config%eps,  config%iter1,  config%iter2,  config%init_step)
             ! Check result
-            if (checkMKLRescode(res,'initialization of TR nlls solver', nllsTR_ounit) /= 0) return
-            if (nllsTR_iw > 2) write( nllsTR_ounit,fmt=200) 'TR initialized, handle: ', handle
+            if (checkMKLRescode(res, 'initialization of TR nlls solver', nllsTR_ounit) /= 0) return
+            if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 200) 'TR initialized, handle: ', handle
             !
-            call IEEE_SET_FLAG (IEEE_ALL,.FALSE.) ! Hush up all the FP exceptions.
+            call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
             !
             bindState: associate (vFval => objFx%state%vF, mJacobi => objFx%state%mJ)
                   !! RCI loop for 'solve'
@@ -336,18 +339,18 @@ contains
                   linfo = 0
                   !
                   do while (next_solve)
-                        RCI_Count = RCI_Count + 1
+                        RCI_Count = RCI_Count+1
                         !
                         if (trapFPErrors()) then
-                              write(nllsTR_ounit,fmt=200) 'Warning: floating point problem before the solver, RCI_Count',RCI_Count
+                              write(nllsTR_ounit, fmt = 200) 'Warning: floating point problem before the solver, RCI_Count',RCI_Count
                         endif
                         !
                         res = dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req)
                         !
                         if (trapFPErrors()) then
-                              write(nllsTR_ounit,fmt=200) 'Warning: floating point problem after the solver, RCI_Count',RCI_Count
+                              write(nllsTR_ounit, fmt = 200) 'Warning: floating point problem after the solver, RCI_Count',RCI_Count
                         endif
-                        call IEEE_SET_FLAG (IEEE_ALL,.FALSE.) ! Hush up all the FP exceptions.
+                        call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
                         !
                         if (res /= TR_SUCCESS) exit
                         ! Make sure that the vX is still inside the constraints
@@ -367,28 +370,28 @@ contains
                                     next_solve = .true.
                               !!-----------------------------------------------------------------------
                               case(1)           ! Recalculate function at vector x
-                                    if (nllsTR_iw > 2) write( nllsTR_ounit,fmt=100) 'Recalculation of the vF'
+                                    if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the vF'
                                     ! Use initial guess specified by the user, just once.
                                     linfo = 0
                                     if (.not. use_init_vFval) then
-                                          call objFx%objectiveEval(vX,linfo)
+                                          call objFx%objectiveEval(vX, linfo)
                                           if ((linfo == 0) .and. (config%use_input_checks)) &
-                                                call checkSolverInput(vF=vFval,info=linfo)
+                                                call checkSolverInput(vF = vFval, info = linfo)
                                     endif
                                     ! Terminate the RCI loop on error in vF
                                     if (linfo /= 0) then
-                                          write(nllsTR_ounit,fmt=100) 'Cannot recalculate the objective function.'
+                                          write(nllsTR_ounit, fmt = 100) 'Cannot recalculate the objective function.'
                                           exit
                                     endif
                                     use_init_vFval = .false.
-                                    if (nllsTR_iw >= 1) write( nllsTR_ounit,'(A,F15.10,1X,A,F15.10)')   &
+                                    if (nllsTR_iw >= 1) write( nllsTR_ounit, '(A, F15.10, 1X, A, F15.10)')   &
                                                        '||X|| = ', norm2(vX),             &
                                                        '||vF|| = ', norm2(vFval)
                                     if (nllsTR_iw > 2) then
-                                          write(nllsTR_ounit,fmt=100) 'X'
-                                          write(nllsTR_ounit,fmt=500) (vX(i), i=1,n)
-                                          write(nllsTR_ounit,fmt=100) 'vF'
-                                          write(nllsTR_ounit,fmt=500) (vFval(i), i=1,m)
+                                          write(nllsTR_ounit, fmt = 100) 'X'
+                                          write(nllsTR_ounit, fmt = 500) (vX(i), i = 1, n)
+                                          write(nllsTR_ounit, fmt = 100) 'vF'
+                                          write(nllsTR_ounit, fmt = 500) (vFval(i), i = 1, m)
                                     endif
                                     ! Store the initial guess if requested to do so
                                     if (is_firstFval .and. present(SolutionInitOut)) then
@@ -398,24 +401,24 @@ contains
                               !!-----------------------------------------------------------------------
                               case(2)           ! Recalculate Jacobian
                                     if (.not.(config%constJacobi)) then
-                                          if (nllsTR_iw > 2) write( nllsTR_ounit,fmt=100) 'Recalculation of the Jacobi matrix'
+                                          if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the Jacobi matrix'
                                           linfo = 0
                                           if (.not. use_init_mJacobi) then
-                                                call objFx%jacobiMatrixEval(vX,linfo)
+                                                call objFx%jacobiMatrixEval(vX, linfo)
                                                 if ((linfo == 0) .and. (config%use_input_checks)) &
-                                                      call checkSolverInput(mJ=mJacobi,info=linfo)
+                                                      call checkSolverInput(mJ = mJacobi, info = linfo)
                                           endif
                                           ! Terminate the RCI loop on error in Jacobi
                                           if (linfo /= 0) then
-                                                write(nllsTR_ounit,fmt=100) 'Cannot recalculate the Jacobi matrix'
+                                                write(nllsTR_ounit, fmt = 100) 'Cannot recalculate the Jacobi matrix'
                                                 exit
                                           endif
                                           use_init_mJacobi = .false.
                                           !
                                           if (nllsTR_iw > 3) then
-                                               write( nllsTR_ounit,fmt=100)  'Jacobi matrix  -->'
+                                               write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  -->'
                                                 call writeMatrix(mJacobi,  nllsTR_ounit)
-                                                write( nllsTR_ounit,fmt=100)  'Jacobi matrix  <--'
+                                                write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  <--'
                                                 flush( nllsTR_ounit)
                                           endif
                                     endif
@@ -426,7 +429,7 @@ contains
                                     is_firstJacobi = .false.
                               !!-----------------------------------------------------------------------
                               case default      ! Unknown RCI, it should never happen!!
-                                    write( nllsTR_ounit,fmt=100) 'Error: unknown RCI control code!!!'
+                                    write( nllsTR_ounit, fmt = 100) 'Error: unknown RCI control code!!!'
                                     exit
                         end select
                   end do
@@ -449,93 +452,93 @@ contains
             if (present(resInfo)) resInfo = resultInfo
             !
             if (nllsTR_iw > 0) then
-                  call nlls_TR_exit_message(message,resultInfo,config,linfo)
-                  write( nllsTR_ounit,fmt=200) 'Stop criterion code: ', resultInfo%stop_criterion
-                  write( nllsTR_ounit,fmt=100) trim(message)
-                  write( nllsTR_ounit,'(A,1X,I0,2(1X,A,1X,E16.8))') 'Step ',resultInfo%iteration, 'R0=', r1, 'R1=',r2
+                  call nlls_TR_exit_message(message, resultInfo, config, linfo)
+                  write( nllsTR_ounit, fmt = 200) 'Stop criterion code: ', resultInfo%stop_criterion
+                  write( nllsTR_ounit, fmt = 100) trim(message)
+                  write( nllsTR_ounit, '(A, 1X, I0, 2(1X, A, 1X, E16.8))') 'Step ',resultInfo%iteration, 'R0=', r1, 'R1=',r2
             endif
             if (nllsTR_iw > 2) then
-                  write( nllsTR_ounit,fmt=100) 'X = '
-                  write( nllsTR_ounit,fmt=500) (vX(i), i=1,n)
+                  write( nllsTR_ounit, fmt = 100) 'X = '
+                  write( nllsTR_ounit, fmt = 500) (vX(i), i = 1, n)
             endif
 
             ! Release MKL resources
             res = dtrnlspbc_delete(handle)
             if (res /= TR_SUCCESS) then
-                  write( nllsTR_ounit,fmt=200) 'dtrnlspbc_delete failed, exit code:',res
+                  write( nllsTR_ounit, fmt = 200) 'dtrnlspbc_delete failed, exit code:',res
             endif
             call mkl_free_buffers()
             ! Deallocate temporary arrays
-            deallocate(vLW,vUP,stat=ierr)
+            deallocate(vLW, vUP, stat = ierr)
             !
             ! Formats
-            100 format(A)           ! fmt=100  ! just a string
-            200 format(A,1X,I0)     ! fmt=400  ! a string followed by an integer
-            500 format(F15.8,1X)    ! fmt=500  ! long float, followed by one space
+            100 format(A)           ! fmt = 100  ! just a string
+            200 format(A, 1X, I0)     ! fmt = 400  ! a string followed by an integer
+            500 format(F15.8, 1X)    ! fmt = 500  ! long float, followed by one space
             !
       end subroutine
 
-      subroutine nlls_TR_exit_message(str,resInfo,config,info)
+      subroutine nlls_TR_exit_message(str, resInfo, config, info)
       implicit none
-      character(len=*),intent(out)                    :: str
-      type(nllsTRRes),intent(in)                      :: resInfo
-      type(nllsTRConf),intent(in)                     :: config
-      integer,intent(out)                             :: info
+      character(len=*), intent(out)                    :: str
+      type(nllsTRRes), intent(in)                      :: resInfo
+      type(nllsTRConf), intent(in)                     :: config
+      integer, intent(out)                             :: info
       !
             ! See documentation of ?trnlspbc_get in MKL manual for
             ! meaning of the stop criterion codes.
             info = 0
             select case (resInfo%stop_criterion)
             case(1)
-                  write(str,fmt=200) 'The TR solver exceeded the maximal number of iterations:',resInfo%iteration
+                  write(str, fmt = 200) 'The TR solver exceeded the maximal number of iterations:',resInfo%iteration
             case(2)
-                  write(str,fmt=201) 'Area of the trust region is smaller than',config%eps(1)
+                  write(str, fmt = 201) 'Area of the trust region is smaller than',config%eps(1)
             case(3)
-                  write(str,fmt=201) 'Requested quality of the solution is reached. ||F(x)|| is smaller than',config%eps(2)
+                  write(str, fmt = 201) 'Requested quality of the solution is reached. ||F(x)|| is smaller than',config%eps(2)
             case(4)
-                  write(str,fmt=201) 'The Jacobian matrix is singular. ||J(x)[:,i]|| is smaller than',config%eps(3)
+                  write(str, fmt = 201) 'The Jacobian matrix is singular. ||J(x)[:,i]|| is smaller than',config%eps(3)
             case(5)
-                  write(str,fmt=201) 'Size of the trial step is smaller than',config%eps(4)
+                  write(str, fmt = 201) 'Size of the trial step is smaller than',config%eps(4)
             case(6)
-                  write(str,fmt=201) 'Achievable improvement to the solution is smaller than',config%eps(5)
+                  write(str, fmt = 201) 'Achievable improvement to the solution is smaller than',config%eps(5)
             case default
                   str = 'TR solver has prematurely stopped for unknown reason.'
                   info = -1
             end select
-            200   format(A,1X,I0)
-            201   format(A,1X,E15.7)
+            200   format(A, 1X, I0)
+            201   format(A, 1X, E15.7)
       !
       end subroutine
 
 
-      subroutine checkSolverInput(vF,mJ,info)
-      use, intrinsic :: IEEE_EXCEPTIONS
-      use, intrinsic :: IEEE_ARITHMETIC
+      subroutine checkSolverInput(vF, mJ, info)
+      use, intrinsic:: IEEE_EXCEPTIONS
+      use, intrinsic:: IEEE_ARITHMETIC
       implicit none
-      real(DP),dimension(:),intent(in),optional     :: vF
-      real(DP),dimension(:,:),intent(in),optional   :: mJ
-      integer,intent(out)                                   :: info
+      real(DP), dimension(:), intent(in), optional     :: vF
+      real(DP), dimension(:,:), intent(in), optional   :: mJ
+      integer, intent(out)                                   :: info
       !
             info = 0
             if (present(vF)) then
                   ! Test for NaN and Infty
                   if ( any(IEEE_IS_NAN(vF)) ) then
-                        write(nllsTR_ounit,fmt=101) 'the objective function'
+                        write(nllsTR_ounit, fmt = 101) 'the objective function'
                         info = -1
                   endif
                   if (.not. all(IEEE_IS_FINITE(vF)) ) then
-                        write(nllsTR_ounit,fmt=102) 'the objective function'
+                        write(nllsTR_ounit, fmt = 102) 'the objective function'
                         info = -1
                   endif
             endif
             if (present(mJ)) then
                   ! Test for NaN and Infty
                   if ( any(IEEE_IS_NAN(mJ)) ) then
-                        write(nllsTR_ounit,fmt=101) 'the Jacobian'
+                        write(nllsTR_ounit, fmt = 101) 'the Jacobian'
                         info = -1
                   endif
                   if (.not. all(IEEE_IS_FINITE(mJ)) ) then
-                        write(nllsTR_ounit,fmt=102) 'the Jacobian'
+                        write(nllsTR_ounit, fmt = 102) 'the Jacobian'
                         info = -1
                   endif
             endif
@@ -547,56 +550,105 @@ contains
 
       !> Check floating point exceptions
       logical function trapFPErrors()
-      use, intrinsic :: IEEE_EXCEPTIONS
-      use, intrinsic :: IEEE_ARITHMETIC
+      use, intrinsic:: IEEE_EXCEPTIONS
+      use, intrinsic:: IEEE_ARITHMETIC
       implicit none
       !
-      integer :: i
+      integer:: i
       ! We do not investigate:
       !  - the first component of IEEE_ALL, namely: IEEE_OVERFLOW
       !  - the last component of IEEE_ALL, namely IEEE_INEXACT
-      integer,parameter :: firstflag = 2
-      logical :: fp_errflags(firstflag:size(IEEE_ALL)-1)
+      integer, parameter:: firstflag = 2
+      logical:: fp_errflags(firstflag:size(IEEE_ALL)-1)
       !
-            do i=firstflag, ubound(fp_errflags,1)
-                  call IEEE_GET_FLAG(IEEE_ALL(i),fp_errflags(i))
+            do i = firstflag, ubound(fp_errflags, 1)
+                  call IEEE_GET_FLAG(IEEE_ALL(i), fp_errflags(i))
             enddo
             trapFPErrors = any(fp_errflags)
       !
       end function
 
+    function jacobi(strain_mode) result(jac)
+        real(DP), dimension(5), intent(in):: strain_mode
+        real(DP), dimension(5, 5):: jac
+
+        integer:: res
+
+        res = djacobi(altay_wrapper, 5, 5, jac, strain_mode, 0.2_DP)
+
+    contains
+        subroutine altay_wrapper(m, n, strain_mode, stress_mode)
+            integer, intent(in):: m !> Needed by MKL
+            integer, intent(in):: n !> Needed by MKL
+            real(DP), dimension(n), intent(in):: strain_mode
+            real(DP), dimension(m), intent(out):: stress_mode
+
+            integer:: info
+            real(DP):: v_grad(3, 3)
+
+            v_grad = convert_stress_strain_space(strain_mode/norm2(strain_mode))
+
+            call initstepdata(1, astate, info)
+
+            associate (input => astate%simulCalls(1)%input)
+                input%dgf = Atens
+                input%keep_texture = .true.
+                input%keep_state = .true.
+                input%full_model = .false.
+                input%do_output_init = .false.
+                input%do_output_final = .false.
+            end associate
+
+            stress_mode = convert_stress_strain_space(altay_get_stress_state(v_grad))
+
+            !Normalize for good measure and multiply by-1 because the least squares problem for which we are calculating the jacobi is
+            !(target_stress_mode-stress_mode(strain_mode)) and thus its jacobi is (0-(jacobi(stress_mode(strain_mode))))
+            !Round to TOLERANCE to compensate for variations in the results due to scheduling. The underlying model can never nearly as accurate anyway.
+            stress_mode = anint(-stress_mode/norm2(stress_mode)/TOLERANCE) * TOLERANCE
+        end subroutine
+    end function
+
 
       !> Calculation of Jacobi matrix by means of central difference method.
       !>
       !> This subroutine uses djacobi_solve RCI subroutine from MKL.
-      subroutine JacobiObjEval_djacobi(this,vX, info)
+      subroutine JacobiObjEval_djacobi(this, vX, info)
       implicit none
-      class(MKLFDJacobiObjFunction),intent(inout)     :: this
-      real(DP),dimension(:),intent(in)        :: vX       !< Dimension must be: [n_X_dim]
-      integer,intent(out)                             :: info
+      class(MKLFDJacobiObjFunction), target, intent(inout)     :: this
+      real(DP), dimension(5), intent(in)        :: vX       !< Dimension must be: [n_X_dim]
+      integer, intent(out)                             :: info
 
       integer     :: res
-      integer(kind=8)   :: handle
-      integer     :: RCI_Req
+      integer*8   :: handle
+      integer, target     :: RCI_Req
       logical     :: next_solve
       ! Temporary arrays f1 & f2 which contain: f1 = f(x+eps) | f2 = f(x-eps)
-      real(DP),dimension(this%state%m_F_dim)  :: f1, f2, f0
-      real(DP),dimension(this%state%n_X_dim)  :: tmp_vX
+      real(DP), dimension(5), target  :: f1, f2, f0
+      real(DP), dimension(5), target  :: tmp_vX
+      real(DP), dimension(5, 5), target:: jac
+      real(DP), dimension(5, 5):: jac2, jac_diff
+      integer, target:: n
+      real(DP), target:: eps
       !
       handle = 0
       info = 1
-      ! Check dimensions, return error if mismatch is detected.
-      if (  (size(this%state%mJ,dim=1) /= this%state%m_F_dim) .or.      &
-            (size(this%state%mJ,dim=2) /= this%state%n_X_dim) .or.      &
-            (size(vX) /= this%state%n_X_dim)                      &
-         ) return
-      ! Protect the initial value of state%vF
+      ! Protect the initial vaue of state%vF
       f0 = this%state%vF
-      !
+      f1 = 0._DP
+      f2 = 0._DP
+
+      this%state%mj = 0._DP
+      this%jacobi_eps = 0.2_DP
+
       tmp_vX = vX
-      res =  djacobi_init(handle, this%state%n_X_dim, this%state%m_F_dim, tmp_vX, this%state%mJ, this%jacobi_eps)
+      n = 5
+      eps = 0.2_DP
+
+      jac = 0._DP
+      res =  djacobi_init(handle, n, n, tmp_vX, jac, eps)
+
       ! detect error conditions
-      if (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0) then
+      if (checkMKLRescode(res, 'recalculation of Jacobi matrix', nllsTR_ounit) /= 0) then
             info = 1
             return
       endif
@@ -612,13 +664,15 @@ contains
             select case (RCI_Req)
                   !!-----------------------------------------------------------------------
                   case(1)
-                        call this%objectiveEval(tmp_vX,info)
+                        this%state%mj = jac
+                        call this%objectiveEval(tmp_vX, info)
                         if (info /= 0) exit
                         ! Grab the state
                         f1 = this%state%vF
                   !!-----------------------------------------------------------------------
                   case(2)
-                        call this%objectiveEval(tmp_vX,info)
+                        this%state%mj = jac
+                        call this%objectiveEval(tmp_vX, info)
                         if (info /= 0) exit
                         ! Grab the state
                         f2 = this%state%vF
@@ -631,11 +685,16 @@ contains
                         exit
             end select
       enddo
+
+      jac2 = jacobi(vx)
+
+
       ! Restore the initial value of state%vF
+      this%state%mj = jac
       this%state%vF = f0
       ! Finalize Jacobi solver, release resources
       res = djacobi_delete(handle)
-      if ((info /= 0) .or. (checkMKLRescode(res,'recalculation of Jacobi matrix', nllsTR_ounit) /= 0)) then
+      if ((info /= 0) .or. (checkMKLRescode(res, 'recalculation of Jacobi matrix', nllsTR_ounit) /= 0)) then
             info = 1
       else
             info = 0
@@ -653,11 +712,11 @@ contains
       !> containing 'decrypted' description of error.
       integer function checkMKLRescode(res, leadmsg,  ounit)
       implicit none
-      integer,intent(in)            :: res
-      character(len=*),intent(in)   :: leadmsg
-      integer,intent(in)            :: ounit
+      integer, intent(in)            :: res
+      character(len=*), intent(in)   :: leadmsg
+      integer, intent(in)            :: ounit
       !!
-      character(len=20)             :: errname
+      character(len = 20)             :: errname
       !!
             checkMKLRescode = 0
             if (res /= TR_SUCCESS) then
@@ -670,22 +729,22 @@ contains
                         case default
                                     errname = 'Unknown'
                   end select
-                  write( ounit,9900) leadmsg, errname
+                  write( ounit, 9900) leadmsg, errname
             endif
-      9900 format(A,1X,'failed, reason:',1X,A)
+      9900 format(A, 1X, 'failed, reason:',1X, A)
       end function
 
       subroutine writeMatrix(A, ounit)
       implicit none
-      real(DP),dimension(:,:),intent(in) :: A
-      integer,intent(in)                         :: ounit
+      real(DP), dimension(:,:), intent(in):: A
+      integer, intent(in)                         :: ounit
       !
-      integer :: l,u,i,j
-      l = lbound(A,dim=2)
-      u = ubound(A,dim=2)
-      do i=lbound(A,dim=1),ubound(A,dim=1)
-            write(ounit,'(ES18.9E3,1X,$)') (A(i,j), j=l,u) ! does not conform f2003, but no temporary needed
-            write(ounit,*)
+      integer:: l, u, i, j
+      l = lbound(A, dim = 2)
+      u = ubound(A, dim = 2)
+      do i = lbound(A, dim = 1), ubound(A, dim = 1)
+            write(ounit, '(ES18.9E3, 1X, $)') (A(i, j), j = l, u)  ! does not conform f2003, but no temporary needed
+            write(ounit, *)
       end do
       end subroutine
 
@@ -694,25 +753,25 @@ contains
             !
 
             integer function SolutionPoint_Init(this, n_X_dim, m_F_dim) result(info)
-            class(SolutionPoint),intent(out)    :: this
-            integer,intent(in)                  :: n_X_dim
-            integer,intent(in)                  :: m_F_dim
-            integer :: memstat
+            class(SolutionPoint), intent(out)    :: this
+            integer, intent(in)                  :: n_X_dim
+            integer, intent(in)                  :: m_F_dim
+            integer:: memstat
             !
                   info = -1
                   if ((n_X_dim <= 0) .or. (m_F_dim <= 0)) return
                   this%n_X_dim = n_X_dim
                   this%m_F_dim = m_F_dim
-                  allocate(this%vX(n_X_dim),this%vF(m_F_dim),this%mJ(m_F_dim,n_X_dim),stat=memstat)
+                  allocate(this%vX(n_X_dim), this%vF(m_F_dim), this%mJ(m_F_dim, n_X_dim), stat = memstat)
                   if (memstat == 0) info = 0
             end function
 
 
-            integer function SolutionPoint_Copy(this,other) result(info)
-            class(SolutionPoint),intent(out)    :: this
-            class(SolutionPoint),intent(in)     :: other
+            integer function SolutionPoint_Copy(this, other) result(info)
+            class(SolutionPoint), intent(out)    :: this
+            class(SolutionPoint), intent(in)     :: other
             !
-                  info = SolutionPoint_Init(this,other%n_X_dim, other%m_F_dim)
+                  info = SolutionPoint_Init(this, other%n_X_dim, other%m_F_dim)
                   if (info == 0) then
                         this%vX = other%vX
                         this%vF = other%vF
@@ -721,7 +780,7 @@ contains
             end function
 
             subroutine SolutionPoint_Finalize(this)
-            class(SolutionPoint),intent(inout)    :: this
+            class(SolutionPoint), intent(inout)    :: this
             !
                   if (allocated(this%vX)) deallocate(this%vX)
                   if (allocated(this%vF)) deallocate(this%vF)
@@ -736,14 +795,14 @@ contains
             !
 
             !> Initialization. It must be called by all derived classes.
-            subroutine objectiveFunction_initFx(this,n_X_dim,m_F_dim,info)
-            class(objectiveFunction),intent(inout)      :: this
-            integer,intent(in)                          :: n_X_dim
-            integer,intent(in)                          :: m_F_dim
-            integer,intent(out)                         :: info
+            subroutine objectiveFunction_initFx(this, n_X_dim, m_F_dim, info)
+            class(objectiveFunction), intent(inout)      :: this
+            integer, intent(in)                          :: n_X_dim
+            integer, intent(in)                          :: m_F_dim
+            integer, intent(out)                         :: info
             !
                   info = -1
-                  if (this%state%init(n_X_dim,m_F_dim) == 0) info = 0
+                  if (this%state%init(n_X_dim, m_F_dim) == 0) info = 0
                   this%state%vX = 0.D0
                   this%state%vF = 0.D0
                   this%state%mJ = 0.D0
@@ -753,8 +812,8 @@ contains
             !> Returns rank-one two-elemental array containing:
             !> (1) dimension of variables X and (2) number of components in the function F.
             pure function getProblemSize(this) result(outval)
-            class(objectiveFunction),intent(in)       :: this
-            integer,dimension(2)                      :: outval
+            class(objectiveFunction), intent(in)       :: this
+            integer, dimension(2)                      :: outval
             !
                   outval = [ this%state%n_X_dim, this%state%m_F_dim ]
             !
@@ -762,7 +821,7 @@ contains
 
             !> Returns dimension of variables X.
             pure function getXSize(this)
-            class(objectiveFunction),intent(in)         :: this
+            class(objectiveFunction), intent(in)         :: this
             integer                                   :: getXSize
             !
                   getXSize = this%state%n_X_dim
@@ -771,7 +830,7 @@ contains
 
             !> Returns number of components in the objective function F.
             pure function getFSize(this)
-            class(objectiveFunction),intent(in)         :: this
+            class(objectiveFunction), intent(in)         :: this
             integer                                   :: getFSize
             !
                   getFSize = this%state%m_F_dim
@@ -790,9 +849,9 @@ contains
             !> calculations of the Jacobi matrix to the derived class. The implementation
             !> of objectiveEval should call this method at the end of its execution.
             subroutine trackableObjFunc_objectiveEval(this, vX, info)
-            class(trackableObjFunc),intent(inout)     :: this
-            real(DP),dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
-            integer,intent(out)                       :: info
+            class(trackableObjFunc), intent(inout)     :: this
+            real(DP), dimension(:), intent(in)  :: vX       !< Dimension must be: [n_X_dim]
+            integer, intent(out)                       :: info
             !
                   call this%track(vX, TOF_Function, info)
             !
@@ -802,9 +861,9 @@ contains
             !> calculations of the Jacobi matrix to the derived class. The implementation
             !> of jacobiMatrixEval should call this method at the end of its execution.
             subroutine trackableObjFunc_jacobiMatrixEval(this, vX, info)
-            class(trackableObjFunc),intent(inout)     :: this
-            real(DP),dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
-            integer,intent(out)                       :: info
+            class(trackableObjFunc), target, intent(inout)     :: this
+            real(DP), dimension(5), intent(in)  :: vX       !< Dimension must be: [n_X_dim]
+            integer, intent(out)                       :: info
             !
                   call this%track(vX, TOF_Jacobian, info)
             !
@@ -812,10 +871,10 @@ contains
 
             !> Tracking of the evaluations
             subroutine trackableObjFunc_track(this, vX, request, info)
-            class(trackableObjFunc),intent(inout)     :: this
-            real(DP),dimension(:),intent(in)  :: vX       !< Dimension must be: [n_X_dim]
-            integer,intent(in)                        :: request
-            integer,intent(out)                       :: info
+            class(trackableObjFunc), target, intent(inout)     :: this
+            real(DP), dimension(5), intent(in)  :: vX       !< Dimension must be: [n_X_dim]
+            integer, intent(in)                        :: request
+            integer, intent(out)                       :: info
             !
                   info = 0
                   select case(this%tracking_level)
