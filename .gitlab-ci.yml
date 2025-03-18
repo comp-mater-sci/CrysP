@@ -8,22 +8,6 @@
 # can use verions as well, like gcc:5.2
 # see https://hub.docker.com/_/gcc/
 
-gcc:
-  image: gcc
-  script: |
-    echo "deb [allow-insecure=yes] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
-    apt-get update
-    apt-get install --allow-unauthenticated -y \
-    intel-oneapi-mkl-devel \
-    cmake \
-    python3-pytest python3-pandas python3-numpy
-    source /opt/intel/oneapi/setvars.sh
-    export PATH=${PATH}:${PWD}/VEF/bin
-    AR=xiar ./build.sh -c gfortran -b debug
-    AR=xiar ./build.sh -c gfortran -b release
-    cd test
-    export OMP_NUM_THREADS=3
-    pytest --update=logout -v
 ifx:
   image: intel/hpckit:latest
   script: |

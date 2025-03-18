@@ -8,6 +8,8 @@ module nllsTR
     use altayconfig
     use logging
 
+    implicit none
+
     character(*), parameter:: MOD_NAME = 'nllstr'
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
@@ -44,6 +46,8 @@ module nllsTR
       !> represents the value of the function and its Jacobian.
       type, abstract:: objectiveFunction
 
+            !> Normalized stress vector
+            real(DP), dimension(5)        :: vSn = 0.D0
             !> State variable
             type(SolutionPoint)                               :: state
 
@@ -167,9 +171,6 @@ module nllsTR
       !> Verbosity level.
       !>
       !> The following values of verbosity are allowed:
-      !>   -  0-only error messages,
-      !>   -  1-some diagnostic informations,
-      !>   -  2 and higher-detailed informations (huge amount of output is expected!)
       integer, private                            :: nllsTR_iw = 0
 
      !>@}
@@ -227,7 +228,6 @@ contains
       type(HANDLE_TR)   :: handle
       integer           :: res, linfo
       !
-      real(DP), allocatable, dimension(:), target    :: vLW, vUP   ! would be of size
       ! Variables for TR query
       type(nllsTRRes)                :: resultInfo
       ! RCI loop control
@@ -240,10 +240,20 @@ contains
       ! Other variables
       integer                        :: ierr, i
       character(len = 512)             :: message
-      real(DP):: jacobi_interval
+      real(DP):: jacobi_interval, &
+                 eps(6), &
+                 vlw(5), &
+                 vup(5)
 
-      jacobi_interval = 1.E-8
+      !All tolerances can be set to TOLERANCE except for the tolerance on the residual (i.e. the 'success threshold'). This is set
+      !to 0.01 because we are using normalized stresses and strains and 1% is about as accurate as you can hope the underlying model
+      !to be. See dtrnlspbc_init documentation for more details.
+      eps = TOLERANCE
+      eps(2) = 1.E-2
 
+      !jacobi_interval = 1.E-8_DP
+      vlw = -10._DP
+      vup = 10._DP
       !---------------------------------------------------
             RCI_Req = 0; next_solve = .true.
             info = -1
@@ -252,9 +262,6 @@ contains
             n = objFx%state%n_X_dim        ! Dimensionality of vector X (argument)
             m = objFx%state%m_F_dim        ! Dimensionality of objective function
             !
-            !! Allocate memory
-            allocate(vLW(n), vUP(n), stat = ierr)
-            if (ierr /= 0) return
             ! Set square box constraints
             vLW =  config%lo_limit
             vUP =  config%up_limit
@@ -273,7 +280,7 @@ contains
             !
             if ((config%constJacobi) .and. (.not. config%use_init_state)) then
                   ! Calculate Jacobi matrix
-                  call calc_jacobi(vx, jacobi_interval, objfx%state%mj)
+                  objfx%state%mj = calc_jacobi(vx)
                   if (nllsTR_iw > 3) then
                         write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  -->'
                         call writeMatrix(objFx%state%mJ, nllsTR_ounit)
@@ -301,7 +308,7 @@ contains
             endif
             !
             !! Initialize MKL solver
-            res = dtrnlspbc_init(handle, n, m, vX, vLW, vUP, config%eps,  config%iter1,  config%iter2,  config%init_step)
+            res = dtrnlspbc_init(handle, 5, 5, vX, vLW, vUP, eps, 350, 50, 0.1_DP)
             ! Check result
             if (checkMKLRescode(res, 'initialization of TR nlls solver', nllsTR_ounit) /= 0) return
             if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 200) 'TR initialized, handle: ', handle
@@ -335,23 +342,8 @@ contains
                         where (vX > vUP) vX = vUP
                         ! RCI status
                         select case (RCI_Req)
-                              case (-6)
+                            case (-6:-2)
                                     next_solve = .false.
-                              case (-5)
-                                    next_solve = .false.
-                              case (-4)
-                                  if (jacobi_interval < 10._DP) then
-                                    jacobi_interval = 8*jacobi_interval
-                                    call calc_jacobi(vfval, jacobi_interval, mjacobi)
-                                    next_solve = .true.
-                                  else
-                                      next_solve = .false.
-                                  end if
-                              case (-3)
-                                    next_solve = .false.
-                              case (-2)
-                                    next_solve = .false.
-
                               !!-----------------------------------------------------------------------
                               case(-1)          ! Iteration count has been exceeded
                                     next_solve = .false.
@@ -394,12 +386,7 @@ contains
                                           if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the Jacobi matrix'
                                           linfo = 0
                                           if (.not. use_init_mJacobi) then
-                                                call calc_jacobi(vx, jacobi_interval, objfx%state%mj)
-                                          endif
-                                          ! Terminate the RCI loop on error in Jacobi
-                                          if (linfo /= 0) then
-                                                write(nllsTR_ounit, fmt = 100) 'Cannot recalculate the Jacobi matrix'
-                                                exit
+                                               objfx%state%mj = calc_jacobi(vx)
                                           endif
                                           use_init_mJacobi = .false.
                                           !
@@ -429,8 +416,6 @@ contains
             else
                   info = 0
             endif
-            ! Check errors in evaluation of the objective function and the Jacobian
-            if (linfo < 0) info = -1
             !
             ! Query solution info
             res = dtrnlspbc_get(handle, resultInfo%iteration, resultInfo%stop_criterion, resultInfo%r1, resultInfo%r2)
@@ -456,8 +441,6 @@ contains
                   write( nllsTR_ounit, fmt = 200) 'dtrnlspbc_delete failed, exit code:',res
             endif
             call mkl_free_buffers()
-            ! Deallocate temporary arrays
-            deallocate(vLW, vUP, stat = ierr)
             !
             ! Formats
             100 format(A)           ! fmt = 100  ! just a string
@@ -556,31 +539,42 @@ contains
       !
       end function
 
-    recursive subroutine calc_jacobi(strain_mode, interval, jacobi)
-        real(DP), dimension(5), intent(in):: strain_mode
-        real(DP), intent(inout):: interval
-        real(DP), dimension(5, 5), intent(out):: jacobi
+    !>@Brief Calculate the local change in the stress response at a given strain mode (== Jacobi matrix of AlTay)
+    !>@Details Internally calls MKL, which uses a finite differences method.
+    recursive function calc_jacobi(strain_mode, interval) result(jacobi)
+        real(DP), dimension(5), intent(in):: strain_mode    !> Strain mode at which to calculate the Jacobi
+        real(DP), intent(in), optional:: interval           !> Optional initial interval for the finite difference algorithm.
+        real(DP), dimension(5, 5):: jacobi                  !> The Jacobi
 
-        integer:: res
+        character(*), parameter:: PROC_NAME = 'calc_jacobi'
 
-        res = djacobi(altay_wrapper, 5, 5, jacobi, strain_mode, interval)
+        integer:: i
+        real(DP):: eps
 
-        !Jacobi calculation may fail due to the nature of the objective function. If so and the interval is not unreasonably large,
-        !double the interval and try again.
-        if (res /= TR_SUCCESS) then
-            if (interval < 10._DP) then
-                interval = 2*interval
-                call calc_jacobi(strain_mode, interval, jacobi)
-            else
-                call log_error(MOD_NAME, 'calc_jacobi', ERR_VAL, 'Could not calculate Jacobi')
+        !Initial value experimentally determined to be optimal
+        eps = merge(interval, 2.E-2_DP, present(interval))
+
+        if (djacobi(altay_wrapper, 5, 5, jacobi, strain_mode, eps) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, PROC_NAME, ERR, 'Internal MKL error')
+
+        do i = 1, 5
+            if (norm2(jacobi(:,i)) < TOLERANCE) then
+                if (eps < 1._DP) then
+                    !Increase in eps experimentally determined to be optimal
+                    jacobi = calc_jacobi(strain_mode, 2*eps)
+                    return
+                else
+                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Interval too large')
+                end if
             end if
-        end if
+        end do
     contains
+        !>@Brief Wrapper for calling AlTay from within MKL. See djacobi documentation.
         subroutine altay_wrapper(m, n, strain_mode, stress_mode)
             integer, intent(in):: m !> Needed by MKL
             integer, intent(in):: n !> Needed by MKL
-            real(DP), dimension(n), intent(in):: strain_mode
-            real(DP), dimension(m), intent(out):: stress_mode
+            real(DP), dimension(n), intent(in):: strain_mode    !> Strain mode to calculate the stress response for
+            real(DP), dimension(m), intent(out):: stress_mode   !> Stress response of the material
 
             integer:: info
             real(DP):: v_grad(3, 3)
@@ -605,7 +599,7 @@ contains
             !Round to TOLERANCE to compensate for variations in the results due to scheduling. The underlying model can never nearly as accurate anyway.
             stress_mode = anint(-stress_mode/norm2(stress_mode)/TOLERANCE) * TOLERANCE
         end subroutine
-    end subroutine
+    end function
 
 !----------------------------------------------------------------------------------------------------------------------------------
 ! Private components

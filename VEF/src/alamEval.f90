@@ -14,8 +14,6 @@ implicit none
             !NOTE: [n_X_dim] must be 5
             !      [m_F_dim] must be 5
 
-            !> Normalized stress vector
-            real(DP), dimension(5)        :: vSn = 0.D0
 
             !> Multilevel prediction of stress from the previous call
             real(DP), dimension(5)        :: vSml = 0.D0
