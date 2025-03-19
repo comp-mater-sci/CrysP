@@ -75,7 +75,11 @@ contains
                   input%do_output_final = .false.
             end associate
             ! Call the simulation
-            vs = convert_stress_strain_space(altay_get_stress_state(atens))
+            !Round to TOLERANCE to get rid of numerical instability due to scheduling. The underlying model is much less accurate
+            !anyway.
+            vs = anint(convert_stress_strain_space(altay_get_stress_state(atens))/TOLERANCE) * TOLERANCE
+
+
             if (info /= 0) return
             !
             ! Retrieve output stress into 5D vector

@@ -1,6 +1,43 @@
 !> nllsTR  -- wrapper module for MKL Non-Linear Least Squares Trust Region algorithm
 ! Provide modules: MKL_RCI_TYPE and MKL_RCI
 include 'mkl_rci.f90'
+
+!>@Brief Wrapper for calling AlTay from within MKL. See djacobi documentation.
+!>@Details Has to be declared external for reasons because MKL documentation says so and gfortran will not compile otherwise.
+subroutine altay_wrapper(m, n, strain_mode, stress_mode)
+    use utils
+    use altay
+    use altayconfig
+
+    integer, intent(in):: m !> Needed by MKL
+    integer, intent(in):: n !> Needed by MKL
+    real(DP), dimension(n), intent(in):: strain_mode    !> Strain mode to calculate the stress response for
+    real(DP), dimension(m), intent(out):: stress_mode   !> Stress response of the material
+
+    integer:: info
+    real(DP):: v_grad(3, 3)
+
+    v_grad = convert_stress_strain_space(strain_mode/norm2(strain_mode))
+
+    call initstepdata(1, astate, info)
+
+    associate (input => astate%simulCalls(1)%input)
+        input%dgf = v_grad
+        input%keep_texture = .true.
+        input%keep_state = .true.
+        input%full_model = .false.
+        input%do_output_init = .false.
+        input%do_output_final = .false.
+    end associate
+
+    stress_mode = convert_stress_strain_space(altay_get_stress_state(v_grad))
+
+    !Normalize for good measure and multiply by-1 because the least squares problem for which we are calculating the jacobi is
+    !(target_stress_mode-stress_mode(strain_mode)) and thus its jacobi is (0-(jacobi(stress_mode(strain_mode))))
+    !Round to TOLERANCE to compensate for variations in the results due to scheduling. The underlying model can never nearly as accurate anyway.
+    stress_mode = anint(-stress_mode/norm2(stress_mode)/TOLERANCE) * TOLERANCE
+end subroutine
+
 module nllsTR
     use utils
     use mkl_rci
@@ -542,6 +579,8 @@ contains
     !>@Brief Calculate the local change in the stress response at a given strain mode (== Jacobi matrix of AlTay)
     !>@Details Internally calls MKL, which uses a finite differences method.
     recursive function calc_jacobi(strain_mode, interval) result(jacobi)
+        external altay_wrapper
+
         real(DP), dimension(5), intent(in):: strain_mode    !> Strain mode at which to calculate the Jacobi
         real(DP), intent(in), optional:: interval           !> Optional initial interval for the finite difference algorithm.
         real(DP), dimension(5, 5):: jacobi                  !> The Jacobi
@@ -551,12 +590,20 @@ contains
         integer:: i
         real(DP):: eps
 
-        !Initial value experimentally determined to be optimal
-        eps = merge(interval, 2.E-2_DP, present(interval))
+        !Gfortran can not handle shorter notation with merge()
+        if (present(interval)) then
+            eps = interval
+        else
+            !Experimentally determined to be optimal
+            eps = 2.E-2_DP
+        end if
 
         if (djacobi(altay_wrapper, 5, 5, jacobi, strain_mode, eps) /= TR_SUCCESS) &
             call log_error(MOD_NAME, PROC_NAME, ERR, 'Internal MKL error')
 
+        !The MKL trust region algorithm requires the Jacobi to not have 0 columns. Check for this and if it occurs, increase the
+        !finite differences interval and recalculate the Jacobi. This works due to the step-wise nature of the stress response,
+        !which is in turn caused by the finite number of slip systems determining it.
         do i = 1, 5
             if (norm2(jacobi(:,i)) < TOLERANCE) then
                 if (eps < 1._DP) then
@@ -568,37 +615,6 @@ contains
                 end if
             end if
         end do
-    contains
-        !>@Brief Wrapper for calling AlTay from within MKL. See djacobi documentation.
-        subroutine altay_wrapper(m, n, strain_mode, stress_mode)
-            integer, intent(in):: m !> Needed by MKL
-            integer, intent(in):: n !> Needed by MKL
-            real(DP), dimension(n), intent(in):: strain_mode    !> Strain mode to calculate the stress response for
-            real(DP), dimension(m), intent(out):: stress_mode   !> Stress response of the material
-
-            integer:: info
-            real(DP):: v_grad(3, 3)
-
-            v_grad = convert_stress_strain_space(strain_mode/norm2(strain_mode))
-
-            call initstepdata(1, astate, info)
-
-            associate (input => astate%simulCalls(1)%input)
-                input%dgf = v_grad
-                input%keep_texture = .true.
-                input%keep_state = .true.
-                input%full_model = .false.
-                input%do_output_init = .false.
-                input%do_output_final = .false.
-            end associate
-
-            stress_mode = convert_stress_strain_space(altay_get_stress_state(v_grad))
-
-            !Normalize for good measure and multiply by-1 because the least squares problem for which we are calculating the jacobi is
-            !(target_stress_mode-stress_mode(strain_mode)) and thus its jacobi is (0-(jacobi(stress_mode(strain_mode))))
-            !Round to TOLERANCE to compensate for variations in the results due to scheduling. The underlying model can never nearly as accurate anyway.
-            stress_mode = anint(-stress_mode/norm2(stress_mode)/TOLERANCE) * TOLERANCE
-        end subroutine
     end function
 
 !----------------------------------------------------------------------------------------------------------------------------------
@@ -797,8 +813,5 @@ contains
                         info = -1
                   end select
             !
-            end subroutine
-
-
+    end subroutine
 end module
-
