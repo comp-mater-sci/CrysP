@@ -397,13 +397,13 @@ contains
                                                         !! >= number of rows
         integer, dimension(size(mat, 1)):: ind_basis    !> Indices of the columns of the matrix making up a basis for the column
                                                         !! space. I.e. a minimal set of independent columns.
-
         integer:: m, &
                   ipiv(size(mat, 1)), &
                   next_col, &
                   i, &
                   info
         real(DP):: mat_lu(size(mat, 1), size(mat, 1))
+
 
         m = size(mat, 1)
         ind_basis =  (/(i, i = 1, m)/)
