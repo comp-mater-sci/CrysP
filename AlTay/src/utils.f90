@@ -388,4 +388,47 @@ contains
 
         rk = x0 + (k(1) + 2.D0*k(2) + 2.D0*k(3) + k(4)) / 6.D0
     end function
+
+    !>@Brief Determine the indices of a basis for a matrix. I.e. a set of indices pointing to linearly independent columns of the
+    !matrix.
+    !>@Details Uses LAPACK routine dgetrf. Assumes that the column rank is at least equal to the number of rows.
+    function basis_indices(mat) result(ind_basis)
+        real(DP), dimension(:,:), intent(in):: mat      !> The matrix. Assumed to be wide (cols > rows). Assumed to have column rank
+                                                        !! >= number of rows
+        integer, dimension(size(mat, 1)):: ind_basis    !> Indices of the columns of the matrix making up a basis for the column
+                                                        !! space. I.e. a minimal set of independent columns.
+
+        integer:: m, &
+                  ipiv(size(mat, 1)), &
+                  next_col, &
+                  i, &
+                  info
+        real(DP):: mat_lu(size(mat, 1), size(mat, 1))
+
+        m = size(mat, 1)
+        ind_basis =  (/(i, i = 1, m)/)
+        info = m
+        next_col = m
+        ipiv = m
+
+        !Dgetrf performs LU factorization. If this fails (info > 0), at least the column at index info is dependent on the
+        !preceding columns. Therefore, we keep replacing the column at info by the next column of the input matrix until dgetrf
+        !returns successfully.
+        do while (info > 0)
+            ind_basis(info) = next_col
+            next_col = next_col+1
+            mat_lu = mat(:,ind_basis)
+
+            call dgetrf(m, m, mat_lu, m, ipiv, info)
+
+            !Because LAPACK uses much lower tolerances than we do, we must check the diagonal elements of U even when accorording to
+            !dgetrf the matrix is not singular
+            i = 0
+            do while (info == 0 .and. i < m)
+                i = i+1
+                if (mat_lu(i, i) < TOLERANCE) &
+                    info = i
+            end do
+        end do
+    end function
 end module

@@ -14,8 +14,6 @@ module full_constraints_taylor
     public:: TaylorModel
 
     character(*), parameter:: MOD_NAME = "full_constraints_taylor"
-    integer, dimension(5), parameter::   INITIAL_BASIS_SYSTEMS_FCC(5) = [2, 5, 6, 7, 8], &
-                                       INITIAL_BASIS_SYSTEMS_BCC(5) = [1, 2, 4, 5, 7]
 
     type, extends(Cluster):: TaylorCluster
         integer, dimension(5):: ind_basis_systems
@@ -67,7 +65,7 @@ contains
                 do i = 1, size(clusters)
                     clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
-                    clusters(i)%ind_basis_systems = merge(INITIAL_BASIS_SYSTEMS_FCC, INITIAL_BASIS_SYSTEMS_BCC, size(grains(1)%model%taylor_coeffs, 2) == 12)
+                    clusters(i)%ind_basis_systems = grains(1)%model%basis
                     taylor_coeffs = clusters(i)%grains(1)%model%taylor_coeffs
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
                 end do
