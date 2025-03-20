@@ -148,49 +148,15 @@ implicit none
       linearized_successful = .false.
       !
       ! Run linearized problem if requested
-      if (attempt_linearized) then
-            tr_config%constJacobi = .true.
-            vX_lin = vX
-            ! Start the TR solver for linearized problem
-            ! More thorough exit status is necessary: TR_res
-            call nlls_TR_solve(objFunc, vX_lin, tr_config, r1_lin, r2_lin, ierr, TR_res, SolutionInitOut = initState)
-            R = r2_lin
-            if(ierr /= 0) then
-                  if(.not. config%nonlinear) then
-                        ! If the linear analysis fails, and the non-linear analysis is not requested,
-                        ! then the whole procedure is considered as failed.
-                        info = VEF_ERROR
-                        return
-                  end if
-            else
-                ! do checks if the solution is OK:
-                ! Stop criterion: magic number "3" means: ||F(x)||_2 < eps(2)
-                if ( (r2_lin <= r1_lin) .and. (TR_res%stop_criterion == 3) .and. (r2_lin <= tr_config%eps(2)) ) then
-                      vX = vX_lin
-                      linearized_successful = .true.
-                endif
-            end if
-      endif
-      ! The linearized analysis is either not done or failed.
-      if (.not. linearized_successful .and. config%nonlinear) then
+            ! The linearized analysis is either not done or failed.
             ! Set non-linear analysis
             tr_config%constJacobi = .false.
-            !
-            ! initState is invalid if nlls_TR_solve in the "if (attempt_linearized)"
-            ! branch above returns ierr /= 0
-            if (attempt_linearized .and. (ierr == 0)) then
-                  ! Profit from the initial point stored by the solver for the linearized problem
-                  ierr = objFunc%state%copy(initState)
-                  tr_config%use_init_state = (ierr == 0)
-            endif
-            ! start TR solver
             call nlls_TR_solve(objFunc, vX, tr_config, r1, r2, ierr)
             R = r2
             if(ierr /= 0) then
                   info = VEF_ERROR
                   return
             end if
-      endif
       call initState%finalize()
       !
       ! Set output strain rate
