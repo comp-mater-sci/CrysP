@@ -169,7 +169,7 @@ contains
             RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
         !
         if (present(is_acceptable)) then
-            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, 1.E-2_DP)
+            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, OBJECTIVE_THRESHOLD)
         endif
         !
         D = convert_stress_strain_space(ylp_result%vA)

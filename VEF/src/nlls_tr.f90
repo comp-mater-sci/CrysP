@@ -47,6 +47,7 @@ module nllsTR
     implicit none
 
     character(*), parameter:: MOD_NAME = 'nllstr'
+    real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
       type:: SolutionPoint
@@ -242,7 +243,7 @@ contains
       !to 0.01 because we are using normalized stresses and strains and 1% is about as accurate as you can hope the underlying model
       !to be. See dtrnlspbc_init documentation for more details.
       eps = TOLERANCE
-      eps(2) = 1.E-2
+      eps(2) = OBJECTIVE_THRESHOLD
 
       !jacobi_interval = 1.E-8_DP
       vlw = -10._DP
@@ -391,7 +392,7 @@ contains
             case(2)
                   write(str, fmt = 201) 'Area of the trust region is smaller than',TOLERANCE
             case(3)
-                  write(str, fmt = 201) 'Requested quality of the solution is reached. ||F(x)|| is smaller than',1.E-2_DP
+                  write(str, fmt = 201) 'Requested quality of the solution is reached. ||F(x)|| is smaller than',OBJECTIVE_THRESHOLD
             case(4)
                   write(str, fmt = 201) 'The Jacobian matrix is singular. ||J(x)[:,i]|| is smaller than',TOLERANCE
             case(5)

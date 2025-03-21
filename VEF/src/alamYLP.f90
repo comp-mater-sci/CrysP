@@ -11,6 +11,7 @@ module alamYLP
 
     implicit none
 
+
 contains
 
 
@@ -111,6 +112,6 @@ contains
         if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%state%vF
 
         vSonA = objFunc%vSml
-        info = merge(VEF_FAIL, VEF_OK, R > 1.E-2_DP)
+        info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)
     end subroutine
 end module

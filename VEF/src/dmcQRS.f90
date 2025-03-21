@@ -11,6 +11,7 @@ use commonConfig
 use commonUtils
 use dmcResultFileOutput
 use qrsTypes
+use nllstr
 implicit none
 
     public:: QRSModule
@@ -151,7 +152,7 @@ contains
             if ((this%use_stability_improvements) .AND. (i > 1)) then
                 ! Reuse previously stored result in new coordinate system
                 ! if it represents a converged solution.
-                if (residual_resume <= 1.E-2_DP) then
+                if (residual_resume <= OBJECTIVE_THRESHOLD) then
                     ! Rotate Dresume_t to new coordinate system
                     D = rotate_to(Dresume_t, Mrot)
                     ! Disable Von Mises guess

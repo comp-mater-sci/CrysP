@@ -9,6 +9,7 @@ use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use commonUtils
+use nllstr
 
 implicit none
 
@@ -118,7 +119,7 @@ contains
                 !
                 ! Pick the most recent converged solution
                 do i = icv%increment, 1, -1
-                    if (output(i)%R < 1.E-2_DP) then
+                    if (output(i)%R < OBJECTIVE_THRESHOLD) then
                         D_retry = output(i)%A
                         exit
                     endif
