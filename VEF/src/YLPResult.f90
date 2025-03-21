@@ -1,17 +1,16 @@
 !> Datatypes that simplify work with results of multilevelYLP and procedures
 !> that operate on these datatypes.
 module dmcYLPResult
-use alamYLPConstants, only: alamEval_vSD_dim
 use utils
 
 implicit none
 
     !> Datatype to store results of iterative search
     type:: YLPResult
-        real(DP), dimension(alamEval_vSD_dim):: vA = 0.D0       !< Strain rate mode on yield locus
-        real(DP), dimension(alamEval_vSD_dim):: vS = 0.D0       !< Imposed stress
-        real(DP), dimension(alamEval_vSD_dim):: vSonA = 0.D0    !< Stress corresponding to A
-        real(DP), dimension(alamEval_vSD_dim):: vSonAn = 0.D0   !< Stress mode corresponding to A
+        real(DP), dimension(5):: vA = 0.D0       !< Strain rate mode on yield locus
+        real(DP), dimension(5):: vS = 0.D0       !< Imposed stress
+        real(DP), dimension(5):: vSonA = 0.D0    !< Stress corresponding to A
+        real(DP), dimension(5):: vSonAn = 0.D0   !< Stress mode corresponding to A
         real(DP):: R = 0.D0                  !< Norm of stress residual
         real(DP):: dotWonA = 0.D0            !< Work rate corresponding to vA and vSonA
         real(DP):: scal_s = 0.D0             !< norm2(vSonA) / vS_length
@@ -46,7 +45,7 @@ contains
     !> \post A correctly initialized result has non-zero vS_length field.
     pure function YLPResult_init(vS) result(res)
     type(YLPResult):: res
-    real(DP), dimension(alamEval_vSD_dim), intent(in):: vS
+    real(DP), dimension(5), intent(in):: vS
     !
         res%vS_length = norm2(vS)
         if (res%vS_length > 0.D0) res%vS = vS/res%vS_length
@@ -54,7 +53,7 @@ contains
     end function
 
 
-    !> Derive dependant fields from properly initialized and evaluated YLPResult; 
+    !> Derive dependant fields from properly initialized and evaluated YLPResult;
     !>
     !> This requires fields: vS, vA and vS_length.
     !> \return VEF_ERROR if input ylp_result contains wrong data.
@@ -101,11 +100,11 @@ contains
 
 
     !> Check if ylp_result is within all tolerances.
-    !> \returns .true. if ylp_result passes all tolerances (ie. is acceptable), 
+    !> \returns .true. if ylp_result passes all tolerances (ie. is acceptable),
     !> .false. otherwise.
     !>
     !> The procedure checks the norm of residual error and angle between the solution
-    !> stress and requested stress. These two quantities are very much correlated, 
+    !> stress and requested stress. These two quantities are very much correlated,
     !> except for unconverged solution where they are not. For this reason it
     !> appears better to check both.
     pure logical function checkYLPResult(ylp_result, tolerance, target_residual) result(val)

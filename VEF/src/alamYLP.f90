@@ -42,9 +42,9 @@ implicit none
       use nllsTR
       use alamEval
       implicit none
-      real(DP), intent(in)   :: vS(alamEval_vSD_dim)      !< Imposed stress vector
-      real(DP), intent(inout):: vA(alamEval_vSD_dim)      !< Strain rate mode on yield locus
-      real(DP), intent(out)  :: vSonA(alamEval_vSD_dim)   !< Stress vector corresponding to A
+      real(DP), intent(in)   :: vS(5)      !< Imposed stress vector
+      real(DP), intent(inout):: vA(5)      !< Strain rate mode on yield locus
+      real(DP), intent(out)  :: vSonA(5)   !< Stress vector corresponding to A
       real(DP), intent(out)  :: R          !< Square norm of residual error
       integer                       :: info       !< Exit code
       !> Flag: use von Mises initial guess, otherwise assume vA as an initial strain rate (default: .true.)
@@ -55,7 +55,7 @@ implicit none
       class(NormalizedV5DComp), target, optional, intent(inout):: objective_function
       !
 
-      real(DP), dimension(alamEval_vSD_dim):: vX, vX_lin
+      real(DP), dimension(5):: vX, vX_lin
       type(multilevelYLPConfig):: config !< Effective configuration parameters (defaults on entry)
       !
       !
@@ -108,7 +108,7 @@ implicit none
           objFunc => objective_function_local
       endif
       ! Configure objective function
-      call objFunc%initFx(alamEval_vSD_dim, alamEval_vSD_dim, ierr)
+      call objFunc%initFx(5, 5, ierr)
       if (ierr /= 0) then
           info = VEF_ERROR
           return
@@ -158,7 +158,7 @@ implicit none
             R = r2_lin
             if(ierr /= 0) then
                   if(.not. config%nonlinear) then
-                        ! If the linear analysis fails, and the non-linear analysis is not requested, 
+                        ! If the linear analysis fails, and the non-linear analysis is not requested,
                         ! then the whole procedure is considered as failed.
                         info = VEF_ERROR
                         return

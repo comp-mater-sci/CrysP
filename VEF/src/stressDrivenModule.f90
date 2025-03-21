@@ -118,7 +118,7 @@ contains
     logical, intent(in), optional     :: pretry
     !
     real(DP):: vA_norm
-    real(DP), dimension(alamEval_vSD_dim):: vS            !< Input stress in 5D deviatoric stress space
+    real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
     logical:: use_vM_guess, use_pretry, is_pretry_acceptable
     type(NormalizedV5DCompCached), target:: obj_func
     !
