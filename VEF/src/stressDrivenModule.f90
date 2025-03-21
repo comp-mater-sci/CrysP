@@ -23,8 +23,6 @@ implicit none
     !> stress-drien computational modules
     type, extends(BasicModule):: StressDrivenModule
 
-        type(multilevelYLPConfig)   :: ylp
-
         type(YLPResultTolerance)    :: solution_tolerance
 
         class(ResultTable), pointer  :: ptr_db => null()
@@ -73,7 +71,10 @@ contains
         if (info /= VEF_OK) return
         !
         ! Read multilevelYLP configuration
-        call readYLPConfigSection(cnfunit, this%ylp, info)
+        !User-provided connfiguration is no longer supported and thus ignored in the rest of the program. A call to  this procedure
+        !must however remain to not mess up the existing configuration file format.
+        call readYLPConfigSection(cnfunit, info)
+
         if (info /= VEF_OK) &
             call log_error('StressDrivenModule', 'readConfig', ERR_VAL, 'Check YLP config section.')
 #define MSG_GROUP_ERRORS
@@ -123,7 +124,6 @@ contains
     type(NormalizedV5DCompCached), target:: obj_func
     !
     type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
-    type(multilevelYLPConfig)   :: ylp_pretry
     real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
     !
         info = VEF_ERROR
@@ -150,13 +150,9 @@ contains
             if (this%ptr_db%get(ylp_result_pretry%vS, &
                                 ylp_result_pretry%vA, &
                                 max_angle = pretry_search_angle) == VEF_OK) then
-                ! Use special settings for pre-try
-                ylp_pretry = this%ylp
-                ylp_pretry%linearize = .true.
-                ylp_pretry%nonlinear = .false.
                 !
                 ! get the solution
-                info = this%search(ylp_pretry, ylp_result_pretry, .false., obj_func)
+                info = this%search(ylp_result_pretry, .false., obj_func)
                 ! Accept the solution only if it reached the requested quality
                 if (info == VEF_OK .and. (ylp_result_pretry%R < this%ylp%obj_func_eps)) then
                     is_pretry_acceptable = .true.
@@ -240,9 +236,8 @@ contains
 
 
     !> Read configuration of the solver (libalamylp)
-    subroutine readYLPConfigSection(cnfunit, cnf, info)
+    subroutine readYLPConfigSection(cnfunit, info)
     integer, intent(in)                        :: cnfunit
-    type(multilevelYLPConfig), intent(out)     :: cnf
     integer, intent(out)                       :: info
     !
     real(DP), dimension(2):: tmp
@@ -253,7 +248,7 @@ contains
         use_advanced_settings = .false.
         if (.not. readValue(cnfunit, use_default_solver_settings)) return
         if (.not. use_default_solver_settings) then
-            if (.not. readValue(cnfunit, cnf%jacobi_eps)) then
+            if (.not. readValue(cnfunit, tmp)) then
                  write(error_unit, fmt = 900) 'Check epsilon controlling numerical estimation over Jacobian.'
                  return
             endif
@@ -263,8 +258,6 @@ contains
                  write(error_unit, fmt = 900) 'Check the linearization parameters.'
                  return
             endif
-            cnf%default_eps = tmp(1)
-            cnf%obj_func_eps = tmp(2)
             ! read flag for advanced settings (placeholder at the moment)
             if (.not. readValue(cnfunit, use_advanced_settings)) return
         endif
