@@ -118,7 +118,7 @@ contains
                 !
                 ! Pick the most recent converged solution
                 do i = icv%increment, 1, -1
-                    if (output(i)%R < this%ylp%obj_func_eps) then
+                    if (output(i)%R < 1.E-2_DP) then
                         D_retry = output(i)%A
                         exit
                     endif

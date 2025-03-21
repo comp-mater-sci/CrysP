@@ -1,6 +1,6 @@
 #include "criMacros.fpp"
 
-!> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values, 
+!> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
 use criRange
@@ -107,7 +107,7 @@ contains
                                         sona, &
                                         d, &
                                         dresume_t, &
-                                        smident     
+                                        smident
     type(YLPResult)                 :: ylp_result
     real(DP)                        :: fi1, phi, fi2, residual_resume
     integer     :: i, npoints, npoints_ok, ofunit
@@ -124,11 +124,6 @@ contains
         npoints = this%ptr_range%size()
         !
         RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xqrs', ofunit))
-        !
-        ! Apply correction to the configuration of the search procedure:
-        ! there will be no need to use the full model in the last call unless
-        ! the average Taylor factor is requested.
-        this%ylp%evaluate_full_model  = this%calculate_MFactor
         !
         results = QRSOutputData(npoints)
         !
@@ -156,7 +151,7 @@ contains
             if ((this%use_stability_improvements) .AND. (i > 1)) then
                 ! Reuse previously stored result in new coordinate system
                 ! if it represents a converged solution.
-                if (residual_resume <= this%ylp%obj_func_eps) then
+                if (residual_resume <= 1.E-2_DP) then
                     ! Rotate Dresume_t to new coordinate system
                     D = rotate_to(Dresume_t, Mrot)
                     ! Disable Von Mises guess
@@ -189,7 +184,7 @@ contains
             !
             associate(r => results)
                 !
-                r%phis(i) = fi2*RAD_TO_DEG 
+                r%phis(i) = fi2*RAD_TO_DEG
                 r%qrsvalues(i) = calculateQRS(D_t, ylp_result%scal_s)
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
                 r%residuals(i) = ylp_result%R
@@ -319,7 +314,7 @@ contains
     real(DP) pure function average(a)
         real(DP), dimension(:), intent(in):: a
         integer:: n
-      
+
         n = size(a)
         if (n >= 1) average = sum(a) / dble(n)
     end function
