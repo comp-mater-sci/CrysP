@@ -204,7 +204,7 @@ contains
           integer:: info
           real(DP):: v_grad(3, 3)
 
-          v_grad = convert_stress_strain_space(strain_mode(1:n)/norm2(strain_mode(1:n)))
+          v_grad = convert_stress_strain_space(strain_mode(1:5)/norm2(strain_mode(1:5)))
 
           call initstepdata(1, astate, info)
 
@@ -217,12 +217,12 @@ contains
               input%do_output_final = .false.
           end associate
 
-          stress_mode(1:m) = convert_stress_strain_space(altay_get_stress_state(v_grad))
+          stress_mode(1:5) = convert_stress_strain_space(altay_get_stress_state(v_grad))
 
           !Normalize for good measure and multiply by-1 because the least squares problem for which we are calculating the jacobi is
           !(target_stress_mode-stress_mode(strain_mode)) and thus its jacobi is (0-(jacobi(stress_mode(strain_mode))))
           !Round to TOLERANCE to compensate for variations in the results due to scheduling. The underlying model can never nearly as accurate anyway.
-          stress_mode(1:m) = anint(-stress_mode(1:m)/norm2(stress_mode(1:m))/TOLERANCE) * TOLERANCE
+          stress_mode(1:5) = anint(-stress_mode(1:5)/norm2(stress_mode(1:5))/TOLERANCE) * TOLERANCE
       end subroutine
 
       !> Initialization of nlls_TR module.
