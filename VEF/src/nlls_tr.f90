@@ -1,6 +1,7 @@
 !> nllsTR  -- wrapper module for MKL Non-Linear Least Squares Trust Region algorithm
 ! Provide modules: MKL_RCI_TYPE and MKL_RCI
 include 'mkl_rci.f90'
+include 'mkl_service.f90'
 
 !>@Brief Wrapper for calling AlTay from within MKL. See djacobi documentation.
 !>@Details Has to be declared external for reasons because MKL documentation says so and gfortran will not compile otherwise.
@@ -41,6 +42,7 @@ end subroutine
 module nllsTR
     use utils
     use mkl_rci
+    use mkl_service
     use altay
     use altayconfig
     use logging
