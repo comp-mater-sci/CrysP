@@ -37,29 +37,9 @@ module nllsTR
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
       type:: SolutionPoint
-            !> Dimensionality of vector X (argument)
-            integer                                         :: n_X_dim = 0
-
-            !> Dimensionality of objective function
-            integer                                         :: m_F_dim = 0
-
-            real(DP), dimension(:), allocatable       :: vX       !< The point
-            real(DP), dimension(:), allocatable       :: vF       !< Function at vX
-            real(DP), dimension(:,:), allocatable     :: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
-
-      contains
-            !> Constructor: initialization guided by the dimensions n_X_dim and m_F_dim
-            procedure, pass(this)       :: init => SolutionPoint_Init
-
-            !> Constructor: copy from other SolutionPoint object
-            procedure, pass(this)       :: copy => SolutionPoint_Copy
-
-            !> Destructor: state of the object is changed to uninitialized.
-            procedure, pass(this)       :: finalize => SolutionPoint_Finalize
-
-            !> Generic name for constructors
-            generic, public:: construct => init, copy
-
+          real(DP), dimension(5):: vX       !< The point
+          real(DP), dimension(5):: vF       !< Function at vX
+          real(DP), dimension(5, 5):: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
       end type
 
 
@@ -77,19 +57,7 @@ module nllsTR
             real(DP), dimension(5)        :: vSml = 0.D0
             type(ResultTable), pointer:: ptr_db => null()
       contains
-            !> Initialization function
-            procedure, pass(this)                 :: initFx => objectiveFunction_initFx
-
-            !>@{ \name Stateful interface
-
-            !> Evaluation of objective function vector.
-            !>
-            !> See remarks in IF_objectiveFx_stateful for a guidance how to implement it.
             procedure, pass(this):: objectiveEval => objectiveEval_NV5DComp
-
-            procedure, pass(this):: getProblemSize
-            procedure, pass(this):: getXSize
-            procedure, pass(this):: getFSize
       end type
 
       !>@{ \name Other parameters
@@ -497,93 +465,4 @@ contains
             write(ounit, *)
       end do
       end subroutine
-
-            !
-            ! Methods of SolutionPoint
-            !
-
-            integer function SolutionPoint_Init(this, n_X_dim, m_F_dim) result(info)
-            class(SolutionPoint), intent(out)    :: this
-            integer, intent(in)                  :: n_X_dim
-            integer, intent(in)                  :: m_F_dim
-            integer:: memstat
-            !
-                  info = -1
-                  if ((n_X_dim <= 0) .or. (m_F_dim <= 0)) return
-                  this%n_X_dim = n_X_dim
-                  this%m_F_dim = m_F_dim
-                  allocate(this%vX(n_X_dim), this%vF(m_F_dim), this%mJ(m_F_dim, n_X_dim), stat = memstat)
-                  if (memstat == 0) info = 0
-            end function
-
-
-            integer function SolutionPoint_Copy(this, other) result(info)
-            class(SolutionPoint), intent(out)    :: this
-            class(SolutionPoint), intent(in)     :: other
-            !
-                  info = SolutionPoint_Init(this, other%n_X_dim, other%m_F_dim)
-                  if (info == 0) then
-                        this%vX = other%vX
-                        this%vF = other%vF
-                        this%mJ = other%mJ
-                  endif
-            end function
-
-            subroutine SolutionPoint_Finalize(this)
-            class(SolutionPoint), intent(inout)    :: this
-            !
-                  if (allocated(this%vX)) deallocate(this%vX)
-                  if (allocated(this%vF)) deallocate(this%vF)
-                  if (allocated(this%mJ)) deallocate(this%mJ)
-                  this%n_X_dim = 0
-                  this%m_F_dim = 0
-            end subroutine
-
-
-            !
-            ! Methods of objectiveFunction
-            !
-
-            !> Initialization. It must be called by all derived classes.
-            subroutine objectiveFunction_initFx(this, n_X_dim, m_F_dim, info)
-            class(objectiveFunction), intent(inout)      :: this
-            integer, intent(in)                          :: n_X_dim
-            integer, intent(in)                          :: m_F_dim
-            integer, intent(out)                         :: info
-            !
-                  info = -1
-                  if (this%state%init(n_X_dim, m_F_dim) == 0) info = 0
-                  this%state%vX = 0.D0
-                  this%state%vF = 0.D0
-                  this%state%mJ = 0.D0
-            !
-            end subroutine
-
-            !> Returns rank-one two-elemental array containing:
-            !> (1) dimension of variables X and (2) number of components in the function F.
-            pure function getProblemSize(this) result(outval)
-            class(objectiveFunction), intent(in)       :: this
-            integer, dimension(2)                      :: outval
-            !
-                  outval = [ this%state%n_X_dim, this%state%m_F_dim ]
-            !
-            end function
-
-            !> Returns dimension of variables X.
-            pure function getXSize(this)
-            class(objectiveFunction), intent(in)         :: this
-            integer                                   :: getXSize
-            !
-                  getXSize = this%state%n_X_dim
-            !
-            end function
-
-            !> Returns number of components in the objective function F.
-            pure function getFSize(this)
-            class(objectiveFunction), intent(in)         :: this
-            integer                                   :: getFSize
-            !
-                  getFSize = this%state%m_F_dim
-            !
-            end function
 end module

@@ -68,12 +68,6 @@ contains
             allocate(objective_function_local)
             objFunc => objective_function_local
         endif
-        ! Configure objective function
-        call objFunc%initFx(5, 5, ierr)
-        if (ierr /= 0) then
-            info = VEF_ERROR
-            return
-        endif
         info  = VEF_ERROR
         !
         !Get normalized stress vector
@@ -99,8 +93,7 @@ contains
             info = VEF_ERROR
             return
         end if
-        call initState%finalize()
-        !
+
         ! Set output strain rate
         info  = VEF_ERROR
         norm = norm2(vX)
