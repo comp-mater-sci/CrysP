@@ -80,11 +80,6 @@ module nllsTR
             real(DP)                    :: r2 = 0.D0            !< Final norm of residual
       end type
 
-
-      ! Internal components of the module.
-      ! private writeMatrix
-      private checkMKLRescode
-
 contains
 
     subroutine objectiveEval_NV5DComp(this, vX, info)
@@ -129,7 +124,7 @@ contains
       subroutine nlls_TR_solve(objFx, vX, r1, r2, info, resInfo)
       use, intrinsic:: IEEE_EXCEPTIONS
       use, intrinsic:: IEEE_ARITHMETIC
-      implicit none
+
       ! Formal parameters
       class(objectiveFunction), target, intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
@@ -141,17 +136,17 @@ contains
       !> Full termination status of the TR solver
       type(nllsTRRes), intent(inout), optional          :: resInfo
 
+      character(*), parameter:: PROC_NAME = 'nlls_tr_solve'
+
       type(HANDLE_TR)   :: handle
-      integer           :: res, linfo
-      !
-      ! Variables for TR query
+      integer           :: res, &
+                           linfo, &
+                           rci_req, &
+                           rci_count, &
+                           ierr, &
+                           i
       type(nllsTRRes)                :: resultInfo
-      ! RCI loop control
       logical                        :: next_solve
-      integer                        :: RCI_Req, RCI_Count
-      ! Initialization of vFval and mJacobi
-      ! Other variables
-      integer                        :: ierr, i
       character(len = 512)             :: message
       real(DP):: jacobi_interval, &
                  eps(6), &
@@ -178,7 +173,8 @@ contains
             !! Initialize MKL solver
             res = dtrnlspbc_init(handle, 5, 5, vX, vLW, vUP, eps, 350, 50, 0.1_DP)
             ! Check result
-            if (checkMKLRescode(res, 'initialization of TR nlls solver', nllsTR_ounit) /= 0) return
+            if (res /= TR_SUCCESS) &
+                call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
             if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 200) 'TR initialized, handle: ', handle
             !
             call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
@@ -195,7 +191,7 @@ contains
                         !
                         res = dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req)
                         if (trapFPErrors()) &
-                            call log_error(MOD_NAME, 'nlls_tr_solve', ERR_VAL, 'Floating point problem in solver.')
+                            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Floating point problem in solver.')
                         call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
                         !
                         if (res /= TR_SUCCESS) exit
@@ -424,36 +420,7 @@ contains
 ! Private components
 !----------------------------------------------------------------------------------------------------------------------------------
 
-      !> \internal
-      !> Performs a check of TR MKL specific return values. If the value
-      !> indicates an error conditions, the function will write an error message
-      !> containing 'decrypted' description of error.
-      integer function checkMKLRescode(res, leadmsg,  ounit)
-      implicit none
-      integer, intent(in)            :: res
-      character(len=*), intent(in)   :: leadmsg
-      integer, intent(in)            :: ounit
-      !!
-      character(len = 20)             :: errname
-      !!
-            checkMKLRescode = 0
-            if (res /= TR_SUCCESS) then
-                  checkMKLRescode = -1
-                  select case (res)
-                        case(TR_INVALID_OPTION)
-                                    errname = 'TR_INVALID_OPTION'
-                        case(TR_OUT_OF_MEMORY)
-                                    errname = 'TR_OUT_OF_MEMORY'
-                        case default
-                                    errname = 'Unknown'
-                  end select
-                  write( ounit, 9900) leadmsg, errname
-            endif
-      9900 format(A, 1X, 'failed, reason:',1X, A)
-      end function
-
       subroutine writeMatrix(A, ounit)
-      implicit none
       real(DP), dimension(:,:), intent(in):: A
       integer, intent(in)                         :: ounit
       !
