@@ -107,27 +107,6 @@ module nllsTR
 
       end type
 
-      !> Named constants for trackableObjFunc
-      integer, parameter       :: TOF_None = 0, TOF_Function = 1, TOF_Jacobian = 2, TOF_All = 4
-
-      !> Objective function with tacking of the last evaluations.
-      !>
-      !> vX corresponding to the last evaluation of the function is stored in state%vX
-      !> (member of the parent class)
-      !> vX that corresponds to the last evaluation of the Jacobian is stored in vXofJacobi
-      type, abstract, extends(objectiveFunction):: trackableObjFunc
-
-            integer                                         :: tracking_level = TOF_None
-
-            real(DP), dimension(:), allocatable       :: vXofJacobi
-
-      contains
-
-            procedure:: objectiveEval => trackableObjFunc_objectiveEval
-            procedure, pass(this):: track => trackableObjFunc_track
-      end type
-
-
       abstract interface
             !> Abstract interface for initalization of an instance of objectiveFunction object.
             subroutine IF_initFx(this, n_X_dim, m_F_dim, info)
@@ -635,67 +614,4 @@ contains
                   getFSize = this%state%m_F_dim
             !
             end function
-
-
-
-
-            !
-            ! Methods of trackableObjFunc
-            !
-
-
-            !> Basic implementation of trackableObjInterface. The method defers actual
-            !> calculations of the Jacobi matrix to the derived class. The implementation
-            !> of objectiveEval should call this method at the end of its execution.
-            subroutine trackableObjFunc_objectiveEval(this, vX, info)
-            class(trackableObjFunc), intent(inout)     :: this
-            real(DP), dimension(:), intent(in)  :: vX       !< Dimension must be: [n_X_dim]
-            integer, intent(out)                       :: info
-            !
-                  call this%track(vX, TOF_Function, info)
-            !
-            end subroutine
-
-            !> Basic implementation of trackableObjInterface. The method defers actual
-            !> calculations of the Jacobi matrix to the derived class. The implementation
-            !> of jacobiMatrixEval should call this method at the end of its execution.
-            subroutine trackableObjFunc_jacobiMatrixEval(this, vX, info)
-            class(trackableObjFunc), target, intent(inout)     :: this
-            real(DP), dimension(5), intent(in)  :: vX       !< Dimension must be: [n_X_dim]
-            integer, intent(out)                       :: info
-            !
-                  call this%track(vX, TOF_Jacobian, info)
-            !
-            end subroutine
-
-            !> Tracking of the evaluations
-            subroutine trackableObjFunc_track(this, vX, request, info)
-            class(trackableObjFunc), target, intent(inout)     :: this
-            real(DP), dimension(5), intent(in)  :: vX       !< Dimension must be: [n_X_dim]
-            integer, intent(in)                        :: request
-            integer, intent(out)                       :: info
-            !
-                  info = 0
-                  select case(this%tracking_level)
-                  !
-                  case(TOF_None)
-                        continue
-                  !
-                  case(TOF_Function)
-                        if (request == TOF_Function) this%state%vX = vX
-                  !
-                  case(TOF_Jacobian)
-                        ! lhs-reallocation if needed
-                        if (request == TOF_Jacobian) this%vXofJacobi = vX
-                  !
-                  case(TOF_All)
-                        ! Handle action for two requests:
-                        if (request == TOF_Function) this%state%vX = vX
-                        ! lhs-reallocation if needed
-                        if (request == TOF_Jacobian) this%vXofJacobi = vX
-                  case default
-                        info = -1
-                  end select
-            !
-    end subroutine
 end module
