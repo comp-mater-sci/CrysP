@@ -133,32 +133,36 @@ contains
         ! This also makes sure it is deviatoric.
         vS = convert_stress_strain_space(sigma)
         ylp_result = YLPResult(vS)
-        if (ylp_result%vS_length < epsilon(0.D0)) return
-        !
-            if (.not. use_vM_guess) then
-                ylp_result%vA = convert_stress_strain_space(D)
-                vA_norm = norm2(ylp_result%vA)
-                if (vA_norm < epsilon(0.D0)) return
-            else if (this%ptr_db%get(ylp_result%vS, ylp_result%vA, max_angle = pretry_search_angle) == VEF_OK) then
-                    use_vm_guess = .false.
+
+        if (.not. use_vM_guess) then
+            ylp_result%vA = convert_stress_strain_space(D)
+            vA_norm = norm2(ylp_result%vA)
+            if (vA_norm < epsilon(0.D0)) return
+        else if (this%ptr_db%get(ylp_result%vS, ylp_result%vA, max_angle = pretry_search_angle) == VEF_OK) then
+                use_vm_guess = .false.
+        endif
+
+        !Calculate the corresponding strain rate vA
+        info = this%search(ylp_result, use_vM_guess, obj_func)
+
+        !If the search fails, we try again with the end point of the previous search as the new starting point. This leads to
+        !convergence after all in the majority of cases. Note that experiments have shown that increasing the number of retries does not
+        !notably improve convergence further.
+        if (info == VEF_FAIL .and. associated(this%ptr_db)) then
+            !
+            ! Try another starting point
+            !
+            ! Set the re-try point
+            ylp_result_retry = ylp_result
+            !
+            if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == VEF_OK) then
+                ! get new solution
+                info = this%search(ylp_result_retry, .false., obj_func)
+                ! Use the better of the two
+                if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
             endif
-            ! Calculate the corresponding strain rate vA
-            info = this%search(ylp_result, use_vM_guess, obj_func)
-            if (info == VEF_FAIL .and. associated(this%ptr_db)) then
-                !
-                ! Try another starting point
-                !
-                ! Set the re-try point
-                ylp_result_retry = ylp_result
-                !
-                if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == VEF_OK) then
-                    ! get new solution
-                    info = this%search(ylp_result_retry, .false., obj_func)
-                    ! Use the better of the two
-                    if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
-                endif
-            endif
-            RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
+        endif
+        RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
         !
         if (present(is_acceptable)) then
             is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, OBJECTIVE_THRESHOLD)

@@ -274,15 +274,9 @@ contains
                   do while (next_solve)
                         RCI_Count = RCI_Count+1
                         !
-                        if (trapFPErrors()) then
-                              write(nllsTR_ounit, fmt = 200) 'Warning: floating point problem before the solver, RCI_Count',RCI_Count
-                        endif
-                        !
                         res = dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req)
-                        !
-                        if (trapFPErrors()) then
-                              write(nllsTR_ounit, fmt = 200) 'Warning: floating point problem after the solver, RCI_Count',RCI_Count
-                        endif
+                        if (trapFPErrors()) &
+                            call log_error(MOD_NAME, 'nlls_tr_solve', ERR_VAL, 'Floating point problem in solver.')
                         call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
                         !
                         if (res /= TR_SUCCESS) exit
