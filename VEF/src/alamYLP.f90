@@ -11,15 +11,13 @@ module alamYLP
 
     implicit none
 
-
 contains
-
 
     !> Calculates plastic strain rate corresponding to given deviatoric stress
     !>
     !> The subroutine assumes that multilevel model is already configured and initialized.
-    !> Exit code is retured in info: VEF_OK on success; VEF_ERROR if no converged solution can
-    !> be found; VEF_ERROR or VEF_ERROR if error conditions have been detected.
+    !> Exit code is retured in info: VEF_OK on success; VEF_FAIL if no converged solution can
+    !> be found; VEF_ERROR if error conditions have been detected.
     subroutine multilevelYLP(vS, vA, vSonA, R, info, useVMGuess, outunit, verbose, objective_function)
         real(DP), intent(in)   :: vS(5)      !< Imposed stress vector
         real(DP), intent(inout):: vA(5)      !< Strain rate mode on yield locus
@@ -44,12 +42,13 @@ contains
         integer, parameter       :: stdout = 6
         logical                 :: log_info, log_debug
         real(DP)        :: norm
-        !
+
         if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
         else
             use_vmGuess = .true.
         endif
+
         tr_verbose = 0
         log_info = .false.
         log_debug = .false.

@@ -107,32 +107,28 @@ contains
     !> \return VEF_ERROR on lack of convergence. ylp_result and D are set to the best solution found
     !> \return VEF_ERROR or any criErr_*on severe error conditions. ylp_result and D are undefined
     !> \return VEF_OK on success
-    integer function StressDrivenModule_findSolution(this, sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
-    class(StressDrivenModule), intent(in)   :: this
-    real(DP), dimension(3, 3), intent(in):: sigma
-    real(DP), dimension(3, 3), intent(inout):: D
-    type(YLPResult), intent(out)     :: ylp_result !< Results of the iterative search
-    !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
-    !> starting point for the iterative search.
-    logical, intent(in), optional     :: vM_guess
-    logical, intent(out), optional    :: is_acceptable
-    logical, intent(in), optional     :: pretry
-    !
-    real(DP):: vA_norm
-    real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
-    logical:: use_vM_guess
-    type(NormalizedV5DCompCached), target:: obj_func
-    !
-    type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
-    real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
-    !
-        info = VEF_ERROR
+    integer function StressDrivenModule_findSolution(this, sigma, D, ylp_result, vM_guess, is_acceptable) result(info)
+        class(StressDrivenModule), intent(in)   :: this
+        real(DP), dimension(3, 3), intent(in):: sigma
+        real(DP), dimension(3, 3), intent(inout):: D
+        type(YLPResult), intent(out)     :: ylp_result !< Results of the iterative search
+        !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
+        !> starting point for the iterative search.
+        logical, intent(in), optional     :: vM_guess
+        logical, intent(out), optional    :: is_acceptable
 
+        real(DP):: vA_norm
+        real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
+        logical:: use_vM_guess
+        type(NormalizedV5DCompCached), target:: obj_func
+        type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
+        real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
+
+        info = VEF_ERROR
         obj_func%ptr_db => this%ptr_db
-        !
         if (present(is_acceptable)) is_acceptable = .false.
-        !
         use_vM_guess = optionalDefault(vM_guess, .true.)
+
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
         vS = convert_stress_strain_space(sigma)
@@ -143,12 +139,8 @@ contains
                 ylp_result%vA = convert_stress_strain_space(D)
                 vA_norm = norm2(ylp_result%vA)
                 if (vA_norm < epsilon(0.D0)) return
-            else if (optionalDefault(pretry, .true.)) then
-                if (this%ptr_db%get(ylp_result%vS, &
-                                ylp_result%vA, &
-                                max_angle = pretry_search_angle) == VEF_OK) then
+            else if (this%ptr_db%get(ylp_result%vS, ylp_result%vA, max_angle = pretry_search_angle) == VEF_OK) then
                     use_vm_guess = .false.
-                end if
             endif
             ! Calculate the corresponding strain rate vA
             info = this%search(ylp_result, use_vM_guess, obj_func)
