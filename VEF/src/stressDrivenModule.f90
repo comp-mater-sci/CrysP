@@ -6,7 +6,7 @@ use, intrinsic:: iso_fortran_env, only: error_unit
 use utils
 use criUncomment, only: readValue
 use alamYLP
-use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
+use alamEval, only: NormalizedV5DComp
 use dmcYLPResult
 use dmcAlamEvalCached
 use dmcResultTable

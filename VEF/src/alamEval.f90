@@ -10,17 +10,12 @@ implicit none
       !> Objective function: difference between the searched-for normalized stress and the normalized
       !> stress given by the multilevel model.
       type, extends(ObjectiveFunction):: NormalizedV5DComp
-
             !> Multilevel prediction of stress from the previous call
             real(DP), dimension(5)        :: vSml = 0.D0
       contains
             !> Implementation of virtual method defined in ObjectiveFunction
             procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
-
       end type
-
-      !> Performance counter: number of evaluations of the objective function
-      integer                              :: alamEval_objFx_call_count = 0
 
 contains
 
@@ -41,7 +36,6 @@ contains
             !
             info = -1
             i = 0
-            alamEval_objFx_call_count = alamEval_objFx_call_count+1
             !
             ! Transfer normalized vX into second rank tensor.
             norm = norm2(vX)
