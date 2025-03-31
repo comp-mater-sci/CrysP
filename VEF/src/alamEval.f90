@@ -26,14 +26,11 @@ contains
         real(DP), dimension(5), intent(in):: vX
         integer, intent(out):: info
 
-        real(DP):: vS(5), &
-                   vXn(5)
-
-        vXn = vX/norm2(vx)
+        real(DP):: vS(5)
 
         !Round to TOLERANCE to get rid of numerical instability due to scheduling. The underlying model is much less accurate
         !anyway.
-        vs = anint(convert_stress_strain_space(altay_get_stress_state(convert_stress_strain_space(vXn)))/TOLERANCE) * TOLERANCE
+        vs = anint(convert_stress_strain_space(altay_get_stress_state(convert_stress_strain_space(vX)))/TOLERANCE) * TOLERANCE
 
         ! Retrieve output stress into 5D vector
         !vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
@@ -43,7 +40,7 @@ contains
         this%state%vF = this%vSn-vS
 
         if (info == 0 .and. associated(this%ptr_db)) &
-            call this%ptr_db%put(vXn, this%vSml)
+            call this%ptr_db%put(vX/norm2(vx), this%vSml)  ! Normalize because the magnitude has no impact on the response.
 
         info = VEF_OK
     end subroutine
