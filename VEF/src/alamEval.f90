@@ -18,9 +18,6 @@ module alamEval
           procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
     end type
 
-    !> Performance counter: number of evaluations of the objective function
-    integer                              :: alamEval_objFx_call_count = 0
-
 contains
 
       subroutine objectiveEval_NV5DComp(this, vX, info)
@@ -33,36 +30,11 @@ contains
             !
             real(DP), dimension(3, 3)     :: Atens
             real(DP), dimension(5)       :: vS, vXn
-            real(DP)                    :: norm
-            integer                             :: i
-            !
-            integer, parameter:: istp = 1
-            !
-            info = -1
-            i = 0
-            alamEval_objFx_call_count = alamEval_objFx_call_count+1
-            !
+
             ! Transfer normalized vX into second rank tensor.
-            norm = norm2(vX)
-            if (norm < epsilon(0.D0)) return
-            vXn = vX/norm
+            vXn = vX/norm2(vx)
             Atens = convert_stress_strain_space(vXn)
-            ! Set Atens as current value for processing
-#ifdef DIAGNOSTIC_OUTPUT
-            write(*,'(A, 1X, 5(F12.8))') 'eval for ', vXn
-#endif
-            ! Re-initialize with a request for just one single step
-            call initStepData(istp, astate, info)
-            if (info /= 0) return
-            !
-            associate (input => astate%simulCalls(istp)%input)
-                  input%dgf = Atens
-                  input%keep_texture = .true.
-                  input%keep_state = .true.
-                  input%full_model = .false.
-                  input%do_output_init = .false.
-                  input%do_output_final = .false.
-            end associate
+
             ! Call the simulation
             !Round to TOLERANCE to get rid of numerical instability due to scheduling. The underlying model is much less accurate
             !anyway.
@@ -75,22 +47,9 @@ contains
             !vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
             ! Transfer vS to vSml
             this%vSml = vS
-#ifdef DIAGNOSTIC_OUTPUT
-            write(*,'(A, 1X, 5(F12.8))') 'stress is ', vS
-#endif
             ! Normalize vS
-            norm = norm2(vS)
-            if (norm > 0.D0) then
-                  vS = vS/norm
-                  this%state%vF = this%vSn-vS
-#ifdef DIAGNOSTIC_OUTPUT
-                  write(*,'(F12.8, 1X)') (vS(i), i = 1, 5)
-#endif
-            else
-                 ! norm is zero, so vS = 0
-                 this%state%vF = this%vSn
-            endif
-
+            vS = vS/norm2(vs)
+            this%state%vF = this%vSn-vS
 
             if (info == 0 .and. associated(this%ptr_db)) then
                 ! We wouldn't reach this point if ||vX|| is zero
