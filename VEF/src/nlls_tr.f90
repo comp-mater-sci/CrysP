@@ -122,7 +122,7 @@ module nllsTR
             subroutine IF_objectiveFx_stateful(this, vX, info)
                   import  ::  objectiveFunction, DP
                   class(objectiveFunction), intent(inout)      :: this   !< Instance of the object.
-                  real(DP), dimension(:), intent(in)    :: vX     !< Dimension must be: [n_X_dim]
+                  real(DP), dimension(5), intent(in):: vX
                   integer, intent(out)                         :: info   !< Set to 0 on success
             end subroutine
 

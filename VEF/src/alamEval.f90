@@ -3,6 +3,7 @@
 module alamEval
     use nllsTR
     use dmcResultTable
+    use altay
 
     implicit none
 
@@ -10,53 +11,40 @@ module alamEval
     !> stress given by the multilevel model.
     type, extends(ObjectiveFunction):: NormalizedV5DComp
 
-          !> Multilevel prediction of stress from the previous call
-          real(DP), dimension(5)        :: vSml = 0.D0
-      type(ResultTable), pointer:: ptr_db => null()
+        !> Multilevel prediction of stress from the previous call
+        real(DP), dimension(5)        :: vSml = 0.D0
+        type(ResultTable), pointer:: ptr_db => null()
     contains
-          !> Implementation of virtual method defined in ObjectiveFunction
-          procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
+        !> Implementation of virtual method defined in ObjectiveFunction
+        procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
     end type
 
 contains
 
-      subroutine objectiveEval_NV5DComp(this, vX, info)
-      use altay
-      use altayConfig
-      implicit none
-            class(NormalizedV5DComp), intent(inout)      :: this
-            real(DP), dimension(:), intent(in)    :: vX       !< Dimension must be: 5
-            integer, intent(out)                         :: info
-            !
-            real(DP), dimension(3, 3)     :: Atens
-            real(DP), dimension(5)       :: vS, vXn
+    subroutine objectiveEval_NV5DComp(this, vX, info)
+        class(NormalizedV5DComp), intent(inout):: this
+        real(DP), dimension(5), intent(in):: vX
+        integer, intent(out):: info
 
-            ! Transfer normalized vX into second rank tensor.
-            vXn = vX/norm2(vx)
-            Atens = convert_stress_strain_space(vXn)
+        real(DP):: vS(5), &
+                   vXn(5)
 
-            ! Call the simulation
-            !Round to TOLERANCE to get rid of numerical instability due to scheduling. The underlying model is much less accurate
-            !anyway.
-            vs = anint(convert_stress_strain_space(altay_get_stress_state(atens))/TOLERANCE) * TOLERANCE
+        vXn = vX/norm2(vx)
 
+        !Round to TOLERANCE to get rid of numerical instability due to scheduling. The underlying model is much less accurate
+        !anyway.
+        vs = anint(convert_stress_strain_space(altay_get_stress_state(convert_stress_strain_space(vXn)))/TOLERANCE) * TOLERANCE
 
-            if (info /= 0) return
-            !
-            ! Retrieve output stress into 5D vector
-            !vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
-            ! Transfer vS to vSml
-            this%vSml = vS
-            ! Normalize vS
-            vS = vS/norm2(vs)
-            this%state%vF = this%vSn-vS
+        ! Retrieve output stress into 5D vector
+        !vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
+        ! Transfer vS to vSml
+        this%vSml = vS
+        vS = vS/norm2(vs)
+        this%state%vF = this%vSn-vS
 
-            if (info == 0 .and. associated(this%ptr_db)) then
-                ! We wouldn't reach this point if ||vX|| is zero
-                ! Normalize vX before storing it. It is also done by objectiveEval
-                ! in the superclass.
-                call this%ptr_db%put(vXn, this%vSml)
-            endif
-            info = VEF_OK
-      end subroutine
+        if (info == 0 .and. associated(this%ptr_db)) &
+            call this%ptr_db%put(vXn, this%vSml)
+
+        info = VEF_OK
+    end subroutine
 end module
