@@ -1,7 +1,7 @@
 !> nllsTR  -- wrapper module for MKL Non-Linear Least Squares Trust Region algorithm
 ! Provide modules: MKL_RCI_TYPE and MKL_RCI
 include 'mkl_rci.f90'
-include 'mkl_service.f90'
+include 'mkl_service.f90' !Removes warning about missing interface for mkl_free_buffers.
 
 
 module nllsTR
@@ -198,8 +198,8 @@ contains
 
           integer, intent(in):: m !> Needed by MKL
           integer, intent(in):: n !> Needed by MKL
-          real(DP), dimension(*), intent(in):: strain_mode    !> Strain mode to calculate the stress response for
-          real(DP), dimension(*), intent(out):: stress_mode   !> Stress response of the material
+          real(DP), dimension(*), intent(in):: strain_mode    !> Strain mode to calculate the stress response for. Declared assumed size because gfortran refuses to compile otherwise without declaring the procedure external, which would remove type checking entirely.
+          real(DP), dimension(*), intent(out):: stress_mode   !> Stress response of the material. Declared assumed size for the same reason as strain_mode.
 
           integer:: info
           real(DP):: v_grad(3, 3)
@@ -594,6 +594,8 @@ contains
             eps = 2.E-2_DP
         end if
 
+        !Note that according to the MKL documentation, altay_wrapper should be declared external. This however disables type
+        !checking. We worked around this by aligning the declared types of altay_wrapper exactly with what MKL expects.
         if (djacobi(altay_wrapper, 5, 5, jacobi, strain_mode, eps) /= TR_SUCCESS) &
             call log_error(MOD_NAME, PROC_NAME, ERR, 'Internal MKL error')
 
