@@ -42,36 +42,21 @@ module nllsTR
           real(DP), dimension(5, 5):: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
       end type
 
-
       !> Abstract data type for objective functions.
       !>
       !> It is assumed that every objective function contains a state variable that
       !> represents the value of the function and its Jacobian.
       type:: objectiveFunction
-
             !> Normalized stress vector
             real(DP), dimension(5)        :: vSn = 0.D0
             !> State variable
-            type(SolutionPoint)                               :: state
+            type(SolutionPoint)           :: state
 
             real(DP), dimension(5)        :: vSml = 0.D0
             type(ResultTable), pointer:: ptr_db => null()
       contains
             procedure, pass(this):: objectiveEval => objectiveEval_NV5DComp
       end type
-
-      !>@{ \name Other parameters
-      !>  These parameters are not directly accessible. Use \ref nlls_TR_init to control them. \sa nlls_TR_init
-
-      !> Output unit
-      integer, private                            :: nllsTR_ounit = 6
-
-      !> Verbosity level.
-      !>
-      !> The following values of verbosity are allowed:
-      integer, private                            :: nllsTR_iw = 0
-
-     !>@}
 
       type nllsTRRes
             integer                             :: iteration = 0        !< Interation number
@@ -105,18 +90,6 @@ contains
 
         info = VEF_OK
     end subroutine
-
-
-      !> Initialization of nlls_TR module.
-      subroutine nlls_TR_init(ounit, verbose)
-      implicit none
-      integer, optional, intent(in)         ::  ounit  !< IO unit number for outputs
-      integer, optional, intent(in)         ::  verbose !< Verbosity level, \sa nllsTR_iw
-      !!
-      if (present(ounit)) nllsTR_ounit = ounit
-      if (present(verbose)) nllsTR_iw = verbose
-      end subroutine
-
 
       !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
       !> \param objFx Objective function to minimize
@@ -159,7 +132,6 @@ contains
       eps = TOLERANCE
       eps(2) = OBJECTIVE_THRESHOLD
 
-      !jacobi_interval = 1.E-8_DP
       vlw = -10._DP
       vup = 10._DP
       !---------------------------------------------------
@@ -171,14 +143,11 @@ contains
             where (vX > vUP) vX = vUP
 
             !! Initialize MKL solver
-            res = dtrnlspbc_init(handle, 5, 5, vX, vLW, vUP, eps, 350, 50, 0.1_DP)
-            ! Check result
-            if (res /= TR_SUCCESS) &
+            if (dtrnlspbc_init(handle, 5, 5, vX, vLW, vUP, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
                 call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
-            if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 200) 'TR initialized, handle: ', handle
-            !
+
             call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
-            !
+
             bindState: associate (vFval => objFx%state%vF, mJacobi => objFx%state%mJ)
                   !! RCI loop for 'solve'
                   next_solve = .true.
@@ -210,39 +179,17 @@ contains
                                     next_solve = .true.
                               !!-----------------------------------------------------------------------
                               case(1)           ! Recalculate function at vector x
-                                    if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the vF'
                                     ! Use initial guess specified by the user, just once.
                                     linfo = 0
                                     call objFx%objectiveEval(vX, linfo)
                                     ! Terminate the RCI loop on error in vF
-                                    if (linfo /= 0) then
-                                          write(nllsTR_ounit, fmt = 100) 'Cannot recalculate the objective function.'
-                                          exit
-                                    endif
-                                    if (nllsTR_iw >= 1) write( nllsTR_ounit, '(A, F15.10, 1X, A, F15.10)')   &
-                                                       '||X|| = ', norm2(vX),             &
-                                                       '||vF|| = ', norm2(vFval)
-                                    if (nllsTR_iw > 2) then
-                                          write(nllsTR_ounit, fmt = 100) 'X'
-                                          write(nllsTR_ounit, fmt = 500) (vX(i), i = 1, 5)
-                                          write(nllsTR_ounit, fmt = 100) 'vF'
-                                          write(nllsTR_ounit, fmt = 500) (vFval(i), i = 1, 5)
-                                    endif
+                                    if (linfo /= 0) &
+                                        call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Cannot recalculate the objective function.')
                               case(2)           ! Recalculate Jacobian
-                                          if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the Jacobi matrix'
                                           linfo = 0
                                                objfx%state%mj = calc_jacobi(vx)
-                                          !
-                                          if (nllsTR_iw > 3) then
-                                               write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  -->'
-                                                call writeMatrix(mJacobi,  nllsTR_ounit)
-                                                write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  <--'
-                                                flush( nllsTR_ounit)
-                                          endif
-                              !!-----------------------------------------------------------------------
                               case default      ! Unknown RCI, it should never happen!!
-                                    write( nllsTR_ounit, fmt = 100) 'Error: unknown RCI control code!!!'
-                                    exit
+                                  call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Error: unknown RCI control code!!!')
                         end select
                   end do
             end associate bindState
@@ -260,23 +207,12 @@ contains
             r2 = resultInfo%r2
             !
             if (present(resInfo)) resInfo = resultInfo
-            !
-            if (nllsTR_iw > 0) then
-                  call nlls_TR_exit_message(message, resultInfo, linfo)
-                  write( nllsTR_ounit, fmt = 200) 'Stop criterion code: ', resultInfo%stop_criterion
-                  write( nllsTR_ounit, fmt = 100) trim(message)
-                  write( nllsTR_ounit, '(A, 1X, I0, 2(1X, A, 1X, E16.8))') 'Step ',resultInfo%iteration, 'R0=', r1, 'R1=',r2
-            endif
-            if (nllsTR_iw > 2) then
-                  write( nllsTR_ounit, fmt = 100) 'X = '
-                  write( nllsTR_ounit, fmt = 500) (vX(i), i = 1, 5)
-            endif
 
             ! Release MKL resources
             res = dtrnlspbc_delete(handle)
-            if (res /= TR_SUCCESS) then
-                  write( nllsTR_ounit, fmt = 200) 'dtrnlspbc_delete failed, exit code:',res
-            endif
+            if (res /= TR_SUCCESS) &
+                call log_error(MOD_NAME, PROC_NAME, ERR, 'dtrnlspbc_delete failed')
+
             call mkl_free_buffers()
             !
             ! Formats
@@ -314,44 +250,6 @@ contains
             end select
             200   format(A, 1X, I0)
             201   format(A, 1X, E15.7)
-      !
-      end subroutine
-
-
-      subroutine checkSolverInput(vF, mJ, info)
-      use, intrinsic:: IEEE_EXCEPTIONS
-      use, intrinsic:: IEEE_ARITHMETIC
-      implicit none
-      real(DP), dimension(:), intent(in), optional     :: vF
-      real(DP), dimension(:,:), intent(in), optional   :: mJ
-      integer, intent(out)                                   :: info
-      !
-            info = 0
-            if (present(vF)) then
-                  ! Test for NaN and Infty
-                  if ( any(IEEE_IS_NAN(vF)) ) then
-                        write(nllsTR_ounit, fmt = 101) 'the objective function'
-                        info = -1
-                  endif
-                  if (.not. all(IEEE_IS_FINITE(vF)) ) then
-                        write(nllsTR_ounit, fmt = 102) 'the objective function'
-                        info = -1
-                  endif
-            endif
-            if (present(mJ)) then
-                  ! Test for NaN and Infty
-                  if ( any(IEEE_IS_NAN(mJ)) ) then
-                        write(nllsTR_ounit, fmt = 101) 'the Jacobian'
-                        info = -1
-                  endif
-                  if (.not. all(IEEE_IS_FINITE(mJ)) ) then
-                        write(nllsTR_ounit, fmt = 102) 'the Jacobian'
-                        info = -1
-                  endif
-            endif
-            !
-            101 format('Error: NaN is detected in ',A)  ! For NaN messages
-            102 format('Error: Inf is detected in ',A)  ! For Inf messages
       !
       end subroutine
 
@@ -415,21 +313,4 @@ contains
             end if
         end do
     end function
-
-!----------------------------------------------------------------------------------------------------------------------------------
-! Private components
-!----------------------------------------------------------------------------------------------------------------------------------
-
-      subroutine writeMatrix(A, ounit)
-      real(DP), dimension(:,:), intent(in):: A
-      integer, intent(in)                         :: ounit
-      !
-      integer:: l, u, i, j
-      l = lbound(A, dim = 2)
-      u = ubound(A, dim = 2)
-      do i = lbound(A, dim = 1), ubound(A, dim = 1)
-            write(ounit, '(ES18.9E3, 1X, $)') (A(i, j), j = l, u)  ! does not conform f2003, but no temporary needed
-            write(ounit, *)
-      end do
-      end subroutine
 end module

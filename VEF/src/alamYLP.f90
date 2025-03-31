@@ -77,9 +77,6 @@ contains
         !
         ounit = stdout
         if (present(outunit))  ounit = outunit
-        ! Initialize TR solver
-        ! (note: outunit argument has "optional" modifier in both the caller and callee)
-        call nlls_TR_init(outunit, tr_verbose)
         ! Use von Mises guess
         vX = merge(vS, vA, use_vmGuess)
         !
