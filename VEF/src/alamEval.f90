@@ -11,18 +11,8 @@ implicit none
       !> stress given by the multilevel model.
       type, extends(ObjectiveFunction):: NormalizedV5DComp
 
-            !NOTE: [n_X_dim] must be 5
-            !      [m_F_dim] must be 5
-
-
             !> Multilevel prediction of stress from the previous call
             real(DP), dimension(5)        :: vSml = 0.D0
-
-            !> Flag: request for simulation outputs other than just deviatoric stress.
-            !>
-            !> The full model is not needed for calculation of stresses.
-            logical                                             :: full_model = .false.
-
       contains
             !> Implementation of virtual method defined in ObjectiveFunction
             procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
@@ -70,7 +60,7 @@ contains
                   input%dgf = Atens
                   input%keep_texture = .true.
                   input%keep_state = .true.
-                  input%full_model = this%full_model
+                  input%full_model = .false.
                   input%do_output_init = .false.
                   input%do_output_final = .false.
             end associate
