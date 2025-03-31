@@ -23,7 +23,6 @@ criRange.f90
 criUncomment.f90
 nlls_tr.f90
 alamYLP.f90 
-alamEval.f90
 abstractModule.f90
 basicModule.f90
 commonConfig.f90

@@ -7,7 +7,6 @@
 module alamYLP
     use utils
     use nllsTR
-    use alamEval
 
     implicit none
 
@@ -28,11 +27,11 @@ contains
         logical, optional, intent(in)   :: useVMGuess
         integer, intent(in), optional   :: outunit    !< Unit number for messages
         integer, intent(in), optional   :: verbose
-        class(NormalizedV5DComp), target, optional, intent(inout):: objective_function
+        class(ObjectiveFunction), target, optional, intent(inout):: objective_function
 
         real(DP), dimension(5):: vX, vX_lin
-        class(NormalizedV5DComp), pointer:: objFunc
-        type(NormalizedV5DComp), allocatable, target:: objective_function_local
+        class(ObjectiveFunction), pointer:: objFunc
+        type(ObjectiveFunction), allocatable, target:: objective_function_local
         real(DP)        :: r1, r2
         logical                 :: use_vmGuess
         real(DP)        :: r1_lin, r2_lin

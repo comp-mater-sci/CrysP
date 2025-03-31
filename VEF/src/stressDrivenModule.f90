@@ -6,12 +6,12 @@ use, intrinsic:: iso_fortran_env, only: error_unit
 use utils
 use criUncomment, only: readValue
 use alamYLP
-use alamEval, only: NormalizedV5DComp
 use dmcYLPResult
 use dmcResultTable
 use dmcBasicModule
 use logging
 use commonUtils
+use nllstr
 
 implicit none
 
@@ -119,7 +119,7 @@ contains
         real(DP):: vA_norm
         real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
         logical:: use_vM_guess
-        type(NormalizedV5DComp), target:: obj_func
+        type(ObjectiveFunction), target:: obj_func
         type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
 
@@ -188,7 +188,7 @@ contains
     class(StressDrivenModule), intent(in):: this
     type(YLPResult), intent(inout)           :: ylp_result
     logical, intent(in)                      :: use_vM_guess
-    class(NormalizedV5DComp), intent(inout)  :: obj_func
+    class(ObjectiveFunction), intent(inout)  :: obj_func
     !
         call multilevelYLP(ylp_result%vS,    &
                            ylp_result%vA,    &

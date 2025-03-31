@@ -7,7 +7,6 @@ include 'mkl_rci.f90'
 subroutine altay_wrapper(m, n, strain_mode, stress_mode)
     use utils
     use altay
-    use altayconfig
 
     integer, intent(in):: m !> Needed by MKL
     integer, intent(in):: n !> Needed by MKL
@@ -29,6 +28,7 @@ module nllsTR
     use mkl_rci
     use altay
     use logging
+    use dmcResultTable
 
     implicit none
 
@@ -67,13 +67,15 @@ module nllsTR
       !>
       !> It is assumed that every objective function contains a state variable that
       !> represents the value of the function and its Jacobian.
-      type, abstract:: objectiveFunction
+      type:: objectiveFunction
 
             !> Normalized stress vector
             real(DP), dimension(5)        :: vSn = 0.D0
             !> State variable
             type(SolutionPoint)                               :: state
 
+            real(DP), dimension(5)        :: vSml = 0.D0
+            type(ResultTable), pointer:: ptr_db => null()
       contains
             !> Initialization function
             procedure, pass(this)                 :: initFx => objectiveFunction_initFx
@@ -83,48 +85,12 @@ module nllsTR
             !> Evaluation of objective function vector.
             !>
             !> See remarks in IF_objectiveFx_stateful for a guidance how to implement it.
-            procedure(IF_objectiveFx_stateful), deferred, pass(this)     :: objectiveEval
+            procedure, pass(this):: objectiveEval => objectiveEval_NV5DComp
 
-            procedure, pass(this)                            :: getProblemSize
-            procedure, pass(this)                            :: getXSize
-            procedure, pass(this)                            :: getFSize
+            procedure, pass(this):: getProblemSize
+            procedure, pass(this):: getXSize
+            procedure, pass(this):: getFSize
       end type
-
-      abstract interface
-            !> Abstract interface for initalization of an instance of objectiveFunction object.
-            subroutine IF_initFx(this, n_X_dim, m_F_dim, info)
-                  import  ::  objectiveFunction
-                  class(objectiveFunction), intent(inout)      :: this         !< Instance of the object.
-                  integer, intent(in)                          :: n_X_dim      !< Requested dimensionality of the function argument.
-                  integer, intent(in)                          :: m_F_dim      !< Requested dimensionality of the function value.
-                  integer, intent(out)                         :: info   !< Set to 0 on success
-            end subroutine
-
-            !> Abstract interface for stateful-style objective function calculations.
-            !>
-            !> The function should update the vF component of state member (\sa SolutionPoint)
-            !> \note It is user's responsibility to provide a function that complies with this interface.
-            !> \note This function must not modify any component of SolutionPoint except for vX and vF.
-            subroutine IF_objectiveFx_stateful(this, vX, info)
-                  import  ::  objectiveFunction, DP
-                  class(objectiveFunction), intent(inout)      :: this   !< Instance of the object.
-                  real(DP), dimension(5), intent(in):: vX
-                  integer, intent(out)                         :: info   !< Set to 0 on success
-            end subroutine
-
-            !> Abstract interface for a function that calculates Jacobi matrix in a stateful-style.
-            !>
-            !> The function should update the mF component of state member (\sa SolutionPoint).
-            !> \note It is user's responsibility to provide a function that complies with this interface.
-            !> \note This function must not modify any component of SolutionPoint except for vX and mJ.
-            subroutine IF_JacobiObjFx_stateful(this, vX, info)
-                  import:: objectiveFunction, DP
-                  class(objectiveFunction), target, intent(inout)          :: this     !< Instance of the object.
-                  real(DP), dimension(5), intent(in)        :: vX       !< Dimension must be: [n_X_dim]
-                  integer, intent(out)                             :: info     !< Set to 0 on success
-            end subroutine
-
-      end interface
 
       !>@{ \name Other parameters
       !>  These parameters are not directly accessible. Use \ref nlls_TR_init to control them. \sa nlls_TR_init
@@ -152,6 +118,31 @@ module nllsTR
       private checkMKLRescode
 
 contains
+
+    subroutine objectiveEval_NV5DComp(this, vX, info)
+        class(ObjectiveFunction), intent(inout):: this
+        real(DP), dimension(5), intent(in):: vX
+        integer, intent(out):: info
+
+        real(DP):: vS(5)
+
+        !Round to TOLERANCE to get rid of numerical instability due to scheduling. The underlying model is much less accurate
+        !anyway.
+        vs = anint(convert_stress_strain_space(altay_get_stress_state(convert_stress_strain_space(vX)))/TOLERANCE) * TOLERANCE
+
+        ! Retrieve output stress into 5D vector
+        !vS = convert_stress_strain_space(astate%simulCalls(istp)%output%stress_tensor)
+        ! Transfer vS to vSml
+        this%vSml = vS
+        vS = vS/norm2(vs)
+        this%state%vF = this%vSn-vS
+
+        if (info == 0 .and. associated(this%ptr_db)) &
+            call this%ptr_db%put(vX/norm2(vx), this%vSml)  ! Normalize because the magnitude has no impact on the response.
+
+        info = VEF_OK
+    end subroutine
+
 
       !> Initialization of nlls_TR module.
       subroutine nlls_TR_init(ounit, verbose)
