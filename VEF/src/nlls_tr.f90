@@ -88,7 +88,6 @@ module nllsTR
             !> State variable
             type(SolutionPoint)                               :: state
 
-
       contains
             !> Initialization function
             procedure, pass(this)                 :: initFx => objectiveFunction_initFx
@@ -103,8 +102,6 @@ module nllsTR
             procedure, pass(this)                            :: getProblemSize
             procedure, pass(this)                            :: getXSize
             procedure, pass(this)                            :: getFSize
-
-
       end type
 
       abstract interface
@@ -169,8 +166,6 @@ module nllsTR
       private checkMKLRescode
 
 contains
-
-
 
       !> Initialization of nlls_TR module.
       subroutine nlls_TR_init(ounit, verbose)

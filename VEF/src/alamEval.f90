@@ -1,21 +1,25 @@
 !> Objective function for minimization of difference between requested stress tensor
 !> and stresses obtained from the ALAMEL
 module alamEval
-use nllsTR
+    use nllsTR
+    use dmcResultTable
 
-implicit none
+    implicit none
 
+    !> Objective function: difference between the searched-for normalized stress and the normalized
+    !> stress given by the multilevel model.
+    type, extends(ObjectiveFunction):: NormalizedV5DComp
 
+          !> Multilevel prediction of stress from the previous call
+          real(DP), dimension(5)        :: vSml = 0.D0
+      type(ResultTable), pointer:: ptr_db => null()
+    contains
+          !> Implementation of virtual method defined in ObjectiveFunction
+          procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
+    end type
 
-      !> Objective function: difference between the searched-for normalized stress and the normalized
-      !> stress given by the multilevel model.
-      type, extends(ObjectiveFunction):: NormalizedV5DComp
-            !> Multilevel prediction of stress from the previous call
-            real(DP), dimension(5)        :: vSml = 0.D0
-      contains
-            !> Implementation of virtual method defined in ObjectiveFunction
-            procedure, pass(this)           :: objectiveEval => objectiveEval_NV5DComp
-      end type
+    !> Performance counter: number of evaluations of the objective function
+    integer                              :: alamEval_objFx_call_count = 0
 
 contains
 
@@ -36,6 +40,7 @@ contains
             !
             info = -1
             i = 0
+            alamEval_objFx_call_count = alamEval_objFx_call_count+1
             !
             ! Transfer normalized vX into second rank tensor.
             norm = norm2(vX)
@@ -85,7 +90,14 @@ contains
                  ! norm is zero, so vS = 0
                  this%state%vF = this%vSn
             endif
-            info = 0
-      end subroutine
 
+
+            if (info == 0 .and. associated(this%ptr_db)) then
+                ! We wouldn't reach this point if ||vX|| is zero
+                ! Normalize vX before storing it. It is also done by objectiveEval
+                ! in the superclass.
+                call this%ptr_db%put(vXn, this%vSml)
+            endif
+            info = VEF_OK
+      end subroutine
 end module

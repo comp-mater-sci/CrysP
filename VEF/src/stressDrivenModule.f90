@@ -8,7 +8,6 @@ use criUncomment, only: readValue
 use alamYLP
 use alamEval, only: NormalizedV5DComp
 use dmcYLPResult
-use dmcAlamEvalCached
 use dmcResultTable
 use dmcBasicModule
 use logging
@@ -120,7 +119,7 @@ contains
         real(DP):: vA_norm
         real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
         logical:: use_vM_guess
-        type(NormalizedV5DCompCached), target:: obj_func
+        type(NormalizedV5DComp), target:: obj_func
         type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
 
