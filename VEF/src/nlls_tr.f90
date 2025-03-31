@@ -15,10 +15,8 @@ subroutine altay_wrapper(m, n, strain_mode, stress_mode)
     real(DP), dimension(m), intent(out):: stress_mode   !> Stress response of the material
 
     integer:: info
-    real(DP):: v_grad(3, 3)
 
-    v_grad = convert_stress_strain_space(strain_mode/norm2(strain_mode))
-    stress_mode = convert_stress_strain_space(altay_get_stress_state(v_grad))
+    stress_mode = convert_stress_strain_space(altay_get_stress_state(convert_stress_strain_space(strain_mode)))
 
     !Normalize for good measure and multiply by-1 because the least squares problem for which we are calculating the jacobi is
     !(target_stress_mode-stress_mode(strain_mode)) and thus its jacobi is (0-(jacobi(stress_mode(strain_mode))))
