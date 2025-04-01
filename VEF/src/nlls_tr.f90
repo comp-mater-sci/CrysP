@@ -92,78 +92,61 @@ contains
 
     end subroutine
 
-      !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
-      !> \param objFx Objective function to minimize
-      !> \param jacobiFx Function that calculates Jacobi matrix of objective function
-      subroutine nlls_TR_solve(objFx, vX, r1, r2, resInfo)
-      ! Formal parameters
-      class(objectiveFunction), target, intent(inout)          :: objFx    !< objective function
-      !> Design vector, dimension of vX must correspond to those in objFX
-      real(DP), dimension(:), target, intent(inout)     :: vX
-      real(DP), intent(out)                    :: r1       !< Initial residual of the solution
-      real(DP), intent(out)                    :: r2       !< Final residual of the solution
-      !> Exit code: 0 on success, < 0 on error, > 0 on failure/warning
-      !> Full termination status of the TR solver
-      type(nllsTRRes), intent(inout), optional          :: resInfo
+    !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
+    !> \param objFx Objective function to minimize
+    !> \param jacobiFx Function that calculates Jacobi matrix of objective function
+    subroutine nlls_TR_solve(objFx, vX, r1, r2, resInfo)
+        type(objectiveFunction), target, intent(inout):: objFx    !< objective function
+        real(DP), dimension(5), target, intent(inout)::   vX
+        real(DP), intent(out)::                           r1       !< Initial residual of the solution
+        real(DP), intent(out)::                           r2       !< Final residual of the solution
+        type(nllsTRRes), intent(inout), optional::        resInfo
 
-      character(*), parameter:: PROC_NAME = 'nlls_tr_solve'
-      real(DP), dimension(5), parameter:: LOWER_BOUND = -1._DP
-      real(DP), dimension(5), parameter:: UPPER_BOUND = 1._DP
+        character(*), parameter::           PROC_NAME   = 'nlls_tr_solve'
+        real(DP), dimension(5), parameter:: LOWER_BOUND = -1._DP
+        real(DP), dimension(5), parameter:: UPPER_BOUND = 1._DP
 
-      type(HANDLE_TR)   :: handle
-      integer           :: rci_req
-      type(nllsTRRes)                :: resultInfo
-      character(len = 512)             :: message
-      real(DP):: jacobi_interval, &
-                 eps(6)
+        type(HANDLE_TR):: handle
+        integer::         rci_req
+        type(nllsTRRes):: resultInfo
+        real(DP)::        eps(6)
 
-      !Tolerance on all stop criteria except for the norm of the residual is set to 1% of the objective threshold. This means we
-      !quit if the progress we are making is much smaller than the accuracy we are looking for and therefore negligible.
-      !Experimentally determined to be optimal. See dtrnlspbc_init documentation for more details.
-      eps = OBJECTIVE_THRESHOLD*1.E-2_DP
-      eps(2) = OBJECTIVE_THRESHOLD
+        !Tolerance on all stop criteria except for the norm of the residual is set to 1% of the objective threshold. This means we
+        !quit if the progress we are making is much smaller than the accuracy we are looking for and therefore negligible.
+        !Experimentally determined to be optimal. See dtrnlspbc_init documentation for more details.
+        eps = OBJECTIVE_THRESHOLD*1.E-2_DP
+        eps(2) = OBJECTIVE_THRESHOLD
+        if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
 
-      RCI_Req = 0
+        RCI_Req = 0
+        do while (rci_req >= 0)
+            if (dtrnlspbc_solve(handle, objfx%state%vf, objfx%state%mj, RCI_Req) /= TR_SUCCESS) &
+                call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
 
-      !! Initialize MKL solver
-      if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
-          call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
+            !RCI status. See dtrnlspbc_solve documentation for details.
+            select case (RCI_Req)
+                case(1)  !Evaluate objective function at current strain mode
+                    call objFx%objectiveEval(vX)
+                case(2)  !Recalculate Jacobian
+                    objfx%state%mj = calc_jacobi(vx)
+            end select
+        end do
 
-      !! RCI loop for 'solve'
-      RCI_Req = 0
+        ! Query solution info
+        if (dtrnlspbc_get(handle, resultInfo%iteration, resultInfo%stop_criterion, resultInfo%r1, resultInfo%r2) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, PROC_NAME, ERR, 'Unable to retrieve trust region results.')
+        r1 = resultInfo%r1
+        r2 = resultInfo%r2
+        !
+        if (present(resInfo)) resInfo = resultInfo
 
-      do while (rci_req >= 0)
-          if (dtrnlspbc_solve(handle, objfx%state%vf, objfx%state%mj, RCI_Req) /= TR_SUCCESS) &
-              call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
+        ! Release MKL resources
+        if (dtrnlspbc_delete(handle) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, PROC_NAME, ERR, 'dtrnlspbc_delete failed')
 
-          ! RCI status. See dtrnlspbc_solve documentation for details.
-          select case (RCI_Req)
-              case(1)  !Evaluate objective function at current strain mode
-                  call objFx%objectiveEval(vX)
-              case(2)           ! Recalculate Jacobian
-                  objfx%state%mj = calc_jacobi(vx)
-          end select
-      end do
-
-      ! Query solution info
-      if (dtrnlspbc_get(handle, resultInfo%iteration, resultInfo%stop_criterion, resultInfo%r1, resultInfo%r2) /= TR_SUCCESS) &
-          call log_error(MOD_NAME, PROC_NAME, ERR, 'Unable to retrieve trust region results.')
-      r1 = resultInfo%r1
-      r2 = resultInfo%r2
-      !
-      if (present(resInfo)) resInfo = resultInfo
-
-      ! Release MKL resources
-      if (dtrnlspbc_delete(handle) /= TR_SUCCESS) &
-          call log_error(MOD_NAME, PROC_NAME, ERR, 'dtrnlspbc_delete failed')
-
-      call mkl_free_buffers()
-      !
-      ! Formats
-      100 format(A)           ! fmt = 100  ! just a string
-      200 format(A, 1X, I0)     ! fmt = 400  ! a string followed by an integer
-      500 format(F15.8, 1X)    ! fmt = 500  ! long float, followed by one space
-      end subroutine
+        call mkl_free_buffers()
+    end subroutine
 
     !>@Brief Calculate the local change in the stress response at a given strain mode (== Jacobi matrix of AlTay)
     !>@Details Internally calls MKL, which uses a finite differences method.
