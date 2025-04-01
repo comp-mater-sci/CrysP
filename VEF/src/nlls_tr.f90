@@ -110,6 +110,8 @@ contains
       type(nllsTRRes), intent(inout), optional          :: resInfo
 
       character(*), parameter:: PROC_NAME = 'nlls_tr_solve'
+      real(DP), dimension(5), parameter:: LOWER_BOUND = -1._DP
+      real(DP), dimension(5), parameter:: UPPER_BOUND = 1._DP
 
       type(HANDLE_TR)   :: handle
       integer           :: res, &
@@ -122,9 +124,7 @@ contains
       logical                        :: next_solve
       character(len = 512)             :: message
       real(DP):: jacobi_interval, &
-                 eps(6), &
-                 vlw(5), &
-                 vup(5)
+                 eps(6)
 
       !All tolerances can be set to TOLERANCE except for the tolerance on the residual (i.e. the 'success threshold'). This is set
       !to 0.01 because we are using normalized stresses and strains and 1% is about as accurate as you can hope the underlying model
@@ -132,18 +132,11 @@ contains
       eps = TOLERANCE
       eps(2) = OBJECTIVE_THRESHOLD
 
-      vlw = -10._DP
-      vup = 10._DP
-      !---------------------------------------------------
             RCI_Req = 0; next_solve = .true.
             info = -1
 
-            ! Make sure that the initial guess is inside the constraints
-            where (vX < vLW) vX = vLW
-            where (vX > vUP) vX = vUP
-
             !! Initialize MKL solver
-            if (dtrnlspbc_init(handle, 5, 5, vX, vLW, vUP, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
+            if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
                 call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
 
             call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
@@ -158,38 +151,25 @@ contains
                   do while (next_solve)
                         RCI_Count = RCI_Count+1
                         !
-                        res = dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req)
+                        if (dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req) /= TR_SUCCESS) &
+                            call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
                         if (trapFPErrors()) &
                             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Floating point problem in solver.')
                         call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
-                        !
-                        if (res /= TR_SUCCESS) exit
-                        ! Make sure that the vX is still inside the constraints
-                        where (vX < vLW) vX = vLW
-                        where (vX > vUP) vX = vUP
+
                         ! RCI status
                         select case (RCI_Req)
-                            case (-6:-2)
-                                    next_solve = .false.
-                              !!-----------------------------------------------------------------------
-                              case(-1)          ! Iteration count has been exceeded
-                                    next_solve = .false.
-                              !!-----------------------------------------------------------------------
-                              case(0)           ! Successful
-                                    next_solve = .true.
-                              !!-----------------------------------------------------------------------
-                              case(1)           ! Recalculate function at vector x
-                                    ! Use initial guess specified by the user, just once.
-                                    linfo = 0
-                                    call objFx%objectiveEval(vX, linfo)
-                                    ! Terminate the RCI loop on error in vF
-                                    if (linfo /= 0) &
-                                        call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Cannot recalculate the objective function.')
-                              case(2)           ! Recalculate Jacobian
-                                          linfo = 0
-                                               objfx%state%mj = calc_jacobi(vx)
-                              case default      ! Unknown RCI, it should never happen!!
-                                  call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Error: unknown RCI control code!!!')
+                            case (-6:-1)  ! One of the stop criteria has been reached
+                                print *, rci_req
+                                  next_solve = .false.
+                            case(0)  ! Need another iteration.
+                                  next_solve = .true.
+                            case(1)  !Evaluate objective function at current strain mode
+                                call objFx%objectiveEval(vX, linfo)
+                            case(2)           ! Recalculate Jacobian
+                                objfx%state%mj = calc_jacobi(vx)
+                            case default      ! Unknown RCI, it should never happen!!
+                                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Error: unknown RCI control code!!!')
                         end select
                   end do
             end associate bindState
