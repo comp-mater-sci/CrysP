@@ -37,7 +37,7 @@ contains
         real(DP)        :: r1_lin, r2_lin
         type(nllsTRRes)         :: TR_res
         type(SolutionPoint)     :: initState
-        integer                 :: ounit, tr_verbose, ierr
+        integer                 :: ounit, tr_verbose
         integer, parameter       :: stdout = 6
         logical                 :: log_info, log_debug
         real(DP)        :: norm
@@ -84,12 +84,8 @@ contains
         ! Run linearized problem if requested
         ! The linearized analysis is either not done or failed.
         ! Set non-linear analysis
-        call nlls_TR_solve(objFunc, vX, r1, r2, ierr)
+        call nlls_TR_solve(objFunc, vX, r1, r2)
         R = r2
-        if(ierr /= 0) then
-            info = VEF_ERROR
-            return
-        end if
 
         ! Set output strain rate
         info  = VEF_ERROR

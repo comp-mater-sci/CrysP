@@ -70,10 +70,9 @@ module nllsTR
 
 contains
 
-    subroutine objectiveEval_NV5DComp(this, vX, info)
+    subroutine objectiveEval_NV5DComp(this, vX)
         class(ObjectiveFunction), intent(inout):: this
         real(DP), dimension(5), intent(in):: vX
-        integer, intent(out):: info
 
         real(DP):: vS(5)
 
@@ -88,16 +87,15 @@ contains
         vS = vS/norm2(vs)
         this%state%vF = this%vSn-vS
 
-        if (info == 0 .and. associated(this%ptr_db)) &
+        if (associated(this%ptr_db)) &
             call this%ptr_db%put(vX/norm2(vx), this%vSml)  ! Normalize because the magnitude has no impact on the response.
 
-        info = VEF_OK
     end subroutine
 
       !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
       !> \param objFx Objective function to minimize
       !> \param jacobiFx Function that calculates Jacobi matrix of objective function
-      subroutine nlls_TR_solve(objFx, vX, r1, r2, info, resInfo)
+      subroutine nlls_TR_solve(objFx, vX, r1, r2, resInfo)
       ! Formal parameters
       class(objectiveFunction), target, intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
@@ -105,7 +103,6 @@ contains
       real(DP), intent(out)                    :: r1       !< Initial residual of the solution
       real(DP), intent(out)                    :: r2       !< Final residual of the solution
       !> Exit code: 0 on success, < 0 on error, > 0 on failure/warning
-      integer, intent(out)                             :: info
       !> Full termination status of the TR solver
       type(nllsTRRes), intent(inout), optional          :: resInfo
 
@@ -114,12 +111,7 @@ contains
       real(DP), dimension(5), parameter:: UPPER_BOUND = 1._DP
 
       type(HANDLE_TR)   :: handle
-      integer           :: res, &
-                           linfo, &
-                           rci_req, &
-                           rci_count, &
-                           ierr, &
-                           i
+      integer           :: rci_req
       type(nllsTRRes)                :: resultInfo
       logical                        :: next_solve
       character(len = 512)             :: message
@@ -132,11 +124,7 @@ contains
       eps = OBJECTIVE_THRESHOLD*1.E-2_DP
       eps(2) = OBJECTIVE_THRESHOLD
 
-      !Normalize vx because the thresholds are all calibrated assuming normalized stresses and strains.
-      vx = vx/norm2(vx)
-
       RCI_Req = 0; next_solve = .true.
-      info = -1
 
       !! Initialize MKL solver
       if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
@@ -145,46 +133,35 @@ contains
       !! RCI loop for 'solve'
       next_solve = .true.
       RCI_Req = 0
-      RCI_Count = 0
-      linfo = 0
-      objfx%state%mj = calc_jacobi(vx)
+      !objfx%state%mj = calc_jacobi(vx)
 
       do while (next_solve)
-            RCI_Count = RCI_Count+1
-            !
-            if (dtrnlspbc_solve(handle, objfx%state%vf, objfx%state%mj, RCI_Req) /= TR_SUCCESS) &
-                call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
+          if (dtrnlspbc_solve(handle, objfx%state%vf, objfx%state%mj, RCI_Req) /= TR_SUCCESS) &
+              call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
 
-            ! RCI status. See dtrnlspbc_solve documentation for details.
-            select case (RCI_Req)
-                case (-6:-1)  ! One of the stop criteria has been reached
-                      next_solve = .false.
-                case(0)  ! Need another iteration.
-                      next_solve = .true.
-                case(1)  !Evaluate objective function at current strain mode
-                    call objFx%objectiveEval(vX, linfo)
-                case(2)           ! Recalculate Jacobian
-                    objfx%state%mj = calc_jacobi(vx)
-            end select
+          ! RCI status. See dtrnlspbc_solve documentation for details.
+          select case (RCI_Req)
+              case (-6:-1)  ! One of the stop criteria has been reached
+                    next_solve = .false.
+              case(0)  ! Need another iteration.
+                    next_solve = .true.
+              case(1)  !Evaluate objective function at current strain mode
+                  call objFx%objectiveEval(vX)
+              case(2)           ! Recalculate Jacobian
+                  objfx%state%mj = calc_jacobi(vx)
+          end select
       end do
-      !
-      if (RCI_Req == -1) then
-            ! RCI loop finished due to iteration count, issue a warning.
-            info = 1
-      else
-            info = 0
-      endif
 
       ! Query solution info
-      res = dtrnlspbc_get(handle, resultInfo%iteration, resultInfo%stop_criterion, resultInfo%r1, resultInfo%r2)
+      if (dtrnlspbc_get(handle, resultInfo%iteration, resultInfo%stop_criterion, resultInfo%r1, resultInfo%r2) /= TR_SUCCESS) &
+          call log_error(MOD_NAME, PROC_NAME, ERR, 'Unable to retrieve trust region results.')
       r1 = resultInfo%r1
       r2 = resultInfo%r2
       !
       if (present(resInfo)) resInfo = resultInfo
 
       ! Release MKL resources
-      res = dtrnlspbc_delete(handle)
-      if (res /= TR_SUCCESS) &
+      if (dtrnlspbc_delete(handle) /= TR_SUCCESS) &
           call log_error(MOD_NAME, PROC_NAME, ERR, 'dtrnlspbc_delete failed')
 
       call mkl_free_buffers()
