@@ -36,7 +36,6 @@ contains
         logical                 :: use_vmGuess
         real(DP)        :: r1_lin, r2_lin
         type(nllsTRRes)         :: TR_res
-        type(SolutionPoint)     :: initState
         integer                 :: ounit, tr_verbose
         integer, parameter       :: stdout = 6
         logical                 :: log_info, log_debug
@@ -93,7 +92,7 @@ contains
         if (norm < epsilon(0.D0)) return
         vA = vX/norm
 
-        if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%state%vF
+        if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%stress_mode
 
         vSonA = objFunc%vSml
         info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)

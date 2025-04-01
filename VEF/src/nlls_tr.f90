@@ -38,28 +38,17 @@ module nllsTR
     !strains and 1% is about as accurate as you can hope the underlying model to be.
     real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
 
-      !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
-      type:: SolutionPoint
-          real(DP), dimension(5):: vX       !< The point
-          real(DP), dimension(5):: vF       !< Function at vX
-          real(DP), dimension(5, 5):: mJ       !< Jacobi matrix at vX, [m_F_dim x n_X_dim]
-      end type
-
-      !> Abstract data type for objective functions.
-      !>
-      !> It is assumed that every objective function contains a state variable that
-      !> represents the value of the function and its Jacobian.
-      type:: objectiveFunction
-            !> Normalized stress vector
-            real(DP), dimension(5)        :: vSn = 0.D0
-            !> State variable
-            type(SolutionPoint)           :: state
-
-            real(DP), dimension(5)        :: vSml = 0.D0
-            type(ResultTable), pointer:: ptr_db => null()
-      contains
-            procedure, pass(this):: objectiveEval => objectiveEval_NV5DComp
-      end type
+    !>Data type for objective functions.
+    type:: objectiveFunction
+        real(DP), dimension(5):: strain_mode
+        real(DP), dimension(5):: stress_mode
+        real(DP), dimension(5, 5):: jacobi
+        real(DP), dimension(5):: vSn = 0.D0
+        real(DP), dimension(5):: vSml = 0.D0
+        type(ResultTable), pointer:: ptr_db => null()
+    contains
+          procedure, pass(this):: objectiveEval => objectiveEval_NV5DComp
+    end type
 
       type nllsTRRes
             integer                             :: iteration = 0        !< Interation number
@@ -85,7 +74,7 @@ contains
         ! Transfer vS to vSml
         this%vSml = vS
         vS = vS/norm2(vs)
-        this%state%vF = this%vSn-vS
+        this%stress_mode = this%vSn-vS
 
         if (associated(this%ptr_db)) &
             call this%ptr_db%put(vX/norm2(vx), this%vSml)  ! Normalize because the magnitude has no impact on the response.
@@ -121,7 +110,7 @@ contains
 
         RCI_Req = 0
         do while (rci_req >= 0)
-            if (dtrnlspbc_solve(handle, objfx%state%vf, objfx%state%mj, RCI_Req) /= TR_SUCCESS) &
+            if (dtrnlspbc_solve(handle, objfx%stress_mode, objfx%jacobi, RCI_Req) /= TR_SUCCESS) &
                 call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
 
             !RCI status. See dtrnlspbc_solve documentation for details.
@@ -129,7 +118,7 @@ contains
                 case(1)  !Evaluate objective function at current strain mode
                     call objFx%objectiveEval(vX)
                 case(2)  !Recalculate Jacobian
-                    objfx%state%mj = calc_jacobi(vx)
+                    objfx%jacobi = calc_jacobi(vx)
             end select
         end do
 
