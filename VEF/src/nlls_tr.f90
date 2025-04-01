@@ -113,13 +113,9 @@ contains
       type(HANDLE_TR)   :: handle
       integer           :: rci_req
       type(nllsTRRes)                :: resultInfo
-      logical                        :: next_solve
       character(len = 512)             :: message
       real(DP):: jacobi_interval, &
                  eps(6)
-
-      logical:: first_solve
-
 
       !Tolerance on all stop criteria except for the norm of the residual is set to 1% of the objective threshold. This means we
       !quit if the progress we are making is much smaller than the accuracy we are looking for and therefore negligible.
@@ -127,40 +123,26 @@ contains
       eps = OBJECTIVE_THRESHOLD*1.E-2_DP
       eps(2) = OBJECTIVE_THRESHOLD
 
-      RCI_Req = 0; next_solve = .true.
+      RCI_Req = 0
 
       !! Initialize MKL solver
       if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
           call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
 
       !! RCI loop for 'solve'
-      next_solve = .true.
       RCI_Req = 0
-      !objfx%state%mj = calc_jacobi(vx)
 
-      first_solve = .true.
-
-      do while (next_solve)
+      do while (rci_req >= 0)
           if (dtrnlspbc_solve(handle, objfx%state%vf, objfx%state%mj, RCI_Req) /= TR_SUCCESS) &
               call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
 
           ! RCI status. See dtrnlspbc_solve documentation for details.
           select case (RCI_Req)
-              case (-6:-1)  ! One of the stop criteria has been reached
-                    next_solve = .false.
-              case(0)  ! Need another iteration.
-                    next_solve = .true.
               case(1)  !Evaluate objective function at current strain mode
                   call objFx%objectiveEval(vX)
               case(2)           ! Recalculate Jacobian
                   objfx%state%mj = calc_jacobi(vx)
           end select
-
-          if (first_solve) then
-               print *, rci_req
-               first_solve = .false.
-          end if
-
       end do
 
       ! Query solution info
