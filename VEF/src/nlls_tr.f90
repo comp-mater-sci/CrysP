@@ -95,8 +95,6 @@ contains
       !> \param objFx Objective function to minimize
       !> \param jacobiFx Function that calculates Jacobi matrix of objective function
       subroutine nlls_TR_solve(objFx, vX, r1, r2, info, resInfo)
-      use, intrinsic:: IEEE_EXCEPTIONS
-      use, intrinsic:: IEEE_ARITHMETIC
 
       ! Formal parameters
       class(objectiveFunction), target, intent(inout)          :: objFx    !< objective function
@@ -139,8 +137,6 @@ contains
             if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
                 call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
 
-            call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
-
             bindState: associate (vFval => objFx%state%vF, mJacobi => objFx%state%mJ)
                   !! RCI loop for 'solve'
                   next_solve = .true.
@@ -153,14 +149,10 @@ contains
                         !
                         if (dtrnlspbc_solve(handle, vFval, mJacobi, RCI_Req) /= TR_SUCCESS) &
                             call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
-                        if (trapFPErrors()) &
-                            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Floating point problem in solver.')
-                        call IEEE_SET_FLAG (IEEE_ALL, .FALSE.)  ! Hush up all the FP exceptions.
 
                         ! RCI status
                         select case (RCI_Req)
                             case (-6:-1)  ! One of the stop criteria has been reached
-                                print *, rci_req
                                   next_solve = .false.
                             case(0)  ! Need another iteration.
                                   next_solve = .true.
@@ -232,26 +224,6 @@ contains
             201   format(A, 1X, E15.7)
       !
       end subroutine
-
-      !> Check floating point exceptions
-      logical function trapFPErrors()
-      use, intrinsic:: IEEE_EXCEPTIONS
-      use, intrinsic:: IEEE_ARITHMETIC
-      implicit none
-      !
-      integer:: i
-      ! We do not investigate:
-      !  - the first component of IEEE_ALL, namely: IEEE_OVERFLOW
-      !  - the last component of IEEE_ALL, namely IEEE_INEXACT
-      integer, parameter:: firstflag = 2
-      logical:: fp_errflags(firstflag:size(IEEE_ALL)-1)
-      !
-            do i = firstflag, ubound(fp_errflags, 1)
-                  call IEEE_GET_FLAG(IEEE_ALL(i), fp_errflags(i))
-            enddo
-            trapFPErrors = any(fp_errflags)
-      !
-      end function
 
     !>@Brief Calculate the local change in the stress response at a given strain mode (== Jacobi matrix of AlTay)
     !>@Details Internally calls MKL, which uses a finite differences method.
