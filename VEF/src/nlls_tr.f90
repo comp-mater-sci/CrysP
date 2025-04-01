@@ -41,7 +41,7 @@ module nllsTR
     !>Data type for objective functions.
     type:: objectiveFunction
         real(DP), dimension(5):: strain_mode
-        real(DP), dimension(5):: stress_mode
+        real(DP), dimension(5):: residual
         real(DP), dimension(5, 5):: jacobi
         real(DP), dimension(5):: vSn = 0.D0
         real(DP), dimension(5):: vSml = 0.D0
@@ -49,13 +49,6 @@ module nllsTR
     contains
           procedure, pass(this):: objectiveEval => objectiveEval_NV5DComp
     end type
-
-      type nllsTRRes
-            integer                             :: iteration = 0        !< Interation number
-            integer                             :: stop_criterion = 0   !< Identifier of stop criterion, see MKL documentation
-            real(DP)                    :: r1 = 0.D0            !< Initial norm of residual
-            real(DP)                    :: r2 = 0.D0            !< Final norm of residual
-      end type
 
 contains
 
@@ -74,22 +67,18 @@ contains
         ! Transfer vS to vSml
         this%vSml = vS
         vS = vS/norm2(vs)
-        this%stress_mode = this%vSn-vS
+        this%residual = this%vSn-vS
 
         if (associated(this%ptr_db)) &
             call this%ptr_db%put(vX/norm2(vx), this%vSml)  ! Normalize because the magnitude has no impact on the response.
-
     end subroutine
 
     !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
     !> \param objFx Objective function to minimize
     !> \param jacobiFx Function that calculates Jacobi matrix of objective function
-    subroutine nlls_TR_solve(objFx, vX, r1, r2, resInfo)
+    subroutine nlls_TR_solve(objFx, vX)
         type(objectiveFunction), target, intent(inout):: objFx    !< objective function
         real(DP), dimension(5), target, intent(inout)::   vX
-        real(DP), intent(out)::                           r1       !< Initial residual of the solution
-        real(DP), intent(out)::                           r2       !< Final residual of the solution
-        type(nllsTRRes), intent(inout), optional::        resInfo
 
         character(*), parameter::           PROC_NAME   = 'nlls_tr_solve'
         real(DP), dimension(5), parameter:: LOWER_BOUND = -1._DP
@@ -97,7 +86,6 @@ contains
 
         type(HANDLE_TR):: handle
         integer::         rci_req
-        type(nllsTRRes):: resultInfo
         real(DP)::        eps(6)
 
         !Tolerance on all stop criteria except for the norm of the residual is set to 1% of the objective threshold. This means we
@@ -110,7 +98,7 @@ contains
 
         RCI_Req = 0
         do while (rci_req >= 0)
-            if (dtrnlspbc_solve(handle, objfx%stress_mode, objfx%jacobi, RCI_Req) /= TR_SUCCESS) &
+            if (dtrnlspbc_solve(handle, objfx%residual, objfx%jacobi, RCI_Req) /= TR_SUCCESS) &
                 call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
 
             !RCI status. See dtrnlspbc_solve documentation for details.
@@ -121,14 +109,6 @@ contains
                     objfx%jacobi = calc_jacobi(vx)
             end select
         end do
-
-        ! Query solution info
-        if (dtrnlspbc_get(handle, resultInfo%iteration, resultInfo%stop_criterion, resultInfo%r1, resultInfo%r2) /= TR_SUCCESS) &
-            call log_error(MOD_NAME, PROC_NAME, ERR, 'Unable to retrieve trust region results.')
-        r1 = resultInfo%r1
-        r2 = resultInfo%r2
-        !
-        if (present(resInfo)) resInfo = resultInfo
 
         ! Release MKL resources
         if (dtrnlspbc_delete(handle) /= TR_SUCCESS) &

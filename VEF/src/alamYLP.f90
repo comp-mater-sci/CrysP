@@ -30,13 +30,10 @@ contains
         class(ObjectiveFunction), target, optional, intent(inout):: objective_function
 
         real(DP), dimension(5):: vX, vX_lin
+        integer:: ounit
         class(ObjectiveFunction), pointer:: objFunc
         type(ObjectiveFunction), allocatable, target:: objective_function_local
-        real(DP)        :: r1, r2
         logical                 :: use_vmGuess
-        real(DP)        :: r1_lin, r2_lin
-        type(nllsTRRes)         :: TR_res
-        integer                 :: ounit, tr_verbose
         integer, parameter       :: stdout = 6
         logical                 :: log_info, log_debug
         real(DP)        :: norm
@@ -47,17 +44,14 @@ contains
             use_vmGuess = .true.
         endif
 
-        tr_verbose = 0
         log_info = .false.
         log_debug = .false.
         if (present(verbose)) then
             if (verbose > 2) then
                 log_info = .true.
-                tr_verbose = 1
             endif
             if (verbose > 3) then
                 log_debug = .true.
-                tr_verbose = 3
             endif
         endif
         ! Set the objective function
@@ -78,13 +72,9 @@ contains
         if (present(outunit))  ounit = outunit
         ! Use von Mises guess
         vX = merge(vS, vA, use_vmGuess)
-        !
-        r1 = 0.0_DP; r2 = 0.0_DP
-        ! Run linearized problem if requested
-        ! The linearized analysis is either not done or failed.
-        ! Set non-linear analysis
-        call nlls_TR_solve(objFunc, vX, r1, r2)
-        R = r2
+
+        call nlls_TR_solve(objFunc, vX)
+        R = norm2(objfunc%residual)
 
         ! Set output strain rate
         info  = VEF_ERROR
@@ -92,7 +82,7 @@ contains
         if (norm < epsilon(0.D0)) return
         vA = vX/norm
 
-        if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%stress_mode
+        if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%residual
 
         vSonA = objFunc%vSml
         info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)
