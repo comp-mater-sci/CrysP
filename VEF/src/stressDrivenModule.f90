@@ -123,6 +123,7 @@ contains
         type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
 
+
         info = VEF_ERROR
         obj_func%ptr_db => this%ptr_db
         if (present(is_acceptable)) is_acceptable = .false.
@@ -144,23 +145,6 @@ contains
         !Calculate the corresponding strain rate vA
         info = this%search(ylp_result, use_vM_guess, obj_func)
 
-        !If the search fails, we try again with the end point of the previous search as the new starting point. This leads to
-        !convergence after all in the majority of cases. Note that experiments have shown that increasing the number of retries does not
-        !notably improve convergence further.
-        if (info == VEF_FAIL .and. associated(this%ptr_db)) then
-            !
-            ! Try another starting point
-            !
-            ! Set the re-try point
-            ylp_result_retry = ylp_result
-            !
-            if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == VEF_OK) then
-                ! get new solution
-                info = this%search(ylp_result_retry, .false., obj_func)
-                ! Use the better of the two
-                if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
-            endif
-        endif
         RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
         !
         if (present(is_acceptable)) then
