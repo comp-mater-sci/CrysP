@@ -86,7 +86,8 @@ contains
 
         type(HANDLE_TR):: handle
         integer::         rci_req
-        real(DP)::        eps(6)
+        real(DP), target:: eps(6)  ! Target because handle points tot his
+
 
         !Tolerance on all stop criteria except for the norm of the residual is set to 1% of the objective threshold. This means we
         !quit if the progress we are making is much smaller than the accuracy we are looking for and therefore negligible.
