@@ -193,7 +193,6 @@ module nllsTR
 
 contains
       !>@Brief Wrapper for calling AlTay from within MKL. See djacobi documentation.
-      !>@Details Has to be declared external for reasons because MKL documentation says so and gfortran will not compile otherwise.
       subroutine altay_wrapper(m, n, strain_mode, stress_mode)
 
           integer, intent(in):: m !> Needed by MKL
