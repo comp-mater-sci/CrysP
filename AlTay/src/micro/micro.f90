@@ -161,11 +161,9 @@ contains
     end procedure
 
     module procedure micro_init
-        integer:: i, j, &
-                  offset, &
+        integer:: i, j, k, &
                   n_phases, &
-                  n_grains, &
-                  n_grains_phase
+                  n_grains
         integer, allocatable:: miller_indices(:,:,:)
         class(HardeningState), allocatable:: initial_state
         type(Phase), pointer:: phase_ptr
@@ -189,10 +187,10 @@ contains
             phase_ptr%model = get_model_instance(phases_(i)%model_id)
             miller_indices = get_miller_indices(phases_(i)%deformation_mechanism)
             initial_state = phases(i)%model%init(miller_indices, phases_(i)%parameters)
-            n_grains_phase = size(phases_(i)%orientations, 2)
-            offset = j-1
-            do j = j, j+n_grains_phase-1
-                call grains(j)%init(phases_(i)%orientations(:,j-offset), phases(i)%model, initial_state)
+
+            do k = 1, size(phases_(i)%orientations, 2)
+                call grains(j)%init(phases_(i)%orientations(:,k), phases(i)%model, initial_state)
+                j = j+1
             end do
         end do
     end procedure

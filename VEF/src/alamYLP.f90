@@ -143,7 +143,6 @@ implicit none
       tr_config%eps = config%default_eps   !<< beware!
       tr_config%eps(2) = config%obj_func_eps  ! Norm of F: ||F||_2
       ! Obj func:
-      objFunc%jacobi_eps = config%jacobi_eps
       attempt_linearized = config%linearize
       !
       linearized_successful = .false.

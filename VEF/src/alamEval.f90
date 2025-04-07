@@ -9,13 +9,11 @@ implicit none
 
       !> Objective function: difference between the searched-for normalized stress and the normalized
       !> stress given by the multilevel model.
-      type, extends(MKLFDJacobiObjFunction):: NormalizedV5DComp
+      type, extends(ObjectiveFunction):: NormalizedV5DComp
 
             !NOTE: [n_X_dim] must be 5
             !      [m_F_dim] must be 5
 
-            !> Normalized stress vector
-            real(DP), dimension(5)        :: vSn = 0.D0
 
             !> Multilevel prediction of stress from the previous call
             real(DP), dimension(5)        :: vSml = 0.D0
@@ -77,7 +75,11 @@ contains
                   input%do_output_final = .false.
             end associate
             ! Call the simulation
-            vs = convert_stress_strain_space(altay_get_stress_state(atens))
+            !Round to TOLERANCE to get rid of numerical instability due to scheduling. The underlying model is much less accurate
+            !anyway.
+            vs = anint(convert_stress_strain_space(altay_get_stress_state(atens))/TOLERANCE) * TOLERANCE
+
+
             if (info /= 0) return
             !
             ! Retrieve output stress into 5D vector
