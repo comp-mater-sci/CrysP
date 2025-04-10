@@ -7,8 +7,30 @@
 module alamYLP
     use utils
     use nllsTR
+    use iso_c_binding
 
     implicit none
+
+    interface
+        integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi) bind(C) result(mkl_result_code)
+            import C_INT, &
+                   C_DOUBLE
+
+            real(C_DOUBLE), dimension(5), intent(in):: stress_target
+            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
+            real(C_DOUBLE), dimension(5), intent(out):: strain_mode
+            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
+        end function
+        integer(C_INT) function trust_region_solve_from_guess(stress_target, stress_mode, strain_mode, jacobi) bind(C) result(mkl_result_code)
+            import C_INT, &
+                   C_DOUBLE
+
+            real(C_DOUBLE), dimension(5), intent(in):: stress_target
+            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
+            real(C_DOUBLE), dimension(5), intent(inout):: strain_mode
+            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi
+        end function
+    end interface
 
 contains
 
@@ -37,6 +59,23 @@ contains
         integer, parameter       :: stdout = 6
         logical                 :: log_info, log_debug
         real(DP)        :: norm
+
+
+        real(DP):: stress_target_c(5), &
+                   stress_mode_c(5), &
+                   strain_mode_c(5), &
+                   jacobi_c(5, 5)
+        integer:: mkl_result_code_c
+
+
+
+        mkl_result_code_c = trust_region_solve(stress_target_c, stress_mode_c, strain_mode_c, jacobi_c)
+
+        print *, 'C call result: ', mkl_result_code_c
+
+
+
+
 
         if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
