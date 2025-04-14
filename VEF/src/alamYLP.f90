@@ -19,7 +19,7 @@ module alamYLP
             real(C_DOUBLE), dimension(5), intent(in):: stress_target
             real(C_DOUBLE), dimension(5), intent(out):: stress_mode
             real(C_DOUBLE), dimension(5), intent(out):: strain_mode
-            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
+            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi  ! Stored row major
         end function
         integer(C_INT) function trust_region_solve_from_guess(stress_target, stress_mode, strain_mode, jacobi) bind(C) result(mkl_result_code)
             import C_INT, &
@@ -28,7 +28,7 @@ module alamYLP
             real(C_DOUBLE), dimension(5), intent(in):: stress_target
             real(C_DOUBLE), dimension(5), intent(out):: stress_mode
             real(C_DOUBLE), dimension(5), intent(inout):: strain_mode
-            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi
+            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi  !Stored row major
         end function
     end interface
 
@@ -68,15 +68,6 @@ contains
         integer:: mkl_result_code_c
 
 
-
-        mkl_result_code_c = trust_region_solve(stress_target_c, stress_mode_c, strain_mode_c, jacobi_c)
-
-        print *, 'C call result: ', mkl_result_code_c
-
-
-
-
-
         if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
         else
@@ -111,6 +102,11 @@ contains
         if (present(outunit))  ounit = outunit
         ! Use von Mises guess
         vX = merge(vS, vA, use_vmGuess)
+
+        !stress_target_c = 2._DP
+        !strain_mode_c = vx
+        !mkl_result_code_c = trust_region_solve(stress_target_c, stress_mode_c, strain_mode_c, jacobi_c)
+
 
         call nlls_TR_solve(objFunc, vX)
         R = norm2(objfunc%residual)

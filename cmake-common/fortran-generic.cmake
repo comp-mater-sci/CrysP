@@ -1,5 +1,8 @@
 # Generic sets of Fortran compiler and linker flag
 
+
+set(CMAKE_C_FLAGS "-O3 -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl")
+
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
     set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -Warn all -stand f18 -qopenmp")
     set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check all,noarg_temp_created,nouninit -ftrapuv -debug all -debug-parameters all -traceback -fpe0")

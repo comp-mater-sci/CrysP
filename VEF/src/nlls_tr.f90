@@ -29,10 +29,23 @@ module nllsTR
     use altay
     use logging
     use dmcResultTable
+    use iso_c_binding
 
     implicit none
 
     character(*), parameter:: MOD_NAME = 'nllstr'
+
+
+    interface
+        subroutine calc_jacobi(strain_mode, jacobi) bind(C)
+            import C_DOUBLE
+            real(C_DOUBLE), dimension(5), intent(in):: strain_mode
+            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
+        end subroutine
+    end interface
+
+
+
 
     !Tolerance on the residual (i.e. the 'success threshold'). This is set to 0.01 because we are using normalized stresses and
     !strains and 1% is about as accurate as you can hope the underlying model to be.
@@ -107,7 +120,8 @@ contains
                 case(1)  !Evaluate objective function at current strain mode
                     call objFx%objectiveEval(vX)
                 case(2)  !Recalculate Jacobian
-                    objfx%jacobi = calc_jacobi(vx)
+                    call calc_jacobi(vx, objfx%jacobi)
+                    !objfx%jacobi = calc_jacobi(vx)
             end select
         end do
 
@@ -118,44 +132,44 @@ contains
         call mkl_free_buffers()
     end subroutine
 
-    !>@Brief Calculate the local change in the stress response at a given strain mode (== Jacobi matrix of AlTay)
-    !>@Details Internally calls MKL, which uses a finite differences method.
-    recursive function calc_jacobi(strain_mode, interval) result(jacobi)
-        external altay_wrapper
-
-        real(DP), dimension(5), intent(in):: strain_mode    !> Strain mode at which to calculate the Jacobi
-        real(DP), intent(in), optional:: interval           !> Optional initial interval for the finite difference algorithm.
-        real(DP), dimension(5, 5):: jacobi                  !> The Jacobi
-
-        character(*), parameter:: PROC_NAME = 'calc_jacobi'
-
-        integer:: i
-        real(DP):: eps
-
-        !Gfortran can not handle shorter notation with merge()
-        if (present(interval)) then
-            eps = interval
-        else
-            !Experimentally determined to be optimal
-            eps = 2.E-2_DP
-        end if
-
-        if (djacobi(altay_wrapper, 5, 5, jacobi, strain_mode, eps) /= TR_SUCCESS) &
-            call log_error(MOD_NAME, PROC_NAME, ERR, 'Internal MKL error')
-
-        !The MKL trust region algorithm requires the Jacobi to not have 0 columns. Check for this and if it occurs, increase the
-        !finite differences interval and recalculate the Jacobi. This works due to the step-wise nature of the stress response,
-        !which is in turn caused by the finite number of slip systems determining it.
-        do i = 1, 5
-            if (norm2(jacobi(:,i)) < TOLERANCE) then
-                if (eps < 1._DP) then
-                    !Increase in eps experimentally determined to be optimal
-                    jacobi = calc_jacobi(strain_mode, 2*eps)
-                    return
-                else
-                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Interval too large')
-                end if
-            end if
-        end do
-    end function
+!    !>@Brief Calculate the local change in the stress response at a given strain mode (== Jacobi matrix of AlTay)
+!    !>@Details Internally calls MKL, which uses a finite differences method.
+!    recursive function calc_jacobi(strain_mode, interval) result(jacobi)
+!        external altay_wrapper
+!
+!        real(DP), dimension(5), intent(in):: strain_mode    !> Strain mode at which to calculate the Jacobi
+!        real(DP), intent(in), optional:: interval           !> Optional initial interval for the finite difference algorithm.
+!        real(DP), dimension(5, 5):: jacobi                  !> The Jacobi
+!
+!        character(*), parameter:: PROC_NAME = 'calc_jacobi'
+!
+!        integer:: i
+!        real(DP):: eps
+!
+!        !Gfortran can not handle shorter notation with merge()
+!        if (present(interval)) then
+!            eps = interval
+!        else
+!            !Experimentally determined to be optimal
+!            eps = 2.E-2_DP
+!        end if
+!
+!        if (djacobi(altay_wrapper, 5, 5, jacobi, strain_mode, eps) /= TR_SUCCESS) &
+!            call log_error(MOD_NAME, PROC_NAME, ERR, 'Internal MKL error')
+!
+!        !The MKL trust region algorithm requires the Jacobi to not have 0 columns. Check for this and if it occurs, increase the
+!        !finite differences interval and recalculate the Jacobi. This works due to the step-wise nature of the stress response,
+!        !which is in turn caused by the finite number of slip systems determining it.
+!        do i = 1, 5
+!            if (norm2(jacobi(:,i)) < TOLERANCE) then
+!                if (eps < 1._DP) then
+!                    !Increase in eps experimentally determined to be optimal
+!                    jacobi = calc_jacobi(strain_mode, 2*eps)
+!                    return
+!                else
+!                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Interval too large')
+!                end if
+!            end if
+!        end do
+!    end function
 end module
