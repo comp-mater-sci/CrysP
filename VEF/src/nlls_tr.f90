@@ -37,12 +37,28 @@ module nllsTR
 
 
     interface
-        subroutine calc_jacobi(strain_mode, jacobi) bind(C)
-            import C_DOUBLE
-            real(C_DOUBLE), dimension(5), intent(in):: strain_mode
+        integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
+            import C_INT, &
+                   C_DOUBLE
+
+            real(C_DOUBLE), dimension(5), intent(in):: stress_target
+            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
+            real(C_DOUBLE), dimension(5), intent(out):: strain_mode
             real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
-        end subroutine
+            real(C_DOUBLE), dimension(5), intent(out):: residual
+        end function
+        integer(C_INT) function trust_region_solve_from_guess(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
+            import C_INT, &
+                   C_DOUBLE
+
+            real(C_DOUBLE), dimension(5), intent(in):: stress_target
+            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
+            real(C_DOUBLE), dimension(5), intent(inout):: strain_mode
+            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi
+            real(C_DOUBLE), dimension(5), intent(out):: residual
+        end function
     end interface
+
 
 
 
@@ -82,8 +98,6 @@ contains
         vS = vS/norm2(vs)
         this%residual = this%vSn-vS
 
-        if (associated(this%ptr_db)) &
-            call this%ptr_db%put(vX/norm2(vx), this%vSml)  ! Normalize because the magnitude has no impact on the response.
     end subroutine
 
     !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
@@ -100,36 +114,41 @@ contains
         type(HANDLE_TR):: handle
         integer::         rci_req
         real(DP), target:: eps(6)  ! Target because handle points tot his
+        integer:: err
 
+        err = trust_region_solve_from_guess(objfx%vsn, objfx%vsml, vx, objfx%jacobi, objfx%residual)
+
+        if (associated(objfx%ptr_db)) &
+            call objfx%ptr_db%put(vX/norm2(vx), objfx%vSml)  ! Normalize because the magnitude has no impact on the response.
 
         !Tolerance on all stop criteria except for the norm of the residual is set to 1% of the objective threshold. This means we
         !quit if the progress we are making is much smaller than the accuracy we are looking for and therefore negligible.
         !Experimentally determined to be optimal. See dtrnlspbc_init documentation for more details.
-        eps = OBJECTIVE_THRESHOLD*1.E-2_DP
-        eps(2) = OBJECTIVE_THRESHOLD
-        if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
-            call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
+        !eps = OBJECTIVE_THRESHOLD*1.E-2_DP
+        !eps(2) = OBJECTIVE_THRESHOLD
+        !if (dtrnlspbc_init(handle, 5, 5, vX, LOWER_BOUND, UPPER_BOUND, eps, 350, 50, 0.1_DP) /= TR_SUCCESS) &
+        !    call log_error(MOD_NAME, PROC_NAME, ERR, 'Could not initialize TR solver.')
 
-        RCI_Req = 0
-        do while (rci_req >= 0)
-            if (dtrnlspbc_solve(handle, objfx%residual, objfx%jacobi, RCI_Req) /= TR_SUCCESS) &
-                call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
+        !RCI_Req = 0
+        !do while (rci_req >= 0)
+        !    if (dtrnlspbc_solve(handle, objfx%residual, objfx%jacobi, RCI_Req) /= TR_SUCCESS) &
+        !        call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in trust region solver.')
 
-            !RCI status. See dtrnlspbc_solve documentation for details.
-            select case (RCI_Req)
-                case(1)  !Evaluate objective function at current strain mode
-                    call objFx%objectiveEval(vX)
-                case(2)  !Recalculate Jacobian
-                    call calc_jacobi(vx, objfx%jacobi)
-                    !objfx%jacobi = calc_jacobi(vx)
-            end select
-        end do
+        !    !RCI status. See dtrnlspbc_solve documentation for details.
+        !    select case (RCI_Req)
+        !        case(1)  !Evaluate objective function at current strain mode
+        !            call objFx%objectiveEval(vX)
+        !        case(2)  !Recalculate Jacobian
+        !            call calc_jacobi(vx, objfx%jacobi)
+        !            !objfx%jacobi = calc_jacobi(vx)
+        !    end select
+        !end do
 
-        ! Release MKL resources
-        if (dtrnlspbc_delete(handle) /= TR_SUCCESS) &
-            call log_error(MOD_NAME, PROC_NAME, ERR, 'dtrnlspbc_delete failed')
+        !! Release MKL resources
+        !if (dtrnlspbc_delete(handle) /= TR_SUCCESS) &
+        !    call log_error(MOD_NAME, PROC_NAME, ERR, 'dtrnlspbc_delete failed')
 
-        call mkl_free_buffers()
+        !call mkl_free_buffers()
     end subroutine
 
 !    !>@Brief Calculate the local change in the stress response at a given strain mode (== Jacobi matrix of AlTay)

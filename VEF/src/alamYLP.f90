@@ -11,27 +11,6 @@ module alamYLP
 
     implicit none
 
-    interface
-        integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi) bind(C) result(mkl_result_code)
-            import C_INT, &
-                   C_DOUBLE
-
-            real(C_DOUBLE), dimension(5), intent(in):: stress_target
-            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
-            real(C_DOUBLE), dimension(5), intent(out):: strain_mode
-            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi  ! Stored row major
-        end function
-        integer(C_INT) function trust_region_solve_from_guess(stress_target, stress_mode, strain_mode, jacobi) bind(C) result(mkl_result_code)
-            import C_INT, &
-                   C_DOUBLE
-
-            real(C_DOUBLE), dimension(5), intent(in):: stress_target
-            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
-            real(C_DOUBLE), dimension(5), intent(inout):: strain_mode
-            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi  !Stored row major
-        end function
-    end interface
-
 contains
 
     !> Calculates plastic strain rate corresponding to given deviatoric stress
