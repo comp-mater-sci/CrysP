@@ -28,9 +28,9 @@ module alamYLP
     type:: objectiveFunction
         real(DP), dimension(5):: strain_mode
         real(DP), dimension(5):: residual
-        real(DP), dimension(5, 5):: jacobi
-        real(DP), dimension(5):: vSn = 0.D0
-        real(DP), dimension(5):: vSml = 0.D0
+        real(DP), dimension(5, 5):: jacobi = 0._DP
+        real(DP), dimension(5):: vSn = 0._DP
+        real(DP), dimension(5):: vSml = 0._DP
         type(ResultTable), pointer:: ptr_db => null()
     end type
 
