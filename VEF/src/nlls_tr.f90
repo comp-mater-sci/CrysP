@@ -114,9 +114,9 @@ contains
         type(HANDLE_TR):: handle
         integer::         rci_req
         real(DP), target:: eps(6)  ! Target because handle points tot his
-        integer:: err
 
-        err = trust_region_solve_from_guess(objfx%vsn, objfx%vsml, vx, objfx%jacobi, objfx%residual)
+        if(trust_region_solve_from_guess(objfx%vsn, objfx%vsml, vx, objfx%jacobi, objfx%residual) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in MKL')
 
         if (associated(objfx%ptr_db)) &
             call objfx%ptr_db%put(vX/norm2(vx), objfx%vSml)  ! Normalize because the magnitude has no impact on the response.

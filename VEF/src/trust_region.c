@@ -118,13 +118,6 @@ int trust_region_solve_from_guess(const double* stress_target, double* stress_st
     }
     mkl_err =  dtrnlspbc_delete (&handle);
 
-    printf("%d\n", rci_req);
-
-    //for (int i=0;i<5;i++){
-    //    printf("%f\n", stress_mode[i]);
-    //}
-
-
     return mkl_err;
 }
 
