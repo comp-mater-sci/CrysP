@@ -34,7 +34,6 @@ module alamYLP
         type(ResultTable), pointer:: ptr_db => null()
     end type
 
-
     interface
         integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
             import C_INT, &
