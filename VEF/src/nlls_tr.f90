@@ -47,16 +47,6 @@ module nllsTR
             real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
             real(C_DOUBLE), dimension(5), intent(out):: residual
         end function
-        integer(C_INT) function trust_region_solve_from_guess(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
-            import C_INT, &
-                   C_DOUBLE
-
-            real(C_DOUBLE), dimension(5), intent(in):: stress_target
-            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
-            real(C_DOUBLE), dimension(5), intent(inout):: strain_mode
-            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi
-            real(C_DOUBLE), dimension(5), intent(out):: residual
-        end function
     end interface
 
 
@@ -115,7 +105,7 @@ contains
         integer::         rci_req
         real(DP), target:: eps(6)  ! Target because handle points tot his
 
-        if(trust_region_solve_from_guess(objfx%vsn, objfx%vsml, vx, objfx%jacobi, objfx%residual) /= TR_SUCCESS) &
+        if(trust_region_solve(objfx%vsn, objfx%vsml, vx, objfx%jacobi, objfx%residual) /= TR_SUCCESS) &
             call log_error(MOD_NAME, PROC_NAME, ERR, 'Error in MKL')
 
         if (associated(objfx%ptr_db)) &
