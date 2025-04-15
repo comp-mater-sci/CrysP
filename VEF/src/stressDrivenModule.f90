@@ -11,7 +11,6 @@ use dmcResultTable
 use dmcBasicModule
 use logging
 use commonUtils
-use nllstr
 
 implicit none
 

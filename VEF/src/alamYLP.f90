@@ -1,3 +1,5 @@
+include 'mkl_rci.f90'
+
 !>    \file alamYLP.f90 The file contains modules that calculate
 !>          yield locus position directly from the ALAMEL model.
 !>
@@ -5,11 +7,46 @@
 
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
-    use utils
-    use nllsTR
     use iso_c_binding
+    use mkl_rci
+    use utils
+    use dmcresulttable
+    use logging
 
     implicit none
+
+    private
+
+    public:: OBJECTIVE_THRESHOLD, &
+             ObjectiveFunction, &
+             multilevelylp
+
+    character(*), parameter:: MOD_NAME = 'alamYLP'
+    real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
+
+    !>Data type for objective functions.
+    type:: objectiveFunction
+        real(DP), dimension(5):: strain_mode
+        real(DP), dimension(5):: residual
+        real(DP), dimension(5, 5):: jacobi
+        real(DP), dimension(5):: vSn = 0.D0
+        real(DP), dimension(5):: vSml = 0.D0
+        type(ResultTable), pointer:: ptr_db => null()
+    end type
+
+
+    interface
+        integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
+            import C_INT, &
+                   C_DOUBLE
+
+            real(C_DOUBLE), dimension(5), intent(in):: stress_target
+            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
+            real(C_DOUBLE), dimension(5), intent(out):: strain_mode
+            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
+            real(C_DOUBLE), dimension(5), intent(out):: residual
+        end function
+    end interface
 
 contains
 
@@ -38,13 +75,6 @@ contains
         integer, parameter       :: stdout = 6
         logical                 :: log_info, log_debug
         real(DP)        :: norm
-
-
-        real(DP):: stress_target_c(5), &
-                   stress_mode_c(5), &
-                   strain_mode_c(5), &
-                   jacobi_c(5, 5)
-        integer:: mkl_result_code_c
 
 
         if (present(useVMGuess)) then
@@ -82,12 +112,12 @@ contains
         ! Use von Mises guess
         vX = merge(vS, vA, use_vmGuess)
 
-        !stress_target_c = 2._DP
-        !strain_mode_c = vx
-        !mkl_result_code_c = trust_region_solve(stress_target_c, stress_mode_c, strain_mode_c, jacobi_c)
+        if(trust_region_solve(objfunc%vsn, objfunc%vsml, vx, objfunc%jacobi, objfunc%residual) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
 
+        if (associated(objfunc%ptr_db)) &
+            call objfunc%ptr_db%put(vX/norm2(vx), objfunc%vSml)  ! Normalize because the magnitude has no impact on the response.
 
-        call nlls_TR_solve(objFunc, vX)
         R = norm2(objfunc%residual)
 
         ! Set output strain rate
@@ -101,4 +131,5 @@ contains
         vSonA = objFunc%vSml
         info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)
     end subroutine
+
 end module

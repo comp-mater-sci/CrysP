@@ -24,7 +24,6 @@ criNamedRange.f90
 criNumerics.f90
 criRange.f90
 criUncomment.f90
-nlls_tr.f90
 alamYLP.f90 
 abstractModule.f90
 basicModule.f90
