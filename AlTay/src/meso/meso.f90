@@ -5,6 +5,9 @@
 !>
 !> This module merely serves as a generic interface between the mesoscopic and macroscopic layer and does not contain any implementation.
 !> It does however define which mesoscopic models are supported. These models implement the logic needed for the interface defined here.
+!> Higher-level modules can query this module for all of the information they need regarding the supported mesoscopic models, which
+!> parameters they use etc. In this way, no hard-coded information about the available models needs to be kept at all at higher
+!> levels.
 
 module meso
     use utils
@@ -17,11 +20,11 @@ module meso
 
     public
 
-    !> Supported mesoscopic models
+    !> Supported mesoscopic models.
     !> Constants set to correspond to the number of grains in the clusters the models use.
     enum, bind(C)
-        enumerator  ::  MESO_MODEL_FCTAYLOR       = 1,  & !! Traditional full-constraints Taylor model.
-                        MESO_MODEL_ALAMEL         = 2     !! ALAMEL model developed at KU Leuven.
+        enumerator  ::  MESO_MODEL_FCTAYLOR       = 1,  &
+                        MESO_MODEL_ALAMEL         = 2
     end enum
 
     interface
@@ -89,18 +92,24 @@ module meso
             real(DP), intent(out):: slip                    !! Total slip which occured in the cluster during the time step
         end subroutine
 
-        !>@Brief Update the model state
-        !>@Details Increments the model state after a time step has elapsed.
+        !> Update the model state at the end of a time step.
+        !>
+        !> Useful because the model may contain state that is constant for all cluster at a particular time but needs to update as
+        !> time passes.
         module subroutine meso_update_model()
         end subroutine
 
-        !>@Brief finalize the mesoscopic model.
-        !>@Details Deallocate any pointers or allocatable data structures at the meso level.
+        !> Finalize the mesoscopic model.
+        !>
+        !>Deallocate any pointers or allocatable data structures at the meso level.
         module subroutine meso_finalize()
         end subroutine
     end interface
 end module
 
+!> Implementation of the interface declared in the meso module.
+!>
+!> Links the different model IDs to specific mesoscopic models and keeps a reference to the particular model currently in use.
 submodule(meso) meso_imp
     use logging
     use meso_model
@@ -109,25 +118,23 @@ submodule(meso) meso_imp
 
     implicit none
 
-    character(*), parameter:: MOD_NAME = "Meso"
-
-    class(MesoModel), allocatable:: model
+    class(MesoModel), allocatable:: model !! Reference to the mesoscopic model used for this simulation
 
 contains
 
-    !> @Brief Return a list of IDs of all the supported mesoscopic models
-    !> @Details The main purpose of this function is to avoid duplication of the hardcoded list of supported mesoscopic models.
+    !> Return a list of IDs of all the supported mesoscopic models
     pure function get_model_ids() result(ids)
-        integer, dimension(:), allocatable:: ids
+        integer, dimension(:), allocatable:: ids !! List of supported mesoscopic model IDs.
 
         ids = [MESO_MODEL_FCTAYLOR, MESO_MODEL_ALAMEL]
     end function
 
-    !>@Brief returns an instance of a mesoscopic model with the provided ID.
-    !>@Details The main purpose of this function is to avoid duplication of the hard-coded link between model IDs and their types.
+    !> Returns an instance of a mesoscopic model with the provided ID.
+    !>
+    !> Avoids duplication of the hard-coded link between model IDs and their types.
     function get_model_instance(id) result(m)
-        integer, intent(in):: id            !> Numerical ID of the model. Must be contained in MESO_MODELS enum.
-        class(MesoModel), allocatable:: m   !> The model instance
+        integer, intent(in):: id            !! Numerical ID of the model. Must be contained in MESO_MODELS enum.
+        class(MesoModel), allocatable:: m   !! The model instance
 
         select case (id)
             case (MESO_MODEL_FCTaylor)
@@ -135,10 +142,11 @@ contains
             case (MESO_MODEL_ALAMEL)
                 allocate(AlamelModel:: m)
             case default
-                call log_error(MOD_NAME, "get_model_instance", ERR_VAL, "Invalid model ID")
+                call log_error("Meso", "get_model_instance", ERR_VAL, "Invalid model ID")
         end select
     end function
 
+    !> See interface definition in meso module.
     module procedure meso_get_parameters
         class(MesoModel), allocatable:: m
 
@@ -147,27 +155,33 @@ contains
         params = m%get_parameters()
     end procedure
 
+    !> See interface definition in meso module.
     module procedure meso_init
         model = get_model_instance(model_id)
         call model%init(grains, params, clusters)
     end procedure
 
+    !> See interface definition in meso module.
     module procedure meso_get_stress
         stress = model%get_stress(cluster_, velocity_gradient)
     end procedure
 
+    !> See interface definition in meso module.
     module procedure meso_prepare_deformation
         call model%prepare_deformation(velocity_gradient)
     end procedure
 
+    !> See interface definition in meso module.
     module procedure meso_apply_deformation_step
         call model%apply_step(cluster_, stress, slip)
     end procedure
 
+    !> See interface definition in meso module.
     module procedure meso_update_model
         call model%update()
     end procedure
 
+    !> See interface definition in meso module.
     module procedure meso_finalize
         call model%finalize()
         deallocate(model)
