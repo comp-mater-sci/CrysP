@@ -108,10 +108,9 @@ contains
     end subroutine
 
     !>@Brief See 'meso_model_apply_step'.
-    subroutine full_constraints_taylor_deform(this, cluster_, index_cluster, stress, slip)
+    subroutine full_constraints_taylor_deform(this, cluster_, stress, slip)
         class(TaylorModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
-        integer, intent(in):: index_cluster
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
 

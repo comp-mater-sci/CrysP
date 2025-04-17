@@ -57,7 +57,7 @@ module meso_model
         !> @Brief Apply a deformation step to a cluster
         !> @Details Applies a deformation step to a cluster and returns useful data about the deformation. Upon return, the cluster state is updated to the state after the
         !deformation step.
-        subroutine meso_model_apply_step(this, cluster_, index_cluster, stress, slip)
+        subroutine meso_model_apply_step(this, cluster_, stress, slip)
             import MesoModel
             import Cluster
             import DP
@@ -66,7 +66,6 @@ module meso_model
             class(Cluster), target, intent(inout):: cluster_ !> The cluster to apply the deformation step to. Upon entry, the
                                                                  !> cluster state must be consistent with the beginning of the time step. Upon exit, the cluster state corresponds to the
                                                                  !> end of the time step.
-            integer, intent(in):: index_cluster                  !> Index of the cluster in the cluster list. To be removed.
             real(DP), dimension(3, 3), intent(out):: stress           !> Homogenized stress state of the cluster during the time step.
             real(DP), intent(out):: slip                        !> Total slip that occured in the cluster to realize the
                                                                 !> deformation during this time step.

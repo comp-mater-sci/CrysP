@@ -93,7 +93,7 @@ module simulation
         !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
             !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
                 do i = 1, n_clusters
-                    call meso_apply_deformation_step(clusters(i), i, stress_cluster, slip_cluster)
+                    call meso_apply_deformation_step(clusters(i), stress_cluster, slip_cluster)
                     weight_cluster = clusters(i)%weight
                     total_weight = total_weight+weight_cluster
                     homogenized_stress = homogenized_stress+stress_cluster*weight_cluster

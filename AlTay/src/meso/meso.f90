@@ -82,9 +82,8 @@ module meso
         !> Calculates and outputs the stress state and slip rates of the cluster during the time step.
         !> All quantities are assumed constant during the time step.
         !> On return, the cluster state is updated to correspond to the end of the time step.
-        module subroutine meso_apply_deformation_step(cluster_, index_cluster, stress, slip)
+        module subroutine meso_apply_deformation_step(cluster_, stress, slip)
             class(Cluster), intent(inout):: cluster_        !! Cluster to deform
-            integer, intent(in):: index_cluster             !! Index of the cluster in the cluster list (to be removed)
             real(DP), dimension(3, 3), intent(out):: stress !! Homogenized stress state of the cluster during the time step in the
                                                             !! macroscopic frame.
             real(DP), intent(out):: slip                    !! Total slip which occured in the cluster during the time step
@@ -162,7 +161,7 @@ contains
     end procedure
 
     module procedure meso_apply_deformation_step
-        call model%apply_step(cluster_, index_cluster, stress, slip)
+        call model%apply_step(cluster_, stress, slip)
     end procedure
 
     module procedure meso_update_model

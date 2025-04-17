@@ -231,10 +231,9 @@ contains
         this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
 
-    subroutine alamel_deform(this, cluster_, index_cluster, stress, slip)
+    subroutine alamel_deform(this, cluster_, stress, slip)
         class(AlamelModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
-        integer, intent(in)::       index_cluster
         real(DP), dimension(3, 3), intent(out):: stress                 !> Homogenized stress over the cluster
         real(DP), intent(out):: slip                                    !> Total slip in the cluster for this time step
         real(DP)::                  orientation_increment(3, 3), &
