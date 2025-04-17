@@ -13,7 +13,7 @@ module cluster_module
 
     !> Unit of abstraction at the mesoscopic level.
     !>
-    !> The mesoscopic behavior is defined by the behavior of and interactions between a small group of grains, i.e. a cluster.
+    !> The cluster can be seen as the atomistic material unit with respect to the response to an applied deformation.
     !> Mesoscopic models are expected to extend this type and add fields for any cluster-specific state they need.
     type, abstract:: Cluster
         type(Grain), dimension(:), allocatable:: grains !! List of grains making up this cluster.

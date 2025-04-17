@@ -1,3 +1,11 @@
+!> Top-level module at the meso scale.
+!>
+!> The mesoscopic scale refers in our case to a small, local cluster of grains. This allows the simulation of interactions between
+!> neighboring grains under deformation, which defines the local material response to the deformation.
+!>
+!> This module merely serves as a generic interface between the mesoscopic and macroscopic layer and does not contain any implementation.
+!> It does however define which mesoscopic models are supported. These models implement the logic needed for the interface defined here.
+
 module meso
     use utils
     use parameters
@@ -9,58 +17,77 @@ module meso
 
     public
 
-    !Supported mesoscopic models
-    !Constants set to correspond to the number of grains in a cluster
+    !> Supported mesoscopic models
+    !> Constants set to correspond to the number of grains in the clusters the models use.
     enum, bind(C)
-        enumerator  ::  MESO_MODEL_FCTAYLOR       = 1,  &
-                        MESO_MODEL_ALAMEL         = 2
+        enumerator  ::  MESO_MODEL_FCTAYLOR       = 1,  & !! Traditional full-constraints Taylor model.
+                        MESO_MODEL_ALAMEL         = 2     !! ALAMEL model developed at KU Leuven.
     end enum
 
     interface
 
-        !>@Brief Gets the parameters correspondding to a certain mesoscopic model
+        !> Gets the parameters corresponding to a certain mesoscopic model
+        !>
+        !> The ID must exist in the enum defined in this module. If not, this routine crashes the program.
         module function meso_get_parameters(model_id) result(params)
-            integer, intent(in):: model_id                         !> ID of the model for which to return the parameters
-            type(Parameter), dimension(:), allocatable:: params    !> The list of parametes
+            integer, intent(in):: model_id                         !! ID of the model for which to return the parameters.
+            type(Parameter), dimension(:), allocatable:: params    !! The list of parameters for the specified model.
         end function
 
-        !> @brief Initialize a meso model
-        !> @details Set the mesoscopic model to an instance of the hardening model defined by model_id and initialize it using a
-        !list of parameters.
-        !Note that we must make this a subroutine to avoid creations of temporaries passed through the stack by IFX.
+        !> Initialize the mesoscopic level of the simulation.
+        !>
+        !> To be called only after the microscopic level has been initialized.
+        !>
+        !> Set the mesoscopic model for the simulation and initialize it. Also transform the unstructured list of grains resulting
+        !> from the initialization of the micro level into a list of local clusters, which are also initialized.
+        !>
+        !> If the provided model ID is not contained in the enum provided in this module or the list of parameters is not properly
+        !> initialized, this routine crashes the program.
+        !>
+        !> @note
+        !> We must make this a subroutine to avoid creations of temporaries passed through the stack by IFX, which may lead to a
+        !> stack overflow/segfault.
+        !> @endnote
         module subroutine meso_init(model_id, grains, params, clusters)
-            integer, intent(in):: model_id          !> ID of the model to be initialized
-            type(Grain), dimension(:), allocatable, intent(in):: grains  !> Initialized grains to be distributed among the clusters. Must be declared allocatable to ensure deep copy of allocatable components.
-            type(Parameter), dimension(:), allocatable, intent(in):: params   !> List of parameters with which to initialize the model. Must correspond
-                                                                 ! to the parameter list obtained by calling meso_get_parameters(model_id)
-            class(Cluster), dimension(:), allocatable, intent(out):: clusters !> Initialized clusters
+            integer, intent(in):: model_id                               !! ID of the model to be initialized. Must exist in the enum defined in this module.
+            type(Grain), dimension(:), intent(in):: grains  !! Initialized grains to be distributed among the clusters.
+            type(Parameter), dimension(:), intent(in):: params   !! List of parameters with which to initialize the model. Must correspond
+                                                                              !! to the parameter list obtained by calling
+                                                                              !! meso_get_parameters(model_id) and be properly initialized.
+            class(Cluster), dimension(:), allocatable, intent(out):: clusters !! Initialized clusters which form the unit of
+                                                                              !! simulation at the mesoscopic level.
         end subroutine
 
-        !> @Brief prepares the model for a deformation according to a given velocity gradient
-        !> @Details Updates model state variables to correspond to the selected velocity gradient. Useful because often several
-        ! quantities are derived from the velocity gradient, which remains constant over all clusters and often many time steps.
-        !Note to be called only when preparing for an actual deformation (not when probing stress state).
+        !> Prepare for a deformation according to a given velocity gradient.
+        !>
+        !> Allows meso models to update state variables to correspond to the selected velocity gradient. Useful because often several
+        !> quantities are derived from the velocity gradient, which remains constant over all clusters and often many time steps.
         module subroutine meso_prepare_deformation(velocity_gradient)
-            real(DP), dimension(3, 3), intent(in):: velocity_gradient !> Velocity gradient for the current deformation.
+            real(DP), dimension(3, 3), intent(in):: velocity_gradient !! Velocity gradient for the upcoming deformation.
         end subroutine
 
-        !>@brief Get the stress state of a cluster when a certain velocity gradient is applied
-        !>@details The stress state is homogenized over all of the grains of the cluster and presented in the macroscopic frame.
+        !> Get the stress state of a cluster when a certain velocity gradient is applied.
+        !>
+        !> The cluster is not deformed.
+        !> The stress state is homogenized over all of the grains of the cluster and presented in the macroscopic frame.
         module function meso_get_stress(cluster_, velocity_gradient) result(stress)
-            class(Cluster), intent(inout):: cluster_   !> Pointer to cluster for which to calculate the stress state.
-            real(DP), dimension(3, 3), intent(in):: velocity_gradient !> Velocity gradient to probe
-            real(DP), dimension(3, 3):: stress                        !> Homogenized stress state of the cluster in the macroscopic
-                                                                      !frame when deforming according to the given velocity gradient.
+            class(Cluster), intent(inout):: cluster_                  !! Cluster for which to calculate the stress state.
+            real(DP), dimension(3, 3), intent(in):: velocity_gradient !! Velocity gradient to probe.
+            real(DP), dimension(3, 3):: stress                        !! Homogenized stress state of the cluster in the macroscopic
+                                                                      !! frame when deforming according to the given velocity gradient.
         end function
 
-        !>@Brief Apply a deformation step to a cluster
-        !>@Details Calculates and outputs the stress state and slip rates of the cluster during the time step and updates the
-        !cluster state to that at the end of the time step.
+        !> Apply a deformation step to a cluster.
+        !>
+        !> Calculates and outputs the stress state and slip rates of the cluster during the time step.
+        !> All quantities are assumed constant during the time step.
+        !> On return, the cluster state is updated to correspond to the end of the time step.
         module subroutine meso_apply_deformation_step(cluster_, index_cluster, stress, slip)
-            class(Cluster), intent(inout):: cluster_ !> Cluster to which to apply the deformation step
-            integer, intent(in):: index_cluster               !> Index of the cluster in the cluster list (to be removed)
-            real(DP), dimension(3, 3), intent(out):: stress              !> Homogenized stress state of the cluster during the time step
-            real(DP), intent(out):: slip !> Total slip which occured in the cluster during the time step
+            class(Cluster), intent(inout):: cluster_        !! Cluster to deform
+            integer, intent(in):: index_cluster             !! Index of the cluster in the cluster list (to be removed)
+            real(DP), dimension(3, 3), intent(out):: stress !! Homogenized stress state of the cluster during the time step in the
+                                                            !! macroscopic frame.
+            real(DP), intent(out):: slip                    !! Total slip which occured in the cluster during the time step
         end subroutine
 
         !>@Brief Update the model state
