@@ -21,10 +21,11 @@ module meso
     public
 
     !> Supported mesoscopic models.
-    !> Constants set to correspond to the number of grains in the clusters the models use.
+    !>
+    !> Refer to the documentation of the implementation each model for details on the model itself as well as its parameters.
     enum, bind(C)
-        enumerator  ::  MESO_MODEL_FCTAYLOR       = 1,  &
-                        MESO_MODEL_ALAMEL         = 2
+        enumerator::  MESO_MODEL_FCTAYLOR       = 1 !! Full-Constraints Taylor.
+        enumerator::  MESO_MODEL_ALAMEL         = 2 !! Advanced LAMEL model.
     end enum
 
     interface
