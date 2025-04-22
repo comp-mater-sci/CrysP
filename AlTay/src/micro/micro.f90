@@ -1,4 +1,13 @@
-!> Dispatcher of hardening models
+!> Top-level module at the micro scale.
+
+!> The micro level is concerned with all phenomena occuring inside a single grain. These phenomena determine how a single grain
+!> responds to imposed stress or strain.
+
+!> This module is merely an interface to the microscopic layer and does not contain any implementation. It does however define which
+!> deformation mechanisms and hardening models are supported. Together these form constitutive models, which implement the logic
+!> needed for the interface defined here. Higher-level modules can query this module for all of the information they need regarding
+!> the supported constitutive  models, which parameters they use etc. In this way, no hard-coded information about the available models needs to be kept at all at higher levels.
+
 module micro
     use utils
     use parameters
@@ -20,7 +29,7 @@ module micro
                      HARDENING_DSH_LOOP   = 13
     end enum
 
-    !> Supported deformation mechanisms
+    !> Supported deformation mechanisms (i.e. slip system sets).
     enum, bind(C)
         enumerator:: SLIP_SYSTEMS_FCC  , &
                      SLIP_SYSTEMS_BCC24, &
@@ -30,54 +39,57 @@ module micro
     !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
     !and Fortran semantics require lists to be of homogeneous type.
     type:: Phase
-        class(ConstitutiveModel), allocatable:: model !> The constitutive model backing the phase
+        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
     end type
 
     !> High-level description of a phase. Used for passing phase information to and from higher-level program units. Necessary
-    !because much of the phase description may vary in size between phases so using regular arrays is inconvenient/inefficient/unsafe.
+    !> because much of the phase description may vary in size between phases so using regular arrays is inconvenient/inefficient/unsafe.
     type:: PhaseDescriptor
-        integer:: model_id                                      !> ID of the hardening model to be initialized. Must exist in the enum list provided in this module.
-        integer:: deformation_mechanism                         !> Deformation mechanism to be employed for all grains.
-        type(Parameter), dimension(:), allocatable:: parameters !> Parameters used to initialize the hardening model. Must correspond to the parameter list obtained by calling micro_get_parameters(model_id) and must pass micro_validate_parameters(model_id).
-        real(DP), dimension(:,:), allocatable:: orientations    !> List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
+        integer:: model_id                                      !! ID of the hardening model used by this phase. Must exist in the
+                                                                !! enum above.
+        integer:: deformation_mechanism                         !! Deformation mechanism for all grains of this phase.
+        type(Parameter), dimension(:), allocatable:: parameters !! Parameters used to initialize the hardening model. Assumed to
+                                                                !! have passed micro_validate_parameters(model_id).
+        real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
     end type
 
     interface
-        !>@Brief Returns the parameter list for a particular hardening model.
-        !>@Details The parameters are used to initialize the hardening model. If no valid ID is provided, the procedure crashes the program.
+        !> Returns the parameter list for a particular hardening model.
+
+        !> The parameters are used to initialize the hardening model.
+        !> ID must exist in the enum above. If not, the procedure crashes the program.
         module function micro_get_parameters(model_id) result(params)
-            integer, intent(in)::          model_id !> ID of the hardening model. Valid IDs are listed above.
-            type(Parameter), allocatable:: params(:) !> List of parameters for the hardening model corresponding to the provided ID.
+            integer, intent(in)::          model_id  !! ID of the hardening model. Must exist in the list above.
+            type(Parameter), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
         end function
 
-        !> @Brief Check if a list of initialized parameters is valid for a given hardening model.
-        !> @Details If the parameters do not meet the specified constraints, this routine crashes the program.
-        !!          Each hardening model is free do define additional constraints on the parameters. Refer to the documentation of the
-        !!          individual hardening models for details.
+        !> Check if a list of initialized parameters is valid for a given hardening model.
+
+        !> If any of the parameters is invalid, the implementation is expected to crashes the program.
         module subroutine micro_validate_parameters(model_id, params)
-            integer, intent(in):: model_id                             !> ID of the hardening model to be initialized. Must
-                                                                       !! exist in the enum list provided in this module.
-            type(Parameter), dimension(:), target, intent(in):: params !> List of initialized parameters to be validated. \
-                                                                       !! Must correspond to the parameter list
-                                                                       !! obtained by calling micro_get_parameters(model_id)
+            integer, intent(in):: model_id                             !! ID of the hardening model to be initialized. Must
+                                                                       !! exist in the enum above.
+            type(Parameter), dimension(:), target, intent(in):: params !! List of initialized parameters to be validated.
         end subroutine
 
-        !>@Brief Initialize the micro-level entities of the simulation: The hardening model and the grains.
-        !>@Details If the parameters do not meet the specified constraints, this procedure crashes the program.
-        !!         Must be subroutine to avoid problems with IFX copying too much to the stack.
+        !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
+
+        !> For each provided phase descriptor, a constitutive model is initialized. For each of the orientations in each of
+        !> the phase descriptors, a grain object is initialized which points to its constitutive model. All of the grains across all
+        !> phases are assimilated as output.
         module subroutine  micro_init(phases_, grains)
-            type(PhaseDescriptor), dimension(:), intent(in):: phases_    !> Phase descriptors for each phase.
-            type(Grain), dimension(:), allocatable, intent(out):: grains !> List of initialized grain objects.
+            type(PhaseDescriptor), dimension(:), intent(in):: phases_    !! Phase descriptors for each phase.
+            type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
         end subroutine
 
-        !>@Brief Update the critical resolved shear stresses (CRSS) of the grain.
-        !>@Details Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
-        !time since the last update of the CRSS. The slip rates are assumed constant during the time interval.
+        !> Update the critical resolved shear stresses (CRSS) of the grain.
+
+        !> Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
+        !> time since the last update. The slip rates are assumed constant during the time interval.
         module subroutine micro_deform(grain_, time, slip_rates)
-            type(Grain), intent(inout)::  grain_     !> Grain for which to update the CRSS.
-            real(DP), intent(in)::     time, &       !> Elapsed time since last update of the CRSS for this grain.
-                                       slip_rates(:) !> Slip rate for each slip system of the grain. Size(slip_rates) must equal
-                                                     !> the number of slip systems in the grain.
+            type(Grain), intent(inout):: grain_        !! Grain for which to update the CRSS.
+            real(DP), intent(in)::       time, &       !! Elapsed time since last update of the CRSS for this grain.
+                                         slip_rates(size(grain_%model%taylor_coeffs, 2)) !! Slip rate for each slip system of the grain.
         end subroutine
     end interface
 end module
