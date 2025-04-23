@@ -119,10 +119,8 @@ module simulation
         call meso_update_model()
     end subroutine
 
-    subroutine output_current_state(file_handle)
-        integer, intent(in):: file_handle
-
-        call cur_write_block(file_handle, clusters, deformation_gradient)
+    subroutine output_current_state()
+        call cur_write_block(clusters, deformation_gradient)
     end subroutine
 
     subroutine simulation_finalize()

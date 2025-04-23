@@ -69,8 +69,6 @@ contains
     subroutine finalizeAltay(info)
         integer, intent(out)                 :: info     !< exit code (0 on success)
 
-        ! Close all units.
-        close(IMP5)
         call simulation_finalize()
         if (allocated(astate%simulCalls)) then
               deallocate(astate%simulCalls)
@@ -139,7 +137,6 @@ contains
         integer, intent(out)           :: info
 
         info = VEF_OK
-        if (acnf%output_config%nfile == 1) call output_current_state(IMP1)
-        if (info /= 0) return
+        if (acnf%output_config%nfile == 1) call output_current_state()
     end subroutine
 end module

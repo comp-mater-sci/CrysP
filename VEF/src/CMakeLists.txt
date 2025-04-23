@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
 project(alamDMC Fortran)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
