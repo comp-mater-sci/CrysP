@@ -1,3 +1,8 @@
+!> Implementation of the ALAMEL model developed at KU Leuven. 
+!>
+!> See "Deformation texture prediction: from the Taylor model to the advanced Lamel model" 
+!> by Van Houtte et. al. published in the International Journal of Plasticity 21 for details.
+
 module alamel
     use utils
     use grain_module
@@ -14,43 +19,44 @@ module alamel
     private
     public:: AlamelModel
 
-    character(*), parameter:: MOD_NAME = 'alamel'
+    character(*), parameter:: MOD_NAME = 'alamel'   !! Module name for easy logging.
 
     !> Cluster used by the ALAMEL model.
     type, extends(Cluster):: AlamelCluster
-        integer, dimension(10):: ind_basis_systems                  !> Indices of the currently active slip systems
-        real(DP), dimension(3, 3):: initial_boundary_orientation    !> Rotation matrix representing the initial boundary orientation
-        real(DP), dimension(10, 10):: inverse_basis = 0._DP         !> Inverse of the matrix formed by selecting the active slip
-                                                                    !> systems. Buffering this quantity greatly improves the performance of the internally used simplex routine.
-        type(Relaxation), dimension(2):: relaxations                !> ALAMEL clusters contain 2 relaxations which act as slip
-                                                                    !> systems with 0 critical resolved shear stress.
+        integer, dimension(10):: ind_basis_systems                  !! Indices of the currently active slip systems
+        real(DP), dimension(3, 3):: initial_boundary_orientation    !! Rotation matrix representing the initial boundary orientation
+        real(DP), dimension(10, 10):: inverse_basis = 0._DP         !! Inverse of the matrix formed by selecting the active slip
+                                                                    !! systems. Buffering this quantity greatly improves the performance.
+        type(Relaxation), dimension(2):: relaxations                !! ALAMEL clusters contain 2 relaxations which act as slip
+                                                                    !! systems with 0 critical resolved shear stress.
     end type
 
+    !> Implementation of the ALAMEL model
     type, extends(MesoModel):: AlamelModel
-        real(DP), dimension(3, 3):: deformation_gradient
-        real(DP), dimension(3, 3):: deformation_gradient_during_time_step
-        real(DP), dimension(3, 3):: next_deformation_gradient
-        real(DP), dimension(3, 3):: deformation_gradient_increment
+        real(DP), dimension(3, 3):: deformation_gradient                    !! Description of the current grain shape (at the beginning of the current time step). Considered identical for all grains.
+        real(DP), dimension(3, 3):: deformation_gradient_during_time_step   !! Grain shape in the middle of the time step being simulated
+        real(DP), dimension(3, 3):: next_deformation_gradient               !! Grain shape at the end of the time step.
+        real(DP), dimension(3, 3):: deformation_gradient_increment          !! Increment of the deformation gradient over *half* a time step.
     contains
-        procedure, nopass:: get_parameters => alamel_get_parameters
-        procedure:: init                   => alamel_init
-        procedure:: get_stress             => alamel_get_stress
-        procedure:: apply_step             => alamel_deform
-        procedure:: update                 => alamel_update
-        procedure:: prepare_deformation    => alamel_prepare_deformation
+        procedure, nopass:: get_parameters => alamel_get_parameters         !! Inherited from [[MesoModel]]
+        procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
+        procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
+        procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
+        procedure:: update                 => alamel_update                 !! Inherited from [[MesoModel]]
+        procedure:: prepare_deformation    => alamel_prepare_deformation    !! Inherited from [[MesoModel]]
     end type
 
 contains
 
-    !>@Brief Convert the type of a provided generic cluster to AlamelCluster
-    !>@Details This is the closest Fortran can get to proper type casting.
-    !>         Useful for accessing AlamelCluster-specific fields without the boilerplate of type selection and error handling in
-    !>         each calling procedure.
-    !>         If the input cluster is not an AlamelCluster, the routine crashes the program.
-    !>@Return  If the input cluster is indeed an AlamelCluster, a pointer to this cluster of type AlamelCluster is returned.
+    !> Convert the type of a provided generic cluster to AlamelCluster
+    !>
+    !> This is the closest Fortran can get to proper type casting.
+    !> Useful for accessing AlamelCluster-specific fields without the boilerplate of type selection and error handling in each calling procedure.
+    !> If the input cluster is not an AlamelCluster, the routine crashes the program.
+    !> Otherwise, a pointer to this cluster of type AlamelCluster is returned.
     function to_alamel_cluster(cluster_) result(ptr)
-        class(Cluster), target, intent(in):: cluster_   !> Generic input cluster
-        type(AlamelCluster), pointer:: ptr              !> Pointer to input cluster of type AlamelCluster
+        class(Cluster), target, intent(in):: cluster_   !! Generic input cluster
+        type(AlamelCluster), pointer:: ptr              !! Pointer to input cluster of type AlamelCluster
 
         select type (cluster_)
             type is (AlamelCluster)
@@ -60,6 +66,10 @@ contains
         end select
     end function
 
+    !> See [[MesoModel:get_parameters]]
+    !>
+    !> Parameters:    
+    !> **Boundaries**: List of Euler angles in Bunge convention denoting the orientation of the grain boundary plane normals.
     function alamel_get_parameters() result(params)
         type(Parameter), dimension(:), allocatable:: params
 
@@ -67,7 +77,7 @@ contains
         params(1) = parameter_init("Boundaries", TYPE_ANGLES_LIST)
     end function
 
-    !>@Brief See meso_model_init
+    !> See [[MesoModel:init]]
     subroutine alamel_init(this, grains, params, clusters)
         class(AlamelModel), intent(inout):: this
         type(Grain), dimension(:), intent(in):: grains
@@ -108,8 +118,7 @@ contains
         end select
     end subroutine
 
-    !>@Brief Update the model after a time step has elapsed.
-    !>@Details See meso_update_model
+    !> See [[MesoModel:update]]
     subroutine alamel_update(this)
         class(AlamelModel), intent(inout):: this
 
@@ -118,8 +127,11 @@ contains
         this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
 
+    !> Get the number of slip systems of each grain in the cluster.
+    !>
+    !> Returns an array with the following structure: [number of systems for first grain, number of systems for second grain].
     pure function get_n_systems(cluster_) result(n_systems)
-        class(Cluster), intent(in):: cluster_
+        class(Cluster), intent(in):: cluster_ 
         integer, dimension(2):: n_systems
 
         integer:: i
@@ -129,6 +141,9 @@ contains
         end do
     end function
 
+    !> Get the total number of slip systems in the cluster.
+    !>
+    !> Simply the sum of the slip systems of the first and second grain and the 2 relaxations.
     pure function total_systems(cluster_) result(n_systems)
         class(Cluster), intent(in):: cluster_
         integer:: n_systems
@@ -137,12 +152,14 @@ contains
     end function
 
 
-    !>@Brief Calculate the imposed strain rate vector corresponding to a certain velocity gradient for a cluster
-    !>@Details Projects the velocity gradient onto the crystal frames of the grains comprising the cluster.
+    !> Calculate the imposed strain rate vector corresponding to a certain velocity gradient for a cluster
+    !>
+    !> Projects the velocity gradient onto the crystal frames of the grains comprising the cluster.
     function calc_imposed_strain_rate(alamel_cluster, v_grad) result(imposed_strain_rate)
-        type(AlamelCluster), intent(in):: alamel_cluster
-        real(DP), dimension(3, 3), intent(in):: v_grad !> Velocity gradient
+        type(AlamelCluster), intent(in):: alamel_cluster    !! The cluster.
+        real(DP), dimension(3, 3), intent(in):: v_grad      !! Velocity gradient to project onto the cluster.
         real(DP), dimension(10):: imposed_strain_rate
+
         integer:: i
 
         do i = 1, 2
@@ -150,9 +167,13 @@ contains
         end do
     end function
 
+    !> Homogenize the stress state of the cluster.
+    !>
+    !> Weighted average of the stress states of the individual grains converted to the global frame.
     pure function homogenize_stress_state(alamel_cluster, stress_cluster) result(homogenized_stress)
         type(AlamelCluster), intent(in):: alamel_cluster
-        real(DP), dimension(10), intent(in):: stress_cluster
+        real(DP), dimension(10), intent(in):: stress_cluster    !! Stress state as calculated by simplex. 
+                                                                !! I.e. a 10D vector representing the stress state of both grains in their respective reference frames.
         real(DP), dimension(3, 3):: homogenized_stress
 
         homogenized_stress = ((convert_stress_strain_space(stress_cluster(1:5)) .fromframe. alamel_cluster%grains(1)%orientation) &
@@ -160,8 +181,9 @@ contains
                              / 2._DP
     end function
 
+    !> Assemble the Taylor coefficients of the individual grains and relaxations into a single matrix.
     pure function get_taylor_coeffs(alamel_cluster) result(coeffs)
-        type(AlamelCluster), intent(in):: alamel_cluster
+        type(AlamelCluster), intent(in):: alamel_cluster                
         real(DP), dimension(10, total_systems(alamel_cluster)):: coeffs
 
         integer:: i, &
@@ -177,6 +199,7 @@ contains
         coeffs(:,sum(n_systems)+2)                  = alamel_cluster%relaxations(2)%taylor_coeffs
     end function
 
+    !> Assemble the CRSS of the individual grains and relaxations into a single matrix.
     pure function get_crss(alamel_cluster) result(crss)
         type(AlamelCluster), intent(in):: alamel_cluster
         real(DP), dimension(2, total_systems(alamel_cluster)):: crss
@@ -190,16 +213,15 @@ contains
         crss(:, sum(n_systems)+1:) = 0._DP
     end function
 
-    !>@Brief Get stress state for a cluster
-    !>@details Calculate the homogenized stress over the cluster in the global frame
+    !> See [[MesoModel:get_stress]] 
     function alamel_get_stress(this, cluster_, v_grad) result(stress)
         class(AlamelModel), intent(in):: this
-        class(Cluster), target, intent(inout):: cluster_ !> Intent(inout) because simplex modifies inverse basis
-        real(DP), dimension(3, 3), intent(in):: v_grad !> Imposed velocity gradient
+        class(Cluster), target, intent(inout):: cluster_ 
+        real(DP), dimension(3, 3), intent(in):: v_grad  
         real(DP), dimension(3, 3):: stress
 
-        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)+size(cluster_%grains(2)%model%taylor_coeffs, 2)+2):: slip_rates, &
-                                                                                                                   rss
+        real(DP), dimension(total_systems(cluster_)):: slip_rates, &
+                                                       rss
         real(DP), dimension(10):: stress_cluster
         type(AlamelCluster), pointer:: cluster_ptr
 
@@ -218,8 +240,7 @@ contains
         stress = homogenize_stress_state(cluster_ptr, stress_cluster)
     end function
 
-    !>@Brief Prepares the ALAMEL model for a deformation.
-    !>@Details see meso_prepare_deformation
+    !> See [[MesoModel:prepare_deformation]]
     subroutine alamel_prepare_deformation(this, v_grad)
         class(AlamelModel), intent(inout):: this
         real(DP), dimension(3, 3), intent(in):: v_grad
@@ -231,18 +252,18 @@ contains
         this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
 
+    !> See [[MesoModel:apply_step]]
     subroutine alamel_deform(this, cluster_, stress, slip)
         class(AlamelModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
-        real(DP), dimension(3, 3), intent(out):: stress                 !> Homogenized stress over the cluster
-        real(DP), intent(out):: slip                                    !> Total slip in the cluster for this time step
+        real(DP), dimension(3, 3), intent(out):: stress                 
+        real(DP), intent(out):: slip                                    
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
                                     slip_grain, &
                                     spin_coeffs_relaxations(3, 2), &
-                                    taylor_coeffs(10, &
-                                size(cluster_%grains(1)%model%taylor_coeffs, 2)+size(cluster_%grains(2)%model%taylor_coeffs, 2)+2)
+                                    taylor_coeffs(10, total_systems(cluster_))
         integer::                   i, j, &
                                     n_systems(2), &
                                     n_active_simplex, &
@@ -250,8 +271,8 @@ contains
                                     offset_systems, &
                                     offset_relaxations
         integer, dimension(:), allocatable:: ind_overstressed_slip_systems
-        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)+size(cluster_%grains(2)%model%taylor_coeffs, 2)+2):: slip_rates, &
-                                                                                                             rss
+        real(DP), dimension(total_systems(cluster_)):: slip_rates, &
+                                                       rss
         real(DP), dimension(10):: stress_cluster, &
                                   imposed_strain_rate
         type(AlamelCluster), pointer:: cluster_ptr
@@ -317,8 +338,8 @@ contains
                 end do
 
                 orientation_increment = UNIT_MATRIX_3X3 &
-                                        -(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                        +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &   !>Spin induced by activation of slip systems
+                                        -(this%imposed_spin_rate .toframe. grain_%orientation) &                !Change of reference frame
+                                        +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &     !Spin induced by activation of slip systems
                                         +convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
                 grain_%orientation = matmul(orientation_increment, grain_%orientation)
             end associate
@@ -329,6 +350,9 @@ contains
         cluster_ptr%weight = cluster_weight(cluster_ptr, this%next_deformation_gradient)
     end subroutine
 
+    !> Determine the weight of a cluster
+    !>
+    !> Rough estimation based on the boundary plane orientation relative to the grain shape.     
     real(DP) function cluster_weight(alamel_cluster, def_grad) result(weight)
         type(AlamelCluster), intent(in):: alamel_cluster
         real(DP), intent(in):: def_grad(3, 3)
@@ -356,6 +380,7 @@ contains
         end select
     end function
 
+    !> Get the basis matrix of a cluster.
     function get_basis(alamel_cluster) result(basis)
         type(AlamelCluster), intent(in):: alamel_cluster
         real(DP), dimension(10, 10):: basis
@@ -380,6 +405,7 @@ contains
         end do
     end function
 
+    !> Update the orientation of the relaxation after deformation.
     subroutine update_relaxations(alamel_cluster, def_grad)
         type(AlamelCluster), intent(inout):: alamel_cluster
         real(DP), dimension(3, 3), intent(in):: def_grad

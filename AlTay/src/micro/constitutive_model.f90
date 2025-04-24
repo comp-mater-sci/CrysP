@@ -8,78 +8,92 @@ module constitutive_model
     public:: ConstitutiveModel, &
              HardeningState
 
+    !> Hardening state object specific to each grain.
+    !>
+    !> Concrete constitutive models are to extend this type to include fields for whatever grain-specific state they want to track.
+    !> @note
+    !> It may seem much nicer to simply create subtypes of [[Grain]] with additional fields for hardening state in the concrete constitutive models 
+    !> but this leads to problems at the meso level because a Cluster must keep a list of Grains that belong to it 
+    !> and Fortran does not allow lists of heterogeneous type. 
+    !> @endnote
     type, abstract:: HardeningState
-        real(DP), dimension(:,:), allocatable:: crss
+        real(DP), dimension(:,:), allocatable:: crss  !! Critical resolved shear stress in the positive and negative direction for each slip system.
     end type
 
+    !> Base constitutive model
+    !> 
+    !> Each concrete constitutive model must extend this model and implement its deferred procedures.
     type, abstract:: ConstitutiveModel
-        real(DP), dimension(:,:), allocatable:: taylor_coeffs
-        real(DP), dimension(:,:), allocatable:: spin_coeffs
-        integer, dimension(5):: basis
+        real(DP), dimension(:,:), allocatable:: taylor_coeffs  !! Taylor coefficients of the slip systems. I.e. the 5D vector representation of the symmetric component of the Schmidt matrix.
+        real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
+        integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
     contains
-        procedure(cm_get_parameters), deferred, nopass::      get_parameters
-        procedure(cm_validate_parameters), deferred, nopass:: validate_parameters
-        procedure(cm_init), deferred::                        init
-        procedure(cm_deform), deferred::                      deform
-        procedure:: base_init
+        procedure(cm_get_parameters), deferred, nopass::      get_parameters        !! Get the parameters for this model
+        procedure(cm_validate_parameters), deferred, nopass:: validate_parameters   !! Validate user-provided value for parameters
+        procedure(cm_init), deferred::                        init                  !! Initialize the model
+        procedure(cm_deform), deferred::                      deform                !! Update the hardening state under a given deformation.
+        procedure:: base_init                                                       !! Basic initializtion common to all constitutive models.
     end type
 
     abstract interface
-        !>@Brief Get the parameters associated with the hardening model.
-        !>@Details The default implementation returns an empty list.
-        !>@Return The list of initialized parameters.
+        !> Get the parameters associated with the hardening model.
         function cm_get_parameters() result(params)
             import Parameter
 
-            type(Parameter), dimension(:), allocatable:: params !> List of parameters
+            type(Parameter), dimension(:), allocatable:: params 
         end function
 
-        !>@Brief Validate a parameter set for the current hardening model.
-        !>@Details Check if the parameter values provided by the caller lie within acceptable bounds. Crashes the program if not.
+        !> Validate a parameter set for the current hardening model.
+        !>
+        !> Check if the parameter values provided by the caller lie within acceptable bounds. Crashes the program if not.
         subroutine cm_validate_parameters(params)
             import Parameter
 
-            type(Parameter), dimension(:), target, intent(in):: params !> The parameter list with user-provided values.
+            type(Parameter), dimension(:), target, intent(in):: params !! The parameter list with user-provided values.
         end subroutine
 
-        !>@Brief Initialize the hardening model and the model-specific state data of the grains using this model.
-        !>@Details If the parameters do not meet the constraints provided below, this routine crashes the program.
+        !> Initialize the hardening model and the model-specific state data of the grains using this model.
+        !>
+        !> If the parameters do not meet the constraints provided below, this routine crashes the program.
         function cm_init(this, miller_indices, params) result(initial_state)
             import ConstitutiveModel, &
                    Parameter, &
                    HardeningState
 
-            class(ConstitutiveModel), intent(inout)::     this      !> Instance of the hardening model to be initialized
-            integer, dimension(:,:,:), intent(in):: miller_indices
-            type(Parameter), dimension(:), target, intent(in):: params !> List of parameters to initialize the model with.
-                                                                       !! Must pass this%validate_parameters(params)
+            class(ConstitutiveModel), intent(inout)::     this      !! Instance of the hardening model to be initialized
+            integer, dimension(:,:,:), intent(in):: miller_indices  !! Miller indices of the deformation mechanism to be used.
+            type(Parameter), dimension(:), target, intent(in):: params !! List of parameters to initialize the model with.
+                                                                       !! Assumed to pass this%validate_parameters(params)
             class(HardeningState), allocatable:: initial_state
         end function
 
-        !>@Brief Update the critical resolved shear stresses (CRSS) of a grain.
-        !>@Details Updates CRSS based on the slip rates provided by the caller, assuming these slip rates remain constant over the time
-        !!         interval provided by the caller. May update internal grain state accordingly. The default implementation returns 1 for all of
-        !!         the CRSS values.
+        !> Update the critical resolved shear stresses (CRSS) of a grain.
+        !>
+        !> Updates CRSS based on the slip rates provided by the caller, assuming these slip rates remain constant over the time
+        !> interval provided by the caller. May update internal grain state accordingly. 
         subroutine cm_deform(this, state, time, slip_rates)
             import ConstitutiveModel, &
                    HardeningState, &
                    DP
 
-            class(ConstitutiveModel), intent(inout):: this     !> The hardening model
-            class(HardeningState), target, intent(inout)             :: state   !> The grain for which to update the CRSS.
-            real(DP), intent(in)                :: time     !> Elapsed time since the last update of the CRSS of this grain.
-            real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates  !> Slip rates on each of the slip systems of the grain in the time
-                                                                                     !! interval since the last CRSS update for this grain. Size must equal
-                                                                                     !! the number of slip systems of the grain.
+            class(ConstitutiveModel), intent(inout):: this                   
+            class(HardeningState), target, intent(inout):: state   !! Hardening state to update.
+            real(DP), intent(in)                :: time            !! Elapsed time since the last update of the hardening state of this grain.
+            real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates  !! Slip rates on each of the slip systems of the grain in the time
+                                                                                       !! interval since the last CRSS update for this grain. Size must equal
+                                                                                       !! the number of slip systems of the grain.
         end subroutine
     end interface
 
 contains
 
+    !> Basic iniitialization common to all constitutive models.
+    !> 
+    !> Initializes taylor and spin coefficients and allocates memory for the CRSS.
     subroutine base_init(this, miller_indices, initial_state)
         class(ConstitutiveModel), intent(out):: this
-        integer, dimension(:,:,:), intent(in):: miller_indices
-        class(HardeningState), allocatable, intent(inout):: initial_state
+        integer, dimension(:,:,:), intent(in):: miller_indices              !! Miller indices of all the slip systems.
+        class(HardeningState), allocatable, intent(inout):: initial_state   !! Initial hardening state for all grains using this constitutive model.
 
         integer:: i, &
                   n_systems

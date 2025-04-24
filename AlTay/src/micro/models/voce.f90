@@ -30,10 +30,10 @@ module voce
         type(Stage)::  stage_1                 !! Initial hardening behavior.
         type(Stage)::  stage_2                 !! Hardening behavior after the total slip surpasses the transition slip.
     contains
-        procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from ConstitutiveModel
-        procedure, nopass:: validate_parameters => voce_validate_parameters     !! Inherited from ConstitutiveModel
-        procedure:: init                        => voce_init                    !! Inherited from ConstitutiveModel
-        procedure:: deform                      => voce_deform                  !! Inherited from ConstitutiveModel
+        procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: validate_parameters => voce_validate_parameters     !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
@@ -54,7 +54,7 @@ contains
         end select
     end function
 
-    !> See cm_get_parameters
+    !> See [[ConstitutiveModel:get_parameters]]
     !>
     !> Parameters:   
     !> **TIII1**: Initial flow stress.  
@@ -72,7 +72,7 @@ contains
                   parameter_init('THT',    TYPE_REAL)]
     end function
 
-    !> See cm_validate_parameters
+    !> See [[ConstitutiveModel:validate_parameters]]
     !> 
     !> Constraints on parameters:   
     !> 0 < TIII1 < TIIIS < TIVS
@@ -90,7 +90,7 @@ contains
         call parameter_check_bounds(params .find. 'THT', 0._DP, buffer, .false., .false.)
     end subroutine
 
-    !> See cm_init
+    !> See [[ConstitutiveModel:init]]
     function voce_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
@@ -120,7 +120,7 @@ contains
         initial_state%crss = this%stage_1%T1
     end function
 
-    !> See cm_deform
+    !> See [[ConstitutiveModel:deform]]
     subroutine voce_deform(this, state, time, slip_rates)
         class(ConstitutiveModelVoce),                      intent(inout):: this
         class(HardeningState), target,                  intent(inout):: state
