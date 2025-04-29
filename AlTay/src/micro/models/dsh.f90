@@ -98,27 +98,25 @@ contains
         end select
     end function
 
-    !> See cm_get_parameters
-    !>
-    !> Parameters:    
-    !> - **b**:     Magnitude of burgers vector [m]   
-    !> - **G**:     Shear modulus [MPa]   
-    !> - **alfa**:  Dislocation interaction parameter   
-    !> - **f**:     Volume fraction of Cell Block Boundaries    
-    !> - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]   
-    !> - **I**:     Immobilization coefficient of Cell Boundaries      
-    !> - **R**:     Recovery coefficient of cell boundaries [m]   
-    !> - **Iwd**:   Immobilization coefficient of CBBs    
-    !> - **Rwd**:   Recovery coefficient of CBBs [m]    
-    !> - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]    
-    !> - **beta1**: 1st coeff. micro shear band cut-through of old CBBs    
-    !> - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs    
-    !> - **Iwp**:   Immobilization coefficient of polarity of CBBs    
-    !> - **Rwp**:   Recovery coefficient of polarity of CBBs [m]    
-    !> - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]    
-    !> - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]    
+    !> See [[ConstitutiveModel:get_parameters]]
     function dsh_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:)
+        type(Parameter), allocatable    :: params(:) !! - **b**:     Magnitude of burgers vector [m]
+                                                     !! - **G**:     Shear modulus [MPa]
+                                                     !! - **alfa**:  Dislocation interaction parameter
+                                                     !! - **f**:     Volume fraction of Cell Block Boundaries
+                                                     !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
+                                                     !! - **I**:     Immobilization coefficient of Cell Boundaries
+                                                     !! - **R**:     Recovery coefficient of cell boundaries [m]
+                                                     !! - **Iwd**:   Immobilization coefficient of CBBs
+                                                     !! - **Rwd**:   Recovery coefficient of CBBs [m]
+                                                     !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
+                                                     !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
+                                                     !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
+                                                     !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
+                                                     !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
+                                                     !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
+                                                     !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
+
         params = [parameter_init('b',     TYPE_REAL), &
                   parameter_init('G',     TYPE_REAL), &
                   parameter_init('alfa',  TYPE_REAL), &
@@ -138,26 +136,23 @@ contains
     end function dsh_get_parameters
 
     !> See cm_validate_parameters
-    !>
-    !> Constraints on parameters:   
-    !> - **b**:     ]0.;1.E-8]   
-    !> - **G**:     [1.E4; 5.E5]  
-    !> - **alfa**:  ]0.;5.]  
-    !> - **f**:     ]0.;1.]  
-    !> - **tau0**:  [0.;1.E4]  
-    !> - **I**:     [0.;1.E1]  
-    !> - **R**:     ]0.;1.E-6]  
-    !> - **Iwd**:   [0.;1.E1]  
-    !> - **Rwd**:   ]0.;1.E-6]  
-    !> - **Rncg**:  ]0.;1.E-6]  
-    !> - **beta1**: [0.;1.E2]  
-    !> - **beta2**: [0.;1.E2]  
-    !> - **Iwp**:   [0.;1.E1]  
-    !> - **Rwp**:   ]0.;1.E-6]  
-    !> - **Rrev**:  ]0.;1.E-6]  
-    !> - **R2**:    ]0.;1.E-6]  
     subroutine dsh_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params
+        type(Parameter), dimension(:), target, intent(in):: params !! - **b**:     ]0.;1.E-8]
+                                                                   !! - **G**:     [1.E4; 5.E5]
+                                                                   !! - **alfa**:  ]0.;5.]
+                                                                   !! - **f**:     ]0.;1.]
+                                                                   !! - **tau0**:  [0.;1.E4]
+                                                                   !! - **I**:     [0.;1.E1]
+                                                                   !! - **R**:     ]0.;1.E-6]
+                                                                   !! - **Iwd**:   [0.;1.E1]
+                                                                   !! - **Rwd**:   ]0.;1.E-6]
+                                                                   !! - **Rncg**:  ]0.;1.E-6]
+                                                                   !! - **beta1**: [0.;1.E2]
+                                                                   !! - **beta2**: [0.;1.E2]
+                                                                   !! - **Iwp**:   [0.;1.E1]
+                                                                   !! - **Rwp**:   ]0.;1.E-6]
+                                                                   !! - **Rrev**:  ]0.;1.E-6]
+                                                                   !! - **R2**:    ]0.;1.E-6]
 
         if ((params .find. 'n_slip_systems') /= 24)  &
             call log_error('DSH', 'validate_parameters', ERR_VAL, 'DSH only supports BCC24 slip systems.')

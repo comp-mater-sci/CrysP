@@ -67,11 +67,9 @@ contains
     end function
 
     !> See [[MesoModel:get_parameters]]
-    !>
-    !> Parameters:    
-    !> **Boundaries**: List of Euler angles in Bunge convention denoting the orientation of the grain boundary plane normals.
     function alamel_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention 
+                                                            !! denoting the orientation of the grain boundary plane normals.
 
         allocate(params(1))
         params(1) = parameter_init("Boundaries", TYPE_ANGLES_LIST)

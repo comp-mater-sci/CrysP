@@ -55,15 +55,13 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    !>
-    !> Parameters:   
-    !> **TIII1**: Initial flow stress.  
-    !> **TIIIS**: Saturation flow stress for the first stage.  
-    !> **TIVS**: Saturation flow stress for the second stage.  
-    !> **THIII1**: Initial hardening rate.
-    !> **THT**: Hardening rate at which to transition from stage 1 to stage 2.
     function voce_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
+                                                            !! - **TIIIS**: Saturation flow stress for the first stage.
+                                                            !! - **TIVS**: Saturation flow stress for the second stage.
+                                                            !! - **THIII1**: Initial hardening rate.
+                                                            !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
+
 
         params = [parameter_init('TIII1',  TYPE_REAL), &
                   parameter_init('TIIIS',  TYPE_REAL), &
@@ -73,14 +71,10 @@ contains
     end function
 
     !> See [[ConstitutiveModel:validate_parameters]]
-    !> 
-    !> Constraints on parameters:   
-    !> 0 < TIII1 < TIIIS < TIVS
-    !> 0 < THT < THIII1
     subroutine voce_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params
-
-        type(Parameter), pointer:: buffer !Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
+        type(Parameter), dimension(:), target, intent(in):: params !! - 0 < TIII1 < TIIIS < TIVS
+                                                                   !! - 0 < THT < THIII1
+        type(Parameter), pointer:: buffer                          !Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
 
         buffer => params .find. 'TIIIS'
         call parameter_check_bounds(params .find. 'TIII1', 0._DP, buffer, .false., .false.)

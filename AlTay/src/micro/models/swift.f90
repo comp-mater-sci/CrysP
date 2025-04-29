@@ -50,13 +50,10 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    !>
-    !> Parameters:  
-    !> - **crss0**: Initial critical resoved shear stress  
-    !> - **gamma0**: Initial sum of slip across all slip systems  
-    !> - **n**: Hardening exponent
-    function swift_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:)
+        function swift_get_parameters() result(params)
+        type(Parameter), allocatable    :: params(:)    !! - **crss0**: Initial critical resoved shear stress
+                                                        !! - **gamma0**: Initial sum of slip across all slip systems
+                                                        !! - **n**: Hardening exponent
 
         params = [parameter_init('crss0', TYPE_REAL),             &
                   parameter_init('gamma0', TYPE_REAL),            &
@@ -64,13 +61,11 @@ contains
     end function swift_get_parameters
 
     !> See [[ConstitutiveModel:validate_parameters]]
-    !>
-    !> Constraints on parameters:
-    !> - gamma0 > 0      
-    !> - n > 0  
-    !> - crss0 > 0
     subroutine swift_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params
+        type(Parameter), dimension(:), target, intent(in):: params !! - gamma0 > 0
+                                                                   !! - n > 0
+                                                                   !! - crss0 > 0
+
 
         call parameter_check_bounds(params .find. 'gamma0', lower = 0._DP, lower_inclusive=.false.)
         call parameter_check_bounds(params .find. 'n',      lower = 0._DP, lower_inclusive=.false.)
