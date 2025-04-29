@@ -28,7 +28,7 @@ module simulation
 
     ! initialization call
     subroutine macro_init(clstrs)
-        class(Cluster), dimension(:), allocatable, intent(inout):: clstrs !> Must be declared allocatable because only then deep copy of allocatable components is mandated by the standard.
+        class(Cluster), dimension(:), allocatable, intent(inout):: clstrs 
 
         call move_alloc(clstrs, clusters)
         deformation_gradient = UNIT_MATRIX_3X3
@@ -65,10 +65,10 @@ module simulation
         real(DP), intent(in):: velocity_gradient(3, 3)
         integer:: cluster_size, &
                   n_clusters, &
-                  i               !> Iteration variables
+                  i               
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
-                   homogenized_taylor_factor, &   !Volume-averaged Taylor factor
+                   homogenized_taylor_factor, &   
                    deformation_gradient_increment(3, 3), &
                    strain_rate(3, 3), &
                    spin(3, 3), &
