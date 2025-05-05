@@ -9,12 +9,12 @@ module nllsTR
     use mkl_rci
     use mkl_service
     use altay
-    use altayconfig
     use logging
 
     implicit none
 
     character(*), parameter:: MOD_NAME = 'nllstr'
+    real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
 
       !> Solution at given point. It consists of: 1) the point, 2) function value, and 3) Jacobi matrix.
       type:: SolutionPoint
@@ -131,41 +131,6 @@ module nllsTR
 
       end interface
 
-
-      !> Control over Trust Region algorithm
-      type nllsTRConf
-            !> Array of parameters controling stop criteria
-            !>
-            !> Various convergence criteria are evaluated, see MKL documentation for details
-            real(DP), dimension(6)                :: eps = 1.e-10_DP
-            integer                                      :: iter1 = 300 !< Maximum number of iterations
-            integer                                      :: iter2 = 50  !< Maximum number of trial steps
-            real(DP)                             :: init_step = 100.0_DP  !< Initial step bound factor
-            !> Lower constraints for design vector
-            real(DP)                             :: lo_limit = 0._DP
-            !> Upper constraints for design vector
-            real(DP)                             :: up_limit = 1.e2_DP
-
-            !> Helper for problems with invariant Jacobi matrix
-            !>
-            !> If this variable is set to .true., the library will assume that Jacobi
-            !> matrix is constant over subsequent steps. As effect, the matrix will be
-            !> evaluated only once, before the first step of optimization procedure.
-            !> This parameter is useful if the optimization problem is linear or can be
-            !> linearized.
-            logical                                      :: constJacobi = .false.
-
-            !> If set true, the algorithm will use the contents of "state" field in the objective
-            !> function object for the very first iteration. This implies an assumption that
-            !> the state field contains a consistent starting point.
-            logical                                      :: use_init_state = .false.
-
-            !> If set true, every evaluation of either the objective function or Jacobian
-            !> will be tested against NaN or Inf.
-            logical                                      :: use_input_checks = .true.
-
-      end type
-
       !>@{ \name Other parameters
       !>  These parameters are not directly accessible. Use \ref nlls_TR_init to control them. \sa nlls_TR_init
 
@@ -238,7 +203,7 @@ contains
       !> This subroutine solves the mnimization problem. Trust region algorithm from MKL library is used.
       !> \param objFx Objective function to minimize
       !> \param jacobiFx Function that calculates Jacobi matrix of objective function
-      subroutine nlls_TR_solve(objFx, vX, config, r1, r2, info, resInfo, SolutionInitOut)
+      subroutine nlls_TR_solve(objFx, vX, r1, r2, info, resInfo)
       use, intrinsic:: IEEE_EXCEPTIONS
       use, intrinsic:: IEEE_ARITHMETIC
       implicit none
@@ -246,18 +211,13 @@ contains
       class(objectiveFunction), target, intent(inout)          :: objFx    !< objective function
       !> Design vector, dimension of vX must correspond to those in objFX
       real(DP), dimension(:), target, intent(inout)     :: vX
-      type(nllsTRConf), intent(in)                     :: config   !< Configuration of nllsTR
       real(DP), intent(out)                    :: r1       !< Initial residual of the solution
       real(DP), intent(out)                    :: r2       !< Final residual of the solution
       !> Exit code: 0 on success, < 0 on error, > 0 on failure/warning
       integer, intent(out)                             :: info
       !> Full termination status of the TR solver
       type(nllsTRRes), intent(inout), optional          :: resInfo
-      !> Initial solution to be stored after initial evaluation
-      type(SolutionPoint), intent(out), optional        :: SolutionInitOut
-      !!!! Local variables
-      integer                              :: n        !< Dimension of design vector
-      integer                              :: m        !< Dimension of objective function vector
+
       type(HANDLE_TR)   :: handle
       integer           :: res, linfo
       !
@@ -267,9 +227,6 @@ contains
       logical                        :: next_solve
       integer                        :: RCI_Req, RCI_Count
       ! Initialization of vFval and mJacobi
-      logical                        :: use_init_mJacobi, use_init_vFval
-      logical                        :: is_firstFval, is_firstJacobi
-      !
       ! Other variables
       integer                        :: ierr, i
       character(len = 512)             :: message
@@ -282,7 +239,7 @@ contains
       !to 0.01 because we are using normalized stresses and strains and 1% is about as accurate as you can hope the underlying model
       !to be. See dtrnlspbc_init documentation for more details.
       eps = TOLERANCE
-      eps(2) = 1.E-2
+      eps(2) = OBJECTIVE_THRESHOLD
 
       !jacobi_interval = 1.E-8_DP
       vlw = -10._DP
@@ -290,56 +247,11 @@ contains
       !---------------------------------------------------
             RCI_Req = 0; next_solve = .true.
             info = -1
-            !! Check preconditions
-            ! TODO
-            n = objFx%state%n_X_dim        ! Dimensionality of vector X (argument)
-            m = objFx%state%m_F_dim        ! Dimensionality of objective function
-            !
-            ! Set square box constraints
-            vLW =  config%lo_limit
-            vUP =  config%up_limit
+
             ! Make sure that the initial guess is inside the constraints
             where (vX < vLW) vX = vLW
             where (vX > vUP) vX = vUP
-            !
-            ! Prepare variables for reusing the inital state (if requested)
-            if (config%use_init_state) then
-                  use_init_mJacobi = .true.
-                  use_init_vFval = .true.
-            else
-                  use_init_mJacobi = .false.
-                  use_init_vFval = .false.
-            endif
-            !
-            if ((config%constJacobi) .and. (.not. config%use_init_state)) then
-                  ! Calculate Jacobi matrix
-                  objfx%state%mj = calc_jacobi(vx)
-                  if (nllsTR_iw > 3) then
-                        write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  -->'
-                        call writeMatrix(objFx%state%mJ, nllsTR_ounit)
-                        write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  <--'
-                        flush(nllsTR_ounit)
-                  endif
-            endif
-            !
-            if ( (config%use_input_checks) .and. (config%use_init_state) ) then
-                  call checkSolverInput(objFx%state%vF, objFx%state%mJ, linfo)
-                  if (linfo /= 0) then
-                        write(nllsTR_ounit, fmt = 100) 'Initial state contains invalid values.'
-                        info = -1
-                        return
-                  endif
-            endif
-            !
-            !! Prepare variables to handle the request for output of the initial state
-            is_firstFval = .true.
-            is_firstJacobi = .true.
-            !! Check if it is requested to preserve the initial solution, allocate storage if so.
-            if (present(SolutionInitOut)) then
-                  linfo = SolutionInitOut%init(n, m)
-                  SolutionInitOut%vX = vX
-            endif
-            !
+
             !! Initialize MKL solver
             res = dtrnlspbc_init(handle, 5, 5, vX, vLW, vUP, eps, 350, 50, 0.1_DP)
             ! Check result
@@ -388,40 +300,25 @@ contains
                                     if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the vF'
                                     ! Use initial guess specified by the user, just once.
                                     linfo = 0
-                                    if (.not. use_init_vFval) then
-                                          call objFx%objectiveEval(vX, linfo)
-                                          if ((linfo == 0) .and. (config%use_input_checks)) &
-                                                call checkSolverInput(vF = vFval, info = linfo)
-                                    endif
+                                    call objFx%objectiveEval(vX, linfo)
                                     ! Terminate the RCI loop on error in vF
                                     if (linfo /= 0) then
                                           write(nllsTR_ounit, fmt = 100) 'Cannot recalculate the objective function.'
                                           exit
                                     endif
-                                    use_init_vFval = .false.
                                     if (nllsTR_iw >= 1) write( nllsTR_ounit, '(A, F15.10, 1X, A, F15.10)')   &
                                                        '||X|| = ', norm2(vX),             &
                                                        '||vF|| = ', norm2(vFval)
                                     if (nllsTR_iw > 2) then
                                           write(nllsTR_ounit, fmt = 100) 'X'
-                                          write(nllsTR_ounit, fmt = 500) (vX(i), i = 1, n)
+                                          write(nllsTR_ounit, fmt = 500) (vX(i), i = 1, 5)
                                           write(nllsTR_ounit, fmt = 100) 'vF'
-                                          write(nllsTR_ounit, fmt = 500) (vFval(i), i = 1, m)
+                                          write(nllsTR_ounit, fmt = 500) (vFval(i), i = 1, 5)
                                     endif
-                                    ! Store the initial guess if requested to do so
-                                    if (is_firstFval .and. present(SolutionInitOut)) then
-                                          SolutionInitOut%vF = vFval
-                                    endif
-                                    is_firstFval = .false.
-                              !!-----------------------------------------------------------------------
                               case(2)           ! Recalculate Jacobian
-                                    if (.not.(config%constJacobi)) then
                                           if (nllsTR_iw > 2) write( nllsTR_ounit, fmt = 100) 'Recalculation of the Jacobi matrix'
                                           linfo = 0
-                                          if (.not. use_init_mJacobi) then
                                                objfx%state%mj = calc_jacobi(vx)
-                                          endif
-                                          use_init_mJacobi = .false.
                                           !
                                           if (nllsTR_iw > 3) then
                                                write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  -->'
@@ -429,12 +326,6 @@ contains
                                                 write( nllsTR_ounit, fmt = 100)  'Jacobi matrix  <--'
                                                 flush( nllsTR_ounit)
                                           endif
-                                    endif
-                                    ! Store the initial guess if requested to do so
-                                    if (is_firstJacobi .and. present(SolutionInitOut)) then
-                                          SolutionInitOut%mJ =  mJacobi
-                                    endif
-                                    is_firstJacobi = .false.
                               !!-----------------------------------------------------------------------
                               case default      ! Unknown RCI, it should never happen!!
                                     write( nllsTR_ounit, fmt = 100) 'Error: unknown RCI control code!!!'
@@ -458,14 +349,14 @@ contains
             if (present(resInfo)) resInfo = resultInfo
             !
             if (nllsTR_iw > 0) then
-                  call nlls_TR_exit_message(message, resultInfo, config, linfo)
+                  call nlls_TR_exit_message(message, resultInfo, linfo)
                   write( nllsTR_ounit, fmt = 200) 'Stop criterion code: ', resultInfo%stop_criterion
                   write( nllsTR_ounit, fmt = 100) trim(message)
                   write( nllsTR_ounit, '(A, 1X, I0, 2(1X, A, 1X, E16.8))') 'Step ',resultInfo%iteration, 'R0=', r1, 'R1=',r2
             endif
             if (nllsTR_iw > 2) then
                   write( nllsTR_ounit, fmt = 100) 'X = '
-                  write( nllsTR_ounit, fmt = 500) (vX(i), i = 1, n)
+                  write( nllsTR_ounit, fmt = 500) (vX(i), i = 1, 5)
             endif
 
             ! Release MKL resources
@@ -482,11 +373,10 @@ contains
             !
       end subroutine
 
-      subroutine nlls_TR_exit_message(str, resInfo, config, info)
+      subroutine nlls_TR_exit_message(str, resInfo, info)
       implicit none
       character(len=*), intent(out)                    :: str
       type(nllsTRRes), intent(in)                      :: resInfo
-      type(nllsTRConf), intent(in)                     :: config
       integer, intent(out)                             :: info
       !
             ! See documentation of ?trnlspbc_get in MKL manual for
@@ -496,15 +386,15 @@ contains
             case(1)
                   write(str, fmt = 200) 'The TR solver exceeded the maximal number of iterations:',resInfo%iteration
             case(2)
-                  write(str, fmt = 201) 'Area of the trust region is smaller than',config%eps(1)
+                  write(str, fmt = 201) 'Area of the trust region is smaller than',TOLERANCE
             case(3)
-                  write(str, fmt = 201) 'Requested quality of the solution is reached. ||F(x)|| is smaller than',config%eps(2)
+                  write(str, fmt = 201) 'Requested quality of the solution is reached. ||F(x)|| is smaller than',OBJECTIVE_THRESHOLD
             case(4)
-                  write(str, fmt = 201) 'The Jacobian matrix is singular. ||J(x)[:,i]|| is smaller than',config%eps(3)
+                  write(str, fmt = 201) 'The Jacobian matrix is singular. ||J(x)[:,i]|| is smaller than',TOLERANCE
             case(5)
-                  write(str, fmt = 201) 'Size of the trial step is smaller than',config%eps(4)
+                  write(str, fmt = 201) 'Size of the trial step is smaller than',TOLERANCE
             case(6)
-                  write(str, fmt = 201) 'Achievable improvement to the solution is smaller than',config%eps(5)
+                  write(str, fmt = 201) 'Achievable improvement to the solution is smaller than',TOLERANCE
             case default
                   str = 'TR solver has prematurely stopped for unknown reason.'
                   info = -1
