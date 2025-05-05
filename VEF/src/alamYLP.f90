@@ -92,10 +92,9 @@ contains
         vX = merge(vS, vA, use_vmGuess)
         !
         r1 = 0.0_DP; r2 = 0.0_DP
-        ! Run linearized problem if requested
-        ! The linearized analysis is either not done or failed.
-        ! Set non-linear analysis
+
         call nlls_TR_solve(objFunc, vX, r1, r2, ierr)
+
         R = r2
         if(ierr /= 0) then
             info = VEF_ERROR
