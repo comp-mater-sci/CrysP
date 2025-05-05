@@ -19,7 +19,9 @@ module alamYLP
 
     public:: OBJECTIVE_THRESHOLD, &
              ObjectiveFunction, &
-             multilevelylp
+             multilevelylp, &
+             YLPResult, &
+             deriveylpresult
 
     character(*), parameter:: MOD_NAME = 'alamYLP'
     real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
@@ -33,6 +35,23 @@ module alamYLP
         real(DP), dimension(5):: vSml = 0._DP
         type(ResultTable), pointer:: ptr_db => null()
     end type
+
+    !> Datatype to store results of iterative search
+    type:: YLPResult
+        real(DP), dimension(5):: vA = 0.D0       !< Strain rate mode on yield locus
+        real(DP), dimension(5):: vS = 0.D0       !< Imposed stress
+        real(DP), dimension(5):: vSonA = 0.D0    !< Stress corresponding to A
+        real(DP), dimension(5):: vSonAn = 0.D0   !< Stress mode corresponding to A
+        real(DP):: R = 0.D0                  !< Norm of stress residual
+        real(DP):: dotWonA = 0.D0            !< Work rate corresponding to vA and vSonA
+        real(DP):: scal_s = 0.D0             !< norm2(vSonA) / vS_length
+        real(DP):: vS_length = 0.D0          !< norm2(vS)
+    end type
+
+    !> Constructors of YLPResult type
+    interface YLPResult
+        module procedure YLPResult_init
+    end interface
 
     interface
         integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
@@ -48,6 +67,44 @@ module alamYLP
     end interface
 
 contains
+
+
+
+    !> Create YLPResult from arbitrary vS and performs normalization.
+    !>
+    !> \post A correctly initialized result has non-zero vS_length field.
+    pure function YLPResult_init(vS) result(res)
+    type(YLPResult):: res
+    real(DP), dimension(5), intent(in):: vS
+    !
+        res%vS_length = norm2(vS)
+        if (res%vS_length > 0.D0) res%vS = vS/res%vS_length
+    !
+    end function
+
+
+    !> Derive dependant fields from properly initialized and evaluated YLPResult;
+    !>
+    !> This requires fields: vS, vA and vS_length.
+    !> \return VEF_ERROR if input ylp_result contains wrong data.
+    integer function deriveYLPResult(ylp_result) result(info)
+    type(YLPResult), intent(inout)   :: ylp_result
+    !
+    real(DP):: SonA_norm
+    !
+        info = VEF_ERROR
+        SonA_norm = norm2(ylp_result%vSonA)
+        if ((ylp_result%vS_length < epsilon(0.D0)) .or. (SonA_norm < epsilon(0.D0))) return
+        !
+        ylp_result%dotWonA = dot_product(ylp_result%vA, ylp_result%vSonA)
+        ylp_result%scal_s = SonA_norm/ylp_result%vS_length
+        ! Calculate normalized stess
+        ylp_result%vSonAn = ylp_result%vSonA/SonA_norm
+        info = VEF_OK
+    !
+    end function
+
+
 
     !> Calculates plastic strain rate corresponding to given deviatoric stress
     !>
@@ -131,3 +188,6 @@ contains
         info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)
     end subroutine
 end module
+
+
+

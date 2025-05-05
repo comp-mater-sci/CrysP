@@ -6,7 +6,6 @@ use, intrinsic:: iso_fortran_env, only: error_unit
 use utils
 use criUncomment, only: readValue
 use alamYLP
-use dmcYLPResult
 use dmcResultTable
 use dmcBasicModule
 use logging
@@ -20,11 +19,7 @@ implicit none
     !> Abstract class implementing basic subset of operations that are shared by all
     !> stress-drien computational modules
     type, extends(BasicModule):: StressDrivenModule
-
-        type(YLPResultTolerance)    :: solution_tolerance
-
         class(ResultTable), pointer  :: ptr_db => null()
-
     contains
         procedure, pass(this)     :: initialize => StressDrivenModule_initialize
         procedure, pass(this)     :: readConfig => StressDrivenModule_readConfig

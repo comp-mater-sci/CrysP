@@ -6,10 +6,10 @@ module dmcYld
     use utils
     use criRange
     use criUncomment, only: readValue
-    use dmcYLPResult
     use commonConfig
     use dmcStressDrivenModule
     use commonUtils
+    use alamYlp
 
     implicit none
 

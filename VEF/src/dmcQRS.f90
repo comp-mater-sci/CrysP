@@ -5,7 +5,6 @@
 module dmcQRS
     use criRange
     use criUncomment, only: readValue
-    use dmcYLPResult
     use dmcStressDrivenModule
     use commonConfig
     use commonUtils

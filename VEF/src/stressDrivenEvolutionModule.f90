@@ -4,7 +4,6 @@
 !> material state.
 module dmcStressDrivenEvolutionModule
 use utils
-use dmcYLPResult
 use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord

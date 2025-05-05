@@ -1,9 +1,10 @@
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
-use utils
-use dmcIncrementationControl, only: IncrementationControlVariables
-use dmcYLPResult, only: YLPResult
-implicit none
+    use utils
+    use dmcIncrementationControl, only: IncrementationControlVariables
+    use alamylp
+
+    implicit none
 
     public:: IncrementOutputRecord
     private
@@ -40,7 +41,7 @@ contains
     real(DP), dimension(3, 3), intent(in)        ::  de, &
                                                     se
     real(DP), intent(in)                 :: taylor_factor
-    
+
         this%vm_strain = SQR0P67*norm2(icv%vP_step)
         this%vm_strain_total = SQR0P67*norm2(icv%vP_total)
         this%norm_P_abs = norm2(icv%vP_abs)
