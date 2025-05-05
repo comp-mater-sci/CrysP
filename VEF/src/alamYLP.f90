@@ -130,5 +130,4 @@ contains
         vSonA = objFunc%vSml
         info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)
     end subroutine
-
 end module

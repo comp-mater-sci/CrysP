@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
 project(alamDMC LANGUAGES C Fortran)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
@@ -24,7 +22,7 @@ criNamedRange.f90
 criNumerics.f90
 criRange.f90
 criUncomment.f90
-alamYLP.f90 
+alamYLP.f90
 abstractModule.f90
 basicModule.f90
 commonConfig.f90
@@ -41,11 +39,11 @@ stressDrivenModule.f90
 substeppingConfig.f90
 YLPResult.f90
 dmcADP.f90
-dmcASR.f90 
-dmcEWC.f90 
-dmcQRS.f90  
-dmcUDSA.f90  
-dmcYld.f90  
+dmcASR.f90
+dmcEWC.f90
+dmcQRS.f90
+dmcUDSA.f90
+dmcYld.f90
 alamDMC.f90
 )
 
