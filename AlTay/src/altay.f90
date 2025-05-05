@@ -1,4 +1,5 @@
 module altay
+    use iso_c_binding
     use simulation
     use altayConfig
     use micro
@@ -128,6 +129,15 @@ contains
 
         stress_state = get_stress(velocity_gradient)
     end function
+
+    !Result rounded to 9 digits
+    subroutine altay_get_stress_state_c(velocity_gradient, stress_state) bind(C)
+        real(C_DOUBLE), dimension(5), intent(in):: velocity_gradient
+        real(C_DOUBLE), dimension(5), intent(out):: stress_state
+
+        !Transpose both input and output because C is row major and Fortran column major.
+        stress_state = anint(convert_stress_strain_space(get_stress(convert_stress_strain_space(velocity_gradient)))/TOLERANCE) * TOLERANCE
+    end subroutine
 
     !> Write out the current state variables.
     !> The call may involve IO units: IMP1 (CUR file)

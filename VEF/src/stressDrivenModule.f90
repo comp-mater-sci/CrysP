@@ -6,9 +6,7 @@ use, intrinsic:: iso_fortran_env, only: error_unit
 use utils
 use criUncomment, only: readValue
 use alamYLP
-use alamEval, only: NormalizedV5DComp, alamEval_objFx_call_count
 use dmcYLPResult
-use dmcAlamEvalCached
 use dmcResultTable
 use dmcBasicModule
 use logging
@@ -22,8 +20,6 @@ implicit none
     !> Abstract class implementing basic subset of operations that are shared by all
     !> stress-drien computational modules
     type, extends(BasicModule):: StressDrivenModule
-
-        type(multilevelYLPConfig)   :: ylp
 
         type(YLPResultTolerance)    :: solution_tolerance
 
@@ -73,7 +69,10 @@ contains
         if (info /= VEF_OK) return
         !
         ! Read multilevelYLP configuration
-        call readYLPConfigSection(cnfunit, this%ylp, info)
+        !User-provided connfiguration is no longer supported and thus ignored in the rest of the program. A call to  this procedure
+        !must however remain to not mess up the existing configuration file format.
+        call readYLPConfigSection(cnfunit, info)
+
         if (info /= VEF_OK) &
             call log_error('StressDrivenModule', 'readConfig', ERR_VAL, 'Check YLP config section.')
 #define MSG_GROUP_ERRORS
@@ -106,98 +105,49 @@ contains
     !> \return VEF_ERROR on lack of convergence. ylp_result and D are set to the best solution found
     !> \return VEF_ERROR or any criErr_*on severe error conditions. ylp_result and D are undefined
     !> \return VEF_OK on success
-    integer function StressDrivenModule_findSolution(this, sigma, D, ylp_result, vM_guess, is_acceptable, pretry) result(info)
-    class(StressDrivenModule), intent(in)   :: this
-    real(DP), dimension(3, 3), intent(in):: sigma
-    real(DP), dimension(3, 3), intent(inout):: D
-    type(YLPResult), intent(out)     :: ylp_result !< Results of the iterative search
-    !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
-    !> starting point for the iterative search.
-    logical, intent(in), optional     :: vM_guess
-    logical, intent(out), optional    :: is_acceptable
-    logical, intent(in), optional     :: pretry
-    !
-    real(DP):: vA_norm
-    real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
-    logical:: use_vM_guess, use_pretry, is_pretry_acceptable
-    type(NormalizedV5DCompCached), target:: obj_func
-    !
-    type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
-    type(multilevelYLPConfig)   :: ylp_pretry
-    real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
-    !
-        info = VEF_ERROR
+    integer function StressDrivenModule_findSolution(this, sigma, D, ylp_result, vM_guess, is_acceptable) result(info)
+        class(StressDrivenModule), intent(in)   :: this
+        real(DP), dimension(3, 3), intent(in):: sigma
+        real(DP), dimension(3, 3), intent(inout):: D
+        type(YLPResult), intent(out)     :: ylp_result !< Results of the iterative search
+        !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
+        !> starting point for the iterative search.
+        logical, intent(in), optional     :: vM_guess
+        logical, intent(out), optional    :: is_acceptable
 
+        real(DP):: vA_norm
+        real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
+        logical:: use_vM_guess
+        type(ObjectiveFunction), target:: obj_func
+        type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
+        real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
+
+
+        info = VEF_ERROR
         obj_func%ptr_db => this%ptr_db
-        !
         if (present(is_acceptable)) is_acceptable = .false.
-        !
         use_vM_guess = optionalDefault(vM_guess, .true.)
-        ! Pre-try if requested and no explicit initial quess is provided
-        use_pretry = optionalDefault(pretry, .true.) .and. use_vM_guess
-        !
+
         ! Convert input to the 5D space and make the unit vector(s).
         ! This also makes sure it is deviatoric.
         vS = convert_stress_strain_space(sigma)
         ylp_result = YLPResult(vS)
-        if (ylp_result%vS_length < epsilon(0.D0)) return
-        !
-        is_pretry_acceptable = .false.
-        if (use_pretry) then
-            !
-            ylp_result_pretry = ylp_result
-            !
-            if (this%ptr_db%get(ylp_result_pretry%vS, &
-                                ylp_result_pretry%vA, &
-                                max_angle = pretry_search_angle) == VEF_OK) then
-                ! Use special settings for pre-try
-                ylp_pretry = this%ylp
-                ylp_pretry%linearize = .true.
-                ylp_pretry%nonlinear = .false.
-                !
-                ! get the solution
-                info = this%search(ylp_pretry, ylp_result_pretry, .false., obj_func)
-                ! Accept the solution only if it reached the requested quality
-                if (info == VEF_OK .and. (ylp_result_pretry%R < this%ylp%obj_func_eps)) then
-                    is_pretry_acceptable = .true.
-                    ylp_result = ylp_result_pretry
-                endif
-            endif
-            !
+
+        if (.not. use_vM_guess) then
+            ylp_result%vA = convert_stress_strain_space(D)
+            vA_norm = norm2(ylp_result%vA)
+            if (vA_norm < epsilon(0.D0)) return
+        else if (this%ptr_db%get(ylp_result%vS, ylp_result%vA, max_angle = pretry_search_angle) == VEF_OK) then
+                use_vm_guess = .false.
         endif
-        !
-        if (.not. is_pretry_acceptable) then
-            !
-            if (.not. use_vM_guess) then
-                ylp_result%vA = convert_stress_strain_space(D)
-                vA_norm = norm2(ylp_result%vA)
-                if (vA_norm < epsilon(0.D0)) return
-            endif
-            ! Calculate the corresponding strain rate vA
-            info = this%search(this%ylp, ylp_result, use_vM_guess, obj_func)
-            if (info == VEF_FAIL .and. associated(this%ptr_db)) then
-                !
-                ! Try another starting point
-                !
-                ! Set the re-try point
-                ylp_result_retry = ylp_result
-                !
-                if (this%ptr_db%get(ylp_result_retry%vS, ylp_result_retry%vA) == VEF_OK) then
-                    ! get new solution
-                    info = this%search(this%ylp, ylp_result_retry, .false., obj_func)
-                    ! Use the better of the two
-                    if (ylp_result_retry%R < ylp_result%R) ylp_result = ylp_result_retry
-                endif
-            endif
-            RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
-            ! Rare case: normal search and re-try cannot improve over pre-try
-            if (info /= VEF_OK .and. use_pretry) then
-                if (ylp_result_pretry%R < ylp_result%R) ylp_result = ylp_result_pretry
-            endif
-        endif
+
+        !Calculate the corresponding strain rate vA
+        info = this%search(ylp_result, use_vM_guess, obj_func)
+
+        RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
         !
         if (present(is_acceptable)) then
-            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, this%ylp%obj_func_eps)
+            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, OBJECTIVE_THRESHOLD)
         endif
         !
         D = convert_stress_strain_space(ylp_result%vA)
@@ -217,12 +167,11 @@ contains
     !> \return Exit code from multilevelYLP, unless an error condition occurs
     !> at later stage. In such case VEF_ERROR is returned.
     !> In such case
-    integer function StressDrivenModule_search(this, ylp_config, ylp_result, use_vM_guess, obj_func) result(info)
+    integer function StressDrivenModule_search(this, ylp_result, use_vM_guess, obj_func) result(info)
     class(StressDrivenModule), intent(in):: this
-    type(multilevelYLPConfig), intent(in)    :: ylp_config
     type(YLPResult), intent(inout)           :: ylp_result
     logical, intent(in)                      :: use_vM_guess
-    class(NormalizedV5DComp), intent(inout)  :: obj_func
+    class(ObjectiveFunction), intent(inout)  :: obj_func
     !
         call multilevelYLP(ylp_result%vS,    &
                            ylp_result%vA,    &
@@ -230,7 +179,6 @@ contains
                            ylp_result%R,     &
                            info,             &
                            useVMGuess = use_vM_guess, &
-                           YLPconfig = ylp_config, &
                            verbose = this%output%verbosity, &
                            objective_function = obj_func)
         if (info == VEF_ERROR) return
@@ -240,12 +188,13 @@ contains
 
 
     !> Read configuration of the solver (libalamylp)
-    subroutine readYLPConfigSection(cnfunit, cnf, info)
+    subroutine readYLPConfigSection(cnfunit, info)
     integer, intent(in)                        :: cnfunit
-    type(multilevelYLPConfig), intent(out)     :: cnf
     integer, intent(out)                       :: info
     !
     real(DP), dimension(2):: tmp
+    real(DP):: dummy
+    logical:: dummy_2
     logical:: use_default_solver_settings, use_advanced_settings
     !
         info = VEF_ERROR
@@ -253,18 +202,16 @@ contains
         use_advanced_settings = .false.
         if (.not. readValue(cnfunit, use_default_solver_settings)) return
         if (.not. use_default_solver_settings) then
-            if (.not. readValue(cnfunit, cnf%jacobi_eps)) then
+            if (.not. readValue(cnfunit, dummy)) then
                  write(error_unit, fmt = 900) 'Check epsilon controlling numerical estimation over Jacobian.'
                  return
             endif
-            if (.not. readValue(cnfunit, cnf%linearize)) return
+            if (.not. readValue(cnfunit, dummy_2)) return
             ! read default_eps and obj_func_eps
             if (.not. readValue(cnfunit, tmp)) then
                  write(error_unit, fmt = 900) 'Check the linearization parameters.'
                  return
             endif
-            cnf%default_eps = tmp(1)
-            cnf%obj_func_eps = tmp(2)
             ! read flag for advanced settings (placeholder at the moment)
             if (.not. readValue(cnfunit, use_advanced_settings)) return
         endif

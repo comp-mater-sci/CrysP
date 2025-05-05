@@ -10,19 +10,19 @@ add_library(${libaltay} STATIC
 file_io.f90
 utils.f90
 logging.f90
-altayConfig.f90  
+altayConfig.f90
 altay.f90
 parameters.f90
 macro/simulation.f90
 meso/meso.f90
 meso/meso_model.f90
 meso/taylor_ambiguity.f90
-meso/simplex.f90 
+meso/simplex.f90
 meso/models/alamel.f90
 meso/models/full_constraints_taylor.f90
 meso/cluster.f90
 meso/relaxation.f90
-micro/grain.f90 
+micro/grain.f90
 micro/slip_systems.f90
 micro/micro.f90
 micro/constitutive_model.f90
@@ -52,7 +52,7 @@ install(TARGETS ${libaltay}
 )
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "include/altay" 
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "include/altay"
 	FILES_MATCHING PATTERN "*.fpp" PATTERN ".*" EXCLUDE)
 
 install(EXPORT "altayTargets" DESTINATION "cmake")
