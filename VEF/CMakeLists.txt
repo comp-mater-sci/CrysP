@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(alamDMC Fortran)
 
@@ -13,4 +13,4 @@ set(altay_DIR "../AlTay/${CMAKE_BUILD_TYPE}")
 find_package(altay REQUIRED)
 include_directories(${altay_INCLUDE_DIR})
 
-add_subdirectory(src) 
+add_subdirectory(src)

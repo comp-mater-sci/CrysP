@@ -9,7 +9,7 @@ use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use commonUtils
-use nllstr
+use alamYLP
 
 implicit none
 

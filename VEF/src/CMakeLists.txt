@@ -1,6 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
-
-project(alamDMC Fortran)
+project(alamDMC LANGUAGES C Fortran)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
@@ -14,6 +12,9 @@ endif()
 
 list(APPEND Fortran_FLAGS ${alamDMC_FLAGS})
 
+add_library(trust_region STATIC trust_region.c)
+
+
 add_executable(alamDMC
 criConfigReader.f90
 criLinearMap.f90
@@ -21,11 +22,8 @@ criNamedRange.f90
 criNumerics.f90
 criRange.f90
 criUncomment.f90
-nlls_tr.f90
-alamYLP.f90 
-alamEval.f90
+alamYLP.f90
 abstractModule.f90
-alamEvalCached.f90
 basicModule.f90
 commonConfig.f90
 commonUtils.f90
@@ -41,15 +39,15 @@ stressDrivenModule.f90
 substeppingConfig.f90
 YLPResult.f90
 dmcADP.f90
-dmcASR.f90 
-dmcEWC.f90 
-dmcQRS.f90  
-dmcUDSA.f90  
-dmcYld.f90  
+dmcASR.f90
+dmcEWC.f90
+dmcQRS.f90
+dmcUDSA.f90
+dmcYld.f90
 alamDMC.f90
 )
 
-target_link_libraries(alamDMC altay)
+target_link_libraries(alamDMC altay trust_region)
 set_target_properties(alamDMC PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 install(TARGETS alamDMC RUNTIME DESTINATION bin)

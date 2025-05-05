@@ -1,3 +1,5 @@
+include 'mkl_rci.f90'
+
 !>    \file alamYLP.f90 The file contains modules that calculate
 !>          yield locus position directly from the ALAMEL model.
 !>
@@ -5,21 +7,53 @@
 
 !> Implementation of YLP function that can directly use the ALAMEL multilevel model instead of a plastic potential function.
 module alamYLP
+    use iso_c_binding
+    use mkl_rci
     use utils
-    use nllsTR
-    use alamEval
+    use dmcresulttable
+    use logging
 
     implicit none
 
+    private
+
+    public:: OBJECTIVE_THRESHOLD, &
+             ObjectiveFunction, &
+             multilevelylp
+
+    character(*), parameter:: MOD_NAME = 'alamYLP'
+    real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
+
+    !>Data type for objective functions.
+    type:: objectiveFunction
+        real(DP), dimension(5):: strain_mode
+        real(DP), dimension(5):: residual
+        real(DP), dimension(5, 5):: jacobi = 0._DP
+        real(DP), dimension(5):: vSn = 0._DP
+        real(DP), dimension(5):: vSml = 0._DP
+        type(ResultTable), pointer:: ptr_db => null()
+    end type
+
+    interface
+        integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
+            import C_INT, &
+                   C_DOUBLE
+
+            real(C_DOUBLE), dimension(5), intent(in):: stress_target
+            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
+            real(C_DOUBLE), dimension(5), intent(out):: strain_mode
+            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
+            real(C_DOUBLE), dimension(5), intent(out):: residual
+        end function
+    end interface
 
 contains
-
 
     !> Calculates plastic strain rate corresponding to given deviatoric stress
     !>
     !> The subroutine assumes that multilevel model is already configured and initialized.
-    !> Exit code is retured in info: VEF_OK on success; VEF_ERROR if no converged solution can
-    !> be found; VEF_ERROR or VEF_ERROR if error conditions have been detected.
+    !> Exit code is retured in info: VEF_OK on success; VEF_FAIL if no converged solution can
+    !> be found; VEF_ERROR if error conditions have been detected.
     subroutine multilevelYLP(vS, vA, vSonA, R, info, useVMGuess, outunit, verbose, objective_function)
         real(DP), intent(in)   :: vS(5)      !< Imposed stress vector
         real(DP), intent(inout):: vA(5)      !< Strain rate mode on yield locus
@@ -30,37 +64,32 @@ contains
         logical, optional, intent(in)   :: useVMGuess
         integer, intent(in), optional   :: outunit    !< Unit number for messages
         integer, intent(in), optional   :: verbose
-        class(NormalizedV5DComp), target, optional, intent(inout):: objective_function
+        class(ObjectiveFunction), target, optional, intent(inout):: objective_function
 
         real(DP), dimension(5):: vX, vX_lin
-        class(NormalizedV5DComp), pointer:: objFunc
-        type(NormalizedV5DComp), allocatable, target:: objective_function_local
-        real(DP)        :: r1, r2
+        integer:: ounit
+        class(ObjectiveFunction), pointer:: objFunc
+        type(ObjectiveFunction), allocatable, target:: objective_function_local
         logical                 :: use_vmGuess
-        real(DP)        :: r1_lin, r2_lin
-        type(nllsTRRes)         :: TR_res
-        type(SolutionPoint)     :: initState
-        integer                 :: ounit, tr_verbose, ierr
         integer, parameter       :: stdout = 6
         logical                 :: log_info, log_debug
         real(DP)        :: norm
-        !
+
+
         if (present(useVMGuess)) then
             use_vmGuess = useVMGuess
         else
             use_vmGuess = .true.
         endif
-        tr_verbose = 0
+
         log_info = .false.
         log_debug = .false.
         if (present(verbose)) then
             if (verbose > 2) then
                 log_info = .true.
-                tr_verbose = 1
             endif
             if (verbose > 3) then
                 log_debug = .true.
-                tr_verbose = 3
             endif
         endif
         ! Set the objective function
@@ -69,12 +98,6 @@ contains
         else
             allocate(objective_function_local)
             objFunc => objective_function_local
-        endif
-        ! Configure objective function
-        call objFunc%initFx(5, 5, ierr)
-        if (ierr /= 0) then
-            info = VEF_ERROR
-            return
         endif
         info  = VEF_ERROR
         !
@@ -85,30 +108,24 @@ contains
         !
         ounit = stdout
         if (present(outunit))  ounit = outunit
-        ! Initialize TR solver
-        ! (note: outunit argument has "optional" modifier in both the caller and callee)
-        call nlls_TR_init(outunit, tr_verbose)
         ! Use von Mises guess
         vX = merge(vS, vA, use_vmGuess)
-        !
-        r1 = 0.0_DP; r2 = 0.0_DP
 
-        call nlls_TR_solve(objFunc, vX, r1, r2, ierr)
+        if(trust_region_solve(objfunc%vsn, objfunc%vsml, vx, objfunc%jacobi, objfunc%residual) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
 
-        R = r2
-        if(ierr /= 0) then
-            info = VEF_ERROR
-            return
-        end if
-        call initState%finalize()
-        !
+        if (associated(objfunc%ptr_db)) &
+            call objfunc%ptr_db%put(vX/norm2(vx), objfunc%vSml)  ! Normalize because the magnitude has no impact on the response.
+
+        R = norm2(objfunc%residual)
+
         ! Set output strain rate
         info  = VEF_ERROR
         norm = norm2(vX)
         if (norm < epsilon(0.D0)) return
         vA = vX/norm
 
-        if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%state%vF
+        if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%residual
 
         vSonA = objFunc%vSml
         info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)
