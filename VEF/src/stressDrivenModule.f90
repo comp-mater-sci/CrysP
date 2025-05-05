@@ -27,15 +27,9 @@ implicit none
 
     contains
         procedure, pass(this)     :: initialize => StressDrivenModule_initialize
-
         procedure, pass(this)     :: readConfig => StressDrivenModule_readConfig
-
         procedure, pass(this)     :: finalize => StressDrivenModule_finalize
-
         procedure, pass(this)     :: findSolution => StressDrivenModule_findSolution
-
-        procedure, pass(this)     :: search => StressDrivenModule_search
-
     end type
 
 
@@ -142,9 +136,20 @@ contains
         endif
 
         !Calculate the corresponding strain rate vA
-        info = this%search(ylp_result, use_vM_guess, obj_func)
+         call multilevelYLP(ylp_result%vS,    &
+                           ylp_result%vA,    &
+                           ylp_result%vSonA, &
+                           ylp_result%R,     &
+                           info,             &
+                           useVMGuess = use_vM_guess, &
+                           verbose = this%output%verbosity, &
+                           objective_function = obj_func)
 
-        RETURN_IF_WITH(info == VEF_ERROR, info = VEF_ERROR)
+        if (info == VEF_ERROR .or. deriveYLPResult(ylp_result) /= VEF_OK) then
+            info = VEF_ERROR
+            return
+        end if
+
         !
         if (present(is_acceptable)) then
             is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, OBJECTIVE_THRESHOLD)
@@ -156,33 +161,6 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-    !
-    end function
-
-
-    !> Wrapper around multilevelYLP that uses YLPResult for communicating with the caller.
-    !>
-    !> The wrapper applies settings provided as members of StressDrivenModule.
-    !> It provides a ready-to-use ylp_result on non-error info code.
-    !> \return Exit code from multilevelYLP, unless an error condition occurs
-    !> at later stage. In such case VEF_ERROR is returned.
-    !> In such case
-    integer function StressDrivenModule_search(this, ylp_result, use_vM_guess, obj_func) result(info)
-    class(StressDrivenModule), intent(in):: this
-    type(YLPResult), intent(inout)           :: ylp_result
-    logical, intent(in)                      :: use_vM_guess
-    class(ObjectiveFunction), intent(inout)  :: obj_func
-    !
-        call multilevelYLP(ylp_result%vS,    &
-                           ylp_result%vA,    &
-                           ylp_result%vSonA, &
-                           ylp_result%R,     &
-                           info,             &
-                           useVMGuess = use_vM_guess, &
-                           verbose = this%output%verbosity, &
-                           objective_function = obj_func)
-        if (info == VEF_ERROR) return
-        if (deriveYLPResult(ylp_result) /= VEF_OK) info = VEF_ERROR
     !
     end function
 
