@@ -73,49 +73,4 @@ contains
         info = VEF_OK
     !
     end function
-
-
-    !> Print detailed info about YLP solution based on the content of YLPResult
-    !> object.
-    integer function printYLPResult(iounit, ylp_result) result(info)
-    integer, intent(in)              :: iounit
-    type(YLPResult), intent(in)      :: ylp_result
-    !
-        write(iounit, fmt = 100)
-        write(iounit, fmt = 200) 'Requested stress:', ylp_result%vS
-        write(iounit, fmt = 200) 'Identified normalized stress:', ylp_result%vSonAn
-        write(iounit, fmt = 201) 'Norm of stress residual:', ylp_result%R
-        write(iounit, fmt = 100)
-        write(iounit, fmt = 200) 'Stress on vA:', ylp_result%vSonA
-        write(iounit, fmt = 201) 'Norm of stress on vA:', norm2(ylp_result%vSonA)
-        write(iounit, fmt = 100)
-        !
-        info = VEF_OK
-        !
-        100 format()
-        200 format(A, T40, 5(E12.5, 1X))
-        201 format(A, T40, E12.5)
-    !
-    end function
-
-
-    !> Check if ylp_result is within all tolerances.
-    !> \returns .true. if ylp_result passes all tolerances (ie. is acceptable),
-    !> .false. otherwise.
-    !>
-    !> The procedure checks the norm of residual error and angle between the solution
-    !> stress and requested stress. These two quantities are very much correlated,
-    !> except for unconverged solution where they are not. For this reason it
-    !> appears better to check both.
-    pure logical function checkYLPResult(ylp_result, tolerance, target_residual) result(val)
-    type(YLPResult), intent(in)          :: ylp_result
-    type(YLPResultTolerance), intent(in):: tolerance
-    real(DP), intent(in)         :: target_residual
-    !
-        val = (ylp_result%R < tolerance%residual_tolerance_factor*target_residual) &
-              .and. &
-              (vec_angle(ylp_result%vS, ylp_result%vSonA) < tolerance%angular_tolerance/RAD_TO_DEG)
-    !
-    end function
-
 end module

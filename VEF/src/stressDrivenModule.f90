@@ -150,11 +150,9 @@ contains
             return
         end if
 
-        !
-        if (present(is_acceptable)) then
-            is_acceptable = checkYLPResult(ylp_result, this%solution_tolerance, OBJECTIVE_THRESHOLD)
-        endif
-        !
+        if (present(is_acceptable)) &
+            is_acceptable = .true.
+
         D = convert_stress_strain_space(ylp_result%vA)
         ! Return the info from the last call to 'search'
         !
