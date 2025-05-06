@@ -1,3 +1,7 @@
+!> Traditional full constraints Taylor theory.
+!>
+!> Assumes all grains deform identically.
+
 module full_constraints_taylor
     use utils
     use cluster_module
@@ -15,29 +19,34 @@ module full_constraints_taylor
 
     character(*), parameter:: MOD_NAME = "full_constraints_taylor"
 
+    !> Cluster-specific state needed for full constraints Taylor simulations.
+    !> 
+    !> A Taylor cluster only holds 1 grain.
     type, extends(Cluster):: TaylorCluster
         integer, dimension(5):: ind_basis_systems
         real(DP), dimension(5, 5):: inverse_basis
     end type
 
+    !> Model for full constraints Taylor simulations.
     type, extends(MesoModel):: TaylorModel
     contains
-        procedure:: init => full_constraints_taylor_init
-        procedure:: get_stress => full_constraints_taylor_get_stress
-        procedure:: apply_step => full_constraints_taylor_deform
+        procedure:: init       => full_constraints_taylor_init       !! Inherited from [[MesoModel]]
+        procedure:: get_stress => full_constraints_taylor_get_stress !! Inherited from [[MesoModel]]
+        procedure:: apply_step => full_constraints_taylor_deform     !! Inherited from [[MesoModel]]
     end type
 
 contains
 
-    !>@Brief Convert the type of a provided generic cluster to TaylorCluster
-    !>@Details This is the closest Fortran can get to proper type casting.
-    !>         Useful for accessing TaylorCluster-specific fields without the boilerplate of type selection and error handling in
-    !>         each calling procedure.
-    !>         If the input cluster is not a TaylorCluster, the routine crashes the program.
-    !>@Return  If the input cluster is indeed a TaylorCluster, a pointer to this cluster of type TaylorCluster is returned.
+    !> Convert the type of a provided generic cluster to TaylorCluster
+    !> 
+    !> This is the closest Fortran can get to proper type casting.
+    !> Useful for accessing TaylorCluster-specific fields without the boilerplate of type selection and error handling in
+    !> each calling procedure.
+    !> If the input cluster is not a TaylorCluster, the routine crashes the program.
+    !> If the input cluster is indeed a TaylorCluster, a pointer to this cluster of type TaylorCluster is returned.
     function to_taylor_cluster(cluster_) result(ptr)
-        class(Cluster), target, intent(in):: cluster_   !> Generic input cluster
-        type(TaylorCluster), pointer:: ptr              !> Pointer to input cluster of type TaylorCluster
+        class(Cluster), target, intent(in):: cluster_   !! Generic input cluster
+        type(TaylorCluster), pointer:: ptr              !! Pointer to input cluster of type TaylorCluster
 
         select type (cluster_)
             type is (TaylorCluster)
@@ -47,10 +56,10 @@ contains
         end select
     end function
 
-    !>@Brief See 'meso_model_init'.
+    !> See [[MesoModel:Init]]
     subroutine full_constraints_taylor_init(this, grains, params, clusters)
         class(TaylorModel), intent(inout):: this
-        type(Grain), dimension(:), allocatable, intent(in):: grains
+        type(Grain), dimension(:), intent(in):: grains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
@@ -72,10 +81,10 @@ contains
         end select
     end subroutine
 
-    !>@Brief See 'meso_model_get_stress'.
+    !> See [[MesoModel:get_stress]]
     function full_constraints_taylor_get_stress(this, cluster_, v_grad) result(stress)
         class(TaylorModel), intent(in):: this
-        class(Cluster), target, intent(inout):: cluster_                    !> Intent(inout) because simplex modifies inverse basis
+        class(Cluster), target, intent(inout):: cluster_                    
         real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
@@ -99,19 +108,10 @@ contains
         end associate
     end function
 
-    subroutine full_constraints_taylor_prepare_deformation(this, v_grad)
-        class(TaylorModel), intent(inout):: this
-        real(DP), dimension(3, 3), intent(in):: v_grad !> Velocity gradient used for the next deformation step(s)
-
-        this%velocity_gradient = v_grad
-        this%imposed_spin_rate = antisymmetric_part(this%velocity_gradient)
-    end subroutine
-
-    !>@Brief See 'meso_model_apply_step'.
-    subroutine full_constraints_taylor_deform(this, cluster_, index_cluster, stress, slip)
+    !> See [[MesoModel:apply_step]]
+    subroutine full_constraints_taylor_deform(this, cluster_, stress, slip)
         class(TaylorModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
-        integer, intent(in):: index_cluster
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
 
@@ -162,8 +162,8 @@ contains
             call micro_deform(grain_, 1._DP, slip_rates)
 
             orientation_increment = UNIT_MATRIX_3X3 &
-                                    -(this%imposed_spin_rate .toframe. grain_%orientation) &                !>Change of reference frame
-                                    +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates))    !>Spin induced by activation of slip systems
+                                    -(this%imposed_spin_rate .toframe. grain_%orientation) &     !Change of reference frame
+                                    +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates))  !Spin induced by activation of slip systems
             grain_%orientation = matmul(orientation_increment, grain_%orientation)
         end associate
     end subroutine
