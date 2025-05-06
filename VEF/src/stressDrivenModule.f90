@@ -186,6 +186,8 @@ contains
         logical:: use_vM_guess
         type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
+        real(DP):: r(5), &
+                   jacobi(5,5)
 
 
         info = VEF_ERROR
@@ -204,14 +206,15 @@ contains
                 use_vm_guess = .false.
         endif
 
-        !Calculate the corresponding strain rate vA
-         call multilevelYLP(ylp_result%vS / norm2(ylp_result%vs),    &
-                           ylp_result%vA,    &
-                           ylp_result%vSonA, &
-                           ylp_result%R,     &
-                           info,             &
-                           useVMGuess = use_vM_guess, &
-                           verbose = this%output%verbosity)
+        ! Use von Mises guess
+        if (use_vm_guess) &
+            ylp_result%va = ylp_result%vs
+
+        if(trust_region_solve(ylp_result%vs/norm2(ylp_result%vs), ylp_result%vsona, ylp_result%va, jacobi, r) /= TR_SUCCESS) &
+            call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
+
+
+        info = merge(VEF_FAIL, VEF_OK, norm2(r) > OBJECTIVE_THRESHOLD)
 
         if (associated(this%ptr_db)) &
             call this%ptr_db%put(ylp_result%va, ylp_result%vsona)
@@ -225,14 +228,7 @@ contains
             is_acceptable = .true.
 
         D = convert_stress_strain_space(ylp_result%vA)
-        ! Return the info from the last call to 'search'
-        !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end function
-
 
     !> Read configuration of the solver (libalamylp)
     subroutine readYLPConfigSection(cnfunit, info)
@@ -267,50 +263,5 @@ contains
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
-    end subroutine
-
-
-
-    !> Calculates plastic strain rate corresponding to given deviatoric stress
-    !>
-    !> The subroutine assumes that multilevel model is already configured and initialized.
-    !> Exit code is retured in info: VEF_OK on success; VEF_FAIL if no converged solution can
-    !> be found; VEF_ERROR if error conditions have been detected.
-    subroutine multilevelYLP(target_stress_mode, strain_mode, stress, residual, info, useVMGuess, outunit, verbose)
-        real(DP), intent(in)   :: target_stress_mode(5)      !< Imposed stress mode. Normalized.
-        real(DP), intent(inout):: strain_mode(5)      !< Strain rate mode on yield locus
-        real(DP), intent(out)  :: stress(5)   !< Stress vector corresponding to A
-        real(DP), intent(out)  :: residual          !< Square norm of residual error
-        integer                       :: info       !< Exit code
-        !> Flag: use von Mises initial guess, otherwise assume vA as an initial strain rate (default: .true.)
-        logical, optional, intent(in)   :: useVMGuess
-        integer, intent(in), optional   :: outunit    !< Unit number for messages
-        integer, intent(in), optional   :: verbose
-
-        logical                 :: use_vmGuess
-        integer, parameter       :: stdout = 6
-        real(DP)        :: r(5), &
-                           jacobi(5,5)
-
-
-        if (present(useVMGuess)) then
-            use_vmGuess = useVMGuess
-        else
-            use_vmGuess = .true.
-        endif
-
-        info  = VEF_ERROR
-
-        ! Use von Mises guess
-        if (use_vmguess) &
-            strain_mode = target_stress_mode
-
-        if(trust_region_solve(target_stress_mode, stress, strain_mode, jacobi, r) /= TR_SUCCESS) &
-            call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
-
-
-        residual = norm2(r)
-
-        info = merge(VEF_FAIL, VEF_OK, residual > OBJECTIVE_THRESHOLD)
     end subroutine
 end module
