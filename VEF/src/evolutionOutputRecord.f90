@@ -2,7 +2,7 @@
 module dmcEvolutionOutputRecord
     use utils
     use dmcIncrementationControl, only: IncrementationControlVariables
-    use alamylp
+    use dmcStressDrivenModule
 
     implicit none
 

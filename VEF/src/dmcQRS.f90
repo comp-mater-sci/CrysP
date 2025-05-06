@@ -10,7 +10,6 @@ module dmcQRS
     use commonUtils
     use dmcResultFileOutput
     use qrsTypes
-    use alamYlp
 
     implicit none
 

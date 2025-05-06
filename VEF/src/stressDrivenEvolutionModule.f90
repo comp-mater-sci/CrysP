@@ -8,7 +8,6 @@ use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use commonUtils
-use alamYLP
 
 implicit none
 

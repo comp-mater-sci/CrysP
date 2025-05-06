@@ -9,7 +9,6 @@ module dmcYld
     use commonConfig
     use dmcStressDrivenModule
     use commonUtils
-    use alamYlp
 
     implicit none
 
