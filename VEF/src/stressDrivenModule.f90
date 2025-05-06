@@ -18,23 +18,11 @@ implicit none
     private
     public:: StressDrivenModule, &
              OBJECTIVE_THRESHOLD, &
-             ObjectiveFunction, &
-             multilevelylp, &
              YLPResult, &
              deriveylpresult
 
     character(*), parameter:: MOD_NAME = 'stressDrivnModule'
     real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
-
-    !>Data type for objective functions.
-    type:: objectiveFunction
-        real(DP), dimension(5):: strain_mode
-        real(DP), dimension(5):: residual
-        real(DP), dimension(5, 5):: jacobi = 0._DP
-        real(DP), dimension(5):: vSn = 0._DP
-        real(DP), dimension(5):: vSml = 0._DP
-        type(ResultTable), pointer:: ptr_db => null()
-    end type
 
     !> Datatype to store results of iterative search
     type:: YLPResult
@@ -196,14 +184,11 @@ contains
         real(DP):: vA_norm
         real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
         logical:: use_vM_guess
-        type(ObjectiveFunction), target:: obj_func
         type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
 
 
         info = VEF_ERROR
-        obj_func%ptr_db => this%ptr_db
-        if (present(is_acceptable)) is_acceptable = .false.
         use_vM_guess = optionalDefault(vM_guess, .true.)
 
         ! Convert input to the 5D space and make the unit vector(s).
@@ -220,14 +205,16 @@ contains
         endif
 
         !Calculate the corresponding strain rate vA
-         call multilevelYLP(ylp_result%vS,    &
+         call multilevelYLP(ylp_result%vS / norm2(ylp_result%vs),    &
                            ylp_result%vA,    &
                            ylp_result%vSonA, &
                            ylp_result%R,     &
                            info,             &
                            useVMGuess = use_vM_guess, &
-                           verbose = this%output%verbosity, &
-                           objective_function = obj_func)
+                           verbose = this%output%verbosity)
+
+        if (associated(this%ptr_db)) &
+            call this%ptr_db%put(ylp_result%va, ylp_result%vsona)
 
         if (info == VEF_ERROR .or. deriveYLPResult(ylp_result) /= VEF_OK) then
             info = VEF_ERROR
@@ -289,26 +276,21 @@ contains
     !> The subroutine assumes that multilevel model is already configured and initialized.
     !> Exit code is retured in info: VEF_OK on success; VEF_FAIL if no converged solution can
     !> be found; VEF_ERROR if error conditions have been detected.
-    subroutine multilevelYLP(vS, vA, vSonA, R, info, useVMGuess, outunit, verbose, objective_function)
-        real(DP), intent(in)   :: vS(5)      !< Imposed stress vector
-        real(DP), intent(inout):: vA(5)      !< Strain rate mode on yield locus
-        real(DP), intent(out)  :: vSonA(5)   !< Stress vector corresponding to A
-        real(DP), intent(out)  :: R          !< Square norm of residual error
+    subroutine multilevelYLP(target_stress_mode, strain_mode, stress, residual, info, useVMGuess, outunit, verbose)
+        real(DP), intent(in)   :: target_stress_mode(5)      !< Imposed stress mode. Normalized.
+        real(DP), intent(inout):: strain_mode(5)      !< Strain rate mode on yield locus
+        real(DP), intent(out)  :: stress(5)   !< Stress vector corresponding to A
+        real(DP), intent(out)  :: residual          !< Square norm of residual error
         integer                       :: info       !< Exit code
         !> Flag: use von Mises initial guess, otherwise assume vA as an initial strain rate (default: .true.)
         logical, optional, intent(in)   :: useVMGuess
         integer, intent(in), optional   :: outunit    !< Unit number for messages
         integer, intent(in), optional   :: verbose
-        class(ObjectiveFunction), target, optional, intent(inout):: objective_function
 
-        real(DP), dimension(5):: vX, vX_lin
-        integer:: ounit
-        class(ObjectiveFunction), pointer:: objFunc
-        type(ObjectiveFunction), allocatable, target:: objective_function_local
         logical                 :: use_vmGuess
         integer, parameter       :: stdout = 6
-        logical                 :: log_info, log_debug
-        real(DP)        :: norm
+        real(DP)        :: r(5), &
+                           jacobi(5,5)
 
 
         if (present(useVMGuess)) then
@@ -317,53 +299,18 @@ contains
             use_vmGuess = .true.
         endif
 
-        log_info = .false.
-        log_debug = .false.
-        if (present(verbose)) then
-            if (verbose > 2) then
-                log_info = .true.
-            endif
-            if (verbose > 3) then
-                log_debug = .true.
-            endif
-        endif
-        ! Set the objective function
-        if (present(objective_function)) then
-            objFunc => objective_function
-        else
-            allocate(objective_function_local)
-            objFunc => objective_function_local
-        endif
         info  = VEF_ERROR
-        !
-        !Get normalized stress vector
-        norm = norm2(vS)
-        if (norm < epsilon(0.D0)) return
-        objFunc%vSn = vS/norm
-        !
-        ounit = stdout
-        if (present(outunit))  ounit = outunit
-        ! Use von Mises guess
-        vX = merge(vS, vA, use_vmGuess)
 
-        if(trust_region_solve(objfunc%vsn, objfunc%vsml, vx, objfunc%jacobi, objfunc%residual) /= TR_SUCCESS) &
+        ! Use von Mises guess
+        if (use_vmguess) &
+            strain_mode = target_stress_mode
+
+        if(trust_region_solve(target_stress_mode, stress, strain_mode, jacobi, r) /= TR_SUCCESS) &
             call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
 
-        if (associated(objfunc%ptr_db)) &
-            call objfunc%ptr_db%put(vX/norm2(vx), objfunc%vSml)  ! Normalize because the magnitude has no impact on the response.
 
-        R = norm2(objfunc%residual)
+        residual = norm2(r)
 
-        ! Set output strain rate
-        info  = VEF_ERROR
-        norm = norm2(vX)
-        if (norm < epsilon(0.D0)) return
-        vA = vX/norm
-
-        if (log_info) write(ounit, '(A, 1X, 5(E15.8, 1X))') 'Final residual vector: ',objFunc%residual
-
-        vSonA = objFunc%vSml
-        info = merge(VEF_FAIL, VEF_OK, R > OBJECTIVE_THRESHOLD)
+        info = merge(VEF_FAIL, VEF_OK, residual > OBJECTIVE_THRESHOLD)
     end subroutine
 end module
-
