@@ -1,82 +1,87 @@
-!>Global definitions used in multiple modules within AlTay
+!> Global constant definitions and useful utility procedures used all over AlTay.
+
 module utils
     use, intrinsic:: iso_fortran_env, only: output_unit
 
     implicit none
+
     public
 
+    integer, parameter       :: MAX_PATHLEN = 2048          !! Maximum file path length.
+    integer, parameter       :: display_unit = output_unit  !! Identifier for stdout. Used in write statements.
+    integer, parameter::  DP = selected_real_kind(15, 307)  !! Kind for reals corresponding to the classic notion of a double precision floating point number of 8 bytes.
+    real(DP), parameter:: TOLERANCE  = 1.E-9_DP             !! Default tolerance on floating point calculations to compensate for inherent inaccuracy of floating point arithmetic, especially for multithreaded computations.
+    real(DP), parameter:: REAL_DP_MAX_VAL = huge(0._DP)     !! Placeholder for 'infinity'. Useful as initial value in loops looking for the minimum of some value in a list.
+    real(DP), parameter:: PI         = acos(-1.D0)          !! Pi.
+    real(DP), parameter:: RAD_TO_DEG = 180._DP/PI           !! Multiply by this constant to convert a value in radians to degrees. Divide for the reverse operation.
+    real(DP), parameter:: SQR0P5     = sqrt(0.5_DP)         !! Square root of 1/2.
+    real(DP), parameter:: SQR0P67    = sqrt(2._DP/3._DP)    !! Square root of 2/3.
+    real(DP), parameter:: SQR1P5     = sqrt(1.5_DP)         !! Square root of 3/2.
+    real(DP), parameter:: SQR2       = sqrt(2._DP)          !! Square root of 2.
 
-    integer, parameter::  DP = selected_real_kind(15, 307)
-    real(DP), parameter:: TOLERANCE  = 1.E-9_DP, &
-                          REAL_DP_MAX_VAL = huge(0._DP), &
-                          PI         = acos(-1.D0), &
-                          RAD_TO_DEG = 180._DP/PI, &
-                          SQR0P5     = sqrt(0.5_DP), &
-                          SQR0P67    = sqrt(2._DP/3._DP), &
-                          SQR1P5     = sqrt(1.5_DP), &
-                          SQR2       = sqrt(2._DP)
-
-    !Status codes
+    !> Status codes. Used to communicate information on the completion of a procedure to the caller.
     enum, bind(C)
-        enumerator:: VEF_OK, &
-                      VEF_FAIL, &
-                      VEF_ERROR
+        enumerator:: VEF_OK      !! Sucessful execution
+        enumerator:: VEF_FAIL    !! No errors occured, but the routine did not accomplish its main goal.
+        enumerator:: VEF_ERROR   !! Errors occured during exection.
     end enum
-    integer, parameter       :: display_unit = output_unit
 
-    integer:: IMP1 = 7  !< output-file with successive "current situations"
-    integer:: IMP5 = 111     !< output of stress-strain or slip-stress
 
-    !> Maximal length of path acceptable by the filesystem
-    integer, parameter       :: MAX_PATHLEN = 2048
 
     !> Matrix form of the unit second rank tensor
     real(DP), dimension(3, 3), parameter:: UNIT_MATRIX_3X3 = reshape([1._DP, 0._DP, 0._DP, &
-                                                                       0._DP, 1._DP, 0._DP, &
-                                                                       0._DP, 0._DP, 1._DP], [3, 3])
+                                                                      0._DP, 1._DP, 0._DP, &
+                                                                      0._DP, 0._DP, 1._DP], [3, 3])
 
-    character(*), private, parameter:: MOD_NAME = 'utils'
+    character(*), private, parameter:: MOD_NAME = 'utils' !! Module name for easier logging.
 
-    interface normalize
+    
+    interface normalize !! Normalize a vector or an array of column vectors.
         module procedure normalize_int, normalize_real, normalize_vec_int
     end interface
 
-    interface convert_stress_strain_space
+    interface convert_stress_strain_space !! Convert between 3x3 tensor representation or 5D stress-strain space representation of stresses and strains.
         module procedure convert_stress_strain_mat_vec, &
                          convert_stress_strain_vec_mat
     end interface
 
-    interface convert_spin
+    interface convert_spin !! Convert a small strain spin between an antisymmetric 3x3 matrix representation and a 3D vector representation.
         module procedure convert_spin_mat_vec, &
                          convert_spin_vec_mat
     end interface
 
-    interface operator(.dot.)
+    interface operator(.dot.) !! Dot product for vectors, or double dot product for matrices.
         module procedure dot_product_wrapper, double_dot_product
     end interface
 
-    interface operator(.cross.)
+    interface operator(.cross.) !! Cross product between two vectors.
         module procedure cross_int, cross_real
     end interface
 
-    interface operator(.outer.)
+    interface operator(.outer.) !! Outer product (i.e. tensor product) between 2 vectors.
         module procedure outer_product
     end interface
 
-    interface operator(.toframe.)
+    interface operator(.toframe.) !! Rotate a matrix to a particular reference frame represented in the macroscopic frame (passive convention).
         module procedure rotate_to
     end interface
 
-    interface operator(.fromframe.)
+    interface operator(.fromframe.) !! Rotate a matrix from a particular reference frame to the macroscopic frame (passive convention).
         module procedure rotate_from
     end interface
 contains
 
-    !> Convert second-rank tensor t into 5D vector following Van Houtte et al., 1992.
-    !> Hydrostatic component is subtracted and tensor is symmetrized
+    !> Convert second-rank tensor t into 5D vector. 
+    !>
+    !> This works because deviatoric strains and stresses only have 5 independent components.
+    !> Hydrostatic component is subtracted and tensor is symmetrized. This procedure therefore works on ony input tensor.
+    !> The convention by Van Houtte et al., 1992 is followed here. 
+    !> @note
+    !> Different papers by Van Houtte sometimes use a different transformation. Be careful with this.
+    !> @endnote
     pure function convert_stress_strain_mat_vec(t) result(v)
-        real(DP), dimension(3, 3), intent(in)   :: t
-        real(DP), dimension(5)                :: v
+        real(DP), dimension(3, 3), intent(in) :: t  !! The input tensor
+        real(DP), dimension(5)                :: v  !! 5D vector representation of the tensor.
 
         v(1) =  SQR0P5*(t(1, 1) - t(2, 2))
         v(2) = -SQR1P5*(t(3, 3) - (t(1, 1) + t(2, 2) + t(3, 3)) / 3._DP)
@@ -85,10 +90,11 @@ contains
         v(5) =  SQR0P5*(t(1, 2) + t(2, 1))
     end function
 
-    !> Convert 5D vector v into second-rank tensor
+    !> Inverse operation of convert_stress_strain_mat_vec
     pure function convert_stress_strain_vec_mat(v) result(t)
-        real(DP), dimension(5), intent(in)    :: v
-        real(DP), dimension(3, 3)             :: t
+        real(DP), dimension(5), intent(in)    :: v  !! The input vector
+        real(DP), dimension(3, 3)             :: t  !! The 3x3 deviatoric tensor representation of the vector.
+
         real(DP), parameter ::  root6i = 1.D0/sqrt(6.D0)
 
         t(1, 1) =  SQR0P5*v(1) + root6i*v(2)
@@ -102,20 +108,25 @@ contains
         t(2, 1) = t(1, 2)
     end function
 
+    !> Wrapper for the Fortran intrinsic dot_product.
+    !>
+    !> Needed to define the .dot. operator.
     pure real(DP) function dot_product_wrapper(vec1, vec2)
-        real(DP), intent(in):: vec1(:), &
-                                vec2(size(vec1))
+        real(DP), intent(in):: vec1(:), &      
+                               vec2(size(vec1)) 
 
         dot_product_wrapper = dot_product(vec1, vec2)
     end function
 
+    !> The double dot product between 2 matrices
     pure real(DP) function double_dot_product(mat1, mat2)
-        real(DP), intent(in):: mat1(:,:), &
-                               mat2(size(mat1, 1), size(mat1, 2))
+        real(DP), intent(in):: mat1(:,:), &                         
+                               mat2(size(mat1, 1), size(mat1, 2))  
 
         double_dot_product = sum(mat1*mat2)
     end function
 
+    !> Cross product between 2 integer vectors
     pure function cross_int(v1, v2) result(cross)
         integer, intent(in), dimension(3):: v1, v2
         integer, dimension(3):: cross
@@ -125,6 +136,7 @@ contains
         cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
     end function
 
+    !> Cross product between 2 real vectors
     pure function cross_real(v1, v2) result(cross)
         real(DP), intent(in), dimension(3):: v1, v2
         real(DP), dimension(3):: cross
@@ -134,6 +146,9 @@ contains
         cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
     end function
 
+    !> Normalize an array of integer column vectors.
+    !> 
+    !> Each column vector is normalized independently
     pure function normalize_int(arr) result(normalized)
         integer, dimension(:,:), intent(in):: arr
         real(DP), dimension(3, size(arr, 2)):: normalized
@@ -143,14 +158,18 @@ contains
             normalized(:,i) = real(arr(:,i), DP) / norm2(real(arr(:,i), DP))
         end do
     end function
-     pure function normalize_vec_int(vec) result(normalized)
+    !> Normalize an integer vector.
+    pure function normalize_vec_int(vec) result(normalized)
         integer, dimension(:), intent(in):: vec
         real(DP), dimension(size(vec)):: normalized
         integer:: i
 
         normalized = real(vec, DP) / norm2(real(vec, DP))
     end function
-
+    
+    !> Normalize an array of real column vectors.
+    !> 
+    !> Each column vector is normalized independently
     pure function normalize_real(arr) result(normalized)
         real(DP), dimension(:,:), intent(in):: arr
         real(DP), dimension(3, size(arr, 2)):: normalized
@@ -161,7 +180,7 @@ contains
         end do
     end function
 
-
+    !> The outer (i.e. tensor) product between 2 vectors.
     pure function outer_product(v1, v2) result(prod)
         real(DP), dimension(:), intent(in)      :: v1, v2
         real(DP), dimension(size(v1), size(v2)):: prod
@@ -170,6 +189,9 @@ contains
         forall(i = 1:size(v1), j = 1:size(v2)) prod(i, j) = v1(i) * v2(j)
     end function
 
+    !> Take the symmetric part of a matrix.
+    !> 
+    !> Removes any rotational components
     pure function symmetric_part(mat) result(sym)
         real(DP), dimension(:,:), intent(in):: mat
         real(DP), dimension(size(mat, 1), size(mat, 2)):: sym
@@ -177,7 +199,7 @@ contains
         sym = (mat+transpose(mat)) / 2._DP
     end function
 
-
+    !> Take the antisymmetric (i.e. rotational) part of a matrix.
     pure function antisymmetric_part(mat) result(antisym)
         real(DP), dimension(:,:), intent(in):: mat
         real(DP), dimension(size(mat, 1), size(mat, 2)):: antisym
@@ -185,6 +207,19 @@ contains
         antisym = (mat-transpose(mat)) / 2._DP
     end function
 
+    !> Convert a small strain rotation matrix to a 3D vector representation.
+    !>
+    !> The resulting vector is structured as follows: [(1,2);(1,3);(2,3)]
+    pure function convert_spin_mat_vec(t) result(rot)
+        real(DP), dimension(3, 3), intent(in):: t
+        real(DP), dimension(3)               :: rot
+
+        real(DP), dimension(3, 3)            :: antisym
+
+        antisym = antisymmetric_part(t)
+        rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
+    end function
+    !> Inverse operation of convert_spin_mat_vec
     pure function convert_spin_vec_mat(vec) result(mat)
         real(DP), intent(in):: vec(3)
         real(DP)::             mat(3, 3)
@@ -197,17 +232,11 @@ contains
         mat(3, 1) = -mat(1, 3)
         mat(3, 2) = -mat(2, 3)
     end function
-    pure function convert_spin_mat_vec(t) result(rot)
-        real(DP), dimension(3, 3), intent(in):: t
-        real(DP), dimension(3)               :: rot
-        real(DP), dimension(3, 3)             :: antisym
-
-        antisym = antisymmetric_part(t)
-        rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
-    end function
-
-    ! Returns the inverse of a matrix calculated by finding the LU
-    ! decomposition.  Depends on LAPACK.
+    
+    !> Invert a matrix
+    !>
+    !> Calculated using the LU decomposition.  
+    !> Depends on LAPACK.
     function invert(A) result(Ainv)
         real(DP), dimension(:,:), intent(in):: A
         real(DP), dimension(size(A, 1), size(A, 2)):: Ainv
@@ -237,12 +266,14 @@ contains
         if (info /= 0) error stop 'Matrix inversion failed!'
     end function
 
-    !Compute matrix exponential for a (3, 3)-matrix with small norm, i.e. ||A|| < 1
-    !If ||A|| > 1, catastrophic cancellation in floating point arithmetic can occur
-    !Uses the Taylor Series Expansion:
-    !exp(A) == I+A + A^2/(2!) + A^3/(3!) + ... + A^n/(n!) + ...
+
+    !> Compute matrix exponential for a (3, 3)-matrix with small norm, i.e. ||A|| << 1
+    !>
+    !> If ||A|| > 1, catastrophic cancellation in floating point arithmetic can occur
+    !> Uses the Taylor Series Expansion:
+    !> exp(A) == I+A + A^2/(2!) + A^3/(3!) + ... + A^n/(n!) + ...
     pure function matrix_exponential_small_norm(A) result(exponential)
-        real(DP), dimension(3, 3), intent(in):: A
+        real(DP), dimension(3, 3), intent(in):: A                   !! Input matrix with norm << 1.
         real(DP), dimension(3, 3)            :: exponential, &
                                                 term                   !Term in taylor series expansion
         integer                              :: k                      !Index of current term
@@ -260,44 +291,40 @@ contains
         end do
     end function
 
-    !> @brief Rotates the second-rank tensor S to the reference frame given by rotation R.
-    !! @return The tensor in the frame defined by R
-    !! @param S the tensor before rotation
-    !! @param R Rotation matrix following Bunge convention. I.e. the basis of the unrotated frame expressed in the rotated frame.
+    !> Rotates the second-rank tensor S to the reference frame given by rotation R.
     pure function rotate_to(S, R) result(Srot)
-        real(DP), dimension(3, 3), intent(in)    ::  S, &
-                                                    R
-        real(DP), dimension(3, 3)                ::  Srot
+        real(DP), dimension(3, 3), intent(in):: S    !! Input matrix
+        real(DP), dimension(3, 3), intent(in):: R    !! Passive rotation matrix. I.e. the basis of the unrotated frame expressed in the rotated frame.
+        real(DP), dimension(3, 3)            :: Srot !! Rotated matrix in Bunge convention.
 
         Srot = matmul(matmul(R, S), transpose(R))
     end function
 
-    !> @brief Rotates the second-rank tensor S from the reference frame given by rotation R.
-    !! @return The rotated tensor
-    !! @param S the tensor expressed in the frame defined by R
-    !! @param R Rotation matrix following Bunge convention. I.e. the basis of the unrotated frame expressed in the rotated frame.
+    !> Rotates the second-rank tensor S from the reference frame given by rotation R.
     pure function rotate_from(S, R) result(Srot)
-        real(DP), dimension(3, 3), intent(in)    ::  S, &
-                                                    R
-        real(DP), dimension(3, 3)                ::  Srot
+        real(DP), dimension(3, 3), intent(in):: S    !! The tensor expressed in the frame defined by R
+        real(DP), dimension(3, 3), intent(in):: R    !! Passive rotation matrix. I.e. the basis of the unrotated frame expressed in the rotated frame.
+        real(DP), dimension(3, 3)            :: Srot !! Input matrix in the global reference frame.
 
         Srot = matmul(matmul(transpose(R), S), R)
     end function
 
-    !> @brief Calculate the angle between two vectors.
-    !> @return The angle between the input vector in radians.
+    !> Calculate the angle between two vectors.
+    !>
+    !> Angle is expressed in radians
     pure real(DP) function vec_angle(u, v)
-        real(DP), dimension(:), intent(in):: u          !< First vector. Must be non-zero.
-        real(DP), dimension(size(u)), intent(in):: v    !< Second vector. Must be non-zero.
+        real(DP), dimension(:), intent(in):: u         
+        real(DP), dimension(size(u)), intent(in):: v  
 
         vec_angle = acos((u .dot. v) / sqrt((u .dot. u) * (v .dot. v)))
     end function
 
-    !> @brief Convert Euler angles to a rotation matrix.
-    !> @return 3x3 rotation matrix corresponding to the given Euler angles.
+    !> Convert Euler angles in Bunge convention to a rotation matrix.
+    !>
+    !> Returns a 3x3 (passive) rotation matrix corresponding to the given Euler angles.
     pure function from_euler_angles(angles) result(mat)
-    real(DP), dimension(3), intent(in):: angles !< Euler angles in Bunge convention
-    real(DP), dimension(3, 3)    :: mat
+    real(DP), dimension(3), intent(in):: angles !! Euler angles in Bunge convention
+    real(DP), dimension(3, 3)    :: mat         !! Passive rotation matrix (i.e. basis of the unrotated frame expressed in the rotated frame).
     real(DP):: cos_phi1, cos_phi2, cos_PHI, &
                sin_phi1, sin_phi2, sin_PHI
 
@@ -319,10 +346,11 @@ contains
         mat(3, 3) = cos_PHI
     end function
 
-    !> @brief Converts a rotation matrix to Euler angles.
-    !> @return 3-element vector containing the Euler angles corresponding to the given rotation matrix in Bunge convention.
+    !> Converts a rotation matrix to Euler angles.
+    !>
+    !> 3-element vector containing the Euler angles corresponding to the given rotation matrix in Bunge convention.
     pure function to_euler_angles(mat) result(ang)
-        real(DP), dimension(3, 3), intent(in)::  mat !< Rotation matrix.
+        real(DP), dimension(3, 3), intent(in)::  mat !< Rotation matrix in passive convention.
         real(DP)::              ang(3), &
                                 phi1, &
                                 PHI, &
@@ -353,9 +381,9 @@ contains
         ang(3) = phi2
     end function
 
-    !> @brief Calculate the trace of a matrix.
+    !> Calculate the trace of a matrix.
     pure real(DP) function trace(x) result(res)
-        real(DP), dimension(:,:), intent(in):: x !< The matrix. Must be square.
+        real(DP), dimension(:,:), intent(in):: x !< The matrix. Assumed to be square.
 
         integer:: i
 
@@ -389,13 +417,14 @@ contains
         rk = x0 + (k(1) + 2.D0*k(2) + 2.D0*k(3) + k(4)) / 6.D0
     end function
 
-    !>@Brief Determine the indices of a basis for a matrix. I.e. a set of indices pointing to linearly independent columns of the
-    !matrix.
-    !>@Details Uses LAPACK routine dgetrf. Assumes that the column rank is at least equal to the number of rows.
+    !> Determine the indices of a basis for a matrix. 
+    !>
+    !> By basis is meant a set of linearly independent columns. The number of these independent columns is equal to the number of rows of the matrix.
+    !> Uses LAPACK routine dgetrf. Assumes that the column rank is at least equal to the number of rows.
     function basis_indices(mat) result(ind_basis)
-        real(DP), dimension(:,:), intent(in):: mat      !> The matrix. Assumed to be wide (cols > rows). Assumed to have column rank
+        real(DP), dimension(:,:), intent(in):: mat      !! The matrix. Assumed to be wide (cols > rows). Assumed to have column rank
                                                         !! >= number of rows
-        integer, dimension(size(mat, 1)):: ind_basis    !> Indices of the columns of the matrix making up a basis for the column
+        integer, dimension(size(mat, 1)):: ind_basis    !! Indices of the columns of the matrix making up a basis for the column
                                                         !! space. I.e. a minimal set of independent columns.
         integer:: m, &
                   ipiv(size(mat, 1)), &

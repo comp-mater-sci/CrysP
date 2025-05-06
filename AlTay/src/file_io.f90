@@ -6,15 +6,16 @@ module file_io
     use altayConfig
 
     implicit none
+
     private
-
-    character(*), parameter::   MOD_NAME = "file_io"
-
     public::    read_texture, &
                 read_boundaries, &
                 cur_write_title, &
                 cur_write_block, &
                 open_output_files
+
+    character(*), parameter::   MOD_NAME = "file_io"
+    integer, parameter:: IMP1=7
 
 contains
 
@@ -90,8 +91,7 @@ contains
 
 
     !Write the current state of all grains to file.
-    subroutine cur_write_block(iounit, clusters, deformation_gradient)
-        integer, intent(in)::                                           iounit !< IO unit number
+    subroutine cur_write_block(clusters, deformation_gradient)
         class(Cluster), dimension(:), intent(in)::  clusters !< List of all clusters which contains
                                                                                  !  state of all grains
         real(DP), dimension(3, 3), intent(in)::                         deformation_gradient
@@ -107,15 +107,15 @@ contains
         n_grains = size(clusters) * cluster_size
 
         !Write general information
-        write (iounit, 402)
-        write (iounit, 403) n_grains, deformation_gradient
-        write (iounit, 401)
+        write (IMP1, 402)
+        write (IMP1, 403) n_grains, deformation_gradient
+        write (IMP1, 401)
 
         !Write state of each grain
         do i = 1, size(clusters)
             do j = 1, cluster_size
                 euler_angles = to_euler_angles(clusters(i)%grains(j)%orientation)*RAD_TO_DEG
-                write(iounit, 400, iostat = info)&
+                write(IMP1, 400, iostat = info)&
                     i*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3)
                 if (info /= 0) exit
             end do

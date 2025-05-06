@@ -1,37 +1,50 @@
+!> This module resolves the Taylor ambiguity.
+!>
+!> Taylor ambiguity is a well-known problem for Taylor-like crystal plasticity models. 
+!> Namely, 5 independent slip systems suffice to achieve any imposed strain.
+!> However, it is possible that the stress state this causes suffices to activate several other systems as well.
+!> This happens especially when isotropic hardening laws are used. 
+!> Up to 8 slip systems may be active in total due to this issue.
+!> Therefore, the actual slip rates in the crystal are 'ambiguous' since any combination 
+!> of these systems that achieves the imposed strain also minimizes the amount of work.
+!>
+!> Several methods can be used to decide on which systems to pick.
+!> The approach chosen here is to look for the minimum norm solution,
+!> i.e. the combination of systems where norm the total slip is minimal.
+
 module taylor_ambiguity
     use utils
     use logging
     use grain_module
 
     implicit none
+
     private
-
-    character(len=*), parameter:: MOD_NAME = "taylor_ambiguity"
-
     public:: assess_slip_system_activity, &
              resolve_taylor_ambiguity
 
+    character(len=*), parameter:: MOD_NAME = "taylor_ambiguity"
+
+
 contains
 
-    !> @Brief Find the number of active and indices of overstressed slip systems.
-    !> @Details Active slip systems have a nonzero slip rate, while overstressed slip systems are systems where the resolved shear
-    !           stress exceeds the critical resolved shear stress. From this we can determine if Taylor ambiguity is occuring.
+    !> Find the number of active and indices of overstressed slip systems.
+    !>
+    !> Active slip systems have a nonzero slip rate, while overstressed slip systems are systems where the resolved shear
+    !> stress exceeds the critical resolved shear stress. From this we can determine if Taylor ambiguity is occuring.
     subroutine assess_slip_system_activity(grain_, rss, slip_rates, n_active, ind_overstressed)
-        class(Grain), intent(in):: grain_    !> The grain
-        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: rss !> The resolved shear stress on each of the slip systems of
-                                                                         !> the grain (as calculated by simplex)
-        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: slip_rates  !> Slip rates for each slip system
-                                                                                 !> according to simplex. Max. 5 nonzero
-                                                                                 !> components
-        integer, intent(out):: n_active !> The number of active systems (systems with nonzero slip rate)
-        integer, dimension(:), allocatable, intent(out):: ind_overstressed    !> If taylor ambiguity is occurring, contains the
-                                                                              !> indices of the overstressed slip systems (rss >= crss). Otherwise it is returned unallocated.
+        class(Grain), intent(in):: grain_                                                 !! Grain suffering from Taylor ambiguity.
+        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: rss        !! The resolved shear stress on each of the slip systems of the grain (as calculated by simplex)
+        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: slip_rates !! Slip rates for each slip system (as calculated by simplex).
+        integer, intent(out):: n_active                                                   !! The number of active systems (with nonzero slip rate)
+        integer, dimension(:), allocatable, intent(out):: ind_overstressed                !! If taylor ambiguity is occurring, contains the
+                                                                                          !! indices of the overstressed slip systems (rss >= crss). Otherwise it is returned unallocated.
 
-        integer:: i, &             !Iterator
-                  n_overstressed, &      !Number of active slip systems in the grain
-                  ind_overstressed_buffer(8)      !Buffer for the indices of the overstressed slip systems.
-                                   !Note that 8 is the theoretical maximum of active slip systems
-        real(DP):: overstress            !Extent to which a particular slip system is overstressed and thus active
+        integer:: i, &             
+                  n_overstressed, &             !Number of active slip systems in the grain
+                  ind_overstressed_buffer(8)    !Buffer for the indices of the overstressed slip systems.
+                                                !Note that 8 is the theoretical maximum of active slip systems
+        real(DP):: overstress                   !Extent to which a particular slip system is overstressed and thus active
 
         character(*), parameter:: PROC_NAME = 'detect_taylor_ambiguity'
 
@@ -62,26 +75,18 @@ contains
             ind_overstressed = ind_overstressed_buffer(:n_overstressed)
     end subroutine
 
-    !> @brief Resolves the Taylor ambiguity
-    !!
-    !! @details This subroutine resolves the Taylor ambiguity for the slip rates.
-    !!          After solving the equations using the simplex method, we know
-    !!          the stress, strain rate and the active slip systems.
-    !!          This still leaves us with several options for the slip rates.
-    !!          This subroutine finds the slip rates assuming that the sum
-    !!          of the squares of the slip rates must be minimal.
-    !!
-    !! @return    slip_rates                  real vector (n_slip_systems)
-    !!                                        Slip rates for all the slip systems
+    !> Resolves the Taylor ambiguity
+    !>
+    !> This subroutine finds the solution for the slip rates that minimizes the sum their squares.
     function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs, n_active_simplex) result(slip_rates)
-        integer, intent(in)::                                               ind_active_slip_systems(:)  !< Indices of the active slip systems.
-        real(DP), dimension(:,:), intent(in)::                              taylor_coeffs               !< Slip systems in stress-strain space.
-        real(DP), dimension(:), intent(in)::    rss                         !< Resolved shear stress on the active slip systems.
-        real(DP), dimension(5), intent(in)::                                strain(5)                   !< Imposed strain on the current grain.
-        integer, intent(in)::                                               n_active_simplex            !< Number of active slip systems according to the simplex solution.
+        integer, intent(in)::                        ind_active_slip_systems(:)  !! Indices of the active slip systems.
+        real(DP), dimension(:,:), intent(in)::       taylor_coeffs               !! Slip systems in stress-strain space.
+        real(DP), dimension(:), intent(in)::         rss                         !! Resolved shear stress on the active slip systems.
+        real(DP), dimension(5), intent(in)::         strain(5)                   !! Imposed strain on the current grain.
+        integer, intent(in)::                        n_active_simplex            !! Number of active slip systems according to the simplex solution.
+        real(DP), dimension(size(taylor_coeffs,2)):: slip_rates                  !! Slip rates for all the slip systems
 
-        real(DP)::              slip_rates(size(taylor_coeffs, 2)), &
-                                coeffs(5, size(ind_active_slip_systems)), &
+        real(DP)::              coeffs(5, size(ind_active_slip_systems)), &
                                 sum_squares_optimal
         integer::               sign_slip(size(ind_active_slip_systems)), &
                                 i
@@ -99,22 +104,22 @@ contains
             call log_error(MOD_NAME, 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
     end function
 
-    !> @brief iterate over all combinations of active slip systems to find the minimum norm solution
-    !!
-    !! @details This routine finds the combination of slip rates among the active slip systems which yields the smalles sum of
-    !!          squared slips. It starts with evaluating the input combination. If this does not yield a valid solution (all slip rates
-    !!          positive), it tries all subsets of the input set with at least 5 slip systems.
+    !> Iterate over all combinations of active slip systems to find the minimum norm solution
+    !>
+    !> This routine finds the combination of slip rates among the active slip systems which yields the smalles sum of
+    !> squared slips. It starts with evaluating the input combination. If this does not yield a valid solution (all slip rates
+    !> positive), it tries all subsets of the input set with at least as many slip systems as simplex found.
     recursive subroutine iterate_combinations(coeffs, strain, ind, start_index, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
-        real(DP), intent(in)::      coeffs(:,:), &                  !< Taylor coefficients of the slip systems with their sign adjusted based on the rss found
-                                                                    !  in simplex so that all slip rates determined by the minimum norm solution should be possitive.
-                                    strain(5)                       !< Imposed strain on the grain.
-        integer, intent(in)::       ind(:), &                       !< Indices of the currently considered slip systems.
-                                    start_index, &                  !< Index from which to start looping over possible subsets. Needed to avoid duplicting
-                                                                    !  combinations (e.g. [1, 2] and [2, 1]).
-                                    n_active_simplex, &             !< Number of active slip systems according to the simplex solution.
-                                    sign_slip(size(ind))                    !< Sign of the slip rates on each of the candidate slip systems.
-        real(DP), intent(inout)::   slip_rates(:), &  !< Current optimal solution for the slip rates.
-                                    sum_squares_optimal             !< Optimal sum of squared slip rates found so far
+        real(DP), intent(in)::      coeffs(:,:), &                  !! Taylor coefficients of the slip systems with their sign adjusted based on the rss found
+                                                                    !! in simplex so that all slip rates determined by the minimum norm solution should be possitive.
+                                    strain(5)                       !! Imposed strain on the grain.
+        integer, intent(in)::       ind(:), &                       !! Indices of the currently considered slip systems.
+                                    start_index, &                  !! Index from which to start looping over possible subsets. Needed to avoid duplicting
+                                                                    !! combinations (e.g. [1, 2] and [2, 1]).
+                                    n_active_simplex, &             !! Number of active slip systems according to the simplex solution.
+                                    sign_slip(size(ind))            !! Sign of the slip rates on each of the candidate slip systems.
+        real(DP), intent(inout)::   slip_rates(:), &                !! Current optimal solution for the slip rates.
+                                    sum_squares_optimal             !! Optimal sum of squared slip rates found so far
 
         integer, parameter::        SIZE_WORKSPACE = 10  ! Optimal, refer to LAPACK documentation.
         integer::                   i, j, &
