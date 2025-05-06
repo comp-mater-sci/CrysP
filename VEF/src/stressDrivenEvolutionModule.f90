@@ -86,7 +86,7 @@ contains
         !> the material at the end of the step.
         integer:: i, n_roots, n_records
         real(DP), dimension(2):: xi
-        logical:: stop_flag, acceptable_point, acceptable_point_retry
+        logical:: stop_flag
         real(DP), parameter:: stretch_ratio = 1e-3_DP
         real(DP), dimension(3, 3):: zero = 0._DP
 
@@ -111,8 +111,8 @@ contains
             if (info /= VEF_OK) exit
             !
             ! Calculate the strain rate mode
-            info = this%findSolution(sigma, D, ylp, is_acceptable = acceptable_point)
-            if ((info /= VEF_OK) .or. .not. acceptable_point) then
+            info = this%findSolution(sigma, D, ylp)
+            if (info /= VEF_OK) then
                 ! Re-attempt, try A from the previous increment as the starting point
                 !
                 ! Pick the most recent converged solution
@@ -122,19 +122,17 @@ contains
                         exit
                     endif
                 enddo
-                acceptable_point_retry = .false.
                 ! Check post-condition of the loop: i > 0 means
                 ! we have such a solution:
                 if (i > 0) then
-                    info = this%findSolution(sigma, D_retry, ylp_retry, vM_guess=.false., &
-                                             is_acceptable = acceptable_point_retry)
+                    info = this%findSolution(sigma, D_retry, ylp_retry, vM_guess=.false.)
                     ! Accept the solution only if it is better than the original one
-                    if (acceptable_point .and. (ylp_retry%R < ylp%R)) then
+                    if (ylp_retry%R < ylp%R) then
                         D = D_retry
                         ylp = ylp_retry
                     endif
                 endif
-                CHOOSE(info, acceptable_point .or. acceptable_point_retry, VEF_OK, VEF_FAIL)
+                info = VEF_OK
             endif
             if (info == VEF_ERROR) exit
             !

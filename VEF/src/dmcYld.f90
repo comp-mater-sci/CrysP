@@ -132,7 +132,7 @@ contains
         class(range_type), allocatable             :: theta_range
         integer                 :: i, npoints, ofunit
         integer:: posA, posB
-        logical:: first_run, acceptable_point
+        logical:: first_run
         real(DP), parameter:: beta = 0._DP
 
         ! Super-class first
@@ -192,9 +192,9 @@ contains
                                 + w*this%base_vectors(:,3)
                 Sm = from_voigt(sigma_vector)
                 !
-                info = this%findSolution(Sm, D, ylp_result, is_acceptable = acceptable_point)
+                info = this%findSolution(Sm, D, ylp_result)
                 ! Consider what to do with unsuccessful search
-                if (info == VEF_ERROR .or. ((info == VEF_FAIL) .and. (.not. acceptable_point))) then
+                if (info /= VEF_OK) then
                     write(display_unit, fmt = 860) 'Cannot find solution, datapoint dropped'
                     cycle
                 endif

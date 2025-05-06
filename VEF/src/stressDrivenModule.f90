@@ -3,17 +3,17 @@ include 'mkl_rci.f90'
 
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
-use, intrinsic:: iso_fortran_env, only: error_unit
-use iso_c_binding
-use utils
-use criUncomment, only: readValue
-use dmcResultTable
-use dmcBasicModule
-use logging
-use commonUtils
-use mkl_rci
+    use, intrinsic:: iso_fortran_env, only: error_unit
+    use iso_c_binding
+    use utils
+    use criUncomment, only: readValue
+    use dmcResultTable
+    use dmcBasicModule
+    use logging
+    use commonUtils
+    use mkl_rci
 
-implicit none
+    implicit none
 
     private
     public:: StressDrivenModule, &
@@ -41,6 +41,17 @@ implicit none
         module procedure YLPResult_init
     end interface
 
+    !> Abstract class implementing basic subset of operations that are shared by all
+    !> stress-drien computational modules
+    type, extends(BasicModule):: StressDrivenModule
+        class(ResultTable), pointer  :: ptr_db => null()
+    contains
+        procedure, pass(this)     :: initialize => StressDrivenModule_initialize
+        procedure, pass(this)     :: readConfig => StressDrivenModule_readConfig
+        procedure, pass(this)     :: finalize => StressDrivenModule_finalize
+        procedure, pass(this)     :: findSolution => StressDrivenModule_findSolution
+    end type
+
     interface
         integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
             import C_INT, &
@@ -53,19 +64,6 @@ implicit none
             real(C_DOUBLE), dimension(5), intent(out):: residual
         end function
     end interface
-
-    !> Abstract class implementing basic subset of operations that are shared by all
-    !> stress-drien computational modules
-    type, extends(BasicModule):: StressDrivenModule
-        class(ResultTable), pointer  :: ptr_db => null()
-    contains
-        procedure, pass(this)     :: initialize => StressDrivenModule_initialize
-        procedure, pass(this)     :: readConfig => StressDrivenModule_readConfig
-        procedure, pass(this)     :: finalize => StressDrivenModule_finalize
-        procedure, pass(this)     :: findSolution => StressDrivenModule_findSolution
-    end type
-
-
 
 contains
 
@@ -80,7 +78,6 @@ contains
         if (res%vS_length > 0.D0) res%vS = vS/res%vS_length
     !
     end function
-
 
     !> Derive dependant fields from properly initialized and evaluated YLPResult;
     !>
@@ -103,11 +100,6 @@ contains
     !
     end function
 
-
-
-
-
-
     !> Initialize a configured StressDrivenModule object
     integer function StressDrivenModule_initialize(this) result(info)
     class(StressDrivenModule), intent(inout)          :: this
@@ -125,8 +117,6 @@ contains
         allocate(this%ptr_db, stat = ierr)
     end function
 
-
-
     integer function StressDrivenModule_readConfig(this, cnfunit) result(info)
     class(StressDrivenModule), intent(inout)          :: this
     integer, intent(in)                        :: cnfunit
@@ -141,27 +131,16 @@ contains
 
         if (info /= VEF_OK) &
             call log_error('StressDrivenModule', 'readConfig', ERR_VAL, 'Check YLP config section.')
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end function
 
 
     !> Finalization of the module
     integer function StressDrivenModule_finalize(this) result(info)
     class(StressDrivenModule), intent(inout):: this
-    !
-
-        ! Save the result cache and delete the object
         if (associated(this%ptr_db)) then
             deallocate(this%ptr_db)
         endif
-        !
-        ! ... and then finalize the superclass.
-        !
         info = this%BasicModule%finalize()
-    !
     end function
 
     !> Calculate plastic strain rate D that corresponds to the superimposed input stress `sigma`
@@ -171,7 +150,7 @@ contains
     !> \return VEF_ERROR on lack of convergence. ylp_result and D are set to the best solution found
     !> \return VEF_ERROR or any criErr_*on severe error conditions. ylp_result and D are undefined
     !> \return VEF_OK on success
-    integer function StressDrivenModule_findSolution(this, sigma, D, ylp_result, vM_guess, is_acceptable) result(info)
+    integer function StressDrivenModule_findSolution(this, sigma, D, ylp_result, vM_guess) result(info)
         class(StressDrivenModule), intent(in)   :: this
         real(DP), dimension(3, 3), intent(in):: sigma
         real(DP), dimension(3, 3), intent(inout):: D
@@ -179,12 +158,10 @@ contains
         !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
         !> starting point for the iterative search.
         logical, intent(in), optional     :: vM_guess
-        logical, intent(out), optional    :: is_acceptable
 
         real(DP):: vA_norm
         real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
         logical:: use_vM_guess
-        type(YLPResult)  :: ylp_result_retry, ylp_result_pretry
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
         real(DP):: r(5), &
                    jacobi(5,5)
@@ -202,13 +179,9 @@ contains
             ylp_result%vA = convert_stress_strain_space(D)
             vA_norm = norm2(ylp_result%vA)
             if (vA_norm < epsilon(0.D0)) return
-        else if (this%ptr_db%get(ylp_result%vS, ylp_result%vA, max_angle = pretry_search_angle) == VEF_OK) then
-                use_vm_guess = .false.
-        endif
-
-        ! Use von Mises guess
-        if (use_vm_guess) &
+        else if (this%ptr_db%get(ylp_result%vS, ylp_result%vA, max_angle = pretry_search_angle) /= VEF_OK) then
             ylp_result%va = ylp_result%vs
+        endif
 
         if(trust_region_solve(ylp_result%vs/norm2(ylp_result%vs), ylp_result%vsona, ylp_result%va, jacobi, r) /= TR_SUCCESS) &
             call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
@@ -223,9 +196,6 @@ contains
             info = VEF_ERROR
             return
         end if
-
-        if (present(is_acceptable)) &
-            is_acceptable = .true.
 
         D = convert_stress_strain_space(ylp_result%vA)
     end function

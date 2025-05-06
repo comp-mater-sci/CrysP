@@ -111,7 +111,7 @@ contains
     type(YLPResult)                 :: ylp_result
     real(DP)                        :: fi1, phi, fi2, residual_resume
     integer     :: i, npoints, npoints_ok, ofunit
-    logical     :: useVMGuess, acceptable_point
+    logical     :: useVMGuess
     !
     type(QRSOutputData):: results
 
@@ -159,8 +159,8 @@ contains
                 endif
             endif
             !
-            info = this%findSolution(sigma, D, ylp_result, useVMGuess, is_acceptable = acceptable_point)
-            if ((info /= VEF_OK) .and. .not. acceptable_point) then
+            info = this%findSolution(sigma, D, ylp_result, useVMGuess)
+            if (info /= VEF_OK) then
                 write(display_unit, fmt = 860) 'Cannot find solution, datapoint dropped'
                 cycle
             endif
