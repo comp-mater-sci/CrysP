@@ -124,16 +124,21 @@ contains
                     w,  &
                     iunilen, &
                     Sm(3, 3), &
-                    D(3, 3), &
                     scal_s_rel, &
                     sigma_vector(6)
-        type(YLPResult)                           :: ylp_result !< Results of the interative search
         type(yldResult), dimension(:), allocatable  :: yldRes
         class(range_type), allocatable             :: theta_range
         integer                 :: i, npoints, ofunit
         integer:: posA, posB
         logical:: first_run
         real(DP), parameter:: beta = 0._DP
+
+        real(DP):: target_stress_mode(5), &
+                   strain_mode(5), &
+                   stress_mode(5), &
+                   stress_norm, &
+                   residual_norm
+
 
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
@@ -159,18 +164,15 @@ contains
                 write(display_unit, fmt = 900) 'Norm of the input stress for scaling cannot be zero'
                 return
             endif
-            ! Run the identification
-            info = this%findSolution(Sm, D, ylp_result)
-            if (info /= VEF_OK) then
-                write(display_unit, fmt = 900) 'Cannot find solution for the scaling stress'
-                return
-            endif
 
-            if (abs(ylp_result%scal_s) < epsilon(0.D0)) then
-                write(display_unit, fmt = 900) 'Identification results in zero-length stress tensor.'
-                return
-            endif
-            iunilen = 1.D0/ylp_result%scal_s
+
+
+            ! Run the identification
+            target_stress_mode = convert_stress_strain_space(sm)
+            target_stress_mode = target_stress_mode / norm2(target_stress_mode)
+
+            call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
+            iunilen = 1._DP / stress_norm
         endif
         !
         allocate(yldRes(npoints))
@@ -191,19 +193,18 @@ contains
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
                 Sm = from_voigt(sigma_vector)
-                !
-                info = this%findSolution(Sm, D, ylp_result)
-                ! Consider what to do with unsuccessful search
-                if (info /= VEF_OK) then
-                    write(display_unit, fmt = 860) 'Cannot find solution, datapoint dropped'
-                    cycle
-                endif
-                scal_s_rel = ylp_result%scal_s*iunilen
+                target_stress_mode = convert_stress_strain_space(sm)
+                target_stress_mode = target_stress_mode / norm2(target_stress_mode)
 
-                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, ylp_result%scal_s, scal_s_rel, &
-                                      norm2(ylp_result%vSonA), ylp_result%dotWonA, &
+                call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
+
+                scal_s_rel = stress_norm*iunilen
+
+                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, stress_norm, scal_s_rel, &
+                                      stress_norm, &
+                                      strain_mode .dot. stress_mode * stress_norm, &
                                       [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
-                                      [0._DP, 0._DP], beta, ylp_result%R)
+                                      [0._DP, 0._DP], beta, residual_norm)
 
                 i = i+1
             enddo

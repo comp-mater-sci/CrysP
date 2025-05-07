@@ -1,4 +1,4 @@
-#include "criMacros.fpp"
+include "criMacros.fpp"
 include 'mkl_rci.f90'
 
 !> Implementation of a altay-based DMC computiational module.
@@ -22,19 +22,14 @@ module dmcStressDrivenModule
     character(*), parameter:: MOD_NAME = 'stressDrivnModule'
     real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
 
-    !> Constructors of YLPResult type
-    interface YLPResult
-        module procedure YLPResult_init
-    end interface
-
     !> Abstract class implementing basic subset of operations that are shared by all
     !> stress-drien computational modules
     type, extends(BasicModule):: StressDrivenModule
         class(ResultTable), pointer  :: ptr_db => null()
     contains
-        procedure, pass(this)     :: initialize => StressDrivenModule_initialize
-        procedure, pass(this)     :: finalize => StressDrivenModule_finalize
-        procedure, pass(this)     :: findSolution => StressDrivenModule_findSolution
+        procedure, pass(this):: initialize => StressDrivenModule_initialize
+        procedure, pass(this):: finalize => StressDrivenModule_finalize
+        procedure, pass(this):: findSolution => StressDrivenModule_findSolution
     end type
 
     interface
@@ -53,33 +48,13 @@ module dmcStressDrivenModule
 
 contains
 
-    !> Derive dependant fields from properly initialized and evaluated YLPResult;
-    !>
-    !> This requires fields: vS, vA and vS_length.
-    !> \return VEF_ERROR if input ylp_result contains wrong data.
-    integer function deriveYLPResult(ylp_result) result(info)
-        type(YLPResult), intent(inout)   :: ylp_result
-
-        real(DP):: SonA_norm
-
-        info = VEF_ERROR
-        SonA_norm = norm2(ylp_result%vSonA)
-        if ((ylp_result%vS_length < epsilon(0.D0)) .or. (SonA_norm < epsilon(0.D0))) return
-        !
-        ylp_result%dotWonA = dot_product(ylp_result%vA, ylp_result%vSonA)
-        ylp_result%scal_s = SonA_norm/ylp_result%vS_length
-        ! Calculate normalized stess
-        ylp_result%vSonAn = ylp_result%vSonA/SonA_norm
-        info = VEF_OK
-    end function
-
     !> Initialize a configured StressDrivenModule object
     integer function StressDrivenModule_initialize(this) result(info)
         class(StressDrivenModule), intent(inout)          :: this
 
         integer:: ierr
 
-        RETURN_IF(info /= VEF_OK, info = this%BasicModule%initialize())
+        info = this%BasicModule%initialize()
         allocate(this%ptr_db, stat = ierr)
     end function
 
@@ -103,19 +78,25 @@ contains
     subroutine stressdrivenmodule_findSolution(this, target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
         class(StressDrivenModule), intent(in)   :: this
         real(DP), dimension(5), intent(in):: target_stress_mode
-        real(DP), dimension(5), intent(inout):: strain_mode
+        real(DP), dimension(5), intent(out):: strain_mode
         real(DP), dimension(5), intent(out):: stress_mode
-        real(DP), intent(out):: sress_norm
+        real(DP), intent(out):: stress_norm
         real(DP), intent(out):: residual_norm
 
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
         real(DP):: jacobi(5,5)
 
+        if (associated(this%ptr_db)) then
+            if (this%ptr_db%get(target_stress_mode, strain_mode, pretry_search_angle) /= VEF_OK) &
+                strain_mode = target_stress_mode
+        else
+            strain_mode = target_stress_mode
+        end if
 
         if(trust_region_solve(target_stress_mode, strain_mode, jacobi, stress_mode, stress_norm, residual_norm) /= TR_SUCCESS) &
             call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
 
         if (associated(this%ptr_db)) &
             call this%ptr_db%put(strain_mode, stress_mode)
-    end function
+    end subroutine
 end module

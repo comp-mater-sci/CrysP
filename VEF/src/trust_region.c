@@ -97,7 +97,7 @@ int calc_jacobi(const double* strain_mode, double* jacobi)
 }
 
 //Calculate the strain mode corresponding as closely as possible to the imposed stress state. All inputs and outputs must be initialized externally and are of dimension DIM, except for jacobi, which is of dimension DIM*DIM.
-int trust_region_solve(const double* target_stress_mode, double* strain_mode, double* jacobi, double* stress_mode, double stress_norm, double residual_norm)
+int trust_region_solve(const double* target_stress_mode, double* strain_mode, double* jacobi, double* stress_mode, double* stress_norm, double* residual_norm)
 {
 
     _TRNSPBC_HANDLE_t handle;
@@ -131,9 +131,9 @@ int trust_region_solve(const double* target_stress_mode, double* strain_mode, do
                 altay_get_stress_state_c(strain_mode, stress_state);
                 for (int i=0;i<DIM;i++)
                     stress_mode[i] = stress_state[i];
-                stress_norm = normalize(stress_mode);
+                *stress_norm = normalize(stress_mode);
                 for (int i=0;i<DIM;i++)
-                    residual[i] = stress_target[i] - stress_mode[i];
+                    residual[i] = target_stress_mode[i] - stress_mode[i];
                 break;
             }
             case 2:
@@ -146,7 +146,7 @@ int trust_region_solve(const double* target_stress_mode, double* strain_mode, do
     }
 
     normalize(strain_mode); // The trust region algorithm may deviate from unit length.
-    residual_norm = norm2(residual);
+    *residual_norm = norm2(residual);
 
     mkl_err =  dtrnlspbc_delete (&handle);
     MKL_Free_Buffers();

@@ -34,27 +34,31 @@ contains
 
 
     !> Make IncrementOutputRecord from increment data.
-    function IncrementOutputRecord_init(icv, ylp, De, Se, taylor_factor) result(this)
+    function IncrementOutputRecord_init(icv, De, Se, taylor_factor, target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm) result(this)
     type(IncrementOutputRecord)                 :: this
     type(IncrementationControlVariables), intent(in):: icv
-    type(YLPResult), intent(in)                  :: ylp
     real(DP), dimension(3, 3), intent(in)        ::  de, &
                                                     se
     real(DP), intent(in)                 :: taylor_factor
+    real(DP), dimension(5), intent(in):: target_stress_mode
+    real(DP), dimension(5), intent(in):: strain_mode
+    real(DP), dimension(5), intent(in):: stress_mode
+    real(DP), intent(in):: stress_norm
+    real(DP), intent(in):: residual_norm
 
         this%vm_strain = SQR0P67*norm2(icv%vP_step)
         this%vm_strain_total = SQR0P67*norm2(icv%vP_total)
         this%norm_P_abs = norm2(icv%vP_abs)
         !
-        this%dotWonA = ylp%dotWonA
-        this%scal_s = ylp%scal_s
-        this%norm_SonA = norm2(ylp%vSonA)
-        this%R = ylp%R
+        this%dotWonA = strain_mode .dot. stress_mode * stress_norm
+        this%scal_s = stress_norm
+        this%norm_SonA = stress_norm
+        this%R = residual_norm
 
         this%taylor_factor = taylor_factor
 
-        this%A = convert_stress_strain_space(ylp%vA)
-        this%SonA = convert_stress_strain_space(ylp%vSonA)
+        this%A = convert_stress_strain_space(strain_mode)
+        this%SonA = convert_stress_strain_space(stress_mode)
 
         this%P_inc_evol = De
         this%S_evol = Se
