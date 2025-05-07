@@ -17,24 +17,10 @@ module dmcStressDrivenModule
 
     private
     public:: StressDrivenModule, &
-             OBJECTIVE_THRESHOLD, &
-             YLPResult, &
-             deriveylpresult
+             OBJECTIVE_THRESHOLD
 
     character(*), parameter:: MOD_NAME = 'stressDrivnModule'
     real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
-
-    !> Datatype to store results of iterative search
-    type:: YLPResult
-        real(DP), dimension(5):: vA = 0.D0       !< Strain rate mode on yield locus
-        real(DP), dimension(5):: vS = 0.D0       !< Imposed stress
-        real(DP), dimension(5):: vSonA = 0.D0    !< Stress corresponding to A
-        real(DP), dimension(5):: vSonAn = 0.D0   !< Stress mode corresponding to A
-        real(DP):: R = 0.D0                  !< Norm of stress residual
-        real(DP):: dotWonA = 0.D0            !< Work rate corresponding to vA and vSonA
-        real(DP):: scal_s = 0.D0             !< norm2(vSonA) / vS_length
-        real(DP):: vS_length = 0.D0          !< norm2(vS)
-    end type
 
     !> Constructors of YLPResult type
     interface YLPResult
@@ -52,30 +38,20 @@ module dmcStressDrivenModule
     end type
 
     interface
-        integer(C_INT) function trust_region_solve(stress_target, stress_mode, strain_mode, jacobi, residual) bind(C) result(mkl_result_code)
+        integer(C_INT) function trust_region_solve(target_stress_mode, strain_mode, jacobi, stress_mode, stress_norm, residual_norm) bind(C) result(mkl_result_code)
             import C_INT, &
                    C_DOUBLE
 
-            real(C_DOUBLE), dimension(5), intent(in):: stress_target
-            real(C_DOUBLE), dimension(5), intent(out):: stress_mode
-            real(C_DOUBLE), dimension(5), intent(out):: strain_mode
-            real(C_DOUBLE), dimension(5, 5), intent(out):: jacobi
-            real(C_DOUBLE), dimension(5), intent(out):: residual
+            real(C_DOUBLE), dimension(5), intent(in)::       target_stress_mode
+            real(C_DOUBLE), dimension(5), intent(inout)::    strain_mode
+            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi
+            real(C_DOUBLE), dimension(5), intent(out)::      stress_mode
+            real(C_DOUBLE), intent(out)::                    stress_norm
+            real(C_DOUBLE), intent(out)::                    residual_norm
         end function
     end interface
 
 contains
-
-    !> Create YLPResult from arbitrary vS and performs normalization.
-    !>
-    !> \post A correctly initialized result has non-zero vS_length field.
-    pure function YLPResult_init(vS) result(res)
-        type(YLPResult):: res
-        real(DP), dimension(5), intent(in):: vS
-
-        res%vS_length = norm2(vS)
-        if (res%vS_length > 0.D0) res%vS = vS/res%vS_length
-    end function
 
     !> Derive dependant fields from properly initialized and evaluated YLPResult;
     !>
@@ -124,53 +100,22 @@ contains
     !> \return VEF_ERROR on lack of convergence. ylp_result and D are set to the best solution found
     !> \return VEF_ERROR or any criErr_*on severe error conditions. ylp_result and D are undefined
     !> \return VEF_OK on success
-    integer function StressDrivenModule_findSolution(this, sigma, D, ylp_result, vM_guess) result(info)
+    subroutine stressdrivenmodule_findSolution(this, target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
         class(StressDrivenModule), intent(in)   :: this
-        real(DP), dimension(3, 3), intent(in):: sigma
-        real(DP), dimension(3, 3), intent(inout):: D
-        type(YLPResult), intent(out)     :: ylp_result !< Results of the iterative search
-        !> Flag: use von Mises inital guess (default: .true.). If false, D will be used as the
-        !> starting point for the iterative search.
-        logical, intent(in), optional     :: vM_guess
+        real(DP), dimension(5), intent(in):: target_stress_mode
+        real(DP), dimension(5), intent(inout):: strain_mode
+        real(DP), dimension(5), intent(out):: stress_mode
+        real(DP), intent(out):: sress_norm
+        real(DP), intent(out):: residual_norm
 
-        real(DP):: vA_norm
-        real(DP), dimension(5):: vS            !< Input stress in 5D deviatoric stress space
-        logical:: use_vM_guess
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
-        real(DP):: r(5), &
-                   jacobi(5,5)
+        real(DP):: jacobi(5,5)
 
 
-        info = VEF_ERROR
-        use_vM_guess = optionalDefault(vM_guess, .true.)
-
-        ! Convert input to the 5D space and make the unit vector(s).
-        ! This also makes sure it is deviatoric.
-        vS = convert_stress_strain_space(sigma)
-        ylp_result = YLPResult(vS)
-
-        if (.not. use_vM_guess) then
-            ylp_result%vA = convert_stress_strain_space(D)
-            vA_norm = norm2(ylp_result%vA)
-            if (vA_norm < epsilon(0.D0)) return
-        else if (this%ptr_db%get(ylp_result%vS, ylp_result%vA, max_angle = pretry_search_angle) /= VEF_OK) then
-            ylp_result%va = ylp_result%vs
-        endif
-
-        if(trust_region_solve(ylp_result%vs/norm2(ylp_result%vs), ylp_result%vsona, ylp_result%va, jacobi, r) /= TR_SUCCESS) &
+        if(trust_region_solve(target_stress_mode, strain_mode, jacobi, stress_mode, stress_norm, residual_norm) /= TR_SUCCESS) &
             call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
 
-
-        info = merge(VEF_FAIL, VEF_OK, norm2(r) > OBJECTIVE_THRESHOLD)
-
         if (associated(this%ptr_db)) &
-            call this%ptr_db%put(ylp_result%va, ylp_result%vsona)
-
-        if (info == VEF_ERROR .or. deriveYLPResult(ylp_result) /= VEF_OK) then
-            info = VEF_ERROR
-            return
-        end if
-
-        D = convert_stress_strain_space(ylp_result%vA)
+            call this%ptr_db%put(strain_mode, stress_mode)
     end function
 end module

@@ -23,11 +23,12 @@ inline double norm2(const double* vec)
 }
 
 //Normalize a DIM-dimensional vector of doubles.
-inline void normalize(double* stress_state)
+inline double normalize(double* stress_state)
 {
     double norm = norm2(stress_state);
     for (int i=0;i<DIM;i++)
         stress_state[i] /= norm;
+    return norm;
 }
 
 //Wrapper for get_stress_state specifically for use from calc_jacobi to avoid code duplication.
@@ -96,7 +97,7 @@ int calc_jacobi(const double* strain_mode, double* jacobi)
 }
 
 //Calculate the strain mode corresponding as closely as possible to the imposed stress state. All inputs and outputs must be initialized externally and are of dimension DIM, except for jacobi, which is of dimension DIM*DIM.
-int trust_region_solve(const double* stress_target, double* stress_state, double* strain_rate, double* jacobi, double* residual)
+int trust_region_solve(const double* target_stress_mode, double* strain_mode, double* jacobi, double* stress_mode, double stress_norm, double residual_norm)
 {
 
     _TRNSPBC_HANDLE_t handle;
@@ -112,9 +113,10 @@ int trust_region_solve(const double* stress_target, double* stress_state, double
     const double  INITIAL_TRUST_REGION = 0.1;
 
     //See MKL documentation for details.
-    MKL_INT mkl_err = dtrnlspbc_init(&handle, &DIM, &DIM, strain_rate, LOWER_BOUND, UPPER_BOUND, EPS, &ITER1, &ITER2, &INITIAL_TRUST_REGION);
+    MKL_INT mkl_err = dtrnlspbc_init(&handle, &DIM, &DIM, strain_mode, LOWER_BOUND, UPPER_BOUND, EPS, &ITER1, &ITER2, &INITIAL_TRUST_REGION);
     if (mkl_err != TR_SUCCESS) return mkl_err;
 
+    double residual[DIM];
     MKL_INT rci_req = 0;
     while (rci_req >= 0)
     {
@@ -125,24 +127,27 @@ int trust_region_solve(const double* stress_target, double* stress_state, double
         {
             case 1:
             {
-                altay_get_stress_state_c(strain_rate, stress_state);
-                double stress_mode[DIM];
+                double stress_state[DIM];
+                altay_get_stress_state_c(strain_mode, stress_state);
                 for (int i=0;i<DIM;i++)
                     stress_mode[i] = stress_state[i];
-                normalize(stress_mode);
+                stress_norm = normalize(stress_mode);
                 for (int i=0;i<DIM;i++)
                     residual[i] = stress_target[i] - stress_mode[i];
                 break;
             }
             case 2:
             {
-                mkl_err = calc_jacobi(strain_rate, jacobi);
+                mkl_err = calc_jacobi(strain_mode, jacobi);
                 if (mkl_err != TR_SUCCESS) return mkl_err;
                 break;
             }
         }
     }
-    normalize(strain_rate);
+
+    normalize(strain_mode); // The trust region algorithm may deviate from unit length.
+    residual_norm = norm2(residual);
+
     mkl_err =  dtrnlspbc_delete (&handle);
     MKL_Free_Buffers();
     return mkl_err;
