@@ -7,12 +7,6 @@ ADP_INCREMENT = 'fixed\n'               \
                 + '4\n'                 \
                 + '0.1 0.25 0.5 0.9'
 
-CUSTOM_SOLVER_SETTINGS =    'False\n'           \
-                            + '0.2\n'           \
-                            + 'True\n'          \
-                            + '0.1       0.25\n' \
-                            + 'False'
-
 MODE_CONFIG =  {'ADP':                                              \
                     'True\n'                                        \
                     + '3\n'                                           \
@@ -29,9 +23,8 @@ MODE_CONFIG =  {'ADP':                                              \
                     + '0.1 -0.1 0.0 0.0 0.0 0.0\n'                  \
                     + 'True\n'                                      \
                     + ADP_INCREMENT,                                \
-                'ASR':
-                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
-                    + '0.0 0.0 0.0\n'                                 \
+                'ASR':                                              \
+                     '0.0 0.0 0.0\n'                                 \
                     + '2\n'                                         \
                     + '1.0 1.0 0.0 0.0 0.0 0.0\n'                   \
                     + 'True\n'                                      \
@@ -40,8 +33,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     + 'True\n'                                      \
                     + DEFAULT_INCREMENT,                            \
                'EWC':                                               \
-                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
-                    + 'reference\n'                                   \
+                     'reference\n'                                   \
                     + '1.0 0.0 0.0 0.0 0.0 0.0\n'                   \
                     + DEFAULT_INCREMENT + '\n'                      \
                     + 'uniform\n'                                   \
@@ -51,13 +43,11 @@ MODE_CONFIG =  {'ADP':                                              \
                     + '2\n'                                         \
                     + 'True',                                       \
                'QRS':                                               \
-                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
-                    + 'uniform\n'                                     \
+                     'uniform\n'                                     \
                     + '0.0    90.0   5.0\n'                         \
                     + 'True',                                       \
                'UDSA':                                              \
-                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
-                    + 'inplane\n'                                     \
+                     'inplane\n'                                     \
                     + 'discrete\n'                                  \
                     + '2\n'                                         \
                     + '0.0 45.0\n'                             \
@@ -67,8 +57,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     + 'tension\n'                                   \
                     + 'True',                                       \
                'YLD':                                               \
-                    CUSTOM_SOLVER_SETTINGS + '\n'                   \
-                    + 'uniform\n'                                     \
+                     'uniform\n'                                     \
                     + '0.0 360.0 36.0\n'                            \
                     + 'True'}
 

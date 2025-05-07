@@ -47,7 +47,6 @@ module dmcStressDrivenModule
         class(ResultTable), pointer  :: ptr_db => null()
     contains
         procedure, pass(this)     :: initialize => StressDrivenModule_initialize
-        procedure, pass(this)     :: readConfig => StressDrivenModule_readConfig
         procedure, pass(this)     :: finalize => StressDrivenModule_finalize
         procedure, pass(this)     :: findSolution => StressDrivenModule_findSolution
     end type
@@ -71,12 +70,11 @@ contains
     !>
     !> \post A correctly initialized result has non-zero vS_length field.
     pure function YLPResult_init(vS) result(res)
-    type(YLPResult):: res
-    real(DP), dimension(5), intent(in):: vS
-    !
+        type(YLPResult):: res
+        real(DP), dimension(5), intent(in):: vS
+
         res%vS_length = norm2(vS)
         if (res%vS_length > 0.D0) res%vS = vS/res%vS_length
-    !
     end function
 
     !> Derive dependant fields from properly initialized and evaluated YLPResult;
@@ -84,10 +82,10 @@ contains
     !> This requires fields: vS, vA and vS_length.
     !> \return VEF_ERROR if input ylp_result contains wrong data.
     integer function deriveYLPResult(ylp_result) result(info)
-    type(YLPResult), intent(inout)   :: ylp_result
-    !
-    real(DP):: SonA_norm
-    !
+        type(YLPResult), intent(inout)   :: ylp_result
+
+        real(DP):: SonA_norm
+
         info = VEF_ERROR
         SonA_norm = norm2(ylp_result%vSonA)
         if ((ylp_result%vS_length < epsilon(0.D0)) .or. (SonA_norm < epsilon(0.D0))) return
@@ -97,46 +95,22 @@ contains
         ! Calculate normalized stess
         ylp_result%vSonAn = ylp_result%vSonA/SonA_norm
         info = VEF_OK
-    !
     end function
 
     !> Initialize a configured StressDrivenModule object
     integer function StressDrivenModule_initialize(this) result(info)
-    class(StressDrivenModule), intent(inout)          :: this
-    !
-    integer:: ierr
-    !
-        !
-        ! Let the superclass do its initialization first ...
-        !
+        class(StressDrivenModule), intent(inout)          :: this
+
+        integer:: ierr
+
         RETURN_IF(info /= VEF_OK, info = this%BasicModule%initialize())
-        !
-        ! ... and then do your own initialization
-        !
-        ! Allocate and possibly populate the result cache
         allocate(this%ptr_db, stat = ierr)
     end function
 
-    integer function StressDrivenModule_readConfig(this, cnfunit) result(info)
-    class(StressDrivenModule), intent(inout)          :: this
-    integer, intent(in)                        :: cnfunit
-    !
-        info = this%BasicModule%readConfig(cnfunit)
-        if (info /= VEF_OK) return
-        !
-        ! Read multilevelYLP configuration
-        !User-provided connfiguration is no longer supported and thus ignored in the rest of the program. A call to  this procedure
-        !must however remain to not mess up the existing configuration file format.
-        call readYLPConfigSection(cnfunit, info)
-
-        if (info /= VEF_OK) &
-            call log_error('StressDrivenModule', 'readConfig', ERR_VAL, 'Check YLP config section.')
-    end function
-
-
     !> Finalization of the module
     integer function StressDrivenModule_finalize(this) result(info)
-    class(StressDrivenModule), intent(inout):: this
+        class(StressDrivenModule), intent(inout):: this
+
         if (associated(this%ptr_db)) then
             deallocate(this%ptr_db)
         endif
@@ -199,39 +173,4 @@ contains
 
         D = convert_stress_strain_space(ylp_result%vA)
     end function
-
-    !> Read configuration of the solver (libalamylp)
-    subroutine readYLPConfigSection(cnfunit, info)
-    integer, intent(in)                        :: cnfunit
-    integer, intent(out)                       :: info
-    !
-    real(DP), dimension(2):: tmp
-    real(DP):: dummy
-    logical:: dummy_2
-    logical:: use_default_solver_settings, use_advanced_settings
-    !
-        info = VEF_ERROR
-        use_default_solver_settings = .true.
-        use_advanced_settings = .false.
-        if (.not. readValue(cnfunit, use_default_solver_settings)) return
-        if (.not. use_default_solver_settings) then
-            if (.not. readValue(cnfunit, dummy)) then
-                 write(error_unit, fmt = 900) 'Check epsilon controlling numerical estimation over Jacobian.'
-                 return
-            endif
-            if (.not. readValue(cnfunit, dummy_2)) return
-            ! read default_eps and obj_func_eps
-            if (.not. readValue(cnfunit, tmp)) then
-                 write(error_unit, fmt = 900) 'Check the linearization parameters.'
-                 return
-            endif
-            ! read flag for advanced settings (placeholder at the moment)
-            if (.not. readValue(cnfunit, use_advanced_settings)) return
-        endif
-        info = VEF_OK
-
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    end subroutine
 end module
