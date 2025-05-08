@@ -136,9 +136,8 @@ contains
         real(DP):: target_stress_mode(5), &
                    target_stress_norm, &
                    strain_mode(5), &
-                   stress_mode(5), &
-                   stress_norm, &
-                   residual_norm
+                   stress(5), &
+                   residual(5)
 
 
         ! Super-class first
@@ -166,8 +165,8 @@ contains
             iunilen = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / iunilen
 
-            call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
-            iunilen = iunilen / stress_norm
+            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+            iunilen = iunilen / norm2(stress)
         endif
         !
         allocate(yldRes(npoints))
@@ -192,15 +191,15 @@ contains
                 target_stress_norm = norm2(target_stress_mode)
                 target_stress_mode = target_stress_mode / target_stress_norm
 
-                call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
+                call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
-                scal_s_rel = stress_norm/target_stress_norm*iunilen
+                scal_s_rel = norm2(stress)/target_stress_norm*iunilen
 
-                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, stress_norm, scal_s_rel, &
-                                      stress_norm, &
-                                      strain_mode .dot. stress_mode * stress_norm, &
+                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, norm2(stress), scal_s_rel, &
+                                      norm2(stress), &
+                                      strain_mode .dot. stress, &
                                       [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
-                                      [0._DP, 0._DP], beta, residual_norm)
+                                      [0._DP, 0._DP], beta, norm2(residual))
 
                 i = i+1
             enddo

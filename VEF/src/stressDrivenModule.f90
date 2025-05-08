@@ -33,16 +33,15 @@ module dmcStressDrivenModule
     end type
 
     interface
-        integer(C_INT) function trust_region_solve(target_stress_mode, strain_mode, jacobi, stress_mode, stress_norm, residual_norm) bind(C) result(mkl_result_code)
+        integer(C_INT) function trust_region_solve(target_stress_mode, strain_mode, jacobi, stress, residual) bind(C) result(mkl_result_code)
             import C_INT, &
                    C_DOUBLE
 
             real(C_DOUBLE), dimension(5), intent(in)::       target_stress_mode
             real(C_DOUBLE), dimension(5), intent(inout)::    strain_mode
             real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi
-            real(C_DOUBLE), dimension(5), intent(out)::      stress_mode
-            real(C_DOUBLE), intent(out)::                    stress_norm
-            real(C_DOUBLE), intent(out)::                    residual_norm
+            real(C_DOUBLE), dimension(5), intent(out)::      stress
+            real(C_DOUBLE), dimension(5), intent(out)::      residual
         end function
     end interface
 
@@ -75,13 +74,12 @@ contains
     !> \return VEF_ERROR on lack of convergence. ylp_result and D are set to the best solution found
     !> \return VEF_ERROR or any criErr_*on severe error conditions. ylp_result and D are undefined
     !> \return VEF_OK on success
-    subroutine stressdrivenmodule_findSolution(this, target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
+    subroutine stressdrivenmodule_findSolution(this, target_stress_mode, strain_mode, stress, residual)
         class(StressDrivenModule), intent(in)   :: this
         real(DP), dimension(5), intent(in):: target_stress_mode
         real(DP), dimension(5), intent(out):: strain_mode
-        real(DP), dimension(5), intent(out):: stress_mode
-        real(DP), intent(out):: stress_norm
-        real(DP), intent(out):: residual_norm
+        real(DP), dimension(5), intent(out):: stress
+        real(DP), dimension(5), intent(out):: residual
 
         real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
         real(DP):: jacobi(5,5)
@@ -93,10 +91,10 @@ contains
             strain_mode = target_stress_mode
         end if
 
-        if(trust_region_solve(target_stress_mode, strain_mode, jacobi, stress_mode, stress_norm, residual_norm) /= TR_SUCCESS) &
+        if(trust_region_solve(target_stress_mode, strain_mode, jacobi, stress, residual) /= TR_SUCCESS) &
             call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
 
         if (associated(this%ptr_db)) &
-            call this%ptr_db%put(strain_mode, stress_mode)
+            call this%ptr_db%put(strain_mode, stress/norm2(stress))
     end subroutine
 end module

@@ -11,7 +11,6 @@ use commonUtils
 
 implicit none
 
-
     public:: StressDrivenEvolutionModule
     private
 
@@ -75,9 +74,8 @@ contains
         real(DP):: target_stress_mode(5), &
                    target_stress_norm, &
                    strain_mode(5), &
-                   stress_mode(5), &
-                   stress_norm, &
-                   residual_norm
+                   stress(5), &
+                   residual(5)
 
 
         !
@@ -117,11 +115,10 @@ contains
             if (info /= VEF_OK) exit
             !
             ! Calculate the strain rate mode
-
             target_stress_mode = convert_stress_strain_space(sigma)
             target_stress_norm = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / target_stress_norm
-            call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
+            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
             ! Nasty hack: drilling a hole to libaltay to get the Taylor factor
             call getTaylorFactor(1, taylor_factor, info)
@@ -132,9 +129,9 @@ contains
                                                taylor_factor, &
                                                target_stress_mode, &
                                                strain_mode, &
-                                               stress_mode, &
-                                               stress_norm/target_stress_norm, &
-                                               residual_norm)
+                                               stress/norm2(stress), &
+                                               norm2(stress)/target_stress_norm, &
+                                               norm2(residual))
 
             ! Check if we start a/another increment
             stop_flag = .false.
@@ -187,7 +184,7 @@ contains
                     if (control_variable < 0.D0) control_variable = 1._DP
                     !
                 case(scalingPlasticWork)
-                    control_variable = strain_mode .dot. stress_mode * stress_norm
+                    control_variable = strain_mode .dot. stress
                 !
                 case(scalingStrainTensorComponent)
                     if (present(rotmat)) then

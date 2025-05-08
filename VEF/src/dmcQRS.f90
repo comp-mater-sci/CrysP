@@ -115,9 +115,8 @@ contains
 
     real(DP):: target_stress_mode(5), &
                strain_mode(5), &
-               stress_mode(5), &
-               stress_norm, &
-               residual_norm
+               stress(5), &
+               residual(5)
 
 
     !
@@ -156,11 +155,11 @@ contains
 
             target_stress_mode = convert_stress_strain_space(sigma)
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
-            call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
+            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
             !
-            SonA = convert_stress_strain_space(stress_mode * stress_norm)
-            SmIdent = convert_stress_strain_space(stress_mode)  ! stress mode for found strain mode
+            SonA = convert_stress_strain_space(stress)
+            SmIdent = convert_stress_strain_space(stress / norm2(stress))  ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
             D_t = rotate_from(convert_stress_strain_space(strain_mode), Mrot)
@@ -169,7 +168,7 @@ contains
             !(***) Prepare next iteration if re-using is requested.
             if (this%use_stability_improvements) then
                 Dresume_t = D_t
-                residual_resume = residual_norm
+                residual_resume = norm2(residual)
             endif
             !
             ! Calculate output variables
@@ -177,9 +176,9 @@ contains
             associate(r => results)
                 !
                 r%phis(i) = fi2*RAD_TO_DEG
-                r%qrsvalues(i) = calculateQRS(D_t, stress_norm)
+                r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
-                r%residuals(i) = residual_norm
+                r%residuals(i) = norm2(residual)
                 ! Optional: Taylor factor can be retrieved
                 if (this%calculate_MFactor) then
                     call getTaylorFactor(1, r%mfactors(i), info)
