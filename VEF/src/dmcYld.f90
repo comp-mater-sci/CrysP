@@ -134,6 +134,7 @@ contains
         real(DP), parameter:: beta = 0._DP
 
         real(DP):: target_stress_mode(5), &
+                   target_stress_norm, &
                    strain_mode(5), &
                    stress_mode(5), &
                    stress_norm, &
@@ -160,19 +161,13 @@ contains
         iunilen = 1.D0
         if (this%do_scaling) then
             Sm =  from_voigt(this%scaling_vector)
-            if (norm2(Sm) < epsilon(0.D0)) then
-                write(display_unit, fmt = 900) 'Norm of the input stress for scaling cannot be zero'
-                return
-            endif
 
-
-
-            ! Run the identification
             target_stress_mode = convert_stress_strain_space(sm)
-            target_stress_mode = target_stress_mode / norm2(target_stress_mode)
+            iunilen = norm2(target_stress_mode)
+            target_stress_mode = target_stress_mode / iunilen
 
             call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
-            iunilen = 1._DP / stress_norm
+            iunilen = iunilen / stress_norm
         endif
         !
         allocate(yldRes(npoints))
@@ -194,11 +189,12 @@ contains
                                 + w*this%base_vectors(:,3)
                 Sm = from_voigt(sigma_vector)
                 target_stress_mode = convert_stress_strain_space(sm)
-                target_stress_mode = target_stress_mode / norm2(target_stress_mode)
+                target_stress_norm = norm2(target_stress_mode)
+                target_stress_mode = target_stress_mode / target_stress_norm
 
                 call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
 
-                scal_s_rel = stress_norm*iunilen
+                scal_s_rel = stress_norm/target_stress_norm*iunilen
 
                 yldRes(i) = yldResult(theta*RAD_TO_DEG, w, stress_norm, scal_s_rel, &
                                       stress_norm, &
