@@ -270,8 +270,6 @@ contains
     !
     end subroutine
 
-
-
     !> Calculate vector v that is normal to the vector AB (from point A to B).
     !> Provide the angle between the vector v and the x axis.
     !> v is obtained by a clockwise rotation by 90 degs applied to the AB vector.

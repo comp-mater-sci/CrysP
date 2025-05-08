@@ -73,6 +73,7 @@ contains
         real(DP), dimension(6):: X_tmp_voigt
 
         real(DP):: target_stress_mode(5), &
+                   target_stress_norm, &
                    strain_mode(5), &
                    stress_mode(5), &
                    stress_norm, &
@@ -118,7 +119,8 @@ contains
             ! Calculate the strain rate mode
 
             target_stress_mode = convert_stress_strain_space(sigma)
-            target_stress_mode = target_stress_mode / norm2(target_stress_mode)
+            target_stress_norm = norm2(target_stress_mode)
+            target_stress_mode = target_stress_mode / target_stress_norm
             call this%findsolution(target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm)
 
             ! Nasty hack: drilling a hole to libaltay to get the Taylor factor
@@ -131,7 +133,7 @@ contains
                                                target_stress_mode, &
                                                strain_mode, &
                                                stress_mode, &
-                                               stress_norm, &
+                                               stress_norm/target_stress_norm, &
                                                residual_norm)
 
             ! Check if we start a/another increment
