@@ -123,7 +123,6 @@ contains
         real(DP):: theta, &
                     w,  &
                     iunilen, &
-                    Sm(3, 3), &
                     scal_s_rel, &
                     sigma_vector(6)
         type(yldResult), dimension(:), allocatable  :: yldRes
@@ -159,9 +158,7 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            Sm =  from_voigt(this%scaling_vector)
-
-            target_stress_mode = convert_stress_strain_space(sm)
+            target_stress_mode = voigt_to_deviatoric(this%scaling_vector)
             iunilen = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / iunilen
 
@@ -186,8 +183,7 @@ contains
                 !       a temporary created in a call to convert_voigt
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                Sm = from_voigt(sigma_vector)
-                target_stress_mode = convert_stress_strain_space(sm)
+                target_stress_mode = voigt_to_deviatoric(sigma_vector)
                 target_stress_norm = norm2(target_stress_mode)
                 target_stress_mode = target_stress_mode / target_stress_norm
 
