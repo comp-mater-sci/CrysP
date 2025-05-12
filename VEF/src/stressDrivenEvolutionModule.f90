@@ -131,7 +131,7 @@ contains
                                                strain_mode, &
                                                stress/norm2(stress), &
                                                norm2(stress)/target_stress_norm, &
-                                               norm2(residual))
+                                               norm2(deviatoric_to_voigt(residual)))
 
             ! Check if we start a/another increment
             stop_flag = .false.

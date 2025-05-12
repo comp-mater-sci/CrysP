@@ -168,7 +168,7 @@ contains
             !(***) Prepare next iteration if re-using is requested.
             if (this%use_stability_improvements) then
                 Dresume_t = D_t
-                residual_resume = norm2(residual)
+                residual_resume = norm2(deviatoric_to_voigt(residual))
             endif
             !
             ! Calculate output variables
@@ -178,7 +178,7 @@ contains
                 r%phis(i) = fi2*RAD_TO_DEG
                 r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
-                r%residuals(i) = norm2(residual)
+                r%residuals(i) = norm2(deviatoric_to_voigt(residual))
                 ! Optional: Taylor factor can be retrieved
                 if (this%calculate_MFactor) then
                     call getTaylorFactor(1, r%mfactors(i), info)

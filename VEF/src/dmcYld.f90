@@ -199,7 +199,7 @@ contains
                                       norm2(stress), &
                                       strain_mode .dot. stress, &
                                       [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
-                                      [0._DP, 0._DP], beta, norm2(residual))
+                                      [0._DP, 0._DP], beta, norm2(deviatoric_to_voigt(residual)))
 
                 i = i+1
             enddo
