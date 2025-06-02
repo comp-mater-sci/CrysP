@@ -171,7 +171,7 @@ contains
                 case(scalingStrainTensor)
                     ! Find scaling factor x such as
                     ! ||vP_step-x vA|| - ||vP_step|| = increment_size   (*)
-                    n_roots = solvequadraticpolynomial(a = strain_mode .dot. strain_mode, &
+                    n_roots = solveQuadraticPolynomial(a = strain_mode .dot. strain_mode, &
                                                        b = 2 * strain_mode .dot. icv%vp_step, &
                                                        c = (icv%vp_step .dot. icv%vp_step) - &
                                                            (control%increment_size+norm2(icv%vp_step))**2, &

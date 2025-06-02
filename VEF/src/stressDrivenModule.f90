@@ -19,7 +19,7 @@ module dmcStressDrivenModule
     public:: StressDrivenModule, &
              OBJECTIVE_THRESHOLD
 
-    character(*), parameter:: MOD_NAME = 'stressDrivnModule'
+    character(*), parameter:: MOD_NAME = 'stressDrivenModule'
     real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
 
     !> Abstract class implementing basic subset of operations that are shared by all
