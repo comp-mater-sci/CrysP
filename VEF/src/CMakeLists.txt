@@ -22,7 +22,6 @@ criNamedRange.f90
 criNumerics.f90
 criRange.f90
 criUncomment.f90
-alamYLP.f90
 abstractModule.f90
 basicModule.f90
 commonConfig.f90
@@ -37,7 +36,6 @@ strainDrivenStep.f90
 stressDrivenEvolutionModule.f90
 stressDrivenModule.f90
 substeppingConfig.f90
-YLPResult.f90
 dmcADP.f90
 dmcASR.f90
 dmcEWC.f90

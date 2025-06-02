@@ -5,13 +5,11 @@
 module dmcQRS
     use criRange
     use criUncomment, only: readValue
-    use dmcYLPResult
     use dmcStressDrivenModule
     use commonConfig
     use commonUtils
     use dmcResultFileOutput
     use qrsTypes
-    use alamYlp
 
     implicit none
 
@@ -107,15 +105,19 @@ contains
                                         sigma, &
                                         sigma_t, &
                                         sona, &
-                                        d, &
                                         dresume_t, &
                                         smident
-    type(YLPResult)                 :: ylp_result
     real(DP)                        :: fi1, phi, fi2, residual_resume
     integer     :: i, npoints, npoints_ok, ofunit
-    logical     :: useVMGuess, acceptable_point
+    logical     :: useVMGuess
     !
     type(QRSOutputData):: results
+
+    real(DP):: target_stress_mode(5), &
+               strain_mode(5), &
+               stress(5), &
+               residual(5)
+
 
     !
         ! Super-class first
@@ -150,36 +152,23 @@ contains
             ! Rotate from "tensile" to material coordinate system
             sigma = rotate_to(sigma_t, Mrot)
             !
-            if ((this%use_stability_improvements) .AND. (i > 1)) then
-                ! Reuse previously stored result in new coordinate system
-                ! if it represents a converged solution.
-                if (residual_resume <= OBJECTIVE_THRESHOLD) then
-                    ! Rotate Dresume_t to new coordinate system
-                    D = rotate_to(Dresume_t, Mrot)
-                    ! Disable Von Mises guess
-                    useVMGuess = .false.
-                endif
-            endif
-            !
-            info = this%findSolution(sigma, D, ylp_result, useVMGuess, is_acceptable = acceptable_point)
-            if ((info /= VEF_OK) .and. .not. acceptable_point) then
-                write(display_unit, fmt = 860) 'Cannot find solution, datapoint dropped'
-                cycle
-            endif
 
-            if (info == VEF_ERROR) exit
+            target_stress_mode = convert_stress_strain_space(sigma)
+            target_stress_mode = target_stress_mode / norm2(target_stress_mode)
+            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+
             !
-            SonA = convert_stress_strain_space(ylp_result%vSonA)
-            SmIdent = convert_stress_strain_space(ylp_result%vSonAn)  ! stress mode for found strain mode
+            SonA = convert_stress_strain_space(stress)
+            SmIdent = convert_stress_strain_space(stress / norm2(stress))  ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
-            D_t = rotate_from(D, Mrot)
+            D_t = rotate_from(convert_stress_strain_space(strain_mode), Mrot)
             S_t = rotate_from(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
             if (this%use_stability_improvements) then
                 Dresume_t = D_t
-                residual_resume = ylp_result%R
+                residual_resume = norm2(deviatoric_to_voigt(residual))
             endif
             !
             ! Calculate output variables
@@ -187,9 +176,9 @@ contains
             associate(r => results)
                 !
                 r%phis(i) = fi2*RAD_TO_DEG
-                r%qrsvalues(i) = calculateQRS(D_t, ylp_result%scal_s)
+                r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
-                r%residuals(i) = ylp_result%R
+                r%residuals(i) = norm2(deviatoric_to_voigt(residual))
                 ! Optional: Taylor factor can be retrieved
                 if (this%calculate_MFactor) then
                     call getTaylorFactor(1, r%mfactors(i), info)

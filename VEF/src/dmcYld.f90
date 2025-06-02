@@ -6,7 +6,6 @@ module dmcYld
     use utils
     use criRange
     use criUncomment, only: readValue
-    use dmcYLPResult
     use commonConfig
     use dmcStressDrivenModule
     use commonUtils
@@ -124,17 +123,21 @@ contains
         real(DP):: theta, &
                     w,  &
                     iunilen, &
-                    Sm(3, 3), &
-                    D(3, 3), &
                     scal_s_rel, &
                     sigma_vector(6)
-        type(YLPResult)                           :: ylp_result !< Results of the interative search
         type(yldResult), dimension(:), allocatable  :: yldRes
         class(range_type), allocatable             :: theta_range
         integer                 :: i, npoints, ofunit
         integer:: posA, posB
-        logical:: first_run, acceptable_point
+        logical:: first_run
         real(DP), parameter:: beta = 0._DP
+
+        real(DP):: target_stress_mode(5), &
+                   target_stress_norm, &
+                   strain_mode(5), &
+                   stress(5), &
+                   residual(5)
+
 
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
@@ -155,23 +158,12 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            Sm =  from_voigt(this%scaling_vector)
-            if (norm2(Sm) < epsilon(0.D0)) then
-                write(display_unit, fmt = 900) 'Norm of the input stress for scaling cannot be zero'
-                return
-            endif
-            ! Run the identification
-            info = this%findSolution(Sm, D, ylp_result)
-            if (info /= VEF_OK) then
-                write(display_unit, fmt = 900) 'Cannot find solution for the scaling stress'
-                return
-            endif
+            target_stress_mode = voigt_to_deviatoric(this%scaling_vector)
+            iunilen = norm2(target_stress_mode)
+            target_stress_mode = target_stress_mode / iunilen
 
-            if (abs(ylp_result%scal_s) < epsilon(0.D0)) then
-                write(display_unit, fmt = 900) 'Identification results in zero-length stress tensor.'
-                return
-            endif
-            iunilen = 1.D0/ylp_result%scal_s
+            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+            iunilen = iunilen / norm2(stress)
         endif
         !
         allocate(yldRes(npoints))
@@ -191,20 +183,19 @@ contains
                 !       a temporary created in a call to convert_voigt
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                Sm = from_voigt(sigma_vector)
-                !
-                info = this%findSolution(Sm, D, ylp_result, is_acceptable = acceptable_point)
-                ! Consider what to do with unsuccessful search
-                if (info == VEF_ERROR .or. ((info == VEF_FAIL) .and. (.not. acceptable_point))) then
-                    write(display_unit, fmt = 860) 'Cannot find solution, datapoint dropped'
-                    cycle
-                endif
-                scal_s_rel = ylp_result%scal_s*iunilen
+                target_stress_mode = voigt_to_deviatoric(sigma_vector)
+                target_stress_norm = norm2(target_stress_mode)
+                target_stress_mode = target_stress_mode / target_stress_norm
 
-                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, ylp_result%scal_s, scal_s_rel, &
-                                      norm2(ylp_result%vSonA), ylp_result%dotWonA, &
+                call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+
+                scal_s_rel = norm2(stress)/target_stress_norm*iunilen
+
+                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, norm2(stress), scal_s_rel, &
+                                      norm2(stress), &
+                                      strain_mode .dot. stress, &
                                       [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
-                                      [0._DP, 0._DP], beta, ylp_result%R)
+                                      [0._DP, 0._DP], beta, norm2(deviatoric_to_voigt(residual)))
 
                 i = i+1
             enddo
@@ -273,8 +264,6 @@ contains
         720 format(/)  ! Double empty line
     !
     end subroutine
-
-
 
     !> Calculate vector v that is normal to the vector AB (from point A to B).
     !> Provide the angle between the vector v and the x axis.

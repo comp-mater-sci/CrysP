@@ -4,15 +4,12 @@
 !> material state.
 module dmcStressDrivenEvolutionModule
 use utils
-use dmcYLPResult
 use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use commonUtils
-use alamYLP
 
 implicit none
-
 
     public:: StressDrivenEvolutionModule
     private
@@ -69,12 +66,17 @@ contains
         type(IncrementOutputRecord), dimension(:), allocatable, intent(out):: output
         type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
         !
-        real(DP):: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch, &
-                D(3, 3), X_tmp(3, 3), D_retry(3, 3)
-        type(YLPResult):: ylp, ylp_retry
+        real(DP):: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch, X_tmp(3, 3)
         real(DP), dimension(5):: vDe, vSe
         type(IncrementationControl):: icv
         real(DP), dimension(6):: X_tmp_voigt
+
+        real(DP):: target_stress_mode(5), &
+                   target_stress_norm, &
+                   strain_mode(5), &
+                   stress(5), &
+                   residual(5)
+
 
         !
         type(IncrementOutputRecord)         :: tmp_record
@@ -88,7 +90,7 @@ contains
         !> the material at the end of the step.
         integer:: i, n_roots, n_records
         real(DP), dimension(2):: xi
-        logical:: stop_flag, acceptable_point, acceptable_point_retry
+        logical:: stop_flag
         real(DP), parameter:: stretch_ratio = 1e-3_DP
         real(DP), dimension(3, 3):: zero = 0._DP
 
@@ -113,42 +115,24 @@ contains
             if (info /= VEF_OK) exit
             !
             ! Calculate the strain rate mode
-            info = this%findSolution(sigma, D, ylp, is_acceptable = acceptable_point)
-            if ((info /= VEF_OK) .or. .not. acceptable_point) then
-                ! Re-attempt, try A from the previous increment as the starting point
-                !
-                ! Pick the most recent converged solution
-                do i = icv%increment, 1, -1
-                    if (output(i)%R < OBJECTIVE_THRESHOLD) then
-                        D_retry = output(i)%A
-                        exit
-                    endif
-                enddo
-                acceptable_point_retry = .false.
-                ! Check post-condition of the loop: i > 0 means
-                ! we have such a solution:
-                if (i > 0) then
-                    info = this%findSolution(sigma, D_retry, ylp_retry, vM_guess=.false., &
-                                             is_acceptable = acceptable_point_retry)
-                    ! Accept the solution only if it is better than the original one
-                    if (acceptable_point .and. (ylp_retry%R < ylp%R)) then
-                        D = D_retry
-                        ylp = ylp_retry
-                    endif
-                endif
-                CHOOSE(info, acceptable_point .or. acceptable_point_retry, VEF_OK, VEF_FAIL)
-            endif
-            if (info == VEF_ERROR) exit
-            !
+            target_stress_mode = convert_stress_strain_space(sigma)
+            target_stress_norm = norm2(target_stress_mode)
+            target_stress_mode = target_stress_mode / target_stress_norm
+            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+
             ! Nasty hack: drilling a hole to libaltay to get the Taylor factor
             call getTaylorFactor(1, taylor_factor, info)
             !
             ! Make output record and prepare variables for updating icv
             tmp_record = IncrementOutputRecord(icv%IncrementationControlVariables, &
-                                               ylp, &
                                                zero, zero, &
-                                               taylor_factor)
-            !
+                                               taylor_factor, &
+                                               target_stress_mode, &
+                                               strain_mode, &
+                                               stress/norm2(stress), &
+                                               norm2(stress)/target_stress_norm, &
+                                               norm2(deviatoric_to_voigt(residual)))
+
             ! Check if we start a/another increment
             stop_flag = .false.
             select case(control%scaling_type)
@@ -182,31 +166,31 @@ contains
                 ! Calculate increment of plastic strain to be imposed for texture evolution:
                 select case(control%scaling_type)
                 case(scalingStrainTensorIncrement)
-                    control_variable = norm2(ylp%vA)
+                    control_variable = 1._DP
                 !
                 case(scalingStrainTensor)
                     ! Find scaling factor x such as
                     ! ||vP_step-x vA|| - ||vP_step|| = increment_size   (*)
-                    n_roots = solveQuadraticPolynomial(a = dot_product(ylp%vA, ylp%vA), &
-                                                       b = 2*dot_product(ylp%vA, icv%vP_step), &
-                                                       c = dot_product(icv%vP_step, icv%vP_step) - &
-                                                         (control%increment_size+norm2(icv%vP_step))**2, &
-                                                       x = xi)
+                    n_roots = solveQuadraticPolynomial(a = strain_mode .dot. strain_mode, &
+                                                       b = 2 * strain_mode .dot. icv%vp_step, &
+                                                       c = (icv%vp_step .dot. icv%vp_step) - &
+                                                           (control%increment_size+norm2(icv%vp_step))**2, &
+                                                       x=xi)
                     ! Up to two roots; we pick the largest one;
                     control_variable = -1.0_DP
                     if (n_roots > 0) control_variable = control%increment_size/maxval(xi(1:n_roots))
                     ! If control variable is negative (the only way to satisfy (*) is
                     ! to decrease the strain), fall back to a less accurate scheme.
-                    if (control_variable < 0.D0) control_variable = norm2(ylp%vA)
+                    if (control_variable < 0.D0) control_variable = 1._DP
                     !
                 case(scalingPlasticWork)
-                    control_variable = ylp%dotWonA
+                    control_variable = strain_mode .dot. stress
                 !
                 case(scalingStrainTensorComponent)
                     if (present(rotmat)) then
-                        X_tmp = rotate_to(D, rotmat)
+                        X_tmp = rotate_to(convert_stress_strain_space(strain_mode), rotmat)
                     else
-                        X_tmp = D
+                        X_tmp = convert_stress_strain_space(strain_mode)
                     endif
                     X_tmp_voigt = to_voigt(X_tmp, 6)
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
@@ -223,7 +207,7 @@ contains
                 scaling_factor = (control%increment_size/control_variable)
                 !
                 ! Calculate strain increment for material state evolution
-                vDe = ylp%vA*scaling_factor
+                vDe = strain_mode * scaling_factor
                 tmp_record%P_inc_evol = convert_stress_strain_space(vDe)
                 ! Update material state
                 call makeTextureUpdateStep(tmp_record%P_inc_evol, &
@@ -261,8 +245,6 @@ contains
     !
         output = output(1:n_records)
     end function
-
-
 
     !> Event handler in calculateStressPath: invoked at the begining of each
     !> increment
