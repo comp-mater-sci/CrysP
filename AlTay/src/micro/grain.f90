@@ -26,7 +26,7 @@ contains
         class(ConstitutiveModel), target, intent(in):: model
         class(HardeningState), intent(in):: state
 
-        this%orientation = from_euler_angles(orientation)
+        this%orientation = euler_to_tensor(orientation)
         this%model => model
         this%state = state
     end subroutine

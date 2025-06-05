@@ -114,7 +114,7 @@ contains
         !Write state of each grain
         do i = 1, size(clusters)
             do j = 1, cluster_size
-                euler_angles = to_euler_angles(clusters(i)%grains(j)%orientation)*RAD_TO_DEG
+                euler_angles = tensor_to_euler(clusters(i)%grains(j)%orientation)*RAD_TO_DEG
                 write(IMP1, 400, iostat = info)&
                     i*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3)
                 if (info /= 0) exit

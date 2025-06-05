@@ -15,6 +15,19 @@ module utils
     real(DP), parameter:: PI         = acos(-1.D0)          !! Pi.
     real(DP), parameter:: RAD_TO_DEG = 180._DP/PI           !! Multiply by this constant to convert a value in radians to degrees. Divide for the reverse operation.
 
+
+
+
+    real(DP), parameter:: SQR0P5     = sqrt(0.5_DP)         !! Square root of 1/2.
+    real(DP), parameter:: SQR0P67    = sqrt(2._DP/3._DP)    !! Square root of 2/3.
+    real(DP), parameter:: SQR1P5     = sqrt(1.5_DP)         !! Square root of 3/2.
+    real(DP), parameter:: SQR2       = sqrt(2._DP)          !! Square root of 2.
+    real(DP), parameter:: ROOT6I = 1.D0/sqrt(6.D0)          !! 1/sqr(6)
+
+
+
+
+
     !> Status codes. Used to communicate information on the completion of a procedure to the caller.
     enum, bind(C)
         enumerator:: VEF_OK      !! Sucessful execution
@@ -57,55 +70,70 @@ module utils
     end interface
 
 
+
+
+    interface convert_stress_strain_space !! Convert between 3x3 tensor representation or 5D stress-strain space representation of stresses and strains.
+        module procedure convert_stress_strain_mat_vec, &
+                         convert_stress_strain_vec_mat
+    end interface
+
+    interface convert_spin !! Convert a small strain spin between an antisymmetric 3x3 matrix representation and a 3D vector representation.
+        module procedure convert_spin_mat_vec, &
+                         convert_spin_vec_mat
+    end interface
+
+
+
+
     interface
         module pure function euler_to_tensor(euler) result(tensor)
             real(DP), dimension(3), intent(in):: euler
             real(DP), dimension(3,3):: tensor
         end function
 
-        module pure function spin_to_tensor(spin) result(tensor)
-            real(DP), dimension(3), intent(in):: spin
-            real(DP), dimension(3,3):: tensor
-        end function
+        !module pure function spin_to_tensor(spin) result(tensor)
+        !    real(DP), dimension(3), intent(in):: spin
+        !    real(DP), dimension(3,3):: tensor
+        !end function
 
-        module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
-            real(DP), dimension(5), intent(in):: deviatoric
-            real(DP), dimension(6):: voigt
-        end function
-        module pure function deviatoric_to_tensor(deviatoric) result(tensor)
-            real(DP), dimension(5), intent(in):: deviatoric
-            real(DP), dimension(3,3):: tensor
-        end function
+        !module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
+        !    real(DP), dimension(5), intent(in):: deviatoric
+        !    real(DP), dimension(6):: voigt
+        !end function
+        !module pure function deviatoric_to_tensor(deviatoric) result(tensor)
+        !    real(DP), dimension(5), intent(in):: deviatoric
+        !    real(DP), dimension(3,3):: tensor
+        !end function
 
-        module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
-            real(DP), dimension(6), intent(in):: voigt
-            real(DP), dimension(5):: deviatoric
-        end function
-        module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
-            real(DP), dimension(6), intent(in):: voigt
-            real(DP), dimension(3,3):: tensor
-        end function
+        !module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
+        !    real(DP), dimension(6), intent(in):: voigt
+        !    real(DP), dimension(5):: deviatoric
+        !end function
+        !module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
+        !    real(DP), dimension(6), intent(in):: voigt
+        !    real(DP), dimension(3,3):: tensor
+        !end function
 
-        module pure function tensor_to_von_mises(tensor) result(von_mises)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP):: von_mises
-        end function
-        module pure function tensor_to_euler(tensor) result(euler)
+        !module pure function tensor_to_von_mises(tensor) result(von_mises)
+        !    real(DP), dimension(3,3), intent(in):: tensor
+        !    real(DP):: von_mises
+        !end function
+        module function tensor_to_euler(tensor) result(euler)
             real(DP), dimension(3,3), intent(in):: tensor
             real(DP), dimension(3):: euler
         end function
-        module pure function tensor_to_spin(tensor) result(spin)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP), dimension(3):: spin
-        end function
-        module pure function tensor_to_deviatoric(tensor) result(deviatoric)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP), dimension(5):: deviatoric
-        end function
-        module pure function tensor_to_unscaled_voigt(tensor) result(voigt)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP), dimension(6):: voigt
-        end function
+        !module pure function tensor_to_spin(tensor) result(spin)
+        !    real(DP), dimension(3,3), intent(in):: tensor
+        !    real(DP), dimension(3):: spin
+        !end function
+        !module pure function tensor_to_deviatoric(tensor) result(deviatoric)
+        !    real(DP), dimension(3,3), intent(in):: tensor
+        !    real(DP), dimension(5):: deviatoric
+        !end function
+        !module pure function tensor_to_unscaled_voigt(tensor) result(voigt)
+        !    real(DP), dimension(3,3), intent(in):: tensor
+        !    real(DP), dimension(6):: voigt
+        !end function
     end interface
 
 contains
@@ -345,94 +373,13 @@ contains
         end do
     end function
 
-end module
-
-submodule(Utils) Conversions
-
-    implicit none
-
-    real(DP), parameter:: SQR0P5     = sqrt(0.5_DP)         !! Square root of 1/2.
-    real(DP), parameter:: SQR0P67    = sqrt(2._DP/3._DP)    !! Square root of 2/3.
-    real(DP), parameter:: SQR1P5     = sqrt(1.5_DP)         !! Square root of 3/2.
-    real(DP), parameter:: SQR2       = sqrt(2._DP)          !! Square root of 2.
-    real(DP), parameter:: ROOT6I = 1.D0/sqrt(6.D0)          !! 1/sqr(6)
-
-contains
-
-    module procedure euler_to_tensor
-        real(DP):: sins(3), &
-                   coss(3)
-
-        !Bunge convention: phi1, Phi, phi2
-        sins = sin(euler)
-        coss = cos(euler)
-
-        tensor(1, 1) = coss(1)*coss(3) - (sins(1)*sins(3)*coss(2))
-        tensor(1, 2) = sins(1)*coss(3) + (coss(1)*sins(3)*coss(2))
-        tensor(1, 3) = sins(3)*sins(2)
-        tensor(2, 1) = -coss(1)*sins(3) - (sins(1)*coss(3)*coss(2))
-        tensor(2, 2) = -sins(1)*sins(3) + (coss(1)*coss(3)*coss(2))
-        tensor(2, 3) = coss(3)*sins(2)
-        tensor(3, 1) = sins(1)*sins(2)
-        tensor(3, 2) = -coss(1)*sins(2)
-        tensor(3, 3) = coss(2)
-    end procedure
-
-    module procedure spin_to_tensor
-    end procedure
-    module procedure deviatoric_to_unscaled_voigt
-    end procedure
-    module procedure deviatoric_to_tensor
-    end procedure
-    module procedure unscaled_voigt_to_deviatoric
-    end procedure
-    module procedure unscaled_voigt_to_tensor
-    end procedure
-    module procedure tensor_to_von_mises
-    end procedure
-
-
-    pure function to_euler_angles(mat) result(ang)
-        real(DP), dimension(3, 3), intent(in)::  mat !< Rotation matrix in passive convention.
-        real(DP)::              ang(3), &
-                                phi1, &
-                                PHI, &
-                                phi2, &
-                                cos_PHI
-
-            end function
-
-
-    module procedure tensor_to_euler
-        euler(2) = acos(tensor(3, 3) / norm2(tensor(:,3)))
-
-        if (abs(cos(euler(2)))==1.0D0) then  ! case that PHI = 0\B0 or PHI = 180\B0
-            !Set phi2 to 0.0D0, given that:
-            !  (phi1;   0\B0; phi2) equivalent to (phi1+phi2;    0; 0).
-            !  (phi1; 180\B0; phi2) equivalent to (phi1+phi2; 180\B0; 0).
-            phi2 = 0.0D0
-            phi1 = atan2(-mat(2, 1)/cos_PHI, mat(2, 2)/cos_PHI)  ! range: [-pi, pi[
-        else
-            phi1 = atan2(mat(3, 1), -mat(3, 2))  ! range: [-pi, pi[
-            phi2 = atan2(mat(1, 3), mat(2, 3))  ! range: [-pi, pi[
-        end if
-
-        !If needed, replace Euler angles with equivalent values within proper bounds.
-        if (PHI == PI)     PHI  = 0._DP       ![  0, pi] -> [0,  pi[
-        if (phi1 < 0._DP) phi1 = phi1+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
-        if (phi2 < 0._DP) phi2 = phi2+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
-
-        ang(1) = phi1
-        ang(2) = phi
-        ang(3) = phi2
-
-    end procedure
-    module procedure tensor_to_spin
-    end procedure
-    module procedure tensor_to_deviatoric
-    end procedure
-    module procedure tensor_to_unscaled_voigt
-    end procedure
+    ! Determinant of 3x3 matrix
+    pure real(DP) function det(A) result(d)
+        real(DP), dimension(3,3), intent(in):: A
+        d = A(1,1)*(A(2,2)*A(3,3) - A(2,3)*A(3,2)) &
+               - A(1,2)*(A(2,1)*A(3,3) - A(2,3)*A(3,1)) &
+               + A(1,3)*(A(2,1)*A(3,2) - A(2,2)*A(3,1))
+    end function
 
 
 
@@ -607,6 +554,99 @@ contains
             res = res+x(i, i)
         enddo
     end function
+
+
+end module
+
+submodule(Utils) Conversions
+
+    implicit none
+
+
+contains
+
+    module procedure euler_to_tensor
+        real(DP):: sins(3), &
+                   coss(3)
+
+        !Bunge convention: phi1, Phi, phi2
+        sins = sin(euler)
+        coss = cos(euler)
+
+        tensor(1, 1) = coss(1)*coss(3) - (sins(1)*sins(3)*coss(2))
+        tensor(1, 2) = sins(1)*coss(3) + (coss(1)*sins(3)*coss(2))
+        tensor(1, 3) = sins(3)*sins(2)
+        tensor(2, 1) = -coss(1)*sins(3) - (sins(1)*coss(3)*coss(2))
+        tensor(2, 2) = -sins(1)*sins(3) + (coss(1)*coss(3)*coss(2))
+        tensor(2, 3) = coss(3)*sins(2)
+        tensor(3, 1) = sins(1)*sins(2)
+        tensor(3, 2) = -coss(1)*sins(2)
+        tensor(3, 3) = coss(2)
+    end procedure
+
+    !module procedure spin_to_tensor
+    !end procedure
+    !module procedure deviatoric_to_unscaled_voigt
+    !end procedure
+    !module procedure deviatoric_to_tensor
+    !end procedure
+    !module procedure unscaled_voigt_to_deviatoric
+    !end procedure
+    !module procedure unscaled_voigt_to_tensor
+    !end procedure
+    !module procedure tensor_to_von_mises
+    !end procedure
+
+
+
+    module procedure tensor_to_euler
+
+
+        real(DP) :: U(3,3), VT(3,3), S(3), R(3,3)
+        real(DP) :: work(15)
+        integer :: info
+
+        R = tensor
+
+        !Perform polar decomposition to isolate rotational component of input matrix.
+        !Useful even if the input matrix is a rotation matrix due to accumulation of roundoff errors during the simulation.
+
+        ! Perform SVD: M = U * S * VT
+        call dgesvd('A', 'A', 3, 3, R, 3, S, U, 3, VT, 3, work, size(work), info)
+
+        ! Compute orthonormal rotation matrix R = U * VT
+        R = matmul(U, VT)
+
+        ! Ensure R is proper rotation (det = +1)
+        if (det(R) < 0._DP) then
+            U(:,3) = -U(:,3)
+            R = matmul(U, VT)
+        end if
+
+        if (R(3,3) + TOLERANCE > 1._DP) then !Phi is very close to being out of bounds
+            euler(1) = atan2(-R(2, 1), R(2, 2))  ! range: [-pi, pi[
+            euler(2) = 0._DP
+            euler(3) = 0._DP
+        else if (R(3,3) - TOLERANCE < -1._DP) then !Phi is very close to being out of bounds
+            euler(1) = atan2(R(2, 1), -R(2, 2))  ! range: [-pi, pi[
+            euler(2) = 0._DP
+            euler(3) = 0._DP
+        else
+            euler(1) = atan2(R(3, 1), -R(3, 2))  ! range: [-pi, pi[
+            euler(2) = acos(R(3,3))
+            euler(3) = atan2(R(1, 3), R(2, 3))  ! range: [-pi, pi[
+        end if
+
+        !No need to check angles(2) because acos(-1+TOLERANCE) << (PI - TOLERANCE)
+        if (euler(1) < 0._DP) euler(1) = euler(1)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+        if (euler(3) < 0._DP) euler(3) = euler(3)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+    end procedure
+    !module procedure tensor_to_spin
+    !end procedure
+    !module procedure tensor_to_deviatoric
+    !end procedure
+    !module procedure tensor_to_unscaled_voigt
+    !end procedure
 
 
 

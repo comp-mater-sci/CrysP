@@ -129,7 +129,7 @@ contains
     implicit none
     class(UDSAModule), intent(inout)            :: this
     integer, intent(out)                        :: info
-    
+
     ! Note about naming convention for variables:
     !    - All variables for vectors and tensors suffixed with _t are expressed
     !      in the "tensile sample coordinate system".
@@ -160,7 +160,7 @@ contains
     ! Take uniaxial/{slightly biaxial} tensile stress, to be rotated to the given sample
     ! orientation.
     !
-    !> Uniaxial stress state. Negative value denotes compressive state; 
+    !> Uniaxial stress state. Negative value denotes compressive state;
     !> non-negative values are used for tensile state.
     sigma_t = 0.D0
     stress_direction = merge(-1.D0, 1.D0, (this%stress_state_id == compression_state))
@@ -198,7 +198,7 @@ contains
         !
         ! Rotate stress from "tensile" to material coordinate system
         ! Calculate rotation matrix
-        Mrot = from_euler_angles(sample_orientation)
+        Mrot = euler_to_tensor(sample_orientation)
         sigma = rotate_from(sigma_t, Mrot)
         !
         ! Open and initialize result files
