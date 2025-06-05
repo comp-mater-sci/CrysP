@@ -41,16 +41,6 @@ module utils
         module procedure normalize_int, normalize_real, normalize_vec_int
     end interface
 
-    interface convert_stress_strain_space !! Convert between 3x3 tensor representation or 5D stress-strain space representation of stresses and strains.
-        module procedure convert_stress_strain_mat_vec, &
-                         convert_stress_strain_vec_mat
-    end interface
-
-    interface convert_spin !! Convert a small strain spin between an antisymmetric 3x3 matrix representation and a 3D vector representation.
-        module procedure convert_spin_mat_vec, &
-                         convert_spin_vec_mat
-    end interface
-
     interface operator(.dot.) !! Dot product for vectors, or double dot product for matrices.
         module procedure dot_product_wrapper, double_dot_product
     end interface
@@ -70,6 +60,55 @@ module utils
     interface operator(.fromframe.) !! Rotate a matrix from a particular reference frame to the macroscopic frame (passive convention).
         module procedure rotate_from
     end interface
+
+
+    interface
+        module pure function euler_to_tensor(euler) result(tensor)
+            real(DP), dimension(3), intent(in):: euler
+            real(DP), dimension(3,3):: tensor
+        end function
+
+        module pure function spin_to_tensor(spin) result(tensor)
+            real(DP), dimension(3), intent(in):: spin
+            real(DP), dimension(3,3):: tensor
+        end function
+
+        module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
+            real(DP), dimension(5), intent(in):: deviatoric
+            real(DP), dimension(6):: voigt
+        end function
+        module pure function deviatoric_to_tensor(deviatoric) result(tensor)
+            real(DP), dimension(5), intent(in):: deviatoric
+            real(DP), dimension(3,3):: tensor
+        end function
+
+        module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
+            real(DP), dimension(6), intent(in):: voigt
+            real(DP), dimension(5):: deviatoric
+        end function
+        module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
+            real(DP), dimension(6), intent(in):: voigt
+            real(DP), dimension(3,3):: tensor
+        end function
+
+        module pure function tensor_to_euler(tensor) result(euler)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP), dimension(3):: euler
+        end function
+        module pure function tensor_to_spin(tensor) result(spin)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP), dimension(3):: spin
+        end function
+        module pure function tensor_to_deviatoric(tensor) result(deviatoric)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP), dimension(5):: deviatoric
+        end function
+        module pure function tensor_to_unscaled_voigt(tensor) result(voigt)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP), dimension(6):: voigt
+        end function
+    end interface
+
 contains
 
 
