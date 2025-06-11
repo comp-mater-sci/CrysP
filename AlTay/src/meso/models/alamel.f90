@@ -337,8 +337,8 @@ contains
 
                 orientation_increment = UNIT_MATRIX_3X3 &
                                         -(this%imposed_spin_rate .toframe. grain_%orientation) &                !Change of reference frame
-                                        +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &     !Spin induced by activation of slip systems
-                                        +convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
+                                        +spin_to_tensor(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &     !Spin induced by activation of slip systems
+                                        +spin_to_tensor(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
                 grain_%orientation = matmul(orientation_increment, grain_%orientation)
             end associate
         end do

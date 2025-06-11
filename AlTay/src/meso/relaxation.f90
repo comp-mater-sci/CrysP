@@ -49,7 +49,7 @@ contains
             !Invert direction of relaxations for second grain
             if (i == 2) relaxation_crystal_frame = -relaxation_crystal_frame
             !Rotational component of relaxation
-            this%spin_coeffs(3*(i-1)+1:3*i) = convert_spin(relaxation_crystal_frame)
+            this%spin_coeffs(3*(i-1)+1:3*i) = tensor_to_spin(relaxation_crystal_frame)
             !Deviatoric component of relaxation
             this%taylor_coeffs(5*(i-1)+1:5*i) = convert_stress_strain_space(symmetric_part(relaxation_crystal_frame))
         end do

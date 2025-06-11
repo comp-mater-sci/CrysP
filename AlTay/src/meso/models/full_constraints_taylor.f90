@@ -20,7 +20,7 @@ module full_constraints_taylor
     character(*), parameter:: MOD_NAME = "full_constraints_taylor"
 
     !> Cluster-specific state needed for full constraints Taylor simulations.
-    !> 
+    !>
     !> A Taylor cluster only holds 1 grain.
     type, extends(Cluster):: TaylorCluster
         integer, dimension(5):: ind_basis_systems
@@ -38,7 +38,7 @@ module full_constraints_taylor
 contains
 
     !> Convert the type of a provided generic cluster to TaylorCluster
-    !> 
+    !>
     !> This is the closest Fortran can get to proper type casting.
     !> Useful for accessing TaylorCluster-specific fields without the boilerplate of type selection and error handling in
     !> each calling procedure.
@@ -84,7 +84,7 @@ contains
     !> See [[MesoModel:get_stress]]
     function full_constraints_taylor_get_stress(this, cluster_, v_grad) result(stress)
         class(TaylorModel), intent(in):: this
-        class(Cluster), target, intent(inout):: cluster_                    
+        class(Cluster), target, intent(inout):: cluster_
         real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
@@ -163,7 +163,7 @@ contains
 
             orientation_increment = UNIT_MATRIX_3X3 &
                                     -(this%imposed_spin_rate .toframe. grain_%orientation) &     !Change of reference frame
-                                    +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates))  !Spin induced by activation of slip systems
+                                    +spin_to_tensor(matmul(grain_%model%spin_coeffs, slip_rates))  !Spin induced by activation of slip systems
             grain_%orientation = matmul(orientation_increment, grain_%orientation)
         end associate
     end subroutine

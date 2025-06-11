@@ -56,7 +56,7 @@ contains
                 tmp, &
                 tmp_deformation_rate(3, 3)
     type(StrainDrivenStepConfig):: tmp_step_config
-        
+
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
         RETURN_IF(info /= VEF_OK, info = this%DeformationDrivenModule%readConfig(cnfunit))
         info = VEF_ERROR
@@ -240,7 +240,7 @@ contains
                                           step, increment, &            ! 2 fields
                                           to_voigt(v%L, 9), &         ! 9 fields: velocity gradient
                                           to_voigt(v%D, 6), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                          convert_spin(v%O), &         ! 3 fields: spin tensor
+                                          tensor_to_spin(v%O), &         ! 3 fields: spin tensor
                                           to_voigt(v%A, 6), &         ! 6 fields: strain mode
                                           to_voigt(v%S, 6), &         ! 6 fields: deviatoric stress
                                           v%vm_strain_begin, &

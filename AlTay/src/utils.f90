@@ -77,11 +77,6 @@ module utils
                          convert_stress_strain_vec_mat
     end interface
 
-    interface convert_spin !! Convert a small strain spin between an antisymmetric 3x3 matrix representation and a 3D vector representation.
-        module procedure convert_spin_mat_vec, &
-                         convert_spin_vec_mat
-    end interface
-
 
 
 
@@ -91,10 +86,10 @@ module utils
             real(DP), dimension(3,3):: tensor
         end function
 
-        !module pure function spin_to_tensor(spin) result(tensor)
-        !    real(DP), dimension(3), intent(in):: spin
-        !    real(DP), dimension(3,3):: tensor
-        !end function
+        module pure function spin_to_tensor(spin) result(tensor)
+            real(DP), dimension(3), intent(in):: spin
+            real(DP), dimension(3,3):: tensor
+        end function
 
         !module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
         !    real(DP), dimension(5), intent(in):: deviatoric
@@ -114,18 +109,18 @@ module utils
         !    real(DP), dimension(3,3):: tensor
         !end function
 
-        !module pure function tensor_to_von_mises(tensor) result(von_mises)
-        !    real(DP), dimension(3,3), intent(in):: tensor
-        !    real(DP):: von_mises
-        !end function
+        module pure function tensor_to_von_mises(tensor) result(von_mises)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP):: von_mises
+        end function
         module function tensor_to_euler(tensor) result(euler)
             real(DP), dimension(3,3), intent(in):: tensor
             real(DP), dimension(3):: euler
         end function
-        !module pure function tensor_to_spin(tensor) result(spin)
-        !    real(DP), dimension(3,3), intent(in):: tensor
-        !    real(DP), dimension(3):: spin
-        !end function
+        module pure function tensor_to_spin(tensor) result(spin)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP), dimension(3):: spin
+        end function
         !module pure function tensor_to_deviatoric(tensor) result(deviatoric)
         !    real(DP), dimension(3,3), intent(in):: tensor
         !    real(DP), dimension(5):: deviatoric
@@ -517,33 +512,7 @@ contains
         antisym = (mat-transpose(mat)) / 2._DP
     end function
 
-    !> Convert a small strain rotation matrix to a 3D vector representation.
-    !>
-    !> The resulting vector is structured as follows: [(1,2);(1,3);(2,3)]
-    pure function convert_spin_mat_vec(t) result(rot)
-        real(DP), dimension(3, 3), intent(in):: t
-        real(DP), dimension(3)               :: rot
-
-        real(DP), dimension(3, 3)            :: antisym
-
-        antisym = antisymmetric_part(t)
-        rot = [antisym(1, 2), antisym(1, 3), antisym(2, 3)]
-    end function
-    !> Inverse operation of convert_spin_mat_vec
-    pure function convert_spin_vec_mat(vec) result(mat)
-        real(DP), intent(in):: vec(3)
-        real(DP)::             mat(3, 3)
-
-        mat = 0._DP
-        mat(1, 2) = vec(1)
-        mat(1, 3) = vec(2)
-        mat(2, 3) = vec(3)
-        mat(2, 1) = -mat(1, 2)
-        mat(3, 1) = -mat(1, 3)
-        mat(3, 2) = -mat(2, 3)
-    end function
-
-    !> Calculate the trace of a matrix.
+        !> Calculate the trace of a matrix.
     pure real(DP) function trace(x) result(res)
         real(DP), dimension(:,:), intent(in):: x !< The matrix. Assumed to be square.
 
@@ -584,8 +553,26 @@ contains
         tensor(3, 3) = coss(2)
     end procedure
 
-    !module procedure spin_to_tensor
-    !end procedure
+
+
+
+
+
+
+    module procedure spin_to_tensor
+        tensor = 0._DP
+        tensor(2, 3) = spin(1)
+        tensor(1, 3) = spin(2)
+        tensor(1, 2) = spin(3)
+        tensor(2, 1) = -tensor(1, 2)
+        tensor(3, 1) = -tensor(1, 3)
+        tensor(3, 2) = -tensor(2, 3)
+    end procedure
+
+
+
+
+
     !module procedure deviatoric_to_unscaled_voigt
     !end procedure
     !module procedure deviatoric_to_tensor
@@ -594,14 +581,12 @@ contains
     !end procedure
     !module procedure unscaled_voigt_to_tensor
     !end procedure
-    !module procedure tensor_to_von_mises
-    !end procedure
 
-
+    module procedure tensor_to_von_mises
+        von_mises = SQR0P67 * norm2(symmetric_part(tensor))
+    end procedure
 
     module procedure tensor_to_euler
-
-
         real(DP) :: U(3,3), VT(3,3), S(3), R(3,3)
         real(DP) :: work(15)
         integer :: info
@@ -641,8 +626,17 @@ contains
         if (euler(1) < 0._DP) euler(1) = euler(1)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
         if (euler(3) < 0._DP) euler(3) = euler(3)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
     end procedure
-    !module procedure tensor_to_spin
-    !end procedure
+
+
+    module procedure tensor_to_spin
+        real(DP), dimension(3, 3):: antisym
+
+        antisym = antisymmetric_part(tensor)
+        spin = [antisym(2, 3), antisym(1, 3), antisym(1, 2)]
+    end procedure
+
+
+
     !module procedure tensor_to_deviatoric
     !end procedure
     !module procedure tensor_to_unscaled_voigt

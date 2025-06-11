@@ -70,7 +70,6 @@ module simulation
                    homogenized_stress(3, 3), &
                    homogenized_taylor_factor, &
                    deformation_gradient_increment(3, 3), &
-                   strain_rate(3, 3), &
                    von_mises_strain_rate, &
                    stress_cluster(3, 3), &
                    slip_cluster, &
@@ -79,8 +78,7 @@ module simulation
         n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
 
-        strain_rate = symmetric_part(velocity_gradient)
-        von_mises_strain_rate = SQR0P67*norm2(strain_rate)
+        von_mises_strain_rate = tensor_to_von_mises(velocity_gradient)
         deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
         call meso_prepare_deformation(velocity_gradient)
 

@@ -12,16 +12,16 @@ module constitutive_model
     !>
     !> Concrete constitutive models are to extend this type to include fields for whatever grain-specific state they want to track.
     !> @note
-    !> It may seem much nicer to simply create subtypes of [[Grain]] with additional fields for hardening state in the concrete constitutive models 
-    !> but this leads to problems at the meso level because a Cluster must keep a list of Grains that belong to it 
-    !> and Fortran does not allow lists of heterogeneous type. 
+    !> It may seem much nicer to simply create subtypes of [[Grain]] with additional fields for hardening state in the concrete constitutive models
+    !> but this leads to problems at the meso level because a Cluster must keep a list of Grains that belong to it
+    !> and Fortran does not allow lists of heterogeneous type.
     !> @endnote
     type, abstract:: HardeningState
         real(DP), dimension(:,:), allocatable:: crss  !! Critical resolved shear stress in the positive and negative direction for each slip system.
     end type
 
     !> Base constitutive model
-    !> 
+    !>
     !> Each concrete constitutive model must extend this model and implement its deferred procedures.
     type, abstract:: ConstitutiveModel
         real(DP), dimension(:,:), allocatable:: taylor_coeffs  !! Taylor coefficients of the slip systems. I.e. the 5D vector representation of the symmetric component of the Schmidt matrix.
@@ -40,7 +40,7 @@ module constitutive_model
         function cm_get_parameters() result(params)
             import Parameter
 
-            type(Parameter), dimension(:), allocatable:: params 
+            type(Parameter), dimension(:), allocatable:: params
         end function
 
         !> Validate a parameter set for the current hardening model.
@@ -70,13 +70,13 @@ module constitutive_model
         !> Update the critical resolved shear stresses (CRSS) of a grain.
         !>
         !> Updates CRSS based on the slip rates provided by the caller, assuming these slip rates remain constant over the time
-        !> interval provided by the caller. May update internal grain state accordingly. 
+        !> interval provided by the caller. May update internal grain state accordingly.
         subroutine cm_deform(this, state, time, slip_rates)
             import ConstitutiveModel, &
                    HardeningState, &
                    DP
 
-            class(ConstitutiveModel), intent(inout):: this                   
+            class(ConstitutiveModel), intent(inout):: this
             class(HardeningState), target, intent(inout):: state   !! Hardening state to update.
             real(DP), intent(in)                :: time            !! Elapsed time since the last update of the hardening state of this grain.
             real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates  !! Slip rates on each of the slip systems of the grain in the time
@@ -88,7 +88,7 @@ module constitutive_model
 contains
 
     !> Basic iniitialization common to all constitutive models.
-    !> 
+    !>
     !> Initializes taylor and spin coefficients and allocates memory for the CRSS.
     subroutine base_init(this, miller_indices, initial_state)
         class(ConstitutiveModel), intent(out):: this
@@ -110,7 +110,7 @@ contains
             normalized = normalize(miller_indices(:,:,i))
             schmid_matrix = normalized(:,2) .outer. normalized(:,1)
             this%taylor_coeffs(:,i) = convert_stress_strain_space(schmid_matrix)
-            this%spin_coeffs(:,i) = convert_spin(schmid_matrix)
+            this%spin_coeffs(:,i) = tensor_to_spin(schmid_matrix)
         end do
         this%basis = basis_indices(this%taylor_coeffs)
     end subroutine
