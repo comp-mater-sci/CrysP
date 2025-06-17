@@ -131,7 +131,7 @@ contains
                                                strain_mode, &
                                                stress/norm2(stress), &
                                                norm2(stress)/target_stress_norm, &
-                                               norm2(deviatoric_to_voigt(residual)))
+                                               norm2(deviatoric_to_unscaled_voigt(residual)))
 
             ! Check if we start a/another increment
             stop_flag = .false.
@@ -147,7 +147,7 @@ contains
                 ! and check the tensor component of interest.
                 X_tmp = deviatoric_to_tensor(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotate_to(X_tmp, rotmat)
-                X_tmp_voigt = to_voigt(X_tmp, 6)
+                X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
                 stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
             case default
                 ! Make sure it stops immediately
@@ -192,7 +192,7 @@ contains
                     else
                         X_tmp = deviatoric_to_tensor(strain_mode)
                     endif
-                    X_tmp_voigt = to_voigt(X_tmp, 6)
+                    X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default

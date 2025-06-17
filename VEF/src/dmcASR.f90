@@ -109,7 +109,7 @@ contains
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 !
                 ! Acquire full stress tensor sigma
-                sigma = from_voigt(step%stress_mode)
+                sigma = unscaled_voigt_to_tensor(step%stress_mode)
                 Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
                 S = sigma-Pressure
                 ! Follow the stress path
@@ -214,11 +214,10 @@ contains
                                 v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
                                 v%icv%plastic_work_total, v%dotWonA, &
                                 v%taylor_factor, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
-                                to_voigt(SonA, 6), to_voigt(v%SonA, 6), &
-                                to_voigt(A, 6), to_voigt(v%A, 6), &
-                                to_voigt(P_step, 6), to_voigt(P_step_rot, 6), &
-                                to_voigt(P_total_end, 6), to_voigt(P_total_end_rot, 6)
-                !
+                                tensor_to_unscaled_voigt(SonA), tensor_to_unscaled_voigt(v%SonA), &
+                                tensor_to_unscaled_voigt(A), tensor_to_unscaled_voigt(v%A), &
+                                tensor_to_unscaled_voigt(P_step), tensor_to_unscaled_voigt(P_step_rot), &
+                                tensor_to_unscaled_voigt(P_total_end), tensor_to_unscaled_voigt(P_total_end_rot)
                 end associate
             enddo
             if (ierr == 0) info = VEF_OK

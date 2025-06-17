@@ -158,7 +158,7 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            target_stress_mode = voigt_to_deviatoric(this%scaling_vector)
+            target_stress_mode = unscaled_voigt_to_deviatoric(this%scaling_vector)
             iunilen = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / iunilen
 
@@ -183,7 +183,7 @@ contains
                 !       a temporary created in a call to convert_voigt
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                target_stress_mode = voigt_to_deviatoric(sigma_vector)
+                target_stress_mode = unscaled_voigt_to_deviatoric(sigma_vector)
                 target_stress_norm = norm2(target_stress_mode)
                 target_stress_mode = target_stress_mode / target_stress_norm
 
@@ -195,7 +195,7 @@ contains
                                       norm2(stress), &
                                       strain_mode .dot. stress, &
                                       [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
-                                      [0._DP, 0._DP], beta, norm2(deviatoric_to_voigt(residual)))
+                                      [0._DP, 0._DP], beta, norm2(deviatoric_to_unscaled_voigt(residual)))
 
                 i = i+1
             enddo

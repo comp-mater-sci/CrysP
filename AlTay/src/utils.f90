@@ -81,23 +81,23 @@ module utils
             real(DP), dimension(3,3):: tensor
         end function
 
-        !module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
-        !    real(DP), dimension(5), intent(in):: deviatoric
-        !    real(DP), dimension(6):: voigt
-        !end function
+        module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
+            real(DP), dimension(5), intent(in):: deviatoric
+            real(DP), dimension(6):: voigt
+        end function
         module pure function deviatoric_to_tensor(deviatoric) result(tensor)
             real(DP), dimension(5), intent(in):: deviatoric
             real(DP), dimension(3,3):: tensor
         end function
 
-        !module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
-        !    real(DP), dimension(6), intent(in):: voigt
-        !    real(DP), dimension(5):: deviatoric
-        !end function
-        !module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
-        !    real(DP), dimension(6), intent(in):: voigt
-        !    real(DP), dimension(3,3):: tensor
-        !end function
+        module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
+            real(DP), dimension(6), intent(in):: voigt
+            real(DP), dimension(5):: deviatoric
+        end function
+        module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
+            real(DP), dimension(6), intent(in):: voigt
+            real(DP), dimension(3,3):: tensor
+        end function
 
         module pure function tensor_to_von_mises(tensor) result(von_mises)
             real(DP), dimension(3,3), intent(in):: tensor
@@ -115,10 +115,10 @@ module utils
             real(DP), dimension(3,3), intent(in):: tensor
             real(DP), dimension(5):: deviatoric
         end function
-        !module pure function tensor_to_unscaled_voigt(tensor) result(voigt)
-        !    real(DP), dimension(3,3), intent(in):: tensor
-        !    real(DP), dimension(6):: voigt
-        !end function
+        module pure function tensor_to_unscaled_voigt(tensor) result(voigt)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP), dimension(6):: voigt
+        end function
     end interface
 
 contains
@@ -367,84 +367,6 @@ contains
     end function
 
 
-
-
-    !> @brief Convert a voigt vector to tensor representation.
-    !> @return Real 3x3 matrix containing the tensor representation of the voigt vector.
-    pure function from_voigt(vec) result(mat)
-        real(DP), dimension(:), intent(in):: vec !< Voigt vector. Must be of size 6 or 9. If size is 6, it is assumed to represent a
-                                                 !! stress or strain and the resulting tensor will be symmetrical. If size is 9, it
-                                                 !! is assumed to be a velocity or deformation radient and the result matrix contains all
-                                                 !! elements of the vector.
-        real(DP), dimension(3, 3):: mat
-
-        mat(1, 1) = vec(1)
-        mat(2, 2) = vec(2)
-        mat(3, 3) = vec(3)
-        mat(1, 2) = vec(4)
-        mat(2, 3) = vec(5)
-        mat(3, 1) = vec(6)
-        if (size(vec) == 6) then
-            mat(1, 3) = mat(3, 1)
-            mat(2, 1) = mat(1, 2)
-            mat(3, 2) = mat(2, 3)
-        else
-            mat(1, 3) = vec(7)
-            mat(2, 1) = vec(8)
-            mat(3, 2) = vec(9)
-        end if
-    end function
-
-    !> @brief Convert a matrix to voigt notation.
-    !> @return Real vector with the voigt representation of the matrix. Its size equals the input argument [length]. If length is 6,
-    !! the vector represents a stress or a strain. If length is 9, the vector represents a deformation or velocity gradient.
-    pure function to_voigt(mat, length) result(vec)
-        real(DP), dimension(3, 3), intent(in):: mat !< The input matrix. If length is 6, it is assumed to be symmetrical and its
-                                                    !! elements below the diagonal are ignored.
-        integer, intent(in):: length                !< Length of the resulting vector. Must be 6 or 9.
-        real(DP), dimension(length):: vec
-
-        vec(1) = mat(1, 1)
-        vec(2) = mat(2, 2)
-        vec(3) = mat(3, 3)
-        vec(4) = mat(1, 2)
-        vec(5) = mat(2, 3)
-        vec(6) = mat(1, 3)
-        if (length == 9) then
-            vec(7) = mat(2, 1)
-            vec(8) = mat(3, 2)
-            vec(9) = mat(1, 3)
-        end if
-    end function
-
-    !> Convert a deformation in voigt notation to deviatoric notation.
-    !>
-    !> Subtracts the hydrostatic component and assumes isochoricity.
-    pure function voigt_to_deviatoric(voigt) result(deviatoric)
-        real(DP), dimension(6), intent(in):: voigt  !! Deformation specified in voigt notation in terms of stress or strain.
-        real(DP), dimension(5):: deviatoric         !! Deviatoric component of the deformation.
-
-        deviatoric(1) =  SQR0P5*(voigt(1) - voigt(2))
-        deviatoric(2) = -SQR1P5*(voigt(3) - (sum(voigt(1:3)) / 3._DP))
-        deviatoric(3) = SQR2 * voigt(4)
-        deviatoric(4) = SQR2 * voigt(5)
-        deviatoric(5) = SQR2 * voigt(6)
-    end function
-
-    !> Convert a deviatoric stress or strain to voigt notation.
-    pure function deviatoric_to_voigt(deviatoric) result(voigt)
-        real(DP), dimension(5), intent(in):: deviatoric     !! Deviatoric stress or strain vector
-        real(DP), dimension(6):: voigt                      !! Voigt notation of the deviatoric stress or strain
-
-        voigt(1) = SQR0P5*deviatoric(1) + ROOT6I*deviatoric(2)
-        voigt(2) = -SQR0P5*deviatoric(1) + ROOT6I*deviatoric(2)
-        voigt(3) = -SQR0P67*deviatoric(2)
-        voigt(4) =  SQR0P5*deviatoric(5)
-        voigt(5) =  SQR0P5*deviatoric(3)
-        voigt(6) =  SQR0P5*deviatoric(4)
-    end function
-
-
     !> Take the symmetric part of a matrix.
     !>
     !> Removes any rotational components
@@ -515,11 +437,14 @@ contains
     end procedure
 
 
-
-
-
-    !module procedure deviatoric_to_unscaled_voigt
-    !end procedure
+    module procedure deviatoric_to_unscaled_voigt
+        voigt(1) = SQR0P5*deviatoric(1) + ROOT6I*deviatoric(2)
+        voigt(2) = -SQR0P5*deviatoric(1) + ROOT6I*deviatoric(2)
+        voigt(3) = -SQR0P67*deviatoric(2)
+        voigt(4) =  SQR0P5*deviatoric(5)
+        voigt(5) =  SQR0P5*deviatoric(3)
+        voigt(6) =  SQR0P5*deviatoric(4)
+    end procedure
 
     module procedure deviatoric_to_tensor
         tensor(1, 1) =  SQR0P5*deviatoric(1) + root6i*deviatoric(2)
@@ -533,13 +458,26 @@ contains
         tensor(2, 1) = tensor(1, 2)
     end procedure
 
+    module procedure unscaled_voigt_to_deviatoric
+        deviatoric(1) =  SQR0P5*(voigt(1) - voigt(2))
+        deviatoric(2) = -SQR1P5*(voigt(3) - (sum(voigt(1:3)) / 3._DP))
+        deviatoric(3) = SQR2 * voigt(4)
+        deviatoric(4) = SQR2 * voigt(5)
+        deviatoric(5) = SQR2 * voigt(6)
+    end procedure
 
 
-
-    !module procedure unscaled_voigt_to_deviatoric
-    !end procedure
-    !module procedure unscaled_voigt_to_tensor
-    !end procedure
+    module procedure unscaled_voigt_to_tensor
+        tensor(1, 1) = voigt(1)
+        tensor(2, 2) = voigt(2)
+        tensor(3, 3) = voigt(3)
+        tensor(1, 2) = voigt(4)
+        tensor(2, 3) = voigt(5)
+        tensor(3, 1) = voigt(6)
+        tensor(1, 3) = tensor(3, 1)
+        tensor(2, 1) = tensor(1, 2)
+        tensor(3, 2) = tensor(2, 3)
+    end procedure
 
     module procedure tensor_to_von_mises
         von_mises = SQR0P67 * norm2(symmetric_part(tensor))
@@ -601,12 +539,12 @@ contains
         deviatoric(5) =  SQR0P5*(tensor(1, 2) + tensor(2, 1))
     end procedure
 
-    !module procedure tensor_to_unscaled_voigt
-    !end procedure
-
-
-
-
-
-
+    module procedure tensor_to_unscaled_voigt
+        voigt(1) = tensor(1, 1)
+        voigt(2) = tensor(2, 2)
+        voigt(3) = tensor(3, 3)
+        voigt(4) = (tensor(1, 2) + tensor(2,1)) / 2._DP
+        voigt(5) = (tensor(2, 3) + tensor(3,2)) / 2._DP
+        voigt(6) = (tensor(1, 3) + tensor(3,1)) / 2._DP
+    end procedure
 end submodule

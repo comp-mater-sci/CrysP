@@ -11,7 +11,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     'True\n'                                        \
                     + '3\n'                                           \
                     + 'deformation\n'                               \
-                    + '0.5 -0.25 -0.25 0.0 0.0 0.0 0.0 0.0 0.0\n'   \
+                    + '0.5 0.0 0.0 0.0 -0.25 0.0 0.0 0.0 -0.25\n'   \
                     + 'True\n'                                      \
                     + ADP_INCREMENT + '\n'                          \
                     + 'strainmode\n'                                \
