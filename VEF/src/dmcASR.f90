@@ -204,9 +204,9 @@ contains
                           Mrot => output%rotation_matrix)
                     !
                     ! Step deviatoric strain
-                    P_step_rot = convert_stress_strain_space(v%icv%vP_step)
+                    P_step_rot = deviatoric_to_tensor(v%icv%vP_step)
                     ! Total deviatoric strain
-                    P_total_rot = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
+                    P_total_rot = deviatoric_to_tensor(v%icv%vP_total)  ! at the beginning of the increment
                     P_total_end_rot = P_total_rot+v%P_inc_evol  ! at the end of the increment
 
                     write(iounit, fmt = 710, iostat = ierr) &

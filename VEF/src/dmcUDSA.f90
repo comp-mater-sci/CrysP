@@ -231,7 +231,7 @@ contains
                 S_t = rotate_to(v%SonA, Mrot)
 
                 ! Total deviatoric strain (Note: the total, not per-step)
-                P_t = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
+                P_t = deviatoric_to_tensor(v%icv%vP_total)  ! at the beginning of the increment
                 P_t_end = P_t+v%P_inc_evol  ! at the end of the increment
                 P_t = rotate_to(P_t, Mrot)
                 P_t_end = rotate_to(P_t_end, Mrot)

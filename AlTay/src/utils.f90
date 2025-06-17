@@ -70,16 +70,6 @@ module utils
     end interface
 
 
-
-
-    interface convert_stress_strain_space !! Convert between 3x3 tensor representation or 5D stress-strain space representation of stresses and strains.
-        module procedure convert_stress_strain_mat_vec, &
-                         convert_stress_strain_vec_mat
-    end interface
-
-
-
-
     interface
         module pure function euler_to_tensor(euler) result(tensor)
             real(DP), dimension(3), intent(in):: euler
@@ -95,10 +85,10 @@ module utils
         !    real(DP), dimension(5), intent(in):: deviatoric
         !    real(DP), dimension(6):: voigt
         !end function
-        !module pure function deviatoric_to_tensor(deviatoric) result(tensor)
-        !    real(DP), dimension(5), intent(in):: deviatoric
-        !    real(DP), dimension(3,3):: tensor
-        !end function
+        module pure function deviatoric_to_tensor(deviatoric) result(tensor)
+            real(DP), dimension(5), intent(in):: deviatoric
+            real(DP), dimension(3,3):: tensor
+        end function
 
         !module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
         !    real(DP), dimension(6), intent(in):: voigt
@@ -121,10 +111,10 @@ module utils
             real(DP), dimension(3,3), intent(in):: tensor
             real(DP), dimension(3):: spin
         end function
-        !module pure function tensor_to_deviatoric(tensor) result(deviatoric)
-        !    real(DP), dimension(3,3), intent(in):: tensor
-        !    real(DP), dimension(5):: deviatoric
-        !end function
+        module pure function tensor_to_deviatoric(tensor) result(deviatoric)
+            real(DP), dimension(3,3), intent(in):: tensor
+            real(DP), dimension(5):: deviatoric
+        end function
         !module pure function tensor_to_unscaled_voigt(tensor) result(voigt)
         !    real(DP), dimension(3,3), intent(in):: tensor
         !    real(DP), dimension(6):: voigt
@@ -455,45 +445,6 @@ contains
     end function
 
 
-
-
-
-    !> Convert second-rank tensor t into 5D vector.
-    !>
-    !> This works because deviatoric strains and stresses only have 5 independent components.
-    !> Hydrostatic component is subtracted and tensor is symmetrized. This procedure therefore works on ony input tensor.
-    !> The convention by Van Houtte et al., 1992 is followed here.
-    !> @note
-    !> Different papers by Van Houtte sometimes use a different transformation. Be careful with this.
-    !> @endnote
-    pure function convert_stress_strain_mat_vec(t) result(v)
-        real(DP), dimension(3, 3), intent(in) :: t  !! The input tensor
-        real(DP), dimension(5)                :: v  !! 5D vector representation of the tensor.
-
-        v(1) =  SQR0P5*(t(1, 1) - t(2, 2))
-        v(2) = -SQR1P5*(t(3, 3) - (t(1, 1) + t(2, 2) + t(3, 3)) / 3._DP)
-        v(3) =  SQR0P5*(t(2, 3) + t(3, 2))
-        v(4) =  SQR0P5*(t(3, 1) + t(1, 3))
-        v(5) =  SQR0P5*(t(1, 2) + t(2, 1))
-    end function
-
-    !> Inverse operation of convert_stress_strain_mat_vec
-    pure function convert_stress_strain_vec_mat(v) result(t)
-        real(DP), dimension(5), intent(in)    :: v  !! The input vector
-        real(DP), dimension(3, 3)             :: t  !! The 3x3 deviatoric tensor representation of the vector.
-
-
-        t(1, 1) =  SQR0P5*v(1) + root6i*v(2)
-        t(2, 2) = -SQR0P5*v(1) + root6i*v(2)
-        t(3, 3) = -SQR0P67*v(2)
-        t(2, 3) =  SQR0P5*v(3)
-        t(3, 1) =  SQR0P5*v(4)
-        t(1, 2) =  SQR0P5*v(5)
-        t(3, 2) = t(2, 3)
-        t(1, 3) = t(3, 1)
-        t(2, 1) = t(1, 2)
-    end function
-
     !> Take the symmetric part of a matrix.
     !>
     !> Removes any rotational components
@@ -553,12 +504,6 @@ contains
         tensor(3, 3) = coss(2)
     end procedure
 
-
-
-
-
-
-
     module procedure spin_to_tensor
         tensor = 0._DP
         tensor(2, 3) = spin(1)
@@ -575,8 +520,22 @@ contains
 
     !module procedure deviatoric_to_unscaled_voigt
     !end procedure
-    !module procedure deviatoric_to_tensor
-    !end procedure
+
+    module procedure deviatoric_to_tensor
+        tensor(1, 1) =  SQR0P5*deviatoric(1) + root6i*deviatoric(2)
+        tensor(2, 2) = -SQR0P5*deviatoric(1) + root6i*deviatoric(2)
+        tensor(3, 3) = -SQR0P67*deviatoric(2)
+        tensor(2, 3) =  SQR0P5*deviatoric(3)
+        tensor(3, 1) =  SQR0P5*deviatoric(4)
+        tensor(1, 2) =  SQR0P5*deviatoric(5)
+        tensor(3, 2) = tensor(2, 3)
+        tensor(1, 3) = tensor(3, 1)
+        tensor(2, 1) = tensor(1, 2)
+    end procedure
+
+
+
+
     !module procedure unscaled_voigt_to_deviatoric
     !end procedure
     !module procedure unscaled_voigt_to_tensor
@@ -627,7 +586,6 @@ contains
         if (euler(3) < 0._DP) euler(3) = euler(3)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
     end procedure
 
-
     module procedure tensor_to_spin
         real(DP), dimension(3, 3):: antisym
 
@@ -635,10 +593,14 @@ contains
         spin = [antisym(2, 3), antisym(1, 3), antisym(1, 2)]
     end procedure
 
+    module procedure tensor_to_deviatoric
+        deviatoric(1) =  SQR0P5*(tensor(1, 1) - tensor(2, 2))
+        deviatoric(2) = -SQR1P5*(tensor(3, 3) - (tensor(1, 1) + tensor(2, 2) + tensor(3, 3)) / 3._DP)
+        deviatoric(3) =  SQR0P5*(tensor(2, 3) + tensor(3, 2))
+        deviatoric(4) =  SQR0P5*(tensor(3, 1) + tensor(1, 3))
+        deviatoric(5) =  SQR0P5*(tensor(1, 2) + tensor(2, 1))
+    end procedure
 
-
-    !module procedure tensor_to_deviatoric
-    !end procedure
     !module procedure tensor_to_unscaled_voigt
     !end procedure
 
@@ -648,6 +610,3 @@ contains
 
 
 end submodule
-
-
-

@@ -109,7 +109,7 @@ contains
         do i = 1, n_systems
             normalized = normalize(miller_indices(:,:,i))
             schmid_matrix = normalized(:,2) .outer. normalized(:,1)
-            this%taylor_coeffs(:,i) = convert_stress_strain_space(schmid_matrix)
+            this%taylor_coeffs(:,i) = tensor_to_deviatoric(schmid_matrix)
             this%spin_coeffs(:,i) = tensor_to_spin(schmid_matrix)
         end do
         this%basis = basis_indices(this%taylor_coeffs)

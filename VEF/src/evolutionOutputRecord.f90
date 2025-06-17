@@ -57,8 +57,8 @@ contains
 
         this%taylor_factor = taylor_factor
 
-        this%A = convert_stress_strain_space(strain_mode)
-        this%SonA = convert_stress_strain_space(stress_mode)
+        this%A = deviatoric_to_tensor(strain_mode)
+        this%SonA = deviatoric_to_tensor(stress_mode)
 
         this%P_inc_evol = De
         this%S_evol = Se

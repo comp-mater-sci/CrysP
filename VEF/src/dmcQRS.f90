@@ -153,16 +153,16 @@ contains
             sigma = rotate_to(sigma_t, Mrot)
             !
 
-            target_stress_mode = convert_stress_strain_space(sigma)
+            target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
             call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
             !
-            SonA = convert_stress_strain_space(stress)
-            SmIdent = convert_stress_strain_space(stress / norm2(stress))  ! stress mode for found strain mode
+            SonA = deviatoric_to_tensor(stress)
+            SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
-            D_t = rotate_from(convert_stress_strain_space(strain_mode), Mrot)
+            D_t = rotate_from(deviatoric_to_tensor(strain_mode), Mrot)
             S_t = rotate_from(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.

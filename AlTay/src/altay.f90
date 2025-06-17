@@ -131,12 +131,12 @@ contains
     end function
 
     !Result rounded to 9 digits
-    subroutine altay_get_stress_state_c(velocity_gradient, stress_state) bind(C)
-        real(C_DOUBLE), dimension(5), intent(in):: velocity_gradient
+    subroutine altay_get_stress_state_c(strain_rate, stress_state) bind(C)
+        real(C_DOUBLE), dimension(5), intent(in):: strain_rate
         real(C_DOUBLE), dimension(5), intent(out):: stress_state
 
         !Transpose both input and output because C is row major and Fortran column major.
-        stress_state = anint(convert_stress_strain_space(get_stress(convert_stress_strain_space(velocity_gradient)))/TOLERANCE) * TOLERANCE
+        stress_state = anint(tensor_to_deviatoric(get_stress(deviatoric_to_tensor(strain_rate)))/TOLERANCE) * TOLERANCE
     end subroutine
 
     !> Write out the current state variables.

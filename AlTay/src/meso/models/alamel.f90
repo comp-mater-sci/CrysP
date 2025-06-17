@@ -161,7 +161,7 @@ contains
         integer:: i
 
         do i = 1, 2
-            imposed_strain_rate(5*(i-1)+1:5*i) = convert_stress_strain_space(v_grad .toframe. alamel_cluster%grains(i)%orientation)
+            imposed_strain_rate(5*(i-1)+1:5*i) = tensor_to_deviatoric(v_grad .toframe. alamel_cluster%grains(i)%orientation)
         end do
     end function
 
@@ -174,8 +174,8 @@ contains
                                                                 !! I.e. a 10D vector representing the stress state of both grains in their respective reference frames.
         real(DP), dimension(3, 3):: homogenized_stress
 
-        homogenized_stress = ((convert_stress_strain_space(stress_cluster(1:5)) .fromframe. alamel_cluster%grains(1)%orientation) &
-                             + (convert_stress_strain_space(stress_cluster(6:10)) .fromframe. alamel_cluster%grains(2)%orientation)) &
+        homogenized_stress = ((deviatoric_to_tensor(stress_cluster(1:5)) .fromframe. alamel_cluster%grains(1)%orientation) &
+                             + (deviatoric_to_tensor(stress_cluster(6:10)) .fromframe. alamel_cluster%grains(2)%orientation)) &
                              / 2._DP
     end function
 

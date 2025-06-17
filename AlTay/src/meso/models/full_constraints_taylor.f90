@@ -97,14 +97,14 @@ contains
 
         associate (grain_ => cluster_ptr%grains(1))
             call simplex_solve(grain_%model%taylor_coeffs, &
-                               convert_stress_strain_space(v_grad .toframe. grain_%orientation), &
+                               tensor_to_deviatoric(v_grad .toframe. grain_%orientation), &
                                grain_%state%crss, &
                                cluster_ptr%inverse_basis, &
                                cluster_ptr%ind_basis_systems, &
                                slip_rates, &
                                stress_cluster, &
                                rss)
-            stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_%orientation
+            stress = deviatoric_to_tensor(stress_cluster) .fromframe. grain_%orientation
         end associate
     end function
 
@@ -131,7 +131,7 @@ contains
 
             n_systems = size(grain_%model%taylor_coeffs, 2)
 
-            imposed_strain_rate = convert_stress_strain_space(this%velocity_gradient .toframe. grain_%orientation)
+            imposed_strain_rate = tensor_to_deviatoric(this%velocity_gradient .toframe. grain_%orientation)
 
             call simplex_solve(grain_%model%taylor_coeffs, &
                                imposed_strain_rate, &
@@ -142,7 +142,7 @@ contains
                                stress_cluster, &
                                rss)
 
-            stress = convert_stress_strain_space(stress_cluster) .fromframe. grain_%orientation
+            stress = deviatoric_to_tensor(stress_cluster) .fromframe. grain_%orientation
 
 
 
