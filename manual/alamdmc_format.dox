@@ -199,13 +199,13 @@ notation and expressed in degrees. It is a single-line option:
 Symmetric second-order tensors are expressed in the configuration files in 
 Voigt notation, as a single-line option of the compound datatype `symsrtensor` that consists of 6 `real` types. Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor, then: 
 
--# \confdef{tensor,symsrtensor,symsrtensor} lists the components of \f$ \mathbf{X} \f$ in the order: 
+-# \confdef{tensor,symsrtensor,symsrtensor} lists the components of \f$ \mathbf{X} \f$ in the standard voigt notation order: 
 <ul>
-<li> \f$ X_{11} \space X_{22} \space X_{33} \space X_{12} \space X_{23} \space X_{13} \f$ </li>
+<li> \f$ X_{11} \space X_{22} \space X_{33} \space X_{23} \space X_{13} \space X_{12} \f$ </li>
 </ul>
 for \f$ \mathbf{X} \f$ expressed in the material (`123`) reference frame, or:
 <ul>
-<li> \f$ X_{xx} \space X_{yy} \space X_{zz} \space X_{xy} \space X_{yz} \space X_{xz} \f$ </li>
+<li> \f$ X_{xx} \space X_{yy} \space X_{zz} \space X_{yz} \space X_{xz} \space X_{xy} \f$ </li>
 </ul>
 for \f$ \mathbf{X} \f$ expressed in the sample (`xyz`) reference frame. 
 
@@ -243,12 +243,12 @@ if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
 Second-order tensors may be expressed as a one-line option of the compound datatype `srtensor_voigt` that contains 9 `real` values:
 -# \confdef{tensor,srtensor_voigt,srtensor_voigt} gives the components for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as according to Voigt convention:
 
-   \f$ X_{11} \space X_{22} \space X_{33} \space X_{12} \space X_{23} \space X_{31} \space X_{21} \space X_{32} \space X_{13}\f$
+   \f$ X_{11} \space X_{21} \space X_{31} \space X_{12} \space X_{22} \space X_{32} \space X_{13} \space X_{23} \space X_{33}\f$
 
 \par Example
 If the example given above were represented as \conffield{srtensor_voigt}, it would read:
 ~~~~~~~~~~~~~{.txt}
-0.0 0.0. 0.0 0.0 0.0. 0.0 0.0 0.0. 1.0 # All tensor components are zero, except 13- (or xz-)component.
+0.0 0.0. 0.0 0.0 0.0. 0.0 0.0 0.0. 1.0 # All tensor components are zero, except 33- (or zz-)component.
 ~~~~~~~~~~~~~ 
 
 

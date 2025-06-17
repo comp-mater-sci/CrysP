@@ -159,14 +159,14 @@ contains
             [ character(len = column_width) ::  &
                 'step','increment', & ! 2 fields
                 'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','M-factor','scal_s','S','residual', & ! 10 fields
-                'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
-                'S_xx','S_yy','S_zz','S_xy','S_yz','S_xz', & ! 6 fields
-                'A_11','A_22','A_33','A_12','A_23','A_13', & ! 6 fields  (II)
-                'A_xx','A_yy','A_zz','A_xy','A_yz','A_xz', & ! 6 fields
-                'eps_11','eps_22','eps_33','eps_12','eps_23','eps_13', & ! 6 fields  (III)
-                'eps_xx','eps_yy','eps_zz','eps_xy','eps_yz','eps_xz', & ! 6 fields
-                'eps_tot_11','eps_tot_22','eps_tot_33','eps_tot_12','eps_tot_23','eps_tot_13', & ! 6 fields (IV)
-                'eps_tot_xx','eps_tot_yy','eps_tot_zz','eps_tot_xy','eps_tot_yz','eps_tot_xz'& ! 6 fields
+                'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
+                'S_xx','S_yy','S_zz','S_yz','S_xz','S_xy', & ! 6 fields
+                'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (II)
+                'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy', & ! 6 fields
+                'eps_11','eps_22','eps_33','eps_23','eps_13','eps_12', & ! 6 fields  (III)
+                'eps_xx','eps_yy','eps_zz','eps_yz','eps_xz','eps_xy', & ! 6 fields
+                'eps_tot_11','eps_tot_22','eps_tot_33','eps_tot_23','eps_tot_13','eps_tot_12', & ! 6 fields (IV)
+                'eps_tot_xx','eps_tot_yy','eps_tot_zz','eps_tot_yz','eps_tot_xz','eps_tot_xy'& ! 6 fields
             ]
         !
         info = VEF_OK

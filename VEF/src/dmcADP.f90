@@ -202,11 +202,11 @@ contains
     integer, parameter:: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
     character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
         'step', 'increment', & ! 2 fields
-        'L_11','L_22','L_33','L_12','L_23','L_31','L_21','L_32','L_13',  & ! 9 fields  (I)
-        'D_11','D_22','D_33','D_12','D_23','D_13', & ! 6 fields  (I)
+        'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  & ! 9 fields  (I)
+        'D_11','D_22','D_33','D_23','D_13','D_12', & ! 6 fields  (I)
         'O_12','O_23','O_13', & ! 3 fields  (I)
-        'A_11','A_22','A_33','A_12','A_23','A_13', & ! 6 fields  (I)
-        'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
+        'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (I)
+        'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
         'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 7 fields
         ]
         !

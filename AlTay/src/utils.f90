@@ -54,7 +54,6 @@ module utils
         module procedure rotate_from
     end interface
 
-
     interface
         module pure function euler_to_tensor(euler) result(tensor)
             real(DP), dimension(3), intent(in):: euler
@@ -438,9 +437,9 @@ contains
         voigt(1) = SQR0P5*deviatoric(1) + ROOT6I*deviatoric(2)
         voigt(2) = -SQR0P5*deviatoric(1) + ROOT6I*deviatoric(2)
         voigt(3) = -SQR0P67*deviatoric(2)
-        voigt(4) =  SQR0P5*deviatoric(5)
-        voigt(5) =  SQR0P5*deviatoric(3)
-        voigt(6) =  SQR0P5*deviatoric(4)
+        voigt(4) =  SQR0P5*deviatoric(3)
+        voigt(5) =  SQR0P5*deviatoric(4)
+        voigt(6) =  SQR0P5*deviatoric(5)
     end procedure
 
     module procedure deviatoric_to_tensor
@@ -468,10 +467,10 @@ contains
         tensor(1, 1) = voigt(1)
         tensor(2, 2) = voigt(2)
         tensor(3, 3) = voigt(3)
-        tensor(1, 2) = voigt(4)
-        tensor(2, 3) = voigt(5)
-        tensor(3, 1) = voigt(6)
-        tensor(1, 3) = tensor(3, 1)
+        tensor(2, 3) = voigt(4)
+        tensor(1, 3) = voigt(5)
+        tensor(1, 2) = voigt(6)
+        tensor(3, 1) = tensor(1, 3)
         tensor(2, 1) = tensor(1, 2)
         tensor(3, 2) = tensor(2, 3)
     end procedure
@@ -540,8 +539,8 @@ contains
         voigt(1) = tensor(1, 1)
         voigt(2) = tensor(2, 2)
         voigt(3) = tensor(3, 3)
-        voigt(4) = (tensor(1, 2) + tensor(2,1)) / 2._DP
-        voigt(5) = (tensor(2, 3) + tensor(3,2)) / 2._DP
-        voigt(6) = (tensor(1, 3) + tensor(3,1)) / 2._DP
+        voigt(4) = (tensor(2, 3) + tensor(3,2)) / 2._DP
+        voigt(5) = (tensor(1, 3) + tensor(3,1)) / 2._DP
+        voigt(6) = (tensor(1, 2) + tensor(2,1)) / 2._DP
     end procedure
 end submodule
