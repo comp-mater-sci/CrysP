@@ -28,7 +28,7 @@ implicit none
     !> A strain-(rate) driven step
     type:: StrainDrivenStep
         type(StrainDrivenStepConfig)    ::  config
-        real(DP), dimension(3, 3)        ::  volumetric_strain, & 
+        real(DP), dimension(3, 3)        ::  volumetric_strain, &
                                             deviatoric_strain
     contains
         procedure:: setUp => StrainDrivenStep_setUp
@@ -79,7 +79,7 @@ contains
     pure function StrainDrivenFixedStep_init_nincrements(n_increments) result(this)
         type(StrainDrivenFixedStep):: this
         integer, intent(in)          :: n_increments !< Number of increments.
-    
+
         allocate(this%substepping_config, source = FixedSubsteppingConfig(n_increments))
     end function
 
@@ -87,7 +87,7 @@ contains
     integer function StrainDrivenStep_setUp(this) result(info)
         class(StrainDrivenStep), intent(inout)   :: this
         real(DP):: step_strain_norm
-    
+
         info = VEF_ERROR
         associate(config => this%config)
             ! Make the step traceless: decompose into volumetric strain rate
@@ -113,7 +113,7 @@ contains
     integer function StrainDrivenStep_execute(this, step_output) result(info)
     class(StrainDrivenStep), intent(inout)   :: this
     class(StepOutput), intent(out)           :: step_output
-    
+
         info = VEF_ERROR
     end function
 
@@ -121,7 +121,7 @@ contains
     integer function StrainDrivenStep_readConfig(this, cnfunit) result(info)
     class(StrainDrivenStep), intent(inout)   :: this
     integer, intent(in)                      :: cnfunit !< IO unit
-    
+
         info = VEF_OK
     end function
 
@@ -171,7 +171,7 @@ contains
                     increment_size_tot, &
                     increment_strain(3, 3), &
                     step_strain_total(3, 3)
-    
+
         ! Precondition
         RETURN_IF_WITH(.not. associated(this%substepping_config), info = VEF_ERROR)
         RETURN_IF_WITH(.not. associated(this%substepping_config%ptr_range), info = VEF_ERROR)
@@ -265,8 +265,8 @@ contains
                        altay_output => astate%simulCalls(i)%output)   ! HGH: originally altay_output => altay_state%output
                 !
                 increment_output%L = altay_state%input%dgf
-                increment_output%D = symmetric_part(increment_output%L) 
-                increment_output%O = antisymmetric_part(increment_output%L) 
+                increment_output%D = symmetric_part(increment_output%L)
+                increment_output%O = antisymmetric_part(increment_output%L)
                 increment_output%A = increment_output%D/norm2(increment_output%D)
                 increment_output%S = altay_output%stress_tensor
                 increment_output%vm_strain_begin = altay_output%effective_macro_strain_tot
@@ -277,7 +277,7 @@ contains
                 !
                 increment_output%taylor_factor = altay_output%taylor_factor
                 increment_output%plastic_slip_tot = altay_output%homogenised_slip_tot
-                increment_output%vMeqStrainRate = SQR0P67*norm2(increment_output%D)
+                increment_output%vMeqStrainRate = tensor_to_von_mises(increment_output%D)
 
             end associate
         enddo

@@ -15,27 +15,12 @@ module utils
     real(DP), parameter:: PI         = acos(-1.D0)          !! Pi.
     real(DP), parameter:: RAD_TO_DEG = 180._DP/PI           !! Multiply by this constant to convert a value in radians to degrees. Divide for the reverse operation.
 
-
-
-
-    real(DP), parameter:: SQR0P5     = sqrt(0.5_DP)         !! Square root of 1/2.
-    real(DP), parameter:: SQR0P67    = sqrt(2._DP/3._DP)    !! Square root of 2/3.
-    real(DP), parameter:: SQR1P5     = sqrt(1.5_DP)         !! Square root of 3/2.
-    real(DP), parameter:: SQR2       = sqrt(2._DP)          !! Square root of 2.
-    real(DP), parameter:: ROOT6I = 1.D0/sqrt(6.D0)          !! 1/sqr(6)
-
-
-
-
-
     !> Status codes. Used to communicate information on the completion of a procedure to the caller.
     enum, bind(C)
         enumerator:: VEF_OK      !! Sucessful execution
         enumerator:: VEF_FAIL    !! No errors occured, but the routine did not accomplish its main goal.
         enumerator:: VEF_ERROR   !! Errors occured during exection.
     end enum
-
-
 
     !> Matrix form of the unit second rank tensor
     real(DP), dimension(3, 3), parameter:: UNIT_MATRIX_3X3 = reshape([1._DP, 0._DP, 0._DP, &
@@ -81,6 +66,10 @@ module utils
             real(DP), dimension(3,3):: tensor
         end function
 
+        module pure function deviatoric_to_von_mises(deviatoric) result(von_mises)
+            real(DP), dimension(5), intent(in):: deviatoric
+            real(DP):: von_mises
+        end function
         module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
             real(DP), dimension(5), intent(in):: deviatoric
             real(DP), dimension(6):: voigt
@@ -404,6 +393,11 @@ submodule(Utils) Conversions
 
     implicit none
 
+    real(DP), parameter:: SQR0P5     = sqrt(0.5_DP)         !! Square root of 1/2.
+    real(DP), parameter:: SQR0P67    = sqrt(2._DP/3._DP)    !! Square root of 2/3.
+    real(DP), parameter:: SQR1P5     = sqrt(1.5_DP)         !! Square root of 3/2.
+    real(DP), parameter:: SQR2       = sqrt(2._DP)          !! Square root of 2.
+    real(DP), parameter:: ROOT6I = 1.D0/sqrt(6.D0)          !! 1/sqr(6)
 
 contains
 
@@ -436,6 +430,9 @@ contains
         tensor(3, 2) = -tensor(2, 3)
     end procedure
 
+    module procedure deviatoric_to_von_mises
+        von_mises = SQR0P67 * norm2(deviatoric)
+    end procedure
 
     module procedure deviatoric_to_unscaled_voigt
         voigt(1) = SQR0P5*deviatoric(1) + ROOT6I*deviatoric(2)

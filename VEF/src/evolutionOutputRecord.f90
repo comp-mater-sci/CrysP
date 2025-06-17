@@ -46,8 +46,8 @@ contains
     real(DP), intent(in):: stress_norm
     real(DP), intent(in):: residual_norm
 
-        this%vm_strain = SQR0P67*norm2(icv%vP_step)
-        this%vm_strain_total = SQR0P67*norm2(icv%vP_total)
+        this%vm_strain = deviatoric_to_von_mises(icv%vP_step)
+        this%vm_strain_total = deviatoric_to_von_mises(icv%vP_total)
         this%norm_P_abs = norm2(icv%vP_abs)
         !
         this%dotWonA = strain_mode .dot. stress_mode * stress_norm
