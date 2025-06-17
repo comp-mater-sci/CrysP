@@ -110,8 +110,6 @@ contains
                 !
                 ! Acquire full stress tensor sigma
                 sigma = unscaled_voigt_to_tensor(step%stress_mode)
-                Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
-                S = sigma-Pressure
                 ! Follow the stress path
                 info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, &
                                                 incrementation_control = icv)

@@ -31,7 +31,7 @@ module utils
 
 
     interface normalize !! Normalize a vector or an array of column vectors.
-        module procedure normalize_int, normalize_real, normalize_vec_int
+        module procedure normalize_int, normalize_real, normalize_vec_int, normalize_vec_real
     end interface
 
     interface operator(.dot.) !! Dot product for vectors, or double dot product for matrices.
@@ -169,6 +169,15 @@ contains
 
         normalized = real(vec, DP) / norm2(real(vec, DP))
     end function
+    !> Normalize an integer vector.
+    pure function normalize_vec_real(vec) result(normalized)
+        real(DP), dimension(:), intent(in):: vec
+        real(DP), dimension(size(vec)):: normalized
+        integer:: i
+
+        normalized = real(vec, DP) / norm2(real(vec, DP))
+    end function
+
 
     !> Normalize an array of real column vectors.
     !>
@@ -354,39 +363,7 @@ contains
                + A(1,3)*(A(2,1)*A(3,2) - A(2,2)*A(3,1))
     end function
 
-
-    !> Take the symmetric part of a matrix.
-    !>
-    !> Removes any rotational components
-    pure function symmetric_part(mat) result(sym)
-        real(DP), dimension(:,:), intent(in):: mat
-        real(DP), dimension(size(mat, 1), size(mat, 2)):: sym
-
-        sym = (mat+transpose(mat)) / 2._DP
-    end function
-
-    !> Take the antisymmetric (i.e. rotational) part of a matrix.
-    pure function antisymmetric_part(mat) result(antisym)
-        real(DP), dimension(:,:), intent(in):: mat
-        real(DP), dimension(size(mat, 1), size(mat, 2)):: antisym
-
-        antisym = (mat-transpose(mat)) / 2._DP
-    end function
-
-        !> Calculate the trace of a matrix.
-    pure real(DP) function trace(x) result(res)
-        real(DP), dimension(:,:), intent(in):: x !< The matrix. Assumed to be square.
-
-        integer:: i
-
-        res = 0._DP
-        do i = 1, size(x, 1)
-            res = res+x(i, i)
-        enddo
-    end function
-
-
-end module
+    end module
 
 submodule(Utils) Conversions
 
@@ -476,7 +453,7 @@ contains
     end procedure
 
     module procedure tensor_to_von_mises
-        von_mises = SQR0P67 * norm2(symmetric_part(tensor))
+        von_mises = SQR0P67 * norm2((tensor + transpose(tensor))/2._DP)
     end procedure
 
     module procedure tensor_to_euler
@@ -523,7 +500,7 @@ contains
     module procedure tensor_to_spin
         real(DP), dimension(3, 3):: antisym
 
-        antisym = antisymmetric_part(tensor)
+        antisym = (tensor-transpose(tensor)) / 2._DP
         spin = [antisym(2, 3), antisym(1, 3), antisym(1, 2)]
     end procedure
 

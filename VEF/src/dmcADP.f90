@@ -198,6 +198,7 @@ contains
     integer, intent(in), optional                 :: step_id
     !
     integer:: step, increment, ierr, n_steps, first_step, last_step, n_increments
+    real(DP):: l_voigt(6)
     !
     integer, parameter:: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
     character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
@@ -236,12 +237,13 @@ contains
                     !
                     do increment = 1, n_increments
                           associate(v => step_output%increments(increment))
+                              l_voigt = tensor_to_unscaled_voigt(v%L)
                               write(iounit, fmt = 710, iostat = ierr) &
                                           step, increment, &            ! 2 fields
                                           v%L, &         ! 9 fields: velocity gradient
-                                          tensor_to_unscaled_voigt(v%D), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                          tensor_to_spin(v%O), &         ! 3 fields: spin tensor
-                                          tensor_to_unscaled_voigt(v%A), &         ! 6 fields: strain mode
+                                          tensor_to_unscaled_voigt(v%L), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                          tensor_to_spin(v%L), &         ! 3 fields: spin tensor
+                                          normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
                                           tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
                                           v%vm_strain_begin, &
                                           v%vm_strain_end, &

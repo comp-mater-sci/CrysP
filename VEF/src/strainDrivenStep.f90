@@ -28,8 +28,7 @@ implicit none
     !> A strain-(rate) driven step
     type:: StrainDrivenStep
         type(StrainDrivenStepConfig)    ::  config
-        real(DP), dimension(3, 3)        ::  volumetric_strain, &
-                                            deviatoric_strain
+        real(DP), dimension(3, 3)       ::  deviatoric_strain
     contains
         procedure:: setUp => StrainDrivenStep_setUp
         procedure:: execute => StrainDrivenStep_execute
@@ -52,9 +51,6 @@ implicit none
     !> Outputs collected per increment
     type:: IncrementOutput
         real(DP), dimension(3, 3):: L, &
-                                    D, &
-                                    O, &
-                                    A, &
                                     S
         real(DP):: vm_strain_begin = 0._DP, &
                     vm_strain_end = 0._DP, &
@@ -92,8 +88,7 @@ contains
         associate(config => this%config)
             ! Make the step traceless: decompose into volumetric strain rate
             ! and strain rate deviator
-            this%volumetric_strain = trace(config%deformation_rate) / 3._DP*UNIT_MATRIX_3X3
-            this%deviatoric_strain = config%deformation_rate-this%volumetric_strain
+            this%deviatoric_strain = config%deformation_rate
             step_strain_norm = norm2(this%deviatoric_strain)
             if (step_strain_norm < epsilon(0._DP)) then
                 write(display_unit, 900) 'Norm of the deviatoric part of prescribed deformation is too small.'
@@ -264,20 +259,18 @@ contains
                        altay_state => astate%simulCalls(i), &
                        altay_output => astate%simulCalls(i)%output)   ! HGH: originally altay_output => altay_state%output
                 !
+
                 increment_output%L = altay_state%input%dgf
-                increment_output%D = symmetric_part(increment_output%L)
-                increment_output%O = antisymmetric_part(increment_output%L)
-                increment_output%A = increment_output%D/norm2(increment_output%D)
                 increment_output%S = altay_output%stress_tensor
                 increment_output%vm_strain_begin = altay_output%effective_macro_strain_tot
                 increment_output%vm_strain_end = altay_output%effective_macro_strain_tot_end
                 increment_output%vm_stress = altay_output%effective_stress
                 ! D : S
-                increment_output%plastic_work_inc = sum(increment_output%D*increment_output%S)
+                increment_output%plastic_work_inc = increment_output%L .dot. increment_output%S !Works because S is symmetric
                 !
                 increment_output%taylor_factor = altay_output%taylor_factor
                 increment_output%plastic_slip_tot = altay_output%homogenised_slip_tot
-                increment_output%vMeqStrainRate = tensor_to_von_mises(increment_output%D)
+                increment_output%vMeqStrainRate = tensor_to_von_mises(increment_output%L)
 
             end associate
         enddo

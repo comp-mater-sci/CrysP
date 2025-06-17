@@ -10,7 +10,7 @@ module meso_model
     private
     public:: MesoModel
 
-    !> Base type for mesoscopic models. 
+    !> Base type for mesoscopic models.
     !>
     !> Declares common properties of all mesoscopic models.
     !> Concrete mesoscopic models must extend this base type.
@@ -31,7 +31,7 @@ module meso_model
     abstract interface
         !> Initialize the mesoscopic model.
         !>
-        !> Initializes the mesoscopic model based on a list of initialized grains. 
+        !> Initializes the mesoscopic model based on a list of initialized grains.
         !> These grains are arranged into clusters, which also get initialized.
         !> @note
         !> We must make this a subroutine to avoid IFX copying the cluster list through the stack, leading to stack overflow/segfault.
@@ -43,21 +43,21 @@ module meso_model
             import DP
             import Grain
 
-            class(MesoModel), intent(inout):: this                              !! Model instance        
+            class(MesoModel), intent(inout):: this                              !! Model instance
             type(Grain), dimension(:), intent(in):: grains                      !! List of initialized grains to be arranged into clusters.
-            type(Parameter), dimension(:), intent(in):: params                  !! List of parameters to initialize the model. 
+            type(Parameter), dimension(:), intent(in):: params                  !! List of parameters to initialize the model.
             class(Cluster), dimension(:), allocatable, intent(out):: clusters   !! List of initialized clusters.
         end subroutine
 
         !> Get the stress state for a cluster under a certain strain condition.
-        !> 
+        !>
         !> Returns the homogenized stress state over all of the grains of the cluster.
         function meso_model_get_stress(this, cluster_, v_grad) result(stress)
             import MesoModel
             import Cluster
             import DP
 
-            class(MesoModel), intent(in):: this                !! Model instance     
+            class(MesoModel), intent(in):: this                !! Model instance
             class(Cluster), target, intent(inout):: cluster_   !! The cluster for which to calculate the homogenized stress state
             real(DP), dimension(3, 3), intent(in):: v_grad     !! Velocity gradient representing the strain condition for which to calculate the stress.
             real(DP), dimension(3, 3):: stress                 !! Homogenized stress response of the cluster
@@ -73,8 +73,8 @@ module meso_model
             import DP
 
             class(MesoModel), intent(in):: this                 !! Model instance
-            class(Cluster), target, intent(inout):: cluster_    !! The cluster to apply the deformation step to. 
-                                                                !! Upon entry, the cluster state must be consistent with the beginning of the time step. 
+            class(Cluster), target, intent(inout):: cluster_    !! The cluster to apply the deformation step to.
+                                                                !! Upon entry, the cluster state must be consistent with the beginning of the time step.
                                                                 !! Upon exit, the cluster state corresponds to the end of the time step.
             real(DP), dimension(3, 3), intent(out):: stress     !! Homogenized stress state of the cluster during the time step.
             real(DP), intent(out):: slip                        !! Total slip that occured in the cluster to realize the deformation during this time step.
@@ -114,6 +114,6 @@ contains
         real(DP), dimension(3, 3), intent(in):: v_grad  !! Velocity gradient for the deformation being prepared
 
         this%velocity_gradient = v_grad
-        this%imposed_spin_rate = antisymmetric_part(this%velocity_gradient)
+        this%imposed_spin_rate = spin_to_tensor(tensor_to_spin(v_grad)) !Strip symmetric part
     end subroutine
 end module

@@ -244,7 +244,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: v_grad
 
         this%velocity_gradient = v_grad
-        this%imposed_spin_rate = antisymmetric_part(this%velocity_gradient)
+        this%imposed_spin_rate = spin_to_tensor(tensor_to_spin(v_grad)) !Strip symmetric component
         this%deformation_gradient_increment =  matrix_exponential_small_norm(this%velocity_gradient/2._DP)
         this%deformation_gradient_during_time_step = matmul(this%deformation_gradient_increment, this%deformation_gradient)
         this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
