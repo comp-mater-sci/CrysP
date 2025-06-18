@@ -1,4 +1,4 @@
-!> Global constant definitions and useful utility procedures used all over AlTay.
+!> Useful math utilities
 
 module math_utils
     use base_defs

@@ -1,3 +1,5 @@
+!> All conversions used in VEF.
+
 module conversions
     use math_utils
 
@@ -6,65 +8,121 @@ module conversions
 
 
     interface
+        !> Convert an angle in radians to an angle in degrees.
         module pure elemental function rad_to_deg(rad) result(deg)
-            real(DP), intent(in):: rad
-            real(DP):: deg
+            real(DP), intent(in):: rad  !! Angle in radians
+            real(DP):: deg              !! Angle in degrees
         end function
+
+        !> Convert an angle in degrees to an angle in radians.
         module pure elemental function deg_to_rad(deg) result(rad)
-            real(DP), intent(in):: deg
-            real(DP):: rad
+            real(DP), intent(in):: deg  !! Angle in degrees
+            real(DP):: rad              !! Angle in radians
         end function
+
+        !> Convert an Euler angle triplet to a rotation matrix.
+        !>
+        !> Uses finite strain theory.
         module pure function euler_to_tensor(euler) result(tensor)
-            real(DP), dimension(3), intent(in):: euler
-            real(DP), dimension(3,3):: tensor
+            real(DP), dimension(3), intent(in):: euler !! Euler angles in radians using passive Bunge convention.
+            real(DP), dimension(3,3):: tensor          !! Pure finite strain rotation matrix.
         end function
 
+        !> Convert a spin from vector to tensor representation.
+        !>
+        !> Uses small strain theory.
         module pure function spin_to_tensor(spin) result(tensor)
-            real(DP), dimension(3), intent(in):: spin
-            real(DP), dimension(3,3):: tensor
+            real(DP), dimension(3), intent(in):: spin !! Vector representing the spin component of a small strain velocity gradient.
+                                                      !! I.e. the top-right corner of the tensor. Components are ordered following
+                                                      !! Voigt convention.
+            real(DP), dimension(3,3):: tensor         !! Antisymmetric spin tensor.
         end function
 
+        !> Calculate the Von Mises equivalent of a deviatoric stress or strain.
+        !>
+        !> Only valid in small strain settings.
         module pure function deviatoric_to_von_mises(deviatoric) result(von_mises)
-            real(DP), dimension(5), intent(in):: deviatoric
-            real(DP):: von_mises
+            real(DP), dimension(5), intent(in):: deviatoric !! Deviatoric stress/strain following the later Paul Van Houtte convention.
+            real(DP):: von_mises                            !! Von Mises equivalent stress/strain.
         end function
+
+        !> Convert a deviatoric stress/strain to unscaled voigt representation.
+        !>
+        !> Only valid in small strain settings.
         module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
-            real(DP), dimension(5), intent(in):: deviatoric
-            real(DP), dimension(6):: voigt
+            real(DP), dimension(5), intent(in):: deviatoric !! Deviatoric stress/strain following the later Paul Van Houtte convention.
+            real(DP), dimension(6):: voigt                  !! Stress/strain following the standard voigt component order but without any scaling.
         end function
+
+        !> Convert a deviatoric stress/strain to a tensor.
+        !>
+        !> Only valid in small strain settings.
         module pure function deviatoric_to_tensor(deviatoric) result(tensor)
-            real(DP), dimension(5), intent(in):: deviatoric
-            real(DP), dimension(3,3):: tensor
+            real(DP), dimension(5), intent(in):: deviatoric !! Deviatoric stress/strain following the later Paul Van Houtte convention.
+            real(DP), dimension(3,3):: tensor               !! Symmetric tensor with 0 trace
         end function
 
+        !> Extract the deviatoric component from a stress or strain in unscaled voigt notation.
+        !>
+        !> Eliminates any hydrostatic component.
+        !> Only valid in small strain settings.
         module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
-            real(DP), dimension(6), intent(in):: voigt
-            real(DP), dimension(5):: deviatoric
-        end function
-        module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
-            real(DP), dimension(6), intent(in):: voigt
-            real(DP), dimension(3,3):: tensor
+            real(DP), dimension(6), intent(in):: voigt !! Stress/strain following the standard voigt component order but without any scaling.
+            real(DP), dimension(5):: deviatoric        !! Deviatoric component following the later Van Houtte convention.
         end function
 
+        !> Convert a stress/strain in unscaled voigt notation to a tensor.
+        !>
+        !> Only valid in small strain settings.
+        module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
+            real(DP), dimension(6), intent(in):: voigt !! Stress/strain following the standard voigt component order but without any scaling.
+            real(DP), dimension(3,3):: tensor          !! Symmetric tensor.
+        end function
+
+        !> Calculate the Von Mises equivalent of a tensor.
+        !>
+        !> Symmitrizes the tensor. Even useful for proper stress/strain tensors to get rid of roundoff errors during the simulation.
+        !> Only valid in small strain settings.
         module pure function tensor_to_von_mises(tensor) result(von_mises)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP):: von_mises
+            real(DP), dimension(3,3), intent(in):: tensor   !! Tensor
+            real(DP):: von_mises                            !! Von mises equivalent stress/strain of the tensor.
         end function
+
+        !> Calculate Euler angles from a deformation gradient.
+        !>
+        !> Follows finite strain convention.
+        !> Performs polar decomposition on the input tensor. Even useful for proper rotation tensors to get rid of roundoff errors
+        !> during the simulation
         module function tensor_to_euler(tensor) result(euler)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP), dimension(3):: euler
+            real(DP), dimension(3,3), intent(in):: tensor !! Tensor representing a deformation gradient
+            real(DP), dimension(3):: euler                !! Euler angles in passive Bunge convention in radians.
         end function
+
+        !> Extract the spin from a tensor.
+        !>
+        !> Follows small strain theory.
         module pure function tensor_to_spin(tensor) result(spin)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP), dimension(3):: spin
+            real(DP), dimension(3,3), intent(in):: tensor !! Tensor representing a deformation in small-strain setting.
+            real(DP), dimension(3):: spin                 !! Spin component of the tensor as the upper right corner of the
+                                                          !! antisymmetric component of the tensor, with component order following Voigt convention.
         end function
+
+        !> Extract the deviatoric component of a tensor.
+        !>
+        !> Only valid in small strain settings.
+        !> Eliminates rotational and hydrostatic components.
         module pure function tensor_to_deviatoric(tensor) result(deviatoric)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP), dimension(5):: deviatoric
+            real(DP), dimension(3,3), intent(in):: tensor !! Tensor in small strain setting.
+            real(DP), dimension(5):: deviatoric           !! Deviatoric component following the later Van Houtte convention.
         end function
+
+        !> Extract the stress/strain component from a tensor.
+        !>
+        !> Only valid in small strain settings.
+        !> Eliminates the rotational component.
         module pure function tensor_to_unscaled_voigt(tensor) result(voigt)
-            real(DP), dimension(3,3), intent(in):: tensor
-            real(DP), dimension(6):: voigt
+            real(DP), dimension(3,3), intent(in):: tensor !! Tensor in small strain setting.
+            real(DP), dimension(6):: voigt                !! Stress/strain following the standard voigt component order but without any scaling.
         end function
     end interface
 end module
