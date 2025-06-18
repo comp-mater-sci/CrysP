@@ -1,11 +1,19 @@
 module conversions
-    use base_defs
     use math_utils
 
     implicit none
     public
 
+
     interface
+        module pure elemental function rad_to_deg(rad) result(deg)
+            real(DP), intent(in):: rad
+            real(DP):: deg
+        end function
+        module pure elemental function deg_to_rad(deg) result(rad)
+            real(DP), intent(in):: deg
+            real(DP):: rad
+        end function
         module pure function euler_to_tensor(euler) result(tensor)
             real(DP), dimension(3), intent(in):: euler
             real(DP), dimension(3,3):: tensor
@@ -71,6 +79,14 @@ submodule(conversions) conversions_imp
     real(DP), parameter:: ROOT6I     = 1.D0/sqrt(6.D0)      !! 1/sqr(6)
 
 contains
+
+    module procedure rad_to_deg
+        deg = rad * 180._DP / PI
+    end procedure
+
+    module procedure deg_to_rad
+        rad = deg / 180._DP * PI
+    end procedure
 
     module procedure euler_to_tensor
         real(DP):: sins(3), &

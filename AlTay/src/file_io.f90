@@ -1,5 +1,4 @@
 module file_io
-    use base_defs
     use conversions
     use logging
     use cluster_module
@@ -51,7 +50,7 @@ contains
 96          format(4F10.0, I5, 5X, 2F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
         enddo
-        orientations = orientations/RAD_TO_DEG
+        orientations = deg_to_rad(orientations)
 
 
         close(nunit)
@@ -78,7 +77,7 @@ contains
         enddo
         close(unit = file_handle)
 
-        boundaries = boundaries/RAD_TO_DEG
+        boundaries = deg_to_rad(boundaries)
     end function
 
     !> Write title line of the CUR format.
@@ -115,7 +114,7 @@ contains
         !Write state of each grain
         do i = 1, size(clusters)
             do j = 1, cluster_size
-                euler_angles = tensor_to_euler(clusters(i)%grains(j)%orientation)*RAD_TO_DEG
+                euler_angles = rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
                 write(IMP1, 400, iostat = info)&
                     i*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3)
                 if (info /= 0) exit

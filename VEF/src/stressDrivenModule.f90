@@ -5,8 +5,7 @@ include 'mkl_rci.f90'
 module dmcStressDrivenModule
     use, intrinsic:: iso_fortran_env, only: error_unit
     use iso_c_binding
-    use base_defs
-    use math_utils
+    use conversions
     use criUncomment, only: readValue
     use dmcResultTable
     use dmcBasicModule
@@ -82,7 +81,7 @@ contains
         real(DP), dimension(5), intent(out):: stress
         real(DP), dimension(5), intent(out):: residual
 
-        real(DP), parameter:: pretry_search_angle = 2._DP/RAD_TO_DEG
+        real(DP), parameter:: pretry_search_angle = 0.035_DP !! Approx. 2 degrees
         real(DP):: jacobi(5,5)
 
         if (associated(this%ptr_db)) then

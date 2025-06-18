@@ -9,7 +9,6 @@ module math_utils
 
     real(DP), parameter:: REAL_DP_MAX_VAL = huge(0._DP)     !! Placeholder for 'infinity'. Useful as initial value in loops looking for the minimum of some value in a list.
     real(DP), parameter:: PI         = acos(-1.D0)          !! Pi.
-    real(DP), parameter:: RAD_TO_DEG = 180._DP/PI           !! Multiply by this constant to convert a value in radians to degrees. Divide for the reverse operation.
 
         !> Matrix form of the unit second rank tensor
     real(DP), dimension(3, 3), parameter:: UNIT_MATRIX_3X3 = reshape([1._DP, 0._DP, 0._DP, &

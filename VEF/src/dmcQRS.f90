@@ -3,8 +3,6 @@
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
-    use base_defs
-    use math_utils
     use conversions
     use criRange
     use criUncomment, only: readValue
@@ -148,7 +146,7 @@ contains
             ! use von Mises guess as a default
             useVMGuess = .true.
             !
-            fi2 = -fi2/RAD_TO_DEG
+            fi2 = deg_to_rad(-fi2)
             ! Calculate rotation matrix
             Mrot = euler_to_tensor([fi1, phi, fi2])
 
@@ -178,7 +176,7 @@ contains
             !
             associate(r => results)
                 !
-                r%phis(i) = fi2*RAD_TO_DEG
+                r%phis(i) = rad_to_deg(fi2)
                 r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
                 r%residuals(i) = norm2(deviatoric_to_unscaled_voigt(residual))

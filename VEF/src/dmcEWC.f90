@@ -1,7 +1,6 @@
 #include "criMacros.fpp"
 !> Calculations of Equi-Work Contours
 module dmcEWC
-    use math_utils
     use conversions
     use criRange
     use criNumerics
@@ -229,7 +228,7 @@ contains
             i = i+1
             !
             vTheta(i) = theta
-            theta = theta/RAD_TO_DEG
+            theta = deg_to_rad(theta)
             !
             ! Calculate S by combining the base vectors
             sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta)

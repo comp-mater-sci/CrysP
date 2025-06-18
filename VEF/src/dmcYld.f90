@@ -3,8 +3,6 @@
 !
 !> Yield locus calculations
 module dmcYld
-    use base_defs
-    use math_utils
     use conversions
     use criRange
     use criUncomment, only: readValue
@@ -179,7 +177,7 @@ contains
             i = 1
             do while (theta_range%next(theta))
 
-                theta = theta/RAD_TO_DEG
+                theta = deg_to_rad(theta)
                 ! Combine the base vectors
                 ! Note: explicit temporary sigma_vector prevents runtime warning about
                 !       a temporary created in a call to convert_voigt
@@ -193,7 +191,7 @@ contains
 
                 scal_s_rel = norm2(stress)/target_stress_norm*iunilen
 
-                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, norm2(stress), scal_s_rel, &
+                yldRes(i) = yldResult(rad_to_deg(theta), w, norm2(stress), scal_s_rel, &
                                       norm2(stress), &
                                       strain_mode .dot. stress, &
                                       [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
@@ -213,7 +211,7 @@ contains
                 ! write(display_unit, *) posA, i, posB
                 call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
                                        1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
-                yldRes(i)%beta = yldRes(i)%beta*RAD_TO_DEG
+                yldRes(i)%beta = rad_to_deg(yldRes(i)%beta)
             enddo
             !
             call writeYldResults(ofunit, yldRes(:npoints), info, write_header = first_run)

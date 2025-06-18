@@ -2,7 +2,6 @@
 
 !> DMC Arbitrary Stress Response
 module dmcASR
-    use math_utils
     use conversions
     use criUncomment, only: readValue
     use dmcIncrementationControl
@@ -104,7 +103,7 @@ contains
         nsteps = size(this%steps)
         !
         ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
-        Mrot = euler_to_tensor(this%rotframe/RAD_TO_DEG)
+        Mrot = euler_to_tensor(deg_to_rad(this%rotframe))
         !
         do  istep = 1, nsteps
                         !
