@@ -8,7 +8,7 @@ module dmcBasicModule
     use dmcAbstractModule
     use altayConfig, only: altayConfigData
     use commonConfig
-    use utils
+    use base_defs
     use micro
     use parameters
     use logging

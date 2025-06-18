@@ -1,6 +1,7 @@
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
-    use utils
+    use base_defs
+    use conversions
     use dmcIncrementationControl, only: IncrementationControlVariables
     use dmcStressDrivenModule
 

@@ -6,7 +6,7 @@ module commonConfig
       use criNamedRange
       use criUncomment
       use criConfigReader
-      use utils
+      use base_defs
       implicit none
 
 

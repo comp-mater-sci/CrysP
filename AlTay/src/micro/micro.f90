@@ -9,7 +9,7 @@
 !> the supported constitutive  models, which parameters they use etc. In this way, no hard-coded information about the available models needs to be kept at all at higher levels.
 
 module micro
-    use utils
+    use base_defs
     use parameters
     use logging
     use constitutive_model

@@ -2,13 +2,15 @@
 
 !> DMC Arbitrary Stress Response
 module dmcASR
-use criUncomment, only: readValue
-use dmcIncrementationControl
-use dmcStressDrivenEvolutionModule
-use dmcEvolutionOutputRecord
-use commonConfig
-use commonUtils
-implicit none
+    use math_utils
+    use conversions
+    use criUncomment, only: readValue
+    use dmcIncrementationControl
+    use dmcStressDrivenEvolutionModule
+    use dmcEvolutionOutputRecord
+    use commonConfig
+    use commonUtils
+    implicit none
 
     public:: ASRModule
     private

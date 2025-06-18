@@ -5,7 +5,8 @@ include 'mkl_rci.f90'
 module dmcStressDrivenModule
     use, intrinsic:: iso_fortran_env, only: error_unit
     use iso_c_binding
-    use utils
+    use base_defs
+    use math_utils
     use criUncomment, only: readValue
     use dmcResultTable
     use dmcBasicModule

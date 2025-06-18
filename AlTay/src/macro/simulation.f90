@@ -1,5 +1,6 @@
 module simulation
-    use utils
+    use base_defs
+    use conversions
     use grain_module
     use altayConfig
     use logging

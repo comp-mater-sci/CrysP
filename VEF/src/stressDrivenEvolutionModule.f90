@@ -3,7 +3,8 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
-use utils
+use base_defs
+use conversions
 use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord

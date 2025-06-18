@@ -11,7 +11,8 @@
 !> @endnote
 
 module dsh
-    use utils
+    use base_defs
+    use math_utils
     use constitutive_model
     use parameters
     use logging

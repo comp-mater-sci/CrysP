@@ -3,7 +3,9 @@
 !> Assumes all grains deform identically.
 
 module full_constraints_taylor
-    use utils
+    use base_defs
+    use math_utils
+    use conversions
     use cluster_module
     use logging
     use taylor_ambiguity

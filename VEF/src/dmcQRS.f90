@@ -3,6 +3,9 @@
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
+    use base_defs
+    use math_utils
+    use conversions
     use criRange
     use criUncomment, only: readValue
     use dmcStressDrivenModule

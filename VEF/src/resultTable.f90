@@ -2,7 +2,8 @@
 
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
-    use utils
+    use base_defs
+    use math_utils
 
     implicit none
     private

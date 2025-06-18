@@ -1,5 +1,6 @@
 module file_io
-    use utils
+    use base_defs
+    use conversions
     use logging
     use cluster_module
     use grain_module

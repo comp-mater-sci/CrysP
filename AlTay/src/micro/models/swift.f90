@@ -1,7 +1,7 @@
 !> Implementation of the isotropic phenomenological SWIFT hardening law.
 
 module swift
-    use utils, only: dp
+    use base_defs, only: dp
     use altayConfig
     use constitutive_model
     use logging

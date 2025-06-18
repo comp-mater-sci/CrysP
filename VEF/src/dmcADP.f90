@@ -2,7 +2,8 @@
 
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
-use utils
+use base_defs
+use conversions
 use criConfigReader
 use dmcDeformationDrivenModule
 use dmcResultFileOutput

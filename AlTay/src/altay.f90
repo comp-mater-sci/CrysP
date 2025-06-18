@@ -1,5 +1,7 @@
 module altay
     use iso_c_binding
+    use base_defs
+    use conversions
     use simulation
     use altayConfig
     use micro

@@ -1,5 +1,7 @@
 module relaxation_module
-    use utils
+    use base_defs
+    use math_utils
+    use conversions
 
     implicit none
     private

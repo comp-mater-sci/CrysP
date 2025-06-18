@@ -1,6 +1,6 @@
 !> Provides access to config files with bash-style comments
 module criUncomment
-    use utils
+    use base_defs
 
     implicit none
     private

@@ -1,5 +1,6 @@
 module dsh_screw
-    use utils
+    use base_defs
+    use math_utils
     use parameters
     use dsh
     use slip_systems

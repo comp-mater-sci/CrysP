@@ -1,6 +1,6 @@
 !> Various numerical algorithms
 module criNumerics
-    use utils
+    use base_defs
     implicit none
 
     !> Data needed by barycentric interpolation

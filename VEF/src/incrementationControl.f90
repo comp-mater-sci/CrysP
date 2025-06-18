@@ -1,7 +1,7 @@
 !> Types and procedures that control incrementation in stress-driven
 !> evolution of material state.
 module dmcIncrementationControl
-    use utils
+    use base_defs
 use criLinearMap, only: MapItem
 implicit none
 

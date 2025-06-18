@@ -3,7 +3,9 @@
 !
 !> Yield locus calculations
 module dmcYld
-    use utils
+    use base_defs
+    use math_utils
+    use conversions
     use criRange
     use criUncomment, only: readValue
     use commonConfig

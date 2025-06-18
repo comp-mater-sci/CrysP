@@ -1,5 +1,6 @@
 module grain_module
-    use utils
+    use base_defs
+    use conversions
     use logging
     use constitutive_model
 

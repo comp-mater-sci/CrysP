@@ -1,7 +1,7 @@
 !> Configuration of substepping schemes
 module dmcSubsteppingConfig
 use criRange
-use utils
+use base_defs
 use commonConfig
 implicit none
 

@@ -1,5 +1,5 @@
 module slip_systems
-    use utils
+    use base_defs
     use logging
 
     implicit none

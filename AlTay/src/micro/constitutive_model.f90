@@ -1,5 +1,7 @@
 module constitutive_model
-    use utils
+    use base_defs
+    use math_utils
+    use conversions
     use parameters
 
     implicit none

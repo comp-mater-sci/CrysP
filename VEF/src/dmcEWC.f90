@@ -1,19 +1,21 @@
 #include "criMacros.fpp"
 !> Calculations of Equi-Work Contours
 module dmcEWC
-use criRange
-use criNumerics
-use criLinearMap
-use criConfigReader
-use commonConfig
-use dmcStressDrivenEvolutionModule
-use dmcIncrementationControl
-use dmcEvolutionOutputrecord
-use dmcResultFileOutput
-use commonUtils
-use utils
+    use math_utils
+    use conversions
+    use criRange
+    use criNumerics
+    use criLinearMap
+    use criConfigReader
+    use commonConfig
+    use dmcStressDrivenEvolutionModule
+    use dmcIncrementationControl
+    use dmcEvolutionOutputrecord
+    use dmcResultFileOutput
+    use commonUtils
+    use base_defs
 
-implicit none
+    implicit none
 
     public:: EWCModule
     private

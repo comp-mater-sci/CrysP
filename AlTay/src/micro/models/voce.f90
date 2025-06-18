@@ -1,7 +1,7 @@
 !> This module implements a two-stage isotropic Voce hardening law.
 
 module voce
-    use utils, only: dp
+    use base_defs, only: dp
     use constitutive_model
     use altayConfig
     use logging

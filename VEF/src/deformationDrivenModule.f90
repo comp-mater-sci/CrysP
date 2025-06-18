@@ -1,7 +1,7 @@
 !> Base class for modules implementing strain-(rate) driven simulations (such as ADPModule)
 module dmcDeformationDrivenModule
 use criRange
-use utils
+use base_defs
 use criUncomment, only: readValue
 use dmcBasicModule
 use dmcStrainDrivenStep

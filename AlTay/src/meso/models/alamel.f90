@@ -4,7 +4,8 @@
 !> by Van Houtte et. al. published in the International Journal of Plasticity 21 for details.
 
 module alamel
-    use utils
+    use base_defs
+    use conversions
     use grain_module
     use relaxation_module
     use cluster_module

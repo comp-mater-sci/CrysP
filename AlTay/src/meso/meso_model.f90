@@ -1,8 +1,9 @@
 !> This module defines the interface every mesoscopic model must implement.
 
 module meso_model
+    use base_defs
+    use conversions
     use parameters
-    use utils
     use cluster_module
 
     implicit none
