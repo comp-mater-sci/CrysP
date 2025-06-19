@@ -22,18 +22,18 @@ elif [ "$1" = "-b" ]; then
 elif [ "$1" = "-t" ]; then
     TRACE="1"
     shift 1
+elif [ "$1" = "--clean" ]; then
+    rm -rf AlTay/release AlTay/debug VEF/build VEF/bin
+    shift 1
 else
     break
 fi
 done
 
 cd AlTay
-rm -rf release debug
 cmake -B $BUILD_TYPE/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
 cmake --build ${BUILD_TYPE}/build --parallel --target install
 
 cd ../VEF
-
-rm -rf build bin
 cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE -DCMAKE_INSTALL_PREFIX=.
 cmake --build build --parallel --target install
