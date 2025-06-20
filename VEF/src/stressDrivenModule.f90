@@ -81,7 +81,7 @@ contains
         real(DP), dimension(5), intent(out):: stress
         real(DP), dimension(5), intent(out):: residual
 
-        real(DP), parameter:: pretry_search_angle = 0.035_DP !! Approx. 2 degrees
+        real(DP), parameter:: pretry_search_angle = 0.035_DP ! Approx. 2 degrees
         real(DP):: jacobi(5,5)
 
         if (associated(this%ptr_db)) then
