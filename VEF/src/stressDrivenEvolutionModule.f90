@@ -3,7 +3,8 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
-use utils
+use base_defs
+use conversions
 use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
@@ -115,7 +116,7 @@ contains
             if (info /= VEF_OK) exit
             !
             ! Calculate the strain rate mode
-            target_stress_mode = convert_stress_strain_space(sigma)
+            target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_norm = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / target_stress_norm
             call this%findsolution(target_stress_mode, strain_mode, stress, residual)
@@ -131,7 +132,7 @@ contains
                                                strain_mode, &
                                                stress/norm2(stress), &
                                                norm2(stress)/target_stress_norm, &
-                                               norm2(deviatoric_to_voigt(residual)))
+                                               norm2(deviatoric_to_unscaled_voigt(residual)))
 
             ! Check if we start a/another increment
             stop_flag = .false.
@@ -145,9 +146,9 @@ contains
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
                 ! and check the tensor component of interest.
-                X_tmp = convert_stress_strain_space(icv%vP_step)
+                X_tmp = deviatoric_to_tensor(icv%vP_step)
                 if (present(rotmat)) X_tmp = rotate_to(X_tmp, rotmat)
-                X_tmp_voigt = to_voigt(X_tmp, 6)
+                X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
                 stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
             case default
                 ! Make sure it stops immediately
@@ -188,11 +189,11 @@ contains
                 !
                 case(scalingStrainTensorComponent)
                     if (present(rotmat)) then
-                        X_tmp = rotate_to(convert_stress_strain_space(strain_mode), rotmat)
+                        X_tmp = rotate_to(deviatoric_to_tensor(strain_mode), rotmat)
                     else
-                        X_tmp = convert_stress_strain_space(strain_mode)
+                        X_tmp = deviatoric_to_tensor(strain_mode)
                     endif
-                    X_tmp_voigt = to_voigt(X_tmp, 6)
+                    X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default
@@ -208,14 +209,14 @@ contains
                 !
                 ! Calculate strain increment for material state evolution
                 vDe = strain_mode * scaling_factor
-                tmp_record%P_inc_evol = convert_stress_strain_space(vDe)
+                tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
                 ! Update material state
                 call makeTextureUpdateStep(tmp_record%P_inc_evol, &
                                            tmp_record%S_evol, &
                                            taylor_factor, &
                                            this%output%outputRequest, info)
                 if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
-                vSe = convert_stress_strain_space(tmp_record%S_evol)
+                vSe = tensor_to_deviatoric(tmp_record%S_evol)
             else
                 vDe = 0.D0
                 vSe = 0.D0

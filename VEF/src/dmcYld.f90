@@ -3,7 +3,7 @@
 !
 !> Yield locus calculations
 module dmcYld
-    use utils
+    use conversions
     use criRange
     use criUncomment, only: readValue
     use commonConfig
@@ -158,7 +158,7 @@ contains
         !
         iunilen = 1.D0
         if (this%do_scaling) then
-            target_stress_mode = voigt_to_deviatoric(this%scaling_vector)
+            target_stress_mode = unscaled_voigt_to_deviatoric(this%scaling_vector)
             iunilen = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / iunilen
 
@@ -177,13 +177,13 @@ contains
             i = 1
             do while (theta_range%next(theta))
 
-                theta = theta/RAD_TO_DEG
+                theta = deg_to_rad(theta)
                 ! Combine the base vectors
                 ! Note: explicit temporary sigma_vector prevents runtime warning about
                 !       a temporary created in a call to convert_voigt
                 sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
                                 + w*this%base_vectors(:,3)
-                target_stress_mode = voigt_to_deviatoric(sigma_vector)
+                target_stress_mode = unscaled_voigt_to_deviatoric(sigma_vector)
                 target_stress_norm = norm2(target_stress_mode)
                 target_stress_mode = target_stress_mode / target_stress_norm
 
@@ -191,11 +191,11 @@ contains
 
                 scal_s_rel = norm2(stress)/target_stress_norm*iunilen
 
-                yldRes(i) = yldResult(theta*RAD_TO_DEG, w, norm2(stress), scal_s_rel, &
+                yldRes(i) = yldResult(rad_to_deg(theta), w, norm2(stress), scal_s_rel, &
                                       norm2(stress), &
                                       strain_mode .dot. stress, &
                                       [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
-                                      [0._DP, 0._DP], beta, norm2(deviatoric_to_voigt(residual)))
+                                      [0._DP, 0._DP], beta, norm2(deviatoric_to_unscaled_voigt(residual)))
 
                 i = i+1
             enddo
@@ -211,7 +211,7 @@ contains
                 ! write(display_unit, *) posA, i, posB
                 call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
                                        1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
-                yldRes(i)%beta = yldRes(i)%beta*RAD_TO_DEG
+                yldRes(i)%beta = rad_to_deg(yldRes(i)%beta)
             enddo
             !
             call writeYldResults(ofunit, yldRes(:npoints), info, write_header = first_run)

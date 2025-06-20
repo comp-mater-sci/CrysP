@@ -2,13 +2,14 @@
 
 !> DMC Arbitrary Stress Response
 module dmcASR
-use criUncomment, only: readValue
-use dmcIncrementationControl
-use dmcStressDrivenEvolutionModule
-use dmcEvolutionOutputRecord
-use commonConfig
-use commonUtils
-implicit none
+    use conversions
+    use criUncomment, only: readValue
+    use dmcIncrementationControl
+    use dmcStressDrivenEvolutionModule
+    use dmcEvolutionOutputRecord
+    use commonConfig
+    use commonUtils
+    implicit none
 
     public:: ASRModule
     private
@@ -102,16 +103,14 @@ contains
         nsteps = size(this%steps)
         !
         ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
-        Mrot = from_euler_angles(this%rotframe/RAD_TO_DEG)
+        Mrot = euler_to_tensor(deg_to_rad(this%rotframe))
         !
         do  istep = 1, nsteps
                         !
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 !
                 ! Acquire full stress tensor sigma
-                sigma = from_voigt(step%stress_mode)
-                Pressure = (trace(sigma) / 3.D0) * UNIT_MATRIX_3X3
-                S = sigma-Pressure
+                sigma = unscaled_voigt_to_tensor(step%stress_mode)
                 ! Follow the stress path
                 info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, &
                                                 incrementation_control = icv)
@@ -159,14 +158,14 @@ contains
             [ character(len = column_width) ::  &
                 'step','increment', & ! 2 fields
                 'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','M-factor','scal_s','S','residual', & ! 10 fields
-                'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
-                'S_xx','S_yy','S_zz','S_xy','S_yz','S_xz', & ! 6 fields
-                'A_11','A_22','A_33','A_12','A_23','A_13', & ! 6 fields  (II)
-                'A_xx','A_yy','A_zz','A_xy','A_yz','A_xz', & ! 6 fields
-                'eps_11','eps_22','eps_33','eps_12','eps_23','eps_13', & ! 6 fields  (III)
-                'eps_xx','eps_yy','eps_zz','eps_xy','eps_yz','eps_xz', & ! 6 fields
-                'eps_tot_11','eps_tot_22','eps_tot_33','eps_tot_12','eps_tot_23','eps_tot_13', & ! 6 fields (IV)
-                'eps_tot_xx','eps_tot_yy','eps_tot_zz','eps_tot_xy','eps_tot_yz','eps_tot_xz'& ! 6 fields
+                'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
+                'S_xx','S_yy','S_zz','S_yz','S_xz','S_xy', & ! 6 fields
+                'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (II)
+                'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy', & ! 6 fields
+                'eps_11','eps_22','eps_33','eps_23','eps_13','eps_12', & ! 6 fields  (III)
+                'eps_xx','eps_yy','eps_zz','eps_yz','eps_xz','eps_xy', & ! 6 fields
+                'eps_tot_11','eps_tot_22','eps_tot_33','eps_tot_23','eps_tot_13','eps_tot_12', & ! 6 fields (IV)
+                'eps_tot_xx','eps_tot_yy','eps_tot_zz','eps_tot_yz','eps_tot_xz','eps_tot_xy'& ! 6 fields
             ]
         !
         info = VEF_OK
@@ -204,9 +203,9 @@ contains
                           Mrot => output%rotation_matrix)
                     !
                     ! Step deviatoric strain
-                    P_step_rot = convert_stress_strain_space(v%icv%vP_step)
+                    P_step_rot = deviatoric_to_tensor(v%icv%vP_step)
                     ! Total deviatoric strain
-                    P_total_rot = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
+                    P_total_rot = deviatoric_to_tensor(v%icv%vP_total)  ! at the beginning of the increment
                     P_total_end_rot = P_total_rot+v%P_inc_evol  ! at the end of the increment
 
                     write(iounit, fmt = 710, iostat = ierr) &
@@ -214,11 +213,10 @@ contains
                                 v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
                                 v%icv%plastic_work_total, v%dotWonA, &
                                 v%taylor_factor, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
-                                to_voigt(SonA, 6), to_voigt(v%SonA, 6), &
-                                to_voigt(A, 6), to_voigt(v%A, 6), &
-                                to_voigt(P_step, 6), to_voigt(P_step_rot, 6), &
-                                to_voigt(P_total_end, 6), to_voigt(P_total_end_rot, 6)
-                !
+                                tensor_to_unscaled_voigt(SonA), tensor_to_unscaled_voigt(v%SonA), &
+                                tensor_to_unscaled_voigt(A), tensor_to_unscaled_voigt(v%A), &
+                                tensor_to_unscaled_voigt(P_step), tensor_to_unscaled_voigt(P_step_rot), &
+                                tensor_to_unscaled_voigt(P_total_end), tensor_to_unscaled_voigt(P_total_end_rot)
                 end associate
             enddo
             if (ierr == 0) info = VEF_OK

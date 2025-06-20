@@ -1,11 +1,11 @@
 !> This module resolves the Taylor ambiguity.
 !>
-!> Taylor ambiguity is a well-known problem for Taylor-like crystal plasticity models. 
+!> Taylor ambiguity is a well-known problem for Taylor-like crystal plasticity models.
 !> Namely, 5 independent slip systems suffice to achieve any imposed strain.
 !> However, it is possible that the stress state this causes suffices to activate several other systems as well.
-!> This happens especially when isotropic hardening laws are used. 
+!> This happens especially when isotropic hardening laws are used.
 !> Up to 8 slip systems may be active in total due to this issue.
-!> Therefore, the actual slip rates in the crystal are 'ambiguous' since any combination 
+!> Therefore, the actual slip rates in the crystal are 'ambiguous' since any combination
 !> of these systems that achieves the imposed strain also minimizes the amount of work.
 !>
 !> Several methods can be used to decide on which systems to pick.
@@ -13,7 +13,8 @@
 !> i.e. the combination of systems where norm the total slip is minimal.
 
 module taylor_ambiguity
-    use utils
+    use base_defs
+    use math_utils
     use logging
     use grain_module
 
@@ -40,7 +41,7 @@ contains
         integer, dimension(:), allocatable, intent(out):: ind_overstressed                !! If taylor ambiguity is occurring, contains the
                                                                                           !! indices of the overstressed slip systems (rss >= crss). Otherwise it is returned unallocated.
 
-        integer:: i, &             
+        integer:: i, &
                   n_overstressed, &             !Number of active slip systems in the grain
                   ind_overstressed_buffer(8)    !Buffer for the indices of the overstressed slip systems.
                                                 !Note that 8 is the theoretical maximum of active slip systems

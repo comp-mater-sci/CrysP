@@ -1,6 +1,6 @@
 !> Provides access to config files with bash-style comments
 module criUncomment
-    use utils
+    use base_defs
 
     implicit none
     private
@@ -18,7 +18,7 @@ module criUncomment
       !>                   elements of supported types)
       !> \param[in] frmt  The format to be used in the read operation (type: character(len=*), optional)
       interface readValue
-        module procedure read_scalar, read_array
+        module procedure read_scalar, read_array, read_tensor
       end interface
 
       public:: readValue
@@ -93,6 +93,16 @@ contains
         if (skipComment(inunit, buffer)) read(buffer, fmt=*,iostat = ierr) val
         if (ierr == 0) isOK = .true.
     end function
+    logical function read_tensor(inunit, val) result(isOK)
+        integer, intent(in):: inunit
+        real(DP), dimension(3,3), intent(out):: val
+        character(max_line_len)   :: buffer
+        integer:: ierr
+
+        if (skipComment(inunit, buffer)) read(buffer, fmt=*,iostat = ierr) val
+        isOK = ierr == 0
+    end function
+
 end module
 
 

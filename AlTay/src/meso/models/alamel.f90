@@ -1,10 +1,11 @@
-!> Implementation of the ALAMEL model developed at KU Leuven. 
+!> Implementation of the ALAMEL model developed at KU Leuven.
 !>
-!> See "Deformation texture prediction: from the Taylor model to the advanced Lamel model" 
+!> See "Deformation texture prediction: from the Taylor model to the advanced Lamel model"
 !> by Van Houtte et. al. published in the International Journal of Plasticity 21 for details.
 
 module alamel
-    use utils
+    use base_defs
+    use conversions
     use grain_module
     use relaxation_module
     use cluster_module
@@ -68,7 +69,7 @@ contains
 
     !> See [[MesoModel:get_parameters]]
     function alamel_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention 
+        type(Parameter), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
                                                             !! denoting the orientation of the grain boundary plane normals.
 
         allocate(params(1))
@@ -101,7 +102,7 @@ contains
             j = 1
             do i = 1, size(clusters)
                 clusters(i)%grains = grains(2*(i-1)+1:2*i)
-                clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(from_euler_angles(boundaries(:,j))))
+                clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(euler_to_tensor(boundaries(:,j))))
                 n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
                 do k = 1, 2
                     ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
@@ -129,7 +130,7 @@ contains
     !>
     !> Returns an array with the following structure: [number of systems for first grain, number of systems for second grain].
     pure function get_n_systems(cluster_) result(n_systems)
-        class(Cluster), intent(in):: cluster_ 
+        class(Cluster), intent(in):: cluster_
         integer, dimension(2):: n_systems
 
         integer:: i
@@ -161,7 +162,7 @@ contains
         integer:: i
 
         do i = 1, 2
-            imposed_strain_rate(5*(i-1)+1:5*i) = convert_stress_strain_space(v_grad .toframe. alamel_cluster%grains(i)%orientation)
+            imposed_strain_rate(5*(i-1)+1:5*i) = tensor_to_deviatoric(v_grad .toframe. alamel_cluster%grains(i)%orientation)
         end do
     end function
 
@@ -170,18 +171,18 @@ contains
     !> Weighted average of the stress states of the individual grains converted to the global frame.
     pure function homogenize_stress_state(alamel_cluster, stress_cluster) result(homogenized_stress)
         type(AlamelCluster), intent(in):: alamel_cluster
-        real(DP), dimension(10), intent(in):: stress_cluster    !! Stress state as calculated by simplex. 
+        real(DP), dimension(10), intent(in):: stress_cluster    !! Stress state as calculated by simplex.
                                                                 !! I.e. a 10D vector representing the stress state of both grains in their respective reference frames.
         real(DP), dimension(3, 3):: homogenized_stress
 
-        homogenized_stress = ((convert_stress_strain_space(stress_cluster(1:5)) .fromframe. alamel_cluster%grains(1)%orientation) &
-                             + (convert_stress_strain_space(stress_cluster(6:10)) .fromframe. alamel_cluster%grains(2)%orientation)) &
+        homogenized_stress = ((deviatoric_to_tensor(stress_cluster(1:5)) .fromframe. alamel_cluster%grains(1)%orientation) &
+                             + (deviatoric_to_tensor(stress_cluster(6:10)) .fromframe. alamel_cluster%grains(2)%orientation)) &
                              / 2._DP
     end function
 
     !> Assemble the Taylor coefficients of the individual grains and relaxations into a single matrix.
     pure function get_taylor_coeffs(alamel_cluster) result(coeffs)
-        type(AlamelCluster), intent(in):: alamel_cluster                
+        type(AlamelCluster), intent(in):: alamel_cluster
         real(DP), dimension(10, total_systems(alamel_cluster)):: coeffs
 
         integer:: i, &
@@ -211,11 +212,11 @@ contains
         crss(:, sum(n_systems)+1:) = 0._DP
     end function
 
-    !> See [[MesoModel:get_stress]] 
+    !> See [[MesoModel:get_stress]]
     function alamel_get_stress(this, cluster_, v_grad) result(stress)
         class(AlamelModel), intent(in):: this
-        class(Cluster), target, intent(inout):: cluster_ 
-        real(DP), dimension(3, 3), intent(in):: v_grad  
+        class(Cluster), target, intent(inout):: cluster_
+        real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
         real(DP), dimension(total_systems(cluster_)):: slip_rates, &
@@ -244,7 +245,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: v_grad
 
         this%velocity_gradient = v_grad
-        this%imposed_spin_rate = antisymmetric_part(this%velocity_gradient)
+        this%imposed_spin_rate = spin_to_tensor(tensor_to_spin(v_grad)) !Strip symmetric component
         this%deformation_gradient_increment =  matrix_exponential_small_norm(this%velocity_gradient/2._DP)
         this%deformation_gradient_during_time_step = matmul(this%deformation_gradient_increment, this%deformation_gradient)
         this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
@@ -254,8 +255,8 @@ contains
     subroutine alamel_deform(this, cluster_, stress, slip)
         class(AlamelModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
-        real(DP), dimension(3, 3), intent(out):: stress                 
-        real(DP), intent(out):: slip                                    
+        real(DP), dimension(3, 3), intent(out):: stress
+        real(DP), intent(out):: slip
         real(DP)::                  orientation_increment(3, 3), &
                                     strain_grain(5), &
                                     strain_relaxations(5), &
@@ -337,8 +338,8 @@ contains
 
                 orientation_increment = UNIT_MATRIX_3X3 &
                                         -(this%imposed_spin_rate .toframe. grain_%orientation) &                !Change of reference frame
-                                        +convert_spin(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &     !Spin induced by activation of slip systems
-                                        +convert_spin(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
+                                        +spin_to_tensor(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &     !Spin induced by activation of slip systems
+                                        +spin_to_tensor(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
                 grain_%orientation = matmul(orientation_increment, grain_%orientation)
             end associate
         end do
@@ -350,7 +351,7 @@ contains
 
     !> Determine the weight of a cluster
     !>
-    !> Rough estimation based on the boundary plane orientation relative to the grain shape.     
+    !> Rough estimation based on the boundary plane orientation relative to the grain shape.
     real(DP) function cluster_weight(alamel_cluster, def_grad) result(weight)
         type(AlamelCluster), intent(in):: alamel_cluster
         real(DP), intent(in):: def_grad(3, 3)

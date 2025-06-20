@@ -3,6 +3,7 @@
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
+    use conversions
     use criRange
     use criUncomment, only: readValue
     use dmcStressDrivenModule
@@ -136,7 +137,7 @@ contains
         !
         ! Set sigma_t in such way that deviatoric part is of unit length
         sigma_t = 0.D0
-        sigma_t(1, 1) = SQR1P5/sqrt(this%rho**2-this%rho+1.D0)
+        sigma_t(1, 1) = sqrt(1.5_DP)/sqrt(this%rho**2-this%rho+1.D0)
         sigma_t(2, 2) = this%rho*sigma_t(1, 1)
         !
         i = 1
@@ -145,40 +146,40 @@ contains
             ! use von Mises guess as a default
             useVMGuess = .true.
             !
-            fi2 = -fi2/RAD_TO_DEG
+            fi2 = deg_to_rad(-fi2)
             ! Calculate rotation matrix
-            Mrot = from_euler_angles([fi1, phi, fi2])
+            Mrot = euler_to_tensor([fi1, phi, fi2])
 
             ! Rotate from "tensile" to material coordinate system
             sigma = rotate_to(sigma_t, Mrot)
             !
 
-            target_stress_mode = convert_stress_strain_space(sigma)
+            target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
             call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
             !
-            SonA = convert_stress_strain_space(stress)
-            SmIdent = convert_stress_strain_space(stress / norm2(stress))  ! stress mode for found strain mode
+            SonA = deviatoric_to_tensor(stress)
+            SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
-            D_t = rotate_from(convert_stress_strain_space(strain_mode), Mrot)
+            D_t = rotate_from(deviatoric_to_tensor(strain_mode), Mrot)
             S_t = rotate_from(SonA, Mrot)
             !
             !(***) Prepare next iteration if re-using is requested.
             if (this%use_stability_improvements) then
                 Dresume_t = D_t
-                residual_resume = norm2(deviatoric_to_voigt(residual))
+                residual_resume = norm2(deviatoric_to_unscaled_voigt(residual))
             endif
             !
             ! Calculate output variables
             !
             associate(r => results)
                 !
-                r%phis(i) = fi2*RAD_TO_DEG
+                r%phis(i) = rad_to_deg(fi2)
                 r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
-                r%residuals(i) = norm2(deviatoric_to_voigt(residual))
+                r%residuals(i) = norm2(deviatoric_to_unscaled_voigt(residual))
                 ! Optional: Taylor factor can be retrieved
                 if (this%calculate_MFactor) then
                     call getTaylorFactor(1, r%mfactors(i), info)

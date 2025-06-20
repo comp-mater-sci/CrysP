@@ -1,6 +1,7 @@
 !> Data types for stress evolution outputs
 module dmcEvolutionOutputRecord
-    use utils
+    use base_defs
+    use conversions
     use dmcIncrementationControl, only: IncrementationControlVariables
     use dmcStressDrivenModule
 
@@ -46,8 +47,8 @@ contains
     real(DP), intent(in):: stress_norm
     real(DP), intent(in):: residual_norm
 
-        this%vm_strain = SQR0P67*norm2(icv%vP_step)
-        this%vm_strain_total = SQR0P67*norm2(icv%vP_total)
+        this%vm_strain = deviatoric_to_von_mises(icv%vP_step)
+        this%vm_strain_total = deviatoric_to_von_mises(icv%vP_total)
         this%norm_P_abs = norm2(icv%vP_abs)
         !
         this%dotWonA = strain_mode .dot. stress_mode * stress_norm
@@ -57,8 +58,8 @@ contains
 
         this%taylor_factor = taylor_factor
 
-        this%A = convert_stress_strain_space(strain_mode)
-        this%SonA = convert_stress_strain_space(stress_mode)
+        this%A = deviatoric_to_tensor(strain_mode)
+        this%SonA = deviatoric_to_tensor(stress_mode)
 
         this%P_inc_evol = De
         this%S_evol = Se

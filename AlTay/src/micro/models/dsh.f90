@@ -11,7 +11,8 @@
 !> @endnote
 
 module dsh
-    use utils
+    use base_defs
+    use math_utils
     use constitutive_model
     use parameters
     use logging
@@ -25,7 +26,7 @@ module dsh
 
     real(DP), parameter:: MINFRAC = 2.0D-3,   &     !! See PhD thesis Peeters
                           LOWFRAC = 10.0D-3         !! See PhD thesis Peeters
-    real(DP), dimension(6, 3), parameter:: CBBNORMAL = transpose(real(SLIP_SYSTEMS_BCC_110(:,1, 1:12:2), DP)/SQR2) !! Normal on the
+    real(DP), dimension(6, 3), parameter:: CBBNORMAL = transpose(real(SLIP_SYSTEMS_BCC_110(:,1, 1:12:2), DP)/sqrt(2._DP)) !! Normal on the
                                                                                                                    !! cell block boundaries. See PhD thesis Peeters.
 !! Different DSH models use the CBB normal vectors to derive the dislocation movement vectors
 
@@ -53,14 +54,14 @@ module dsh
         real(DP):: alfa         !! Dislocation interaction parameter
         real(DP):: f            !! Volume fraction of cell block boundaries
         real(DP):: tau0         !! Initial critical resolved shear stress on all slip systems
-        real(DP):: I            !! Immobilization coefficient of Cell Boundaries      
+        real(DP):: I            !! Immobilization coefficient of Cell Boundaries
         real(DP):: R            !! Recovery coefficient of cell boundaries
-        real(DP):: Iwd          !! Immobilization coefficient of CBBs    
+        real(DP):: Iwd          !! Immobilization coefficient of CBBs
         real(DP):: Rwd          !! Recovery coefficient of CBBs
         real(DP):: Rncg         !! Recovery coefficient of old CBBs and polarity of old CBBs
-        real(DP):: beta1        !! 1st coeff. micro shear band cut-through of old CBBs    
-        real(DP):: beta2        !! 2nd coeff. micro shear band cut-through of old CBBs    
-        real(DP):: Iwp          !! Immobilization coefficient of polarity of CBBs    
+        real(DP):: beta1        !! 1st coeff. micro shear band cut-through of old CBBs
+        real(DP):: beta2        !! 2nd coeff. micro shear band cut-through of old CBBs
+        real(DP):: Iwp          !! Immobilization coefficient of polarity of CBBs
         real(DP):: Rwp          !! Recovery coefficient of polarity of CBBs
         real(DP):: Rrev         !! Recovery coefficient of polarity CBBs during bauschinger
         real(DP):: R2           !! Recovery coefficient of CBs due to reversal polarity flux
@@ -72,7 +73,7 @@ module dsh
         real(DP), dimension(24, 6):: alfa_G_b_eff = 0._DP
     contains
         procedure, nopass:: get_parameters => dsh_get_parameters  !! Inherited from ConstitutiveModel
-        
+
         procedure, nopass:: validate_parameters => dsh_validate_parameters !! Inherited from ConstitutiveModel
                 procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
 
@@ -158,21 +159,21 @@ contains
             call log_error('DSH', 'validate_parameters', ERR_VAL, 'DSH only supports BCC24 slip systems.')
 
         call parameter_check_bounds(params .find. 'b',     0._dp,   1.e-8_dp)
-        call parameter_check_bounds(params .find. 'G',     1.e4_dp, 5.e5_dp) 
-        call parameter_check_bounds(params .find. 'alfa',  0._dp,   5._dp)   
-        call parameter_check_bounds(params .find. 'f',     0._dp,   1.0_dp)  
-        call parameter_check_bounds(params .find. 'tau0',  0._dp,   1.e4_dp) 
-        call parameter_check_bounds(params .find. 'I',     0._dp,   10._dp)  
-        call parameter_check_bounds(params .find. 'Iwd',   0._dp,   10._dp)  
-        call parameter_check_bounds(params .find. 'Iwp',   0._dp,   10._dp)  
+        call parameter_check_bounds(params .find. 'G',     1.e4_dp, 5.e5_dp)
+        call parameter_check_bounds(params .find. 'alfa',  0._dp,   5._dp)
+        call parameter_check_bounds(params .find. 'f',     0._dp,   1.0_dp)
+        call parameter_check_bounds(params .find. 'tau0',  0._dp,   1.e4_dp)
+        call parameter_check_bounds(params .find. 'I',     0._dp,   10._dp)
+        call parameter_check_bounds(params .find. 'Iwd',   0._dp,   10._dp)
+        call parameter_check_bounds(params .find. 'Iwp',   0._dp,   10._dp)
         call parameter_check_bounds(params .find. 'R',     0._dp,   1.e-6_dp)
         call parameter_check_bounds(params .find. 'Rwd',   0._dp,   1.e-6_dp)
         call parameter_check_bounds(params .find. 'Rncg',  0._dp,   1.e-6_dp)
         call parameter_check_bounds(params .find. 'Rwp',   0._dp,   1.e-6_dp)
         call parameter_check_bounds(params .find. 'Rrev',  0._dp,   1.e-6_dp)
         call parameter_check_bounds(params .find. 'R2',    0._dp,   1.e-6_dp)
-        call parameter_check_bounds(params .find. 'beta1', 0._dp,   100._dp) 
-        call parameter_check_bounds(params .find. 'beta2', 0._dp,   100._dp) 
+        call parameter_check_bounds(params .find. 'beta1', 0._dp,   100._dp)
+        call parameter_check_bounds(params .find. 'beta2', 0._dp,   100._dp)
     end subroutine
 
     !> Main model initialization procedure common to all variants of the DSH model family.

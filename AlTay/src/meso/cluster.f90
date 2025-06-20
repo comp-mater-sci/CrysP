@@ -4,7 +4,7 @@
 !> This module is needed because defining the cluster type in the top-level meso module would create a circular dependency.
 !> @endnote
 module cluster_module
-    use utils
+    use base_defs
     use grain_module
 
     implicit none

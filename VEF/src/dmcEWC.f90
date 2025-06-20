@@ -1,19 +1,20 @@
 #include "criMacros.fpp"
 !> Calculations of Equi-Work Contours
 module dmcEWC
-use criRange
-use criNumerics
-use criLinearMap
-use criConfigReader
-use commonConfig
-use dmcStressDrivenEvolutionModule
-use dmcIncrementationControl
-use dmcEvolutionOutputrecord
-use dmcResultFileOutput
-use commonUtils
-use utils
+    use conversions
+    use criRange
+    use criNumerics
+    use criLinearMap
+    use criConfigReader
+    use commonConfig
+    use dmcStressDrivenEvolutionModule
+    use dmcIncrementationControl
+    use dmcEvolutionOutputrecord
+    use dmcResultFileOutput
+    use commonUtils
+    use base_defs
 
-implicit none
+    implicit none
 
     public:: EWCModule
     private
@@ -188,7 +189,7 @@ contains
             enddo
             !
             ! Evaluate the reference mode
-            sigma = from_voigt(this%reference_stress_mode)
+            sigma = unscaled_voigt_to_tensor(this%reference_stress_mode)
             info = this%calculateStressPath(sigma, this%control, ref_output)
             if (info /= VEF_OK) return
             !
@@ -227,11 +228,11 @@ contains
             i = i+1
             !
             vTheta(i) = theta
-            theta = theta/RAD_TO_DEG
+            theta = deg_to_rad(theta)
             !
             ! Calculate S by combining the base vectors
             sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta)
-            sigma = from_voigt(sigma_vector)
+            sigma = unscaled_voigt_to_tensor(sigma_vector)
             !
             ! Re-initialize AlTay
             info = this%reinitializeLibAltay()

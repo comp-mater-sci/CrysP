@@ -2,7 +2,8 @@
 
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
-use utils
+use base_defs
+use conversions
 use criConfigReader
 use dmcDeformationDrivenModule
 use dmcResultFileOutput
@@ -49,14 +50,14 @@ contains
         MapItem('strainmode', strainmode_id), &
         MapItem('strain', strain_id)]
     !
-    double precision, dimension(9):: tmp_deformation
+    double precision, dimension(3,3):: tmp_deformation
     double precision, dimension(6):: tmp_strain
 
     real(DP):: step_size, &
                 tmp, &
                 tmp_deformation_rate(3, 3)
     type(StrainDrivenStepConfig):: tmp_step_config
-        
+
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
         RETURN_IF(info /= VEF_OK, info = this%DeformationDrivenModule%readConfig(cnfunit))
         info = VEF_ERROR
@@ -79,13 +80,13 @@ contains
                 select case(deformation)
                 case(deformation_id)
                     if (.not. readValue(cnfunit, tmp_deformation)) return
-                    tmp_deformation_rate = from_voigt(tmp_deformation)
-                !
+                    tmp_deformation_rate = tmp_deformation
+
                 case(strainmode_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
                     if (.not. readValue(cnfunit, step_size)) return
                     !
-                    tmp_deformation_rate = from_voigt(tmp_strain)
+                    tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
                     ! Normalize the deformation
                     tmp = norm2(tmp_deformation_rate)
                     if (tmp < epsilon(0.D0)) then
@@ -96,7 +97,7 @@ contains
                 !
                 case(strain_id)
                     if (.not. readValue(cnfunit, tmp_strain)) return
-                    tmp_deformation_rate = from_voigt(tmp_strain)
+                    tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
                 !
                 case default
                     return
@@ -198,15 +199,16 @@ contains
     integer, intent(in), optional                 :: step_id
     !
     integer:: step, increment, ierr, n_steps, first_step, last_step, n_increments
+    real(DP):: l_voigt(6)
     !
     integer, parameter:: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
     character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
         'step', 'increment', & ! 2 fields
-        'L_11','L_22','L_33','L_12','L_23','L_31','L_21','L_32','L_13',  & ! 9 fields  (I)
-        'D_11','D_22','D_33','D_12','D_23','D_13', & ! 6 fields  (I)
+        'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  & ! 9 fields  (I)
+        'D_11','D_22','D_33','D_23','D_13','D_12', & ! 6 fields  (I)
         'O_12','O_23','O_13', & ! 3 fields  (I)
-        'A_11','A_22','A_33','A_12','A_23','A_13', & ! 6 fields  (I)
-        'S_11','S_22','S_33','S_12','S_23','S_13', & ! 6 fields  (I)
+        'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (I)
+        'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
         'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 7 fields
         ]
         !
@@ -236,13 +238,14 @@ contains
                     !
                     do increment = 1, n_increments
                           associate(v => step_output%increments(increment))
+                              l_voigt = tensor_to_unscaled_voigt(v%L)
                               write(iounit, fmt = 710, iostat = ierr) &
                                           step, increment, &            ! 2 fields
-                                          to_voigt(v%L, 9), &         ! 9 fields: velocity gradient
-                                          to_voigt(v%D, 6), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                          convert_spin(v%O), &         ! 3 fields: spin tensor
-                                          to_voigt(v%A, 6), &         ! 6 fields: strain mode
-                                          to_voigt(v%S, 6), &         ! 6 fields: deviatoric stress
+                                          v%L, &         ! 9 fields: velocity gradient
+                                          tensor_to_unscaled_voigt(v%L), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                          tensor_to_spin(v%L), &         ! 3 fields: spin tensor
+                                          normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
+                                          tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
                                           v%vm_strain_begin, &
                                           v%vm_strain_end, &
                                           v%vMeqStrainRate, &

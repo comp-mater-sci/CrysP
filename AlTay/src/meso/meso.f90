@@ -10,7 +10,7 @@
 !> levels.
 
 module meso
-    use utils
+    use base_defs
     use parameters
     use cluster_module
     use meso_model

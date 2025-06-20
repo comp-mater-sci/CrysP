@@ -1,7 +1,8 @@
 !> Basic configuration of AlTay in a form of formalized data structures.
 
 module altayConfig
-    use utils
+    use base_defs
+    use math_utils
     use parameters
     use slip_systems
 

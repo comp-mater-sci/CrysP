@@ -3,16 +3,17 @@
 !> dmcUDSA (Uniaxially-Dominated Stress Analysis)  allows one to track anisotropic properties
 !> along deformation due to the uniaxial tension or compression stress.
 module dmcUDSA
-use criRange
-use criNamedRange
-use criConfigReader
-use dmcStressDrivenEvolutionModule
-use dmcIncrementationControl
-use dmcEvolutionOutputRecord
-use commonUtils
-use qrsTypes
-use commonConfig
-use utils
+    use conversions
+    use criRange
+    use criNamedRange
+    use criConfigReader
+    use dmcStressDrivenEvolutionModule
+    use dmcIncrementationControl
+    use dmcEvolutionOutputRecord
+    use commonUtils
+    use qrsTypes
+    use commonConfig
+    use base_defs
 
 implicit none
 
@@ -129,7 +130,7 @@ contains
     implicit none
     class(UDSAModule), intent(inout)            :: this
     integer, intent(out)                        :: info
-    
+
     ! Note about naming convention for variables:
     !    - All variables for vectors and tensors suffixed with _t are expressed
     !      in the "tensile sample coordinate system".
@@ -160,7 +161,7 @@ contains
     ! Take uniaxial/{slightly biaxial} tensile stress, to be rotated to the given sample
     ! orientation.
     !
-    !> Uniaxial stress state. Negative value denotes compressive state; 
+    !> Uniaxial stress state. Negative value denotes compressive state;
     !> non-negative values are used for tensile state.
     sigma_t = 0.D0
     stress_direction = merge(-1.D0, 1.D0, (this%stress_state_id == compression_state))
@@ -194,11 +195,11 @@ contains
         case(sample_orientation_arbitrary_id)
             sample_orientation = this%sample_orientation
         end select
-        sample_orientation = sample_orientation/RAD_TO_DEG
+        sample_orientation = deg_to_rad(sample_orientation)
         !
         ! Rotate stress from "tensile" to material coordinate system
         ! Calculate rotation matrix
-        Mrot = from_euler_angles(sample_orientation)
+        Mrot = euler_to_tensor(sample_orientation)
         sigma = rotate_from(sigma_t, Mrot)
         !
         ! Open and initialize result files
@@ -231,7 +232,7 @@ contains
                 S_t = rotate_to(v%SonA, Mrot)
 
                 ! Total deviatoric strain (Note: the total, not per-step)
-                P_t = convert_stress_strain_space(v%icv%vP_total)  ! at the beginning of the increment
+                P_t = deviatoric_to_tensor(v%icv%vP_total)  ! at the beginning of the increment
                 P_t_end = P_t+v%P_inc_evol  ! at the end of the increment
                 P_t = rotate_to(P_t, Mrot)
                 P_t_end = rotate_to(P_t_end, Mrot)

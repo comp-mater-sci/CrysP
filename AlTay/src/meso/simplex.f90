@@ -1,5 +1,6 @@
 module simplex
-    use utils
+    use base_defs
+    use math_utils
     use logging
 
     implicit none
