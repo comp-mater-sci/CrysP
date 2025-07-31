@@ -3,7 +3,6 @@ program alamDMC
     use dmcBasicModule
     use dmcASR
     use dmcQRS
-    use dmcUDSA
     use dmcYld
     use dmcEWC
     use dmcADP
@@ -38,8 +37,6 @@ program alamDMC
     select case(moduleName)
         case('QRS')
             allocate(QRSModule:: the_module)
-        case('UDSA')
-            allocate(UDSAModule:: the_module)
         case('ASR')
             allocate(ASRModule:: the_module)
         case('YLD')

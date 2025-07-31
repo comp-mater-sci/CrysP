@@ -1,6 +1,6 @@
 DEFAULT_INCREMENT = 'StrainTensor\n'    \
                     + '0.25\n'          \
-                    + '0.05'
+                    + '0.01'
 
 MODE_CONFIG =  {'ADP':                                              \
                     'True\n'                                        \
@@ -37,16 +37,6 @@ MODE_CONFIG =  {'ADP':                                              \
                'QRS':                                               \
                      'uniform\n'                                     \
                     + '0.0    90.0   5.0\n'                         \
-                    + 'True',                                       \
-               'UDSA':                                              \
-                     'inplane\n'                                     \
-                    + 'discrete\n'                                  \
-                    + '2\n'                                         \
-                    + '0.0 45.0\n'                             \
-                    + 'StrainTensorComponent\n'                              \
-                    + '0.4\n'                                       \
-                    + '0.05\n'                                      \
-                    + 'tension\n'                                   \
                     + 'True',                                       \
                'YLD':                                               \
                      'uniform\n'                                     \

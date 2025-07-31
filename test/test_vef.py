@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
-EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'UDSA':'uds','YLD':'xyld'}
+EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'YLD':'xyld'}
 GENERATED_DATA = []
 TEST_ROOT = Path.cwd()
 TEST_RUN = TEST_ROOT/'run'
@@ -27,7 +27,7 @@ TEST_REF = TEST_ROOT/'reference'
 TEST_INPUT = TEST_ROOT/'input'
 
 #Configurations that can be tested
-MODES = ['ADP', 'ASR', 'EWC','QRS','UDSA','YLD']
+MODES = ['ADP', 'ASR', 'EWC','QRS','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
 HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'DSH_EDGE', 'DSH_SCREW', 'DSH_LOOP']
@@ -71,16 +71,6 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
         if result.returncode != 0:
             print(result.stderr.decode())
         assert result.returncode == 0
-
-        if mode == 'UDSA':
-            with open('out.uds', 'w') as out:
-                for orientation in [0,45]:
-                    with open(f'out_{orientation}_000.uds','r') as out_oriented:
-                        if orientation == 0:
-                            out.write(out_oriented.read())
-                        else:
-                            out.writelines((out_oriented.read().splitlines(True))[2:])
-
 
         shutil.move(TEST_RUN/f'out.{EXTENSIONS[mode]}', out_path)
         GENERATED_DATA.append((mode, algorithm, slip_system, hardening_model))
@@ -136,8 +126,6 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
             cols = ['eps_xx', 'eps_yy', 'eps_zz', 'eps_xy', 'eps_yz', 'eps_xz']
         elif mode == 'YLD':
             cols = ['sigma_x', 'sigma_y']
-        elif mode == 'UDSA':
-            cols = ['S']
         elif mode == 'QRS':
             cols = ['q-value', 'r-value', 's-value']
 
