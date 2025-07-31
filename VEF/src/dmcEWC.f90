@@ -2,7 +2,6 @@
 !> Calculations of Equi-Work Contours
 module dmcEWC
     use conversions
-    use criRange
     use criNumerics
     use criLinearMap
     use criConfigReader
@@ -13,12 +12,14 @@ module dmcEWC
     use dmcResultFileOutput
     use commonUtils
     use base_defs
+    use logging
 
     implicit none
 
     public:: EWCModule
     private
 
+    character(*), parameter:: MOD_NAME = 'dmcEWC'
     integer, parameter, private:: n_base_vectors = 2
 
 
@@ -35,9 +36,9 @@ module dmcEWC
                                                 [6, n_base_vectors]), DP)
 
         !> Range of angles that provide stress ratios
-        class(range_type), pointer               :: ptr_theta_range => null()
-
-        class(range_type), pointer               :: ptr_contourlevel_range => null()
+        real(DP):: angular_resolution
+        real(DP):: max_strain
+        real(DP):: strain_increment
 
         logical                                :: report_state = .false.
 
@@ -70,6 +71,8 @@ contains
     class(EWCModule), intent(inout)            :: this
     integer, intent(in)                        :: cnfunit
     !
+    character(*), parameter:: PROC_NAME = 'EWCModule_readConfig'
+
     integer:: i, id
     logical:: use_default_settings
     !
@@ -109,11 +112,16 @@ contains
         endif
         !
         ! Contour lines
-        this%ptr_theta_range => rangeFromConfig(cnfunit, info)
-        if (info /= VEF_OK .or. .not. associated(this%ptr_theta_range)) return
-        this%ptr_contourlevel_range => rangeFromConfig(cnfunit, info)
-        if (info /= VEF_OK .or. .not. associated(this%ptr_contourlevel_range)) return
-        if (.not. readValue(cnfunit, this%n_intervals)) return
+        if (.not. readValue(cnfunit, this%angular_resolution)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution.')
+        this%angular_resolution = deg_to_rad(this%angular_resolution)
+
+        if (.not. readValue(cnfunit, this%max_strain)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read maximum strain level.')
+        if (.not. readValue(cnfunit, this%strain_increment)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read strain increment.')
+        if (.not. readValue(cnfunit, this%n_intervals)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read number of intervals.')
         ! Advanced settings
         if (.not. readValue(cnfunit, use_default_settings)) return
         if (.not. use_default_settings) then
@@ -139,7 +147,6 @@ contains
 #undef MSG_GROUP_ERRORS
     !
     end function
-
 
 
     subroutine EWCModule_run(this, info)
@@ -172,10 +179,10 @@ contains
         ! Super-class first
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
         !
-        ! Prepare the input data: array of increments, and
-        ! array of results.
-        n_theta = this%ptr_theta_range%size()
-        n_contours = this%ptr_contourlevel_range%size()
+        !Subtract tolerance to deal with roundoff errors
+        n_theta = ceiling(2*PI / this%angular_resolution - TOLERANCE)
+        !+1 because we need to at least get to the requested strain
+        n_contours = ceiling(this%max_strain / this%strain_increment - TOLERANCE) + 1
         !
         allocate(results(0:n_contours, n_theta))
         vTheta => results(0, :)
@@ -185,7 +192,7 @@ contains
         if (this%use_reference_stress_mode) then
             allocate(vEquivalentStrainLevels(n_contours))
             do i = 1, n_contours
-                tmp_flag = this%ptr_contourlevel_range%next(vEquivalentStrainLevels(i))
+                vEquivalentStrainLevels(i) = (i-1)*this%strain_increment
             enddo
             !
             ! Evaluate the reference mode
@@ -208,7 +215,7 @@ contains
         else
             ! Direct selection of the work levels
             do i = 1, n_contours
-                tmp_flag = this%ptr_contourlevel_range%next(vPlasticWorkLevels(i))
+                vPlasticWorkLevels(i) = (i-1)*this%strain_increment
             enddo
         endif
         !
@@ -222,13 +229,11 @@ contains
         !            Note: the iterations of the main loop are conceptually independent
         !            of each other. Current implementation of the back-end CP model
         !            prevents exploiting that.
-        npoints = this%ptr_theta_range%size()
-        i =  0
-        do while (this%ptr_theta_range%next(theta))
-            i = i+1
+        npoints = n_theta
+        theta = 0._DP
+        do i=1,npoints
             !
-            vTheta(i) = theta
-            theta = deg_to_rad(theta)
+            vTheta(i) = rad_to_deg(theta)
             !
             ! Calculate S by combining the base vectors
             sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta)
@@ -252,12 +257,9 @@ contains
                     results(j, i) = interpolate(bi, vPlasticWorkLevels(j))
                 enddo
             else
-                ! something is wrong with the input data (size of arrays, content?)
-                ! Let's ignore this line.
-                results(:,i) = 0.D0
-                cycle
+                call log_error(MOD_NAME, 'run', ERR_VAL, 'Error in input data')
             endif
-
+            theta = theta + this%angular_resolution
         enddo
         if (info /= VEF_OK) return
         !

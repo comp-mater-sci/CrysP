@@ -4,27 +4,24 @@
 !> Yield locus calculations
 module dmcYld
     use conversions
-    use criRange
     use criUncomment, only: readValue
-    use commonConfig
     use dmcStressDrivenModule
     use commonUtils
+    use logging
 
     implicit none
 
     public YldModule
     private
 
-
     integer, parameter                               :: nbase = 3
+    character(*), parameter:: MOD_NAME = 'dmvYld'
 
 
     !> Class responsible for calculations of yield locus sections
     type, extends(StressDrivenModule):: YldModule
 
-        class(range_type), pointer                 :: ptr_theta_range
-
-        class(range_type), pointer                 :: ptr_w_range
+        real(DP):: angular_resolution
 
         real(DP), dimension(6, nbase):: base_vectors = real(reshape( &
                                             [1, 0, 0, 0, 0, 0, & ! First base vector
@@ -71,6 +68,8 @@ contains
     class(YldModule), intent(inout)            :: this
     integer, intent(in)                        :: cnfunit
     !
+    character(*), parameter:: PROC_NAME = 'yldmodule_readconfig'
+
     integer:: i
     real(DP):: norm
     logical:: normalize, use_default_settings
@@ -78,13 +77,11 @@ contains
         info = this%StressDrivenModule%ReadConfig(cnfunit)
         if (info /= VEF_OK) return
         ! Read parameters specific for the dmcYld program
-        this%ptr_theta_range => rangeFromConfig(cnfunit, info)
-        if ( (info /= VEF_OK) .or. (.not. associated(this%ptr_theta_range)) ) return
+        if (.not. readValue(cnfunit, this%angular_resolution)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
+        this%angular_resolution = deg_to_rad(this%angular_resolution)
         if (.not. readValue(cnfunit, use_default_settings)) return
-        if (use_default_settings) then
-            ! use the defaults:
-            allocate(uniformRange:: this%ptr_w_range)
-        else
+        if (.not. use_default_settings) then
             info = VEF_ERROR
             this%base_vectors = 0.D0
             if (.not. readValue(cnfunit, normalize)) return
@@ -97,8 +94,6 @@ contains
             enddo
             !
             if (.not. readValue(cnfunit, this%normalizeSm)) return
-            this%ptr_w_range => rangeFromConfig(cnfunit, info)
-            if ( (info /= 0) .or. (.not. associated(this%ptr_w_range)) ) return
             if (.not. readValue(cnfunit, this%do_scaling)) return
             if (this%do_scaling) then
                 if (.not. readValue(cnfunit, this%scaling_vector)) return
@@ -126,10 +121,8 @@ contains
                     scal_s_rel, &
                     sigma_vector(6)
         type(yldResult), dimension(:), allocatable  :: yldRes
-        class(range_type), allocatable             :: theta_range
         integer                 :: i, npoints, ofunit
         integer:: posA, posB
-        logical:: first_run
         real(DP), parameter:: beta = 0._DP
 
         real(DP):: target_stress_mode(5), &
@@ -143,19 +136,13 @@ contains
         RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
         !
         info = VEF_ERROR
-        if (.not. (associated(this%ptr_theta_range) .and. associated(this%ptr_w_range)))  return
         !
-        npoints = this%ptr_theta_range%size()
-        if (npoints <= 0) then
-                write(display_unit, fmt='(A)') 'Cannot run using empty range of theta angles.'
-                return
-        endif
-        !
+        npoints = ceiling(2*PI / this%angular_resolution - TOLERANCE)
+
         ! Open the main output file
         RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xyld', ofunit))
         !
         ! Fix the configuration: no need for anything except for the stresses.
-        !
         iunilen = 1.D0
         if (this%do_scaling) then
             target_stress_mode = unscaled_voigt_to_deviatoric(this%scaling_vector)
@@ -168,56 +155,42 @@ contains
         !
         allocate(yldRes(npoints))
         !
-        first_run = .true.
-        do while (this%ptr_w_range%next(w))
-            ! Clone theta range
-            allocate(theta_range, source = this%ptr_theta_range)
-            !
-            ! Loop over the range of theta angles
-            i = 1
-            do while (theta_range%next(theta))
+        theta = 0._DP
+        do i=1,npoints
 
-                theta = deg_to_rad(theta)
-                ! Combine the base vectors
-                ! Note: explicit temporary sigma_vector prevents runtime warning about
-                !       a temporary created in a call to convert_voigt
-                sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
-                                + w*this%base_vectors(:,3)
-                target_stress_mode = unscaled_voigt_to_deviatoric(sigma_vector)
-                target_stress_norm = norm2(target_stress_mode)
-                target_stress_mode = target_stress_mode / target_stress_norm
+            ! Combine the base vectors
+            ! Note: explicit temporary sigma_vector prevents runtime warning about
+            !       a temporary created in a call to convert_voigt
+            sigma_vector = this%base_vectors(:,1)*cos(theta) + this%base_vectors(:,2)*sin(theta) &
+                            + this%base_vectors(:,3)
+            target_stress_mode = unscaled_voigt_to_deviatoric(sigma_vector)
+            target_stress_norm = norm2(target_stress_mode)
+            target_stress_mode = target_stress_mode / target_stress_norm
 
-                call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
-                scal_s_rel = norm2(stress)/target_stress_norm*iunilen
+            scal_s_rel = norm2(stress)/target_stress_norm*iunilen
 
-                yldRes(i) = yldResult(rad_to_deg(theta), w, norm2(stress), scal_s_rel, &
-                                      norm2(stress), &
-                                      strain_mode .dot. stress, &
-                                      [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
-                                      [0._DP, 0._DP], beta, norm2(deviatoric_to_unscaled_voigt(residual)))
+            yldRes(i) = yldResult(rad_to_deg(theta), 1._DP, norm2(stress), scal_s_rel, &
+                                  norm2(stress), &
+                                  strain_mode .dot. stress, &
+                                  [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
+                                  [0._DP, 0._DP], beta, norm2(deviatoric_to_unscaled_voigt(residual)))
 
-                i = i+1
-            enddo
-            deallocate(theta_range)
-            !
-            ! Post-process the results. Get the lower bound of container
-            ! size and iterator-some points may have been dropped.
-            npoints = min(size(yldRes), i-1)
-            do i = 1, npoints
-                ! Get the positions of the bracketing points:
-                posA = merge(npoints-1, i-1, i == 1)
-                posB = merge(2, i+1, i == npoints)
-                ! write(display_unit, *) posA, i, posB
-                call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
-                                       1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
-                yldRes(i)%beta = rad_to_deg(yldRes(i)%beta)
-            enddo
-            !
-            call writeYldResults(ofunit, yldRes(:npoints), info, write_header = first_run)
-            first_run = .false.
-        enddo
-        !
+
+            theta = theta + this%angular_resolution
+        end do
+
+        do i=1,npoints
+            ! Get the positions of the bracketing points:
+            posA = merge(npoints, i-1, i == 1)
+            posB = merge(1, i+1, i == npoints)
+            call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
+                                   1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
+            yldRes(i)%beta = rad_to_deg(yldRes(i)%beta)
+        end do
+
+        call writeYldResults(ofunit, yldRes(:npoints), info, write_header = .true.)
         close(ofunit)
         info = VEF_OK
     !

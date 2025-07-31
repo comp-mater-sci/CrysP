@@ -28,19 +28,17 @@ MODE_CONFIG =  {'ADP':                                              \
                      'reference\n'                                   \
                     + '1.0 0.0 0.0 0.0 0.0 0.0\n'                   \
                     + DEFAULT_INCREMENT + '\n'                      \
-                    + 'uniform\n'                                   \
-                    + '0.0    360.0  36.0\n'                        \
-                    + 'uniform\n'                                   \
-                    + '0.0    0.3  0.1\n'                           \
+                    + '36.0\n'                                      \
+                    + '0.3\n'                                       \
+                    + '0.1\n'                                       \
                     + '2\n'                                         \
                     + 'True',                                       \
                'QRS':                                               \
                      'uniform\n'                                     \
-                    + '0.0    90.0   5.0\n'                         \
+                    + '0.0    90.0   1.0\n'                         \
                     + 'True',                                       \
                'YLD':                                               \
-                     'uniform\n'                                     \
-                    + '0.0 360.0 36.0\n'                            \
+                      '36.0\n'                            \
                     + 'True'}
 
 HARDENING_CONFIG = {'NONE':                         \
