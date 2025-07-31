@@ -1,7 +1,7 @@
 /*!
 \page page_alamdmc_usage AlamDMC Usage
 
-The program AlamDMC can be started from the Windows command line. General form of command 
+The program AlamDMC can be started from the Windows command line. General form of command
 line parameters is:
 \verbatim
 alamDMC  module_name  configuration_file  [token_file]
@@ -10,9 +10,8 @@ alamDMC  module_name  configuration_file  [token_file]
 The `alamDMC` program provides the following modules:
 
 
--# \ref module_udsa - the keyword stands for Uniaxially-Dominated Stress Analysis.
 -# \ref module_asr - the keyword stands for Arbitrary Stress Response.
--# \ref module_qrs - the keyword stands for Q-values, R-values and S-values 
+-# \ref module_qrs - the keyword stands for Q-values, R-values and S-values
 (properties that characterize plastic anisotropy in uniaxial stress state).
 -# \ref module_yld - the keyword stands for YieLD locus.
 -# \ref module_ewc - the keyword stands for Equi-Work Contour.

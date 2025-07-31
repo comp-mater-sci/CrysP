@@ -6,14 +6,16 @@ module dmcQRS
     use conversions
     use criUncomment, only: readValue
     use dmcStressDrivenModule
-    use commonConfig
     use commonUtils
     use dmcResultFileOutput
+    use logging
 
     implicit none
 
-    public:: QRSModule
     private
+    public:: QRSModule
+
+    character(*), parameter:: MOD_NAME = 'dmcQRS'
 
 
     type qrsData
@@ -23,7 +25,7 @@ module dmcQRS
     end type
 
     type, extends(StressDrivenModule):: QRSModule
-        class(range_type), pointer                 :: ptr_range
+        real(DP):: angular_resolution
 
         real(DP)                          :: rho = 0.D0
 
@@ -98,20 +100,24 @@ contains
 
 
     integer function QRSModule_readConfig(this, cnfunit) result(info)
-    implicit none
-    class(QRSModule), intent(inout)              :: this
-    integer, intent(in)                        :: cnfunit
-    !
-    logical:: use_default_settings
-    !
+        class(QRSModule), intent(inout)              :: this
+        integer, intent(in)                        :: cnfunit
+
+        character(*), parameter:: PROC_NAME = 'QRSModule_readconfig'
+
+        logical:: use_default_settings
+
         use_default_settings = .false.
         info = this%StressDrivenModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
         info = VEF_ERROR
-        ! Read parameters specific for the QRSModule module
-        this%ptr_range => rangeFromConfig(cnfunit, info)
-        if ( (info /= VEF_OK) .or. (.not. associated(this%ptr_range)) ) return
-        !
+
+        ! Read parameters specific for the QRS module
+        if (.not. readValue(cnfunit, this%angular_resolution)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
+
+        this%angular_resolution = deg_to_rad(this%angular_resolution)
+
         if (.not. readValue(cnfunit, use_default_settings)) return
         if (.not. use_default_settings) then
                 info = VEF_ERROR
@@ -120,42 +126,40 @@ contains
                 if (.not. readValue(cnfunit, this%fold_symmetry)) return
                 if (.not. readValue(cnfunit, this%use_stability_improvements)) return
         endif
-        !
+
         ! Override the requests for outputs:
         this%altay%output_config%nfile = 0   ! texture
         this%output%outputRequest = .false.       ! idem.
-        !
+
         info = VEF_OK
-    !
     end function
 
 
     subroutine QRSModule_run(this, info)
-    implicit none
-    class(QRSModule), intent(inout)      :: this
-    integer, intent(out)                 :: info
+        class(QRSModule), intent(inout)      :: this
+        integer, intent(out)                 :: info
 
-    ! Convention: strain rate and stress tensors in
-    ! - "Tensile sample coordinate system" have suffix _t
-    ! - "Material coordinate system" have no suffix.
-    real(DP), dimension(3, 3)         ::  Mrot, &
-                                        D_t, &
-                                        S_t, &
-                                        sigma, &
-                                        sigma_t, &
-                                        sona, &
-                                        dresume_t, &
-                                        smident
-    real(DP)                        :: fi1, phi, fi2, residual_resume
-    integer     :: i, npoints, npoints_ok, ofunit
-    logical     :: useVMGuess
-    !
-    type(QRSOutputData):: results
+        ! Convention: strain rate and stress tensors in
+        ! - "Tensile sample coordinate system" have suffix _t
+        ! - "Material coordinate system" have no suffix.
+        real(DP), dimension(3, 3)         ::  Mrot, &
+                                            D_t, &
+                                            S_t, &
+                                            sigma, &
+                                            sigma_t, &
+                                            sona, &
+                                            dresume_t, &
+                                            smident
+        real(DP)                        :: fi2, residual_resume
+        integer     :: i, ofunit, npoints
+        logical     :: useVMGuess
+        !
+        type(QRSOutputData):: results
 
-    real(DP):: target_stress_mode(5), &
-               strain_mode(5), &
-               stress(5), &
-               residual(5)
+        real(DP):: target_stress_mode(5), &
+                   strain_mode(5), &
+                   stress(5), &
+                   residual(5)
 
 
     !
@@ -164,33 +168,30 @@ contains
         !
         info = VEF_ERROR
         !
-        npoints = this%ptr_range%size()
-        !
         RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xqrs', ofunit))
         !
+        npoints = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
         results = QRSOutputData(npoints)
         !
-        fi1 = 0.D0
-        phi = 0.D0
+        fi2 = 0._DP
         !
         ! Set sigma_t in such way that deviatoric part is of unit length
-        sigma_t = 0.D0
-        sigma_t(1, 1) = sqrt(1.5_DP)/sqrt(this%rho**2-this%rho+1.D0)
+        sigma_t = 0._DP
+        sigma_t(1, 1) = sqrt(1.5_DP)/sqrt(this%rho**2-this%rho+1._DP)
         sigma_t(2, 2) = this%rho*sigma_t(1, 1)
         !
-        i = 1
-        do while (this%ptr_range%next(fi2))
+
+        do i=1,npoints
             !
             ! use von Mises guess as a default
             useVMGuess = .true.
-            !
-            fi2 = deg_to_rad(-fi2)
+
             ! Calculate rotation matrix
-            Mrot = euler_to_tensor([fi1, phi, fi2])
+            ! - due to passive rotation convention
+            Mrot = euler_to_tensor([0._DP,0._DP, -fi2])
 
             ! Rotate from "tensile" to material coordinate system
             sigma = rotate_to(sigma_t, Mrot)
-            !
 
             target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
@@ -227,25 +228,11 @@ contains
                     endif
                 endif
             end associate
-            !
-            i = i+1
-            !
-            info = VEF_OK
-        enddo
-        !
-        if (info == VEF_ERROR) return
 
-        npoints_ok = i-1
-        if (npoints /= npoints_ok) then
-            write(display_unit, fmt = 850) 'There were unconverged solutions, so some of datapoints are dropped'
-            ! FIXME: temporary solution: folding cannot be done if there are missing points.
-            if (this%fold_symmetry) then
-                write(display_unit, fmt = 850) 'Folding is turned off.'
-                this%fold_symmetry = .false.
-            endif
-        endif
-        !
-        info = this%fileOutput(ofunit, results, header=.true., restrict = npoints_ok)
+            fi2 = fi2 + this%angular_resolution
+        enddo
+
+        info = this%fileOutput(ofunit, results, header=.true.)
         close(ofunit)
 
 #define MSG_GROUP_ERRORS
@@ -256,13 +243,12 @@ contains
 
 
     !> Write out results to the output file
-    integer function QRSModule_fileOutput(this, iounit, data_record, header, restrict) result(info)
+    integer function QRSModule_fileOutput(this, iounit, data_record, header) result(info)
     implicit none
     class(QRSModule), intent(in)                 :: this
     integer, intent(in)                          :: iounit !< Output IO unit
     type(QRSOutputData), intent(in), optional     :: data_record !< Data to be written out
     logical, intent(in), optional                 :: header !< Header to be written out
-    integer, intent(in), optional                 :: restrict
     !
     integer:: i, npoints, left, right, stride, ierr
     !
@@ -281,10 +267,6 @@ contains
             info = VEF_ERROR
             ! FIXME: flawed assumption, other arrays may have different size
             ALLOCATED_SIZE(npoints, data_record%phis)
-            if (present(restrict)) then
-                RETURN_IF_WITH(npoints < restrict, info = VEF_ERROR)
-                npoints = restrict
-            endif
             ! Write output file
             if (this%fold_symmetry) then
                 ! Average over symmetric positions

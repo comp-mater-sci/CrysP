@@ -5,7 +5,6 @@ module dmcEWC
     use criNumerics
     use criLinearMap
     use criConfigReader
-    use commonConfig
     use dmcStressDrivenEvolutionModule
     use dmcIncrementationControl
     use dmcEvolutionOutputrecord

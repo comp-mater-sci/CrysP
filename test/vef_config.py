@@ -34,8 +34,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     + '2\n'                                         \
                     + 'True',                                       \
                'QRS':                                               \
-                     'uniform\n'                                     \
-                    + '0.0    90.0   1.0\n'                         \
+                      '1.0\n'                         \
                     + 'True',                                       \
                'YLD':                                               \
                       '36.0\n'                            \

@@ -18,13 +18,10 @@ add_library(trust_region STATIC trust_region.c)
 add_executable(alamDMC
 criConfigReader.f90
 criLinearMap.f90
-criNamedRange.f90
 criNumerics.f90
-criRange.f90
 criUncomment.f90
 abstractModule.f90
 basicModule.f90
-commonConfig.f90
 commonUtils.f90
 dmcResultFileOutput.f90
 evolutionOutputRecord.f90
