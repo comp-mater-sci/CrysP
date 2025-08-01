@@ -2,27 +2,19 @@ DEFAULT_INCREMENT = 'StrainTensor\n'    \
                     + '0.25\n'          \
                     + '0.05'
 
-ADP_INCREMENT = 'fixed\n'               \
-                + 'discrete\n'          \
-                + '4\n'                 \
-                + '0.1 0.25 0.5 0.9'
-
 MODE_CONFIG =  {'ADP':                                              \
                     'True\n'                                        \
                     + '3\n'                                           \
                     + 'deformation\n'                               \
                     + '0.5 0.0 0.0 0.0 -0.25 0.0 0.0 0.0 -0.25\n'   \
                     + 'True\n'                                      \
-                    + ADP_INCREMENT + '\n'                          \
                     + 'strainmode\n'                                \
                     + '-1.0 -1.0 0.0 0.0 0.0 0.0\n'                 \
                     + '0.2\n'                                       \
                     + 'True\n'                                      \
-                    + ADP_INCREMENT + '\n'                          \
                     + 'strain\n'                                    \
                     + '0.1 -0.1 0.0 0.0 0.0 0.0\n'                  \
-                    + 'True\n'                                      \
-                    + ADP_INCREMENT,                                \
+                    + 'True',                                      \
                 'ASR':                                              \
                      '0.0 0.0 0.0\n'                                 \
                     + '2\n'                                         \

@@ -1,20 +1,23 @@
 #include "criMacros.fpp"
 
+
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
-use base_defs
-use conversions
-use criConfigReader
-use dmcDeformationDrivenModule
-use dmcResultFileOutput
-use dmcStrainDrivenStep
-implicit none
+    use base_defs
+    use conversions
+    use criConfigReader
+    use dmcResultFileOutput
+    use dmcStrainDrivenStep
+    use dmcBasicModule
 
-    public:: ADPModule
+    implicit none
+
     private
+    public:: ADPModule
 
     !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
-    type, extends(DeformationDrivenModule):: ADPModule
+    type, extends(BasicModule):: ADPModule
+        type(StrainDrivenStep),dimension(:),allocatable :: steps
     contains  ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
         procedure, pass(this):: readConfig => ADPModule_readConfig
         procedure, pass(this):: run => ADPModule_run
@@ -30,38 +33,34 @@ contains
 
     !> Read configuration from IO unit (type-bound function)
     integer function ADPModule_readConfig(this, cnfunit) result(info)  ! call with 1 argument (cnfunit) when referenced through object
-    implicit none
-    class(ADPModule), intent(inout)   :: this !< passed implicitly
-    integer, intent(in)              :: cnfunit !< IO input unit; pass explicitly
-    !
-    integer     :: n_steps, ierr, i, deformation, incrementation
-    !
-    integer, parameter:: n_incrementation_types = 3 !< number of supported incrementation types
-    integer, parameter:: none_incrementation_id = 0, auto_incrementation_id = 1,  fixed_incrementation_id = 2
-    type(MapItem), dimension(n_incrementation_types):: incrementation_type_names = [&
-        MapItem('none', none_incrementation_id), &
-        MapItem('auto', auto_incrementation_id), &
-        MapItem('fixed', fixed_incrementation_id)]
-    !
-    integer, parameter:: n_deformation_types = 3
-    integer, parameter:: deformation_id = 1, strainmode_id = 2, strain_id = 3
-    type(MapItem), dimension(n_deformation_types):: deformation_type_names = [&
-        MapItem('deformation', deformation_id), &
-        MapItem('strainmode', strainmode_id), &
-        MapItem('strain', strain_id)]
-    !
-    double precision, dimension(3,3):: tmp_deformation
-    double precision, dimension(6):: tmp_strain
+        class(ADPModule), intent(inout)   :: this !< passed implicitly
+        integer, intent(in)              :: cnfunit !< IO input unit; pass explicitly
 
-    real(DP):: step_size, &
-                tmp, &
-                tmp_deformation_rate(3, 3)
-    type(StrainDrivenStepConfig):: tmp_step_config
+        integer, parameter:: n_deformation_types = 3
+        integer, parameter:: deformation_id = 1, strainmode_id = 2, strain_id = 3
+        type(MapItem), dimension(n_deformation_types):: deformation_type_names = [&
+            MapItem('deformation', deformation_id), &
+            MapItem('strainmode', strainmode_id), &
+            MapItem('strain', strain_id)]
+
+        integer:: n_steps, ierr, i, deformation
+        real(DP):: tmp_deformation(3,3), &
+                   tmp_strain(6), &
+                   step_size, &
+                   tmp, &
+                   tmp_deformation_rate(3, 3)
+        logical :: default_solver_config
 
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
-        RETURN_IF(info /= VEF_OK, info = this%DeformationDrivenModule%readConfig(cnfunit))
+        ! read output and AlTay configuration sections
+        info = this%BasicModule%readConfig(cnfunit)
+        ! Read "solver config flag" that belongs to the global section
+        ! as it is done in the stressDrivenModule.
         info = VEF_ERROR
-        !
+        if (.not. readValue(cnfunit, default_solver_config)) return
+        ! For the time being, only default solver configuration is accepted for this module.
+        if (.not. default_solver_config) return
+
         ! Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
         !
@@ -70,70 +69,40 @@ contains
         RETURN_ON_WITH(allocate(this%steps(n_steps), stat = ierr), ierr /= 0, info = VEF_ERROR)
         !
         do i = 1, n_steps
-            associate(step => this%steps(i))
-                !
-                ! Read the step definition and convert it into
-                !  StrainDrivenStep object step
-                !
-                ! Read the step input type
-                if (.not. readKeyword(cnfunit, deformation_type_names, deformation)) return
-                select case(deformation)
-                case(deformation_id)
-                    if (.not. readValue(cnfunit, tmp_deformation)) return
-                    tmp_deformation_rate = tmp_deformation
+            ! Read the step definition and convert it into
+            !  StrainDrivenStep object step
+            ! Read the step input type
+            if (.not. readKeyword(cnfunit, deformation_type_names, deformation)) return
+            select case(deformation)
+            case(deformation_id)
+                if (.not. readValue(cnfunit, tmp_deformation)) return
+                tmp_deformation_rate = tmp_deformation
 
-                case(strainmode_id)
-                    if (.not. readValue(cnfunit, tmp_strain)) return
-                    if (.not. readValue(cnfunit, step_size)) return
-                    !
-                    tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
-                    ! Normalize the deformation
-                    tmp = norm2(tmp_deformation_rate)
-                    if (tmp < epsilon(0.D0)) then
-                        write(display_unit, fmt = 900) 'Norm of the strain mode must not be zero'
-                        return
-                    endif
-                    tmp_deformation_rate = tmp_deformation_rate/tmp*step_size
+            case(strainmode_id)
+                if (.not. readValue(cnfunit, tmp_strain)) return
+                if (.not. readValue(cnfunit, step_size)) return
                 !
-                case(strain_id)
-                    if (.not. readValue(cnfunit, tmp_strain)) return
-                    tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
-                !
-                case default
+                tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
+                ! Normalize the deformation
+                tmp = norm2(tmp_deformation_rate)
+                if (tmp < epsilon(0.D0)) then
+                    write(display_unit, fmt = 900) 'Norm of the strain mode must not be zero'
                     return
-                end select
-                !
-                if (.not. readValue(cnfunit, tmp_step_config%update_state)) return
-                !
-                tmp_step_config%deformation_rate = tmp_deformation_rate
-                tmp_step_config%output_state = this%output%outputRequest
-                !
-                ! Read the incrementation type
-                if (.not. readKeyword(cnfunit, incrementation_type_names, incrementation)) return
-                !
-                ! Phase 1: allocate right step type
-                select case(incrementation)
-                case(none_incrementation_id)
-                    ! Allocate step with one fixed increment
-                    allocate(step%step, source = StrainDrivenFixedStep(1))
-                !
-                case(auto_incrementation_id)
-                    allocate(StrainDrivenFixedStep:: step%step)
-
-                case(fixed_incrementation_id)
-                    allocate(StrainDrivenFixedStep:: step%step)
-                    info = step%step%readConfig(cnfunit)
-                    if (info /= VEF_OK) return
-                !
-                case default
-                    info = VEF_ERROR
-                    return
-                end select
-                !
-                ! Phase 2: set the config
-                step%step%config = tmp_step_config
-
-            end associate
+                endif
+                tmp_deformation_rate = tmp_deformation_rate/tmp*step_size
+            !
+            case(strain_id)
+                if (.not. readValue(cnfunit, tmp_strain)) return
+                tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
+            !
+            case default
+                return
+            end select
+            !
+            if (.not. readValue(cnfunit, this%steps(i)%update_state)) return
+            !
+            this%steps(i)%velocity_gradient = tmp_deformation_rate
+            this%steps(i)%output_state = this%output%outputRequest
         enddo
         info = VEF_OK
     !
@@ -154,7 +123,7 @@ contains
     integer:: iounit, i_step, n_steps
     !
         ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%DeformationDrivenModule%run(info))
+        RETURN_IF(info /= VEF_OK, call this%BasicModule%run(info))
         !
         ! Open output file
         RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.adp',iounit))
@@ -169,10 +138,8 @@ contains
         !
         ! Main loop over the steps
         do i_step = 1, n_steps
-            associate(step => this%steps(i_step)%step, &
+            associate(step => this%steps(i_step), &
                       step_output => output%steps(i_step))
-                ! Set up the step
-                RETURN_IF(info /= VEF_OK, info = step%setUp())
                 ! Execute the step
                 RETURN_IF(info /= VEF_OK, info = step%execute(step_output))
                 ! Output the results

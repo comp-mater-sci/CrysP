@@ -99,8 +99,9 @@ contains
         character(max_line_len)   :: buffer
         integer:: ierr
 
+        isOK = .false.
         if (skipComment(inunit, buffer)) read(buffer, fmt=*,iostat = ierr) val
-        isOK = ierr == 0
+        if (ierr == 0) isOK = .true.
     end function
 
 end module

@@ -26,7 +26,6 @@ abstractModule.f90
 basicModule.f90
 commonConfig.f90
 commonUtils.f90
-deformationDrivenModule.f90
 dmcResultFileOutput.f90
 evolutionOutputRecord.f90
 incrementationControl.f90
@@ -35,7 +34,6 @@ resultTable.f90
 strainDrivenStep.f90
 stressDrivenEvolutionModule.f90
 stressDrivenModule.f90
-substeppingConfig.f90
 dmcADP.f90
 dmcASR.f90
 dmcEWC.f90
