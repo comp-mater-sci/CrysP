@@ -27,14 +27,10 @@ contains
         integer::   nunit,  &
                     info,   &
                     nrec,   &
-                    nstap,  &
                     i
         character(40):: title
-        real(DP)::  stap,   &
-                    weight, &
-                    initial_sum_slip
         real(DP), dimension(:,:), allocatable:: orientations
-        character(*), parameter:: PROC_NAME = 'load_texture'
+        character(*), parameter:: PROC_NAME = 'read_texture'
 
         open(newunit = nunit, file = trim(fname), status='old',form='formatted',iostat = info)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
@@ -46,9 +42,9 @@ contains
         if (nrec > 0) allocate(orientations(3, nrec))
 
         do i = 1, nrec
-            read(nunit, 96, iostat = info) orientations(3, i), orientations(2, i), orientations(1, i), stap, nstap, weight, initial_sum_slip
-96          format(4F10.0, I5, 5X, 2F10.0)
-            if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
+            read(nunit, 96, iostat = info) orientations(3, i), orientations(2, i), orientations(1, i)
+96          format(3F10.0)
+            if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read orientation')
         enddo
         orientations = deg_to_rad(orientations)
 
