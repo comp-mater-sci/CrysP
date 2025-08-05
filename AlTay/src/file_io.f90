@@ -35,14 +35,13 @@ contains
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
 
         nrec = 0
-        read (nunit, 94, iostat = info) nrec
-94      format(I6, 5x, A)
+        read (nunit, *, iostat = info) nrec
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
         if (nrec > 0) allocate(orientations(3, nrec))
 
+
         do i = 1, nrec
-            read(nunit, 96, iostat = info) orientations(1, i), orientations(2, i), orientations(3, i)
-96          format(3F10.0)
+            read(nunit, *, iostat = info) orientations(1, i), orientations(2, i), orientations(3, i)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read orientation')
         enddo
         orientations = deg_to_rad(orientations)
