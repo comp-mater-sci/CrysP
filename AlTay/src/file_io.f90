@@ -28,7 +28,6 @@ contains
                     info,   &
                     nrec,   &
                     i
-        character(40):: title
         real(DP), dimension(:,:), allocatable:: orientations
         character(*), parameter:: PROC_NAME = 'read_texture'
 
@@ -36,13 +35,13 @@ contains
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
 
         nrec = 0
-        read (nunit, 94, iostat = info) nrec, title
-94      format(I5, 5x, A)
+        read (nunit, 94, iostat = info) nrec
+94      format(I6, 5x, A)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
         if (nrec > 0) allocate(orientations(3, nrec))
 
         do i = 1, nrec
-            read(nunit, 96, iostat = info) orientations(3, i), orientations(2, i), orientations(1, i)
+            read(nunit, 96, iostat = info) orientations(1, i), orientations(2, i), orientations(3, i)
 96          format(3F10.0)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read orientation')
         enddo
