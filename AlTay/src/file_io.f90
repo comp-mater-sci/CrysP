@@ -39,8 +39,6 @@ contains
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
         if (nrec > 0) allocate(orientations(3, nrec))
 
-
-
         do i = 1, nrec
             read(nunit, *, iostat = info) orientations(1, i), orientations(2, i), orientations(3, i)
             if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read orientation')
