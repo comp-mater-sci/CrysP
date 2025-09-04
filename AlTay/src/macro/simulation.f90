@@ -76,11 +76,17 @@ module simulation
                    slip_cluster, &
                    weight_cluster
 
+
+        !Check if the velocity gradient is purely deviatoric
+        if (abs(velocity_gradient(1,1) + velocity_gradient(2,2)+ velocity_gradient(3,3)) > TOLERANCE) &
+            call log_error(MOD_NAME, 'simulation_run', ERR_VAL, 'The velocity gradient must be purely deviatoric')
+
+
         n_clusters = size(clusters)
         cluster_size = acnf%simul_init%NGR
 
         von_mises_strain_rate = tensor_to_von_mises(velocity_gradient)
-        deformation_gradient_increment = matrix_exponential_small_norm(velocity_gradient)
+        deformation_gradient_increment = matrix_exponential(velocity_gradient)
         call meso_prepare_deformation(velocity_gradient)
 
         total_weight = 0._DP
