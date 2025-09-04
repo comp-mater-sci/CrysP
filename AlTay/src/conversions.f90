@@ -124,6 +124,14 @@ module conversions
             real(DP), dimension(3,3), intent(in):: tensor !! Tensor in small strain setting.
             real(DP), dimension(6):: voigt                !! Stress/strain following the standard voigt component order but without any scaling.
         end function
+
+        !> Extract rotational component of a large deformation gradient
+        !>
+        !> Follows finite strain theory
+        module function tensor_to_rotation(F) result(R)
+            real(DP), dimension(3,3), intent(in):: F
+            real(DP), dimension(3,3):: R  !Rotational component of the deformation gradient in passive convention
+        end function
     end interface
 end module
 
@@ -226,39 +234,22 @@ contains
     end procedure
 
     module procedure tensor_to_euler
-        real(DP) :: U(3,3), VT(3,3), S(3), R(3,3)
-        real(DP) :: work(15)
-        integer :: info
+        real(DP) :: R(3,3)
 
-        R = tensor
-
-        !Perform polar decomposition to isolate rotational component of input matrix.
-        !Useful even if the input matrix is a rotation matrix due to accumulation of roundoff errors during the simulation.
-
-        ! Perform SVD: M = U * S * VT
-        call dgesvd('A', 'A', 3, 3, R, 3, S, U, 3, VT, 3, work, size(work), info)
-
-        ! Compute orthonormal rotation matrix R = U * VT
-        R = matmul(U, VT)
-
-        ! Ensure R is proper rotation (det = +1)
-        if (det(R) < 0._DP) then
-            U(:,3) = -U(:,3)
-            R = matmul(U, VT)
-        end if
+        R = tensor_to_rotation(tensor)
 
         if (R(3,3) + TOLERANCE > 1._DP) then !Phi is very close to being out of bounds
-            euler(1) = atan2(-R(2, 1), R(2, 2))  ! range: [-pi, pi[
+            euler(1) = atan2(-R(1, 2), R(2, 2))  ! range: [-pi, pi[
             euler(2) = 0._DP
             euler(3) = 0._DP
         else if (R(3,3) - TOLERANCE < -1._DP) then !Phi is very close to being out of bounds
-            euler(1) = atan2(R(2, 1), -R(2, 2))  ! range: [-pi, pi[
+            euler(1) = atan2(R(1, 2), -R(2, 2))  ! range: [-pi, pi[
             euler(2) = 0._DP
             euler(3) = 0._DP
         else
-            euler(1) = atan2(R(3, 1), -R(3, 2))  ! range: [-pi, pi[
+            euler(1) = atan2(R(1, 3), -R(2, 3))  ! range: [-pi, pi[
             euler(2) = acos(R(3,3))
-            euler(3) = atan2(R(1, 3), R(2, 3))  ! range: [-pi, pi[
+            euler(3) = atan2(R(3, 1), R(3, 2))  ! range: [-pi, pi[
         end if
 
         !No need to check angles(2) because acos(-1+TOLERANCE) << (PI - TOLERANCE)
@@ -289,5 +280,43 @@ contains
         voigt(5) = (tensor(1, 3) + tensor(3,1)) / 2._DP
         voigt(6) = (tensor(1, 2) + tensor(2,1)) / 2._DP
     end procedure
+
+    !> Imported from DAMASK
+    !> https://damask2.mpie.de/bin/view/Home/WebHome.html
+    module procedure tensor_to_rotation
+      real(DP), dimension(3,3) ::  C                 ! right Cauchy-Green tensor
+      real(DP), dimension(3) :: &
+        lambda, &                                     ! principal stretches
+        I_C, &                                        ! invariants of C
+        I_U                                           ! invariants of U
+      real(DP), dimension(2) :: &
+        I_F                                           ! first two invariants of F
+      real(DP) :: x,Phi
+
+
+      C = matmul(transpose(F),F)
+      I_C = math_invariantsSym33(C)
+      I_F = [math_trace33(F), 0.5_DP*(math_trace33(F)**2 - math_trace33(matmul(F,F)))]
+
+      x = math_clip(I_C(1)**2 -3.0_DP*I_C(2),0.0_DP)**(3.0_DP/2.0_DP)
+      if (x /= 0._DP) then
+        Phi = acos(math_clip((I_C(1)**3 -4.5_DP*I_C(1)*I_C(2) +13.5_DP*I_C(3))/x,-1.0_DP,1.0_DP))
+        lambda = I_C(1) +(2.0_DP * sqrt(math_clip(I_C(1)**2-3.0_DP*I_C(2),0.0_DP))) &
+                        *cos((Phi-2._DP*PI*[1.0_DP,2.0_DP,3.0_DP])/3.0_DP)
+        lambda = sqrt(math_clip(lambda,0.0_DP)/3.0_DP)
+      else
+        lambda = sqrt(I_C(1)/3.0_DP)
+      end if
+
+      I_U = [sum(lambda), lambda(1)*lambda(2)+lambda(2)*lambda(3)+lambda(3)*lambda(1), product(lambda)]
+
+      R = I_U(1)*I_F(2) * UNIT_MATRIX_3X3 &
+        +(I_U(1)**2-I_U(2)) * F &
+        - I_U(1)*I_F(1) * transpose(F) &
+        + I_U(1) * transpose(matmul(F,F)) &
+        - matmul(F,C)
+      R = transpose(R*det(R)**(-1.0_DP/3.0_DP))
+    end procedure
+
 end submodule
 

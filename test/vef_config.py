@@ -1,12 +1,12 @@
 DEFAULT_INCREMENT = 'StrainTensor\n'    \
                     + '0.25\n'          \
-                    + '0.05'
+                    + '0.01'
 
 MODE_CONFIG =  {'ADP':                                              \
                     'True\n'                                        \
                     + '3\n'                                           \
                     + 'deformation\n'                               \
-                    + '0.5 0.0 0.0 0.0 -0.25 0.0 0.0 0.0 -0.25\n'   \
+                    + '0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n'   \
                     + 'True\n'                                      \
                     + 'strainmode\n'                                \
                     + '-1.0 -1.0 0.0 0.0 0.0 0.0\n'                 \
@@ -36,7 +36,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     + 'True',                                       \
                'QRS':                                               \
                      'uniform\n'                                     \
-                    + '0.0    90.0   5.0\n'                         \
+                    + '0.0    90.0   1.0\n'                         \
                     + 'True',                                       \
                'UDSA':                                              \
                      'inplane\n'                                     \
@@ -45,7 +45,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     + '0.0 45.0\n'                             \
                     + 'StrainTensorComponent\n'                              \
                     + '0.4\n'                                       \
-                    + '0.05\n'                                      \
+                    + '0.01\n'                                      \
                     + 'tension\n'                                   \
                     + 'True',                                       \
                'YLD':                                               \
