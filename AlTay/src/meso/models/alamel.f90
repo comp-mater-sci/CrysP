@@ -102,7 +102,7 @@ contains
             j = 1
             do i = 1, size(clusters)
                 clusters(i)%grains = grains(2*(i-1)+1:2*i)
-                clusters(i)%initial_boundary_orientation = matmul(this%deformation_gradient, transpose(euler_to_tensor(boundaries(:,j))))
+                clusters(i)%initial_boundary_orientation = transpose(euler_to_tensor(boundaries(:,j)))
                 n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
                 do k = 1, 2
                     ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
@@ -246,7 +246,7 @@ contains
 
         this%velocity_gradient = v_grad
         this%imposed_spin_rate = spin_to_tensor(tensor_to_spin(v_grad)) !Strip symmetric component
-        this%deformation_gradient_increment =  matrix_exponential_small_norm(this%velocity_gradient/2._DP)
+        this%deformation_gradient_increment =  matrix_exponential(this%velocity_gradient/2._DP)
         this%deformation_gradient_during_time_step = matmul(this%deformation_gradient_increment, this%deformation_gradient)
         this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
@@ -257,12 +257,15 @@ contains
         class(Cluster), target, intent(inout):: cluster_
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
-        real(DP)::                  orientation_increment(3, 3), &
-                                    strain_grain(5), &
+        real(DP)::                  strain_grain(5), &
                                     strain_relaxations(5), &
                                     slip_grain, &
                                     spin_coeffs_relaxations(3, 2), &
-                                    taylor_coeffs(10, total_systems(cluster_))
+                                    taylor_coeffs(10, total_systems(cluster_)), &
+                                    v_grad(3,3), &
+                                    stress_cluster(10), &
+                                    imposed_strain_rate(10), &
+                                    lattice_spin(3,3)
         integer::                   i, j, &
                                     n_systems(2), &
                                     n_active_simplex, &
@@ -272,8 +275,6 @@ contains
         integer, dimension(:), allocatable:: ind_overstressed_slip_systems
         real(DP), dimension(total_systems(cluster_)):: slip_rates, &
                                                        rss
-        real(DP), dimension(10):: stress_cluster, &
-                                  imposed_strain_rate
         type(AlamelCluster), pointer:: cluster_ptr
 
         cluster_ptr => to_alamel_cluster(cluster_)
@@ -328,19 +329,15 @@ contains
                 slip_grain = sum(abs(slip_rates_grain))
                 slip = slip+slip_grain
 
-                !Update hardening model state
-                call micro_deform(grain_, 1._DP, slip_rates_grain)
 
                 !Get spin coefficients of the relaxations corresponding to the current grain
                 do i = 1, 2
                     spin_coeffs_relaxations(:,i) = cluster_ptr%relaxations(i)%spin_coeffs((j-1)*3+1:j*3)
                 end do
 
-                orientation_increment = UNIT_MATRIX_3X3 &
-                                        -(this%imposed_spin_rate .toframe. grain_%orientation) &                !Change of reference frame
-                                        +spin_to_tensor(matmul(grain_%model%spin_coeffs, slip_rates_grain)) &     !Spin induced by activation of slip systems
-                                        +spin_to_tensor(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
-                grain_%orientation = matmul(orientation_increment, grain_%orientation)
+                lattice_spin = spin_to_tensor(matmul(grain_%model%spin_coeffs, slip_rates_grain)) +spin_to_tensor(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
+                v_grad = this%velocity_gradient - (lattice_spin .fromframe. grain_%orientation)
+                call micro_deform(grain_, 1._DP, slip_rates_grain, this%imposed_spin_rate)
             end associate
         end do
 

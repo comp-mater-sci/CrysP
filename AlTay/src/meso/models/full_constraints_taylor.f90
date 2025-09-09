@@ -95,6 +95,9 @@ contains
         real(DP), dimension(5):: stress_cluster
         type(TaylorCluster), pointer:: cluster_ptr
 
+
+
+
         cluster_ptr => to_taylor_cluster(cluster_)
 
         associate (grain_ => cluster_ptr%grains(1))
@@ -117,13 +120,14 @@ contains
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
 
-        real(DP)::                  orientation_increment(3, 3)
         integer::                   n_systems, &
                                     n_active_simplex
         real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)):: slip_rates, &
-                                                     rss
-        real(DP), dimension(5):: stress_cluster, &
-                                 imposed_strain_rate
+                                                                               rss
+        real(DP):: stress_cluster(5), &
+                   imposed_strain_rate(5), &
+                   lattice_spin(3,3), &
+                   v_grad_grain(3,3)
         integer, dimension(:), allocatable:: ind_active_slip_systems
         type(TaylorCluster), pointer:: cluster_ptr
 
@@ -146,8 +150,6 @@ contains
 
             stress = deviatoric_to_tensor(stress_cluster) .fromframe. grain_%orientation
 
-
-
             call  assess_slip_system_activity(grain_, rss, slip_rates, n_active_simplex, ind_active_slip_systems)
 
             if (allocated(ind_active_slip_systems)) then
@@ -160,13 +162,7 @@ contains
 
             slip = sum(abs(slip_rates))
 
-            !Update hardening model state
-            call micro_deform(grain_, 1._DP, slip_rates)
-
-            orientation_increment = UNIT_MATRIX_3X3 &
-                                    -(this%imposed_spin_rate .toframe. grain_%orientation) &     !Change of reference frame
-                                    +spin_to_tensor(matmul(grain_%model%spin_coeffs, slip_rates))  !Spin induced by activation of slip systems
-            grain_%orientation = matmul(orientation_increment, grain_%orientation)
+            call micro_deform(grain_, 1._DP, slip_rates, this%imposed_spin_rate)
         end associate
     end subroutine
 end module

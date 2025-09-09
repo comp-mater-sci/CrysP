@@ -168,28 +168,47 @@ contains
     end function
 
 
-    !> Compute matrix exponential for a (3, 3)-matrix with small norm, i.e. ||A|| << 1
+    !> Compute matrix exponential for a (3, 3)-matrix
     !>
-    !> If ||A|| > 1, catastrophic cancellation in floating point arithmetic can occur
     !> Uses the Taylor Series Expansion:
     !> exp(A) == I+A + A^2/(2!) + A^3/(3!) + ... + A^n/(n!) + ...
-    pure function matrix_exponential_small_norm(A) result(exponential)
-        real(DP), dimension(3, 3), intent(in):: A                   !! Input matrix with norm << 1.
+    !> For Matrices with large norm, quadratic scaling is applied to ensure stability of the Taylor series expansion.
+    !> Reference: DOI: 10.1137/S00361445024180 (method 3)
+    pure function matrix_exponential(A) result(exponential)
+        real(DP), dimension(3, 3), intent(in):: A                   !! Input matrix
         real(DP), dimension(3, 3)            :: exponential, &
-                                                term                   !Term in taylor series expansion
-        integer                              :: k                      !Index of current term
+                                                term, &                   !Term in taylor series expansion
+                                                A_scaled(3,3)
+        integer                              :: k, &
+                                                i, &
+                                                n_steps
 
-        exponential = UNIT_MATRIX_3X3
-        term        = UNIT_MATRIX_3X3
-        k           = 0
 
-        if (norm2(A) > 1._DP+TOLERANCE) error stop 'Norm of matrix should not be greater than 1!'
 
-        do while (norm2(term) > TOLERANCE)
-            k = k+1
-            term = matmul(term, A) / real(k, DP)
-            exponential = exponential+term
-        end do
+        !If norm is 0, taking logarithm crashes the program so handle with care
+        if (norm2(A) < TOLERANCE) then
+            exponential = UNIT_MATRIX_3X3
+        else
+            !Scale A if its norm is larger than 1
+            n_steps = max(0,ceiling(log(norm2(A)) / log(2._DP)))
+            a_scaled = A / (2**n_steps)
+
+            exponential = UNIT_MATRIX_3X3
+            term        = UNIT_MATRIX_3X3
+            k           = 0
+
+            !Calculate the exponential of the scaled A
+            do while (norm2(term) > TOLERANCE)
+                k = k+1
+                term = matmul(term, a_scaled) / real(k, DP)
+                exponential = exponential+term
+            end do
+
+            !Square the exponential of a_scaled until it corresponds with the exponential of A
+            do i=1,n_steps
+                exponential = matmul(exponential,exponential)
+            end do
+        end if
     end function
 
     !> Rotates the second-rank tensor S to the reference frame given by rotation R.
@@ -288,6 +307,21 @@ contains
         end do
     end function
 
+
+    !> Calculate determinant of a symmetric 3x3 matrix.
+    !>
+    !> Imported from DAMASK
+    !> https://damask2.mpie.de/bin/view/Home/WebHome.html
+    real(DP) pure function math_detSym33(m)
+
+      real(DP), dimension(3,3), intent(in) :: m
+
+
+      math_detSym33 = -(m(1,1)*m(2,3)**2 + m(2,2)*m(1,3)**2 + m(3,3)*m(1,2)**2) &
+                      + m(1,1)*m(2,2)*m(3,3) + 2.0_DP * m(1,2)*m(1,3)*m(2,3)
+
+    end function  math_detSym33
+
     ! Determinant of 3x3 matrix
     pure real(DP) function det(A) result(d)
         real(DP), dimension(3,3), intent(in):: A
@@ -295,5 +329,53 @@ contains
                - A(1,2)*(A(2,1)*A(3,3) - A(2,3)*A(3,1)) &
                + A(1,3)*(A(2,1)*A(3,2) - A(2,2)*A(3,1))
     end function
+
+    !> Limit a scalar value to a certain range (either one or two sided).
+    !>
+    !> Imported from DAMASK
+    !> https://damask2.mpie.de/bin/view/Home/WebHome.html
+    real(DP) pure elemental function math_clip(a, left, right)
+
+      real(DP), intent(in) :: a
+      real(DP), intent(in), optional :: left, right
+
+
+      math_clip = a
+      if (present(left))  math_clip = max(left,math_clip)
+      if (present(right)) math_clip = min(right,math_clip)
+      if (present(left) .and. present(right)) then
+        if (left>right) error stop 'left > right'
+      end if
+
+    end function math_clip
+
+
+    !> Calculate trace of a 3x3 matrix.
+    !>
+    !> Imported from DAMASK
+    !> https://damask2.mpie.de/bin/view/Home/WebHome.html
+    real(DP) pure function math_trace33(m)
+      real(DP), dimension(3,3), intent(in) :: m
+
+      math_trace33 = m(1,1) + m(2,2) + m(3,3)
+    end function math_trace33
+
+    !> invariants of symmetrix 3x3 matrix
+    !>
+    !> Imported from DAMASK
+    !> https://damask2.mpie.de/bin/view/Home/WebHome.html
+    pure function math_invariantsSym33(m)
+
+        real(DP), dimension(3,3), intent(in) :: m
+        real(DP), dimension(3) :: math_invariantsSym33
+
+
+        math_invariantsSym33(1) = math_trace33(m)
+        math_invariantsSym33(2) = m(1,1)*m(2,2) + m(1,1)*m(3,3) + m(2,2)*m(3,3) &
+                                -(m(1,2)**2     + m(1,3)**2     + m(2,3)**2)
+        math_invariantsSym33(3) = math_detSym33(m)
+
+    end function math_invariantsSym33
+
 
 end module

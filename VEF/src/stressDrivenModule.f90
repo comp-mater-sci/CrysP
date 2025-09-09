@@ -16,11 +16,10 @@ module dmcStressDrivenModule
     implicit none
 
     private
-    public:: StressDrivenModule, &
-             OBJECTIVE_THRESHOLD
+    public:: StressDrivenModule
+
 
     character(*), parameter:: MOD_NAME = 'stressDrivenModule'
-    real(DP), parameter:: OBJECTIVE_THRESHOLD = 1.E-2_DP
 
     !> Abstract class implementing basic subset of operations that are shared by all
     !> stress-drien computational modules
