@@ -13,7 +13,6 @@ module dmcStrainDrivenStep
              StepOutput, &
              IncrementOutput
 
-
     !> A strain-(rate) driven step
     type:: StrainDrivenStep
         real(DP), dimension(3, 3):: velocity_gradient

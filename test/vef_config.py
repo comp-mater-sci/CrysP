@@ -6,7 +6,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     'True\n'                                        \
                     + '3\n'                                           \
                     + 'deformation\n'                               \
-                    + '0.5 0.0 0.0 0.0 -0.25 0.0 0.0 0.0 -0.25\n'   \
+                    + '0.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n'   \
                     + 'True\n'                                      \
                     + 'strainmode\n'                                \
                     + '-1.0 -1.0 0.0 0.0 0.0 0.0\n'                 \
@@ -36,7 +36,7 @@ MODE_CONFIG =  {'ADP':                                              \
                     + 'True',                                       \
                'QRS':                                               \
                      'uniform\n'                                     \
-                    + '0.0    90.0   5.0\n'                         \
+                    + '0.0    90.0   1.0\n'                         \
                     + 'True',                                       \
                'YLD':                                               \
                      'uniform\n'                                     \

@@ -102,7 +102,7 @@ int trust_region_solve(const double* target_stress_mode, double* strain_mode, do
     _TRNSPBC_HANDLE_t handle;
 
     //Parameters for the trust region algorithm. These have experimentally been finetuned.
-    const double  OBJECTIVE_THRESHOLD = 0.01;
+    const double  OBJECTIVE_THRESHOLD = 0.001;
     const double  EPSILON = 0.01 * OBJECTIVE_THRESHOLD;
     const double  EPS[] = {EPSILON, OBJECTIVE_THRESHOLD, EPSILON, EPSILON, EPSILON, EPSILON};
     const double  LOWER_BOUND[] = {-1.0, -1.0, -1.0, -1.0, -1.0};

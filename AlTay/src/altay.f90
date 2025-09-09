@@ -101,9 +101,10 @@ contains
     subroutine runSteps(steps, info)
         type(altayStateData), intent(inout)        :: steps !< Definiton of the steps.
         integer, intent(out)                       :: info  !< Exit code: 0 on success.
-        integer:: i
+        integer:: i, j
         logical:: input_ok
-        real(DP):: velocity_gradient(3, 3)
+        real(DP):: v_grad(3, 3)
+        real(DP):: hydrostatic_part
 
         ! Validate input
         info = VEF_ERROR
@@ -115,9 +116,14 @@ contains
 
         do i = 1, steps%nSimulCalls
             steps%this = i
-            velocity_gradient = steps%simulcalls(i)%input%dgf
 
-            call simulation_run(velocity_gradient)
+            v_grad = steps%simulcalls(i)%input%dgf
+            !Remove hydrostatic part from velocity gradient
+            hydrostatic_part = (v_grad(1,1) + v_grad(2,2) + v_grad(3,3)) / 3._DP
+            do j=1,3
+                v_grad(j,j) = v_grad(j,j) - hydrostatic_part
+            end do
+            call simulation_run(v_grad)
 
             if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
         enddo

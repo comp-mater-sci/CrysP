@@ -27,31 +27,24 @@ contains
         integer::   nunit,  &
                     info,   &
                     nrec,   &
-                    nstap,  &
                     i
-        character(40):: title
-        real(DP)::  stap,   &
-                    weight, &
-                    initial_sum_slip
         real(DP), dimension(:,:), allocatable:: orientations
-        character(*), parameter:: PROC_NAME = 'load_texture'
+        character(*), parameter:: PROC_NAME = 'read_texture'
 
         open(newunit = nunit, file = trim(fname), status='old',form='formatted',iostat = info)
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
 
         nrec = 0
-        read (nunit, 94, iostat = info) nrec, title
-94      format(I5, 5x, A)
+        read (nunit, *, iostat = info) nrec
         if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
         if (nrec > 0) allocate(orientations(3, nrec))
 
         do i = 1, nrec
-            read(nunit, 96, iostat = info) orientations(3, i), orientations(2, i), orientations(1, i), stap, nstap, weight, initial_sum_slip
-96          format(4F10.0, I5, 5X, 2F10.0)
-            if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read boundary segment')
+            read(nunit, *, iostat = info) orientations(1, i), orientations(2, i), orientations(3, i)
+            if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read orientation')
         enddo
-        orientations = deg_to_rad(orientations)
 
+        orientations = deg_to_rad(orientations)
 
         close(nunit)
     end function
@@ -89,7 +82,6 @@ contains
         write(iounit, fmt='(A)',iostat = info) title
     end subroutine
 
-
     !Write the current state of all grains to file.
     subroutine cur_write_block(clusters, deformation_gradient)
         class(Cluster), dimension(:), intent(in)::  clusters !< List of all clusters which contains
@@ -116,7 +108,7 @@ contains
             do j = 1, cluster_size
                 euler_angles = rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
                 write(IMP1, 400, iostat = info)&
-                    i*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3)
+                    (i-1)*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3)
                 if (info /= 0) exit
             end do
         end do
