@@ -261,11 +261,14 @@ contains
                                     strain_relaxations(5), &
                                     slip_grain, &
                                     spin_coeffs_relaxations(3, 2), &
+                                    taylor_coeffs_relaxations(5,2), &
                                     taylor_coeffs(10, total_systems(cluster_)), &
-                                    v_grad(3,3), &
                                     stress_cluster(10), &
                                     imposed_strain_rate(10), &
-                                    lattice_spin(3,3)
+                                    spin_relax(3), &
+                                    deformation_relax(5), &
+                                    v_grad_relax(3,3), &
+                                    v_grad_grain(3,3)
         integer::                   i, j, &
                                     n_systems(2), &
                                     n_active_simplex, &
@@ -306,7 +309,8 @@ contains
             associate (grain_ => cluster_ptr%grains(j), &
                        slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems(j)), &
                        slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
-                       taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
+                       taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:), &
+                       stress_grain => deviatoric_to_tensor(stress_cluster(offset_grain+1:offset_grain+5)) .fromframe. grain_%orientation)
 
                 call  assess_slip_system_activity(cluster_ptr%grains(j), &
                                                   rss(offset_systems+1:offset_systems+n_systems(j)), &
@@ -335,9 +339,13 @@ contains
                     spin_coeffs_relaxations(:,i) = cluster_ptr%relaxations(i)%spin_coeffs((j-1)*3+1:j*3)
                 end do
 
-                lattice_spin = spin_to_tensor(matmul(grain_%model%spin_coeffs, slip_rates_grain)) +spin_to_tensor(matmul(spin_coeffs_relaxations, slip_rates_relaxations))
-                v_grad = this%velocity_gradient - (lattice_spin .fromframe. grain_%orientation)
-                call micro_deform(grain_, 1._DP, slip_rates_grain, this%imposed_spin_rate)
+                deformation_relax = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
+                spin_relax = matmul(spin_coeffs_relaxations, slip_rates_relaxations)
+
+                v_grad_relax = (deviatoric_to_tensor(deformation_relax) + spin_to_tensor(spin_relax)) .fromframe. grain_%orientation
+                v_grad_grain = this%velocity_gradient - v_grad_relax
+
+                call micro_deform(grain_, 1._DP, slip_rates_grain, v_grad_grain, stress_grain)
             end associate
         end do
 

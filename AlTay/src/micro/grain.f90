@@ -13,6 +13,8 @@ module grain_module
         real(DP), dimension(3, 3):: orientation
         class(ConstitutiveModel), pointer:: model
         class(HardeningState), allocatable:: state
+        real(DP):: deformation_increment            !! Deformation increment in the current time step
+        real(DP):: stress_increment                 !! Stress increment in the current time step
     contains
         procedure:: init   => grain_init
         procedure:: deform => grain_deform
@@ -32,14 +34,29 @@ contains
         this%state = state
     end subroutine
 
-    subroutine grain_deform(this, imposed_spin_rate, t, slip_rates)
+    subroutine grain_deform(this, v_grad, t, slip_rates, stress)
         class(Grain), intent(inout):: this
-        real(DP), dimension(3,3), intent(in):: imposed_spin_rate !! Externally imposed spin rate.
+        real(DP), dimension(3,3), intent(in):: v_grad !! Externally imposed velocity gradient.
         real(DP), intent(in):: t
         real(DP), dimension(size(this%state%crss,2)), intent(in):: slip_rates
+        real(DP), dimension(3,3), intent(in):: stress !! Stress in the global frame
 
         real(DP):: spin(3,3), &
-                   rot_inc(3,3)
+                   crss_old(2, size(this%state%crss,2)), &
+                   crss_new(2, size(crss_old,2)), &
+                   max_crss_inc, &
+                   rot_inc(3,3), &
+                   imposed_spin_rate(3,3), &
+                   orientation_old(3,3), &
+                   stress_new(3,3), &
+                   rotation(3,3)
+
+        crss_old = this%state%crss
+        orientation_old = this%orientation
+
+        !Because the relative deformation in a single increment is small, we can use small strain theory to get the deformation
+        !increment. For small strain: F = Lt+I, so relative deformation is ||Lt+I-I|| / ||I|| = ||Lt||/sqrt(3)
+        this%deformation_increment = norm2(t*v_grad) / sqrt(3._DP)
 
         !Spin consists of a part counteracting the spin component of the slip systems and imposed spin rate
         !Note that imposed_spin_rate is actually an approximation of the 'external' spin caused by the velocity gradient.
@@ -47,11 +64,19 @@ contains
         !And take the matrix logarithm and divide by t.
         !This is needed because the stretch in L interacts nonlinearly with the rotation.
         !For small t, this effect is however negligible. This has been tested extensively.
+        imposed_spin_rate = (v_grad - transpose(v_grad)) / 2._DP
         spin = (spin_to_tensor(matmul(this%model%spin_coeffs, slip_rates)) .fromframe. this%orientation) - imposed_spin_rate
         rot_inc = matrix_exponential(spin*t)
         this%orientation = matmul(this%orientation, rot_inc) !Opposite order due to passive convention
 
         call this%model%deform(this%state, t, slip_rates)
-    end subroutine
 
+        crss_new = this%state%crss
+        max_crss_inc = maxval(crss_new/crss_old)
+        !Composition of rotation to old crystal frame and rotation from new crystal frame
+        rotation = matmul(transpose(this%orientation), orientation_old)
+        stress_new = max_crss_inc * (stress .toframe. rotation)
+
+        this%stress_increment = norm2(stress_new - stress) / norm2(stress)
+    end subroutine
 end module
