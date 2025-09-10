@@ -32,14 +32,16 @@ contains
         this%state = state
     end subroutine
 
-    subroutine grain_deform(this, imposed_spin_rate, t, slip_rates)
+    subroutine grain_deform(this, v_grad, t, slip_rates)
         class(Grain), intent(inout):: this
-        real(DP), dimension(3,3), intent(in):: imposed_spin_rate !! Externally imposed spin rate.
+        real(DP), dimension(3,3), intent(in):: v_grad !! Externally imposed velocity gradient.
         real(DP), intent(in):: t
         real(DP), dimension(size(this%state%crss,2)), intent(in):: slip_rates
 
         real(DP):: spin(3,3), &
-                   rot_inc(3,3)
+                   rot_inc(3,3), &
+                   imposed_spin_rate(3,3)
+
 
         !Spin consists of a part counteracting the spin component of the slip systems and imposed spin rate
         !Note that imposed_spin_rate is actually an approximation of the 'external' spin caused by the velocity gradient.
@@ -47,11 +49,11 @@ contains
         !And take the matrix logarithm and divide by t.
         !This is needed because the stretch in L interacts nonlinearly with the rotation.
         !For small t, this effect is however negligible. This has been tested extensively.
+        imposed_spin_rate = (v_grad - transpose(v_grad)) / 2._DP
         spin = (spin_to_tensor(matmul(this%model%spin_coeffs, slip_rates)) .fromframe. this%orientation) - imposed_spin_rate
         rot_inc = matrix_exponential(spin*t)
         this%orientation = matmul(this%orientation, rot_inc) !Opposite order due to passive convention
 
         call this%model%deform(this%state, t, slip_rates)
     end subroutine
-
 end module
