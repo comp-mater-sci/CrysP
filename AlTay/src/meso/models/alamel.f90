@@ -309,8 +309,7 @@ contains
             associate (grain_ => cluster_ptr%grains(j), &
                        slip_rates_grain=>slip_rates(offset_systems+1:offset_systems+n_systems(j)), &
                        slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
-                       taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:), &
-                       stress_grain => deviatoric_to_tensor(stress_cluster(offset_grain+1:offset_grain+5)) .fromframe. grain_%orientation)
+                       taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
                 call  assess_slip_system_activity(cluster_ptr%grains(j), &
                                                   rss(offset_systems+1:offset_systems+n_systems(j)), &
@@ -345,7 +344,7 @@ contains
                 v_grad_relax = (deviatoric_to_tensor(deformation_relax) + spin_to_tensor(spin_relax)) .fromframe. grain_%orientation
                 v_grad_grain = this%velocity_gradient - v_grad_relax
 
-                call micro_deform(grain_, 1._DP, slip_rates_grain, v_grad_grain, stress_grain)
+                call micro_deform(grain_, 1._DP, slip_rates_grain, v_grad_grain)
             end associate
         end do
 
