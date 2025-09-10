@@ -50,12 +50,9 @@ contains
         !This is needed because the stretch in L interacts nonlinearly with the rotation.
         !For small t, this effect is however negligible. This has been tested extensively.
         imposed_spin_rate = (v_grad - transpose(v_grad)) / 2._DP
-        spin = UNIT_MATRIX_3X3+(spin_to_tensor(matmul(this%model%spin_coeffs, slip_rates)) .fromframe. this%orientation) - imposed_spin_rate
-
-        this%orientation = matmul(spin, this%orientation)
-
-        !rot_inc = matrix_exponential(spin*t)
-        !this%orientation = matmul(this%orientation, rot_inc) !Opposite order due to passive convention
+        spin = (spin_to_tensor(matmul(this%model%spin_coeffs, slip_rates)) .fromframe. this%orientation) - imposed_spin_rate
+        rot_inc = matrix_exponential(spin*t)
+        this%orientation = matmul(this%orientation, rot_inc) !Opposite order due to passive convention
 
         call this%model%deform(this%state, t, slip_rates)
     end subroutine
