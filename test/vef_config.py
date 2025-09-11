@@ -38,16 +38,6 @@ MODE_CONFIG =  {'ADP':                                              \
                      'uniform\n'                                     \
                     + '0.0    90.0   1.0\n'                         \
                     + 'True',                                       \
-               'UDSA':                                              \
-                     'inplane\n'                                     \
-                    + 'discrete\n'                                  \
-                    + '2\n'                                         \
-                    + '0.0 45.0\n'                             \
-                    + 'StrainTensorComponent\n'                              \
-                    + '0.4\n'                                       \
-                    + '0.01\n'                                      \
-                    + 'tension\n'                                   \
-                    + 'True',                                       \
                'YLD':                                               \
                      'uniform\n'                                     \
                     + '0.0 360.0 36.0\n'                            \

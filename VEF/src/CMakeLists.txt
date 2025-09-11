@@ -29,7 +29,6 @@ commonUtils.f90
 dmcResultFileOutput.f90
 evolutionOutputRecord.f90
 incrementationControl.f90
-qrsTypes.f90
 resultTable.f90
 strainDrivenStep.f90
 stressDrivenEvolutionModule.f90
@@ -38,7 +37,6 @@ dmcADP.f90
 dmcASR.f90
 dmcEWC.f90
 dmcQRS.f90
-dmcUDSA.f90
 dmcYld.f90
 alamDMC.f90
 )

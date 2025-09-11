@@ -235,111 +235,8 @@ Anisotropy evolution due to deformation     {#gt_anisotropy_evol}
 
 So far we have used the VEF to derive plastic properties of the material <em>in the state given by the texture measurement</em>. Now we are going to get predictions how the material state evolves, and at the same time we will see how the properties evolve with strain.
 
-
-Deformation under uniaxial stress state    {#gt_udsa}
----------------------------------------
-
-In the next step of this tour we will simulate uniaxial tension test. The [Uniaxial Stress Test Module](@ref module_udsa)  provides a virtual uniaxial test. We will track the evolution of the material state up to a plastic strain of approximately 40%, which is much higher than what may usually be realized in an experimental tensile test setup.
-
-Let's take the configuration file `sid1687f_udsa.cfg` for this module:
-\includelineno guided_tour/sid1687f_udsa.cfg
-
-Again, we made no change in the generic configuration section. The [module-specific part] (@ref configuration_udsa) tells the VEF to simulate a process where the virtual samples are oriented in-plane of the sheet, and  "cut out" in the directions 0&deg;, 45&deg; and 90&deg; with respect to the RD. The AlamDMC program will simulate tension up to tensile strain 0.4. The total deformation will be subdivided into increments of magnitude 0.01. The option `StrainTensorComponent ` instructs the program to calculate the increments in a way that the tensile strain component will uniformly increase.
-
-Let's run the program (module keyword `UDSA`):
-<pre class="consoleView">
-alamDMC UDSA sid1687f_udsa.cfg
-</pre>
-
-You will see a couple of output files produced this time, in particular `sid1687f_udsa_0_000.uds`, `sid1687f_udsa_45_000.uds` and `sid1687f_udsa_90_000.uds`. As you probably guessed from their names, the files correspond to the three directions of the virtual samples.
-We can quickly inspect the content of these files, for instance `sid1687f_udsa_0_000.uds`. The file contains a number of columns. The first one gives the increment number - as we can see, the program performed 41 increments. We also see `r-value` and `r-valueA`, which are the instantaneous and accumulated Lankford coefficients, respectively.  Let's plot these two as functions of tensile strain norm (column `eps_xx`):
-
-<div class="figure">
-<img class="fullsize" src="sid1687f_udsa_0_000_rvalues.png" alt="evolution of the r-values in 0deg tensile test (DX51D steel)">
-<img class="fullsize" src="sid1687f_udsa_45_000_rvalues.png" alt="evolution of the r-values in 45deg tensile test (DX51D steel)">
-<img class="fullsize" src="sid1687f_udsa_90_000_rvalues.png" alt="evolution of the r-values in 90deg tensile test (DX51D steel)">
-<div class="figcaption">Evolution of the r-values in tensile tests (Top - 0&deg;; Middle - 45&deg;; Bottom - 90&deg;), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
-</div>
-
-It can be seen that the instantaneous r-values evolve much faster. They also show more irregularities, since they are derived from plastic <EM>strain rate</EM> (cf. [definition] (@ref r-value)). The accumulated r-values, which are derived from plastic <EM>strain</EM> (cf. [definition] (@ref r-valueA)), evolve far slower.
-
-It appears that the r-values in the TD directions follow a different evolution path than in the other two directions. That also means that \f$ \Delta r \f$ increases with deformation.
-
-The tensile stresses are reported in the column `sigma_xx` as well:
-<div class="figure">
-<img class="fullsize" src="sid1687f_udsa_tensile_stress.png" alt="tensile stress in tensile test (DX51D steel)">
-<div class="figcaption">Evolution of the tensile stress without strain hardening calculated by Uniaxial Stress Test Module (DX51D steel)</div>
-</div>
-
-That looks weird. It seems that the samples at 45&deg; and 90&deg; initially _soften_ and then only slightly harden. Well, it's pretty normal given the fact we do not use any hardening model at all. This also means the hardening effect results exclusively from the texture evolution.
-
-It takes just a few steps to include the hardening. First, let's make a copy of `sid1687f_udsa.cfg` and name it `sid1687f_hardening_udsa.cfg`. We need to make a slight modification to its generic section:
--# change the output prefix (we don't want to overwrite the results of the previous tests, do we?) into: `sid1687f_hardening_udsa`
--# change the hardening parameters:
-    - Set the flag to use default hardening to: `False`
-    - add a line below and put there: `2`
-    - add yet another line below and put the following three values there:
-      `42.  1.4e-2  0.24`
-
-We have just requested [Swift hardening law](@ref hardening_model3) with the parameters
-\f$ \tau_0 = 42 \f$ MPa, \f$  \gamma_0 = 1.4e-2 \f$ and \f$  n = 0.24 \f$ (if you are curious where are these numbers coming from, you are welcome to read our [tutorial on calibrating hardening laws in VEF](@ref tutorial_swift)).
-
-After the modifications, the new input file should look as shown in the listings below:
-\includelineno sid1687f_hardening_udsa.cfg
-
-It's time to re-run the program on our modified input file:
-<pre class="consoleView">
-alamDMC UDSA sid1687f_hardening_udsa.cfg
-</pre>
-
-Let's plot the tensile stresses this virtual material that <em>does</em> harden:
-<div class="figure">
-<img class="fullsize" src="sid1687f_hardening_udsa_tensile_stress.png" alt="evolution of the tensile stresses in tensile test (DX51D steel)">
-<div class="figcaption">Tensile stress evolution in tensile tests with strain hardening, calculated by Uniaxial Stress Test Module (DX51D steel)</div>
-</div>
-
-
-Let's check now how the texture evolves in these tensile tests. Because we [requested output of material state ](@ref state_request), the discrete deformation textures have been stored in a dedicated output format: a CUR file. It contains consecutive <em>blocks</em>: one block per increment of the AlamDMC simulation, up to the final state of texture that is stored in the last block. We may calculate continuous ODFs for all the texture states stored:
-<pre class="consoleView">
-cur2c --input=sid1687f_hardening_udsa_0_000.CUR --output=sid1687f_hardening_udsa_0_000.C
-</pre>
-The [cur2c command](@ref cur2c) produces a series of C files: `sid1687f_hardening_udsa_1.C` to `sid1687f_hardening_udsa_40.C`, corresponding to all blocks contained within the input CUR file. A C file describes the continuous ODF as a set of series expansion coefficients.
-As we remember, the program calculated 41 increments (the initial one and 40 increments afterwards), so the final texture will be in the 40th block. We can be more selective and request just the final one from the two other CUR files:
-<pre class="consoleView">
-cur2c --input=sid1687f_hardening_udsa_45_000.CUR --block=40 --output=sid1687f_hardening_udsa_45_000_40.C
-cur2c --input=sid1687f_hardening_udsa_90_000.CUR --block=40 --output=sid1687f_hardening_udsa_90_000_40.C
-</pre>
-
-For the 3 virtual tests, we can plot ODF sections of the final deformation state:
-<pre class="consoleView">
-odfplot --input sid1687f_hardening_udsa_0_000_40.C  sid1687f_hardening_udsa_45_000_40.C sid1687f_hardening_udsa_90_000_40.C --style=filled --odfmin=0.9 --odfmax=6.0
-</pre>
-Here are the requested ODF sections:
-<div class="figure">
-	<span class="zoom">
-	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_0_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
-	</span>
-	<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$ of the deformation texture at tensile strain 0.4 (in-plane direction of 0&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
-</div>
-<div class="figure">
-	<span class="zoom">
-	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_45_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
-	</span>
-	<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$ of the deformation texture at tensile strain 0.4 (in-plane direction of 45&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
-</div>
-<div class="figure">
-	<span class="zoom">
-	<img class="fullsize widefigure" src="sid1687f_hardening_udsa_90_000_40.png" alt="final deformation texture in UDSA tensile test (DX51D steel)">
-	</span>
-	<div class="figcaption">ODF section \f$ \phi_2 = 45^\circ \f$ of the deformation texture at tensile strain 0.4 (in-plane direction of 90&deg; to RD), calculated by Uniaxial Stress Test Module (DX51D steel)</div>
-</div>
-
-It is immediately clear from these sections that the evolution of the texture greatly depends on the direction of the imposed tension. In-depth interpretation of the texture evolution is beyond the scope of this tutorial. Briefly speaking, the \f$ \gamma \f$-fibre breaks into individual components, but the changes are not limited to this effect.
-
 Deformation under arbitrary stress state    {#gt_asr}
 ----------------------------------------
-
-Obviously, the uniaxial stress state is not the only one that is relevant in simulating plastic deformations. In fact, quite the opposite is true: we often want to find out how the material performs under more complex state. We sometimes also want to know what happens as a result of a pre-deformation under some known stress mode.
 
 Suppose we are interested how the material would behave if we deform it under a given stress state and subsequently impose another deformation, and possibly yet another deformation, and so on. The module ASR can do such calculation for us.
 
@@ -354,7 +251,6 @@ alamDMC ASR sid1687f_asr.cfg
 </pre>
 
 Let's open the output file `sid1687f_asr.asr` to check what's produced by the ASR module. Uh-oh. Sixty columns of data, that's a lot. The module simulates evolution an arbitrary stress and makes no additional assumptions, so it  reports as much as possible (within reason) to allow the user to interpret the results.
-
 
 Equiwork contours    {#gt_ewc}
 -----------------

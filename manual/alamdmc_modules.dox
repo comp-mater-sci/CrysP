@@ -7,177 +7,6 @@ Each AlamDMC module has its own module-specific configuration, which
 is located in the trailing part of the configuration file.
 Furthermore, each module will generate its own specific output data.
 
-\section module_udsa Uniaxial Stress Test Module (keyword: UDSA)
-
-The Uniaxial Stress Test Module provides virtual experiments under uniaxial, tensile or compressive stress states.
-The _pure_ uniaxial state imposes a total stress with exactly one non-zero principal component.
-In this module, also some _non-pure_ uniaxial states may be imposed, namely those having two non-zero principal stress components.
-
-A dedicated _sample reference frame_ (with `x`-, `y`- and `z`-axes) is associated to the virtual sample.
-The imposed stress state is described with reference to this sample reference frame.
-By convention, the sample `x`-axis is aligned with the uniaxial (or main) loading direction.
-
-\subsection configuration_udsa Module-specific configuration
-
--# \confdef{orientation_type,string} specifies the type of sample orientation.
-The exact orientation (or several orientations) may be further specified by a value-dependent option.
-Supported values of \conffield{orientation_type} are:
-  - `inplane` <BR> to request one or several in-plane uniaxial tests.
-  The sample `x`-axis (loading direction) is contained to the material `1`-`2`-plane.
-  The sample `y`-axis is also contained in the material `1`-`2`-plane.
-  The sample `z`-axis is aligned with the material `3`-direction.
-  For \conffield{orientation_type}=`inplane`, the following option needs to be provided:
-    -# \confdef{inplane_orientation_range,realrange} defines a [range] (\ref range_option) for in-plane orientations to be tested.
-	The field \conffield{inplane_orientation_range} is expressed in degrees.
-  - `ND` <BR> to request uniaxial loading (direction of sample `x`-axis) along the material `3`-direction.
-  Note that for sheet metal, it is a convention that the material `3`-direction corresponds to the sheet normal direction ND.
-  Also, the sample `y`-axis is aligned with the material `2`-direction (conventional transverse direction TD for sheet metal).
-  Consequently, the sample `z`-axis is aligned with the material `1`-direction (conventional rolling direction RD for sheet metal).
-  - `arbitrary` <BR> to request a single test with generic orientation of the sample reference, as
-    -# \confdef{arbitrary_orientation,euler} specifies the orientation of the sample frame relative to the material frame in the format specified in \ref euler_option.
--# \conffield{incrementation_type} specifies how the deformation increments will be calculated.
-All values listed in \ref incrementation_option are permitted.
--# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
--# \conffield{increment_magnitude} sets the magnitude of strain increments.
--# \confdef{stress_state,string}  selects between tension and compression stress states. Specify
-  - `compression` <BR> to request compressive stress state, i.e.: \f$ \sigma_{xx} < 0 \f$.
-  - `tension` <BR> to request tensile stress state, i.e.: \f$ \sigma_{xx} > 0 \f$.
--# \confdef{pure_uniaxial_state,logical} \anchor pure_uniaxial_state_anchor specifies whether or not the stress state is _pure_, i.e.
-having exactly one non-zero principal component.
-If set to
-  - `False` <BR> then a non-pure uniaxial stress state is imposed, in which case the following option must be specified:
-    -# \confdef{stress_ratio_rho,real} contains the imposed deviation \f$ \rho \f$ from the pure uniaxial stress state, as:
-    \f[
-    \rho = \frac{\sigma_{yy}}{\sigma_{xx}}
-    \f]
-    where \f$ \sigma_{xx} \f$ and \f$ \sigma_{yy} \f$ are the normal stresses in the sample x- and y-directions, respectively.
-    Note that \f$ \rho = 0 \f$ corresponds to the configuration \conffield{pure_uniaxial_state}=`True`.
-
-\par Example
-Please see the configuration file `AKDQf_udsa.cfg` from `examples` directory:
-\includelineno AKDQf_udsa.cfg
-
-\subsection output_udsa Module-specific output
-
-The module-specific output files are named according to the pattern `<output_prefix>.uds`
-or `<output_prefix>_<tag>.uds`. The latter filename format is used when several
-orientations are requested in the option \conffield{orientation_type}=`inplane`,
-whereby `<tag>` reflects a specific direction of \conffield{inplane_orientation_range}.
-The output files make column-wise reporting of:
-
-<ol>
-	<li> \outdef{increment} The increment sequence number
-	</li>
-
-	<li> \outdef{eps_vM} The von Mises equivalent strain \f$ \epsilon_{vM} \f$
-
-	It is derived from the strain tensor \f$ \boldsymbol{\epsilon} \f$ as:
-	\f[
-		\epsilon_{vM}=\sqrt{2/3} \| \boldsymbol{\epsilon} \|
-	\f]
-	</li>
-
-	<li> \outdef{Pnorm} The norm of accumulated absolute plastic strain increment tensors:
-		\f[
-			P_{norm} = \left\| \sum_{i=1}^{increment} |\Delta\boldsymbol{\epsilon}| \right\|
-		\f]
-	</li>
-
-	<li> \outdef{eps_xx, norm_eps_xx} The magnitude of normal strain component along
-	the x-axis: \f$ \| \epsilon_{xx} \|\f$
-	</li>
-
-	<li> \outdef{sigma_xx} The normal component along the x-axis of the total stress
-	\f$\sigma_{xx}\f$
-
-	This component of the _total_ stress  \f$\boldsymbol{\sigma}\f$ is derived from
-	the deviatoric stress tensor \f$\mathbf{S}\f$ as:
-	\f[
-		\sigma_{xx}=S_{xx}+\sigma_h=S_{xx}-S_{zz}
-	\f]
-	in which the hydrostatic stress \f$ \sigma_h \f$ is derived from the assumption that
-	the sample is stress-free along the z-axis: \f$ \sigma_{zz}=S_{zz}+\sigma_h=0 \f$.
-	</li>
-
-	<li>\outdef{S_xx, norm_SonA_xx} Magnitude of deviatoric stress component along
-	the x-axis (see above)
-	</li>
-
-	<li> \outdef{W} The accumulated plastic work \f$ W \f$
-	</li>
-
-	<li> \outdef{dotW} The rate of plastic work \f$ \dot{W} \f$
-	</li>
-
-	<li> \outdef{M-factor} The volume-average Taylor factor \f$ \overline{M} \f$
-
-	It is obtained from volume-averaging the sum of microscopic slip rates
-	over all deformation systems \f$  \dot{\gamma} \f$, as
-	\f[
-		\overline{M}= \frac{\overline{ \dot{\gamma} }}{D_{vM}}
-	\f]
-	The von Mises equivalent strain rate \f$ D_{vM}=\sqrt{2/3} \| \mathbf{D} \| \f$ is
-	used as normalization factor.
-	</li>
-
-	<li> \outdef{q-value} The instantaneous q-value \f$ q_i \f$
-
-	It is defined as
-	\f[
-		q_i = \frac{-D_{yy}}{D_{xx}}
-	\f]
-	where \f$D_{yy}\f$ and \f$D_{xx}\f$ are the strain rates in the width and tensile
-	directions, respectively. It relates to the instantaneous r-value as \f$ q_i = \frac{r_i}{1+r_i} \f$.
-	</li>
-
-	<li> \outdef{r-value} The instantaneous r-value \f$ r_i \f$
-
-	It is defined as
-	\f[
-		r_i = \frac{D_{yy}}{D_{zz}}
-	\f]
-	where \f$D_{yy}\f$ and \f$D_{zz}\f$ are the strain rates in the width and thickness
-	directions, respectively. It relates to the instantaneous q-value as
-	\f$ \displaystyle r_i = \frac{q_i}{1-q_i} \f$.
-	</li>
-
-	<li> \outdef{s-value} A normalised flow stress \f$ s \f$
-	</li>
-
-	<li> \outdef{q-valueA} The (strain-based) q-value \f$ q \f$
-
-	It is defined as
-	\f[
-		q = \frac{-\epsilon_{yy}}{\epsilon_{xx}}
-	\f]
-	where \f$\epsilon_{yy}\f$ and \f$\epsilon_{xx}\f$ are the strains in the width and
-	tensile directions, respectively. It relates to the r-value as
-	\f$ \displaystyle  q = \frac{r}{1+r} \f$.
-	</li>
-
-	<li> \outdef{r-valueA} The (strain-based) r-value \f$ r \f$
-
-	It is defined as:
-	\f[
-		r = \frac{\epsilon_{yy}}{\epsilon_{zz}}
-	\f]
-	where \f$\epsilon_{yy}\f$ and \f$\epsilon_{zz}\f$ are the strains in the width and
-	thickness directions, respectively. It relates to the q-value as
-	\f$ \displaystyle r = \frac{q}{1-q} \f$.
-	</li>
-
-	<li> \outdef{S, norm_SonA} The norm of deviatoric stress that corresponds to plastic strain mode:
-	\f$ \| \mathbf{S}(\mathbf{A}) \| \f$
-	</li>
-
-	<li> \outdef{residual} The residual of \ref config_search_procedure "search procedure"
-	\f$ Res \f$
-
-	\note As a rule of thumb, the search procedure is supposed to reach the convergence
-	if \f$ Res \ll 10^{-2} \f$.
-	</li>
-</ol>
-
 \section module_asr Multiaxial Stress Test Module (keyword: ASR)
 
 The Multiaxial Stress Test Module prescribes a generic stress loading on a virtual sample.
@@ -226,7 +55,10 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	\f]
 	</li>
 
-	<li> \outref{Pnorm}
+	<li> \outdef{Pnorm} The norm of accumulated absolute plastic strain increment tensors:
+		\f[
+			P_{norm} = \left\| \sum_{i=1}^{increment} |\Delta\boldsymbol{\epsilon}| \right\|
+		\f]
 	</li>
 
 	<li> \outdef{eps_total_vM} The von Mises equivalent of the _total_ strain,
@@ -238,22 +70,35 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	\f]
 	</li>
 
-	<li> \outref{W}
+	<li> \outdef{W} The accumulated plastic work \f$ W \f$
 	</li>
 
-	<li> \outref{dotW}
+	<li> \outdef{dotW} The rate of plastic work \f$ \dot{W} \f$
 	</li>
 
-	<li> \outref{M-factor}
+	<li> \outdef{M-factor} The volume-average Taylor factor \f$ \overline{M} \f$
+
+	It is obtained from volume-averaging the sum of microscopic slip rates
+	over all deformation systems \f$  \dot{\gamma} \f$, as
+	\f[
+		\overline{M}= \frac{\overline{ \dot{\gamma} }}{D_{vM}}
+	\f]
+	The von Mises equivalent strain rate \f$ D_{vM}=\sqrt{2/3} \| \mathbf{D} \| \f$ is
+	used as normalization factor.
 	</li>
 
 	<li> \outdef{scal_s} The norm of a normalized deviatoric stress
 	</li>
 
-	<li> \outref{S, norm_SonA}
+	<li> \outdef{S, norm_SonA} The norm of deviatoric stress that corresponds to plastic strain mode:
+	\f$ \| \mathbf{S}(\mathbf{A}) \| \f$
 	</li>
 
-	<li> \outref{residual}
+	<li> \outdef{residual} The residual of \ref config_search_procedure "search procedure"
+	\f$ Res \f$
+
+	\note As a rule of thumb, the search procedure is supposed to reach the convergence
+	if \f$ Res \ll 10^{-2} \f$.
 	</li>
 
 	<li> \outdef{S_11} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$
@@ -407,16 +252,40 @@ The module-specific outputfile `<output_prefix>.xqrs` makes column-wise reportin
 	<li> \outdef{rho} The requested imposed stress ratio \f$ \rho \f$, as requested in \conffield{pure_uniaxial_state}. See also \ref stress_ratio_rho
 	</li>
 
-	<li> \outref{q-value}
+	<li> \outdef{q-value} The instantaneous q-value \f$ q_i \f$
+
+	It is defined as
+	\f[
+		q_i = \frac{-D_{yy}}{D_{xx}}
+	\f]
+	where \f$D_{yy}\f$ and \f$D_{xx}\f$ are the strain rates in the width and tensile
+	directions, respectively. It relates to the instantaneous r-value as \f$ q_i = \frac{r_i}{1+r_i} \f$.
 	</li>
 
-	<li> \outref{r-value}
+	<li> \outdef{r-value} The instantaneous r-value \f$ r_i \f$
+
+	It is defined as
+	\f[
+		r_i = \frac{D_{yy}}{D_{zz}}
+	\f]
+	where \f$D_{yy}\f$ and \f$D_{zz}\f$ are the strain rates in the width and thickness
+	directions, respectively. It relates to the instantaneous q-value as
+	\f$ \displaystyle r_i = \frac{q_i}{1-q_i} \f$.
 	</li>
 
-	<li> \outref{s-value}
+	<li> \outdef{s-value} A normalised flow stress \f$ s \f$
 	</li>
 
-	<li> \outref{sigma_xx}
+	<li> \outdef{sigma_xx} The normal component along the x-axis of the total stress
+	\f$\sigma_{xx}\f$
+
+	This component of the _total_ stress  \f$\boldsymbol{\sigma}\f$ is derived from
+	the deviatoric stress tensor \f$\mathbf{S}\f$ as:
+	\f[
+		\sigma_{xx}=S_{xx}+\sigma_h=S_{xx}-S_{zz}
+	\f]
+	in which the hydrostatic stress \f$ \sigma_h \f$ is derived from the assumption that
+	the sample is stress-free along the z-axis: \f$ \sigma_{zz}=S_{zz}+\sigma_h=0 \f$.
 	</li>
 
 	<li> \outref{M-factor}
@@ -572,7 +441,12 @@ reference test, the rows in `<output_prefix>_contours.ewc` correspond to the con
 levels as requested in \conffield{increment_magnitude}.
 Both these outputfiles make column-wise reporting of:
 <ol>
-	<li> \outref{eps_vM}
+	<li> \outdef{eps_vM} The von Mises equivalent strain \f$ \epsilon_{vM} \f$
+
+	It is derived from the strain tensor \f$ \boldsymbol{\epsilon} \f$ as:
+	\f[
+		\epsilon_{vM}=\sqrt{2/3} \| \boldsymbol{\epsilon} \|
+	\f]
 	</li>
 
 	<li> \outref{W}
