@@ -29,18 +29,6 @@ implicit none
         !> advances.
         procedure, pass(this)    :: calculateStressPath => StressDrivenEvolutionModule_calculateStressPath
 
-        !> Event handler invoked on increment start.
-        !>
-        !> A subclass can overload this to get informed about the incrementation and
-        !> influence the incrementation.
-        procedure, pass(this)    :: onIncrementStart => StressDrivenEvolutionModule_onIncrementStart
-
-        !> Event handler invoked on increment end
-        !>
-        !> A subclass can overload this to get informed about the incrementation and
-        !> influence the incrementation.
-        procedure, pass(this)    :: onIncrementEnd => StressDrivenEvolutionModule_onIncrementEnd
-
     end type
 
 contains
@@ -112,9 +100,6 @@ contains
         ! Follow the evolution line along S
         ! in the main loop over deformation increments
         do
-            call this%onIncrementStart(control, icv, info)
-            if (info /= VEF_OK) exit
-            !
             ! Calculate the strain rate mode
             target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_norm = norm2(target_stress_mode)
@@ -235,8 +220,6 @@ contains
 
             ! Update icv
             call icv%update(vDe, vSe, info)
-            if (info /= VEF_OK) exit
-            call this%onIncrementEnd(control, icv, tmp_record, info)
             if (stop_flag .or. (info /= VEF_OK)) exit
         enddo
         if (info /= VEF_OK) return
@@ -246,32 +229,6 @@ contains
     !
         output = output(1:n_records)
     end function
-
-    !> Event handler in calculateStressPath: invoked at the begining of each
-    !> increment
-    subroutine StressDrivenEvolutionModule_onIncrementStart(this, control, icv, info)
-    class(StressDrivenEvolutionModule), intent(inout)    :: this
-    class(IncrementationControlSettings), intent(inout)  :: control
-    class(IncrementationControl), intent(inout)          :: icv
-    integer, intent(out)                                 :: info
-    !
-        info = VEF_OK
-    !
-    end subroutine
-
-
-    !> Event handler in calculateStressPath: invoked at the end of each
-    !> increment
-    subroutine StressDrivenEvolutionModule_onIncrementEnd(this, control, icv, output_record, info)
-    class(StressDrivenEvolutionModule), intent(inout)    :: this
-    class(IncrementationControlSettings), intent(inout)  :: control
-    class(IncrementationControl), intent(inout)          :: icv
-    type(IncrementOutputRecord), intent(in)              :: output_record
-    integer, intent(out)                                 :: info
-    !
-                info = VEF_OK
-    !
-    end subroutine
 
     !> Calculate the real roots of quadratic polynomial given in form
     !> a^2 x+b x+c = 0
@@ -300,6 +257,4 @@ contains
               endif
         endif
     end function
-
-
 end module

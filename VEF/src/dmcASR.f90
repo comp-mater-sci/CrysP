@@ -7,12 +7,12 @@ module dmcASR
     use dmcIncrementationControl
     use dmcStressDrivenEvolutionModule
     use dmcEvolutionOutputRecord
-    use commonConfig
     use commonUtils
+
     implicit none
 
-    public:: ASRModule
     private
+    public:: ASRModule
 
     type:: StressDrivenStep
         real(DP), dimension(6)   :: stress_mode = 0.D0

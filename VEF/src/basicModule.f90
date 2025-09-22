@@ -7,7 +7,6 @@ module dmcBasicModule
     use criConfigReader
     use dmcAbstractModule
     use altayConfig, only: altayConfigData
-    use commonConfig
     use base_defs
     use micro
     use parameters
@@ -16,41 +15,41 @@ module dmcBasicModule
     use commonUtils
 
     implicit none
+
     private
-
-    character(*), parameter:: MOD_NAME = 'basicModule'
-
     public:: outputConfig, &
               BasicModule, &
               readAlTayConfigSection
 
-      type:: outputConfig
-            character(max_pathlen)  :: outputPrefix = '' !< Prefix for the output files.
-            logical                 :: outputRequest = .false.
-            integer                 :: verbosity = 0  !< Level of verbosity sent to the stdout and to the log file (if any)
-            integer                 :: log_unit = 6
-      end type
+    character(*), parameter:: MOD_NAME = 'basicModule'
 
-      !> Class implementing basic subset of operations that are shared by all
-      !> computational modules.
-      !>
-      !> \note This class is essentially an abstract class, but declaring it
-      !>       that way prevents the subclasses from calling _ANY_ superclass
-      !>       method (including the ones that have an actual implementation
-      !>       in BasicModule) in the OO-acceptable style:
-      !>       `this%ParentClassName%method()`
-      type, extends(abstractModule):: BasicModule
-            type(outputConfig)            :: output
-            type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
-      contains
-            procedure:: initialize =>  BasicModule_initialize
-            procedure:: readConfig => BasicModule_readConfig
-            procedure:: run => BasicModule_run
-            procedure:: finalize => BasicModule_finalize
-            procedure:: openOutputFile => BasicModule_openOutputFile
-            procedure:: reinitializeLibAltay => BasicModule_reinitializeLibAltay
-            procedure:: finalizeLibAltay => BasicModule_finalizeLibAltay
-      end type
+    type:: outputConfig
+        character(max_pathlen)  :: outputPrefix = '' !< Prefix for the output files.
+        logical                 :: outputRequest = .false.
+        integer                 :: verbosity = 0  !< Level of verbosity sent to the stdout and to the log file (if any)
+        integer                 :: log_unit = 6
+    end type
+
+    !> Class implementing basic subset of operations that are shared by all
+    !> computational modules.
+    !>
+    !> \note This class is essentially an abstract class, but declaring it
+    !>       that way prevents the subclasses from calling _ANY_ superclass
+    !>       method (including the ones that have an actual implementation
+    !>       in BasicModule) in the OO-acceptable style:
+    !>       `this%ParentClassName%method()`
+    type, extends(abstractModule):: BasicModule
+          type(outputConfig)            :: output
+          type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
+    contains
+          procedure:: initialize =>  BasicModule_initialize
+          procedure:: readConfig => BasicModule_readConfig
+          procedure:: run => BasicModule_run
+          procedure:: finalize => BasicModule_finalize
+          procedure:: openOutputFile => BasicModule_openOutputFile
+          procedure:: reinitializeLibAltay => BasicModule_reinitializeLibAltay
+          procedure:: finalizeLibAltay => BasicModule_finalizeLibAltay
+    end type
 
 contains
 
