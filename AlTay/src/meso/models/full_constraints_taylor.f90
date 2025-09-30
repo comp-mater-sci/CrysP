@@ -114,9 +114,11 @@ contains
     end function
 
     !> See [[MesoModel:apply_step]]
-    subroutine full_constraints_taylor_deform(this, cluster_, stress, slip)
+    subroutine full_constraints_taylor_deform(this, cluster_, velocity_gradient, time, stress, slip)
         class(TaylorModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
+        real(DP), dimension(3,3), intent(in):: velocity_gradient
+        real(DP), intent(in):: time
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
 
@@ -137,7 +139,7 @@ contains
 
             n_systems = size(grain_%model%taylor_coeffs, 2)
 
-            imposed_strain_rate = tensor_to_deviatoric(this%velocity_gradient .toframe. grain_%orientation)
+            imposed_strain_rate = tensor_to_deviatoric(velocity_gradient .toframe. grain_%orientation)
 
             call simplex_solve(grain_%model%taylor_coeffs, &
                                imposed_strain_rate, &
@@ -162,7 +164,7 @@ contains
 
             slip = sum(abs(slip_rates))
 
-            call micro_deform(grain_, 1._DP, slip_rates, this%velocity_gradient)
+            call micro_deform(grain_, time, slip_rates, velocity_gradient)
         end associate
     end subroutine
 end module

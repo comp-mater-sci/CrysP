@@ -16,15 +16,11 @@ module meso_model
     !> Declares common properties of all mesoscopic models.
     !> Concrete mesoscopic models must extend this base type.
     type, abstract:: MesoModel
-        real(DP), dimension(3, 3):: velocity_gradient   !! Current Velocity gradient applied during deformation steps.
-        real(DP), dimension(3, 3):: imposed_spin_rate   !! Current imposed spin rate derived from the velocity gradient.
-                                                        !! Stored separately for performance.
     contains
         procedure, nopass::                          get_parameters      => meso_model_get_parameters       !! Get the parameters needed to initialize the model.
         procedure(meso_model_init), deferred::       init                                                   !! Initialize the model.
         procedure(meso_model_get_stress), deferred:: get_stress                                             !! Get the stress state of a cluster under a certain strain condition.
         procedure(meso_model_apply_step), deferred:: apply_step                                             !! Apply a single deformation step to a single cluster.
-        procedure::                                  prepare_deformation => meso_model_prepare_deformation  !! Prepare the model for a number of deformation steps in a certain direction.
         procedure::                                  update              => meso_model_update               !! Update the model state after a deformation step.
         procedure::                                  finalize            => meso_model_finalize             !! Free memory
     end type
@@ -68,7 +64,7 @@ module meso_model
         !>
         !> Returns some statistics of the deformation to the caller.
         !> The cluster state is updated to the state after the deformation step.
-        subroutine meso_model_apply_step(this, cluster_, stress, slip)
+        subroutine meso_model_apply_step(this, cluster_, velocity_gradient, time, stress, slip)
             import MesoModel
             import Cluster
             import DP
@@ -77,6 +73,8 @@ module meso_model
             class(Cluster), target, intent(inout):: cluster_    !! The cluster to apply the deformation step to.
                                                                 !! Upon entry, the cluster state must be consistent with the beginning of the time step.
                                                                 !! Upon exit, the cluster state corresponds to the end of the time step.
+            real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient to apply to the cluster
+            real(DP), intent(in):: time                         !! Duration of the time step
             real(DP), dimension(3, 3), intent(out):: stress     !! Homogenized stress state of the cluster during the time step.
             real(DP), intent(out):: slip                        !! Total slip that occured in the cluster to realize the deformation during this time step.
         end subroutine
@@ -96,8 +94,10 @@ contains
     !> Update the mesoscopic model.
     !>
     !> The default implementation does nothing.
-    subroutine meso_model_update(this)
+    subroutine meso_model_update(this, velocity_gradient, time)
         class(MesoModel), intent(inout):: this  !! Model instance
+        real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
+        real(DP), intent(in):: time                              !! Duration of the time step.
     end subroutine
 
     !> Finalize the mesoscopic model
@@ -105,16 +105,5 @@ contains
     !> The default implementation does nothing.
     subroutine meso_model_finalize(this)
         class(MesoModel), intent(in):: this     !! Model instance
-    end subroutine
-
-    !> Prepare the model for a deformation
-    !>
-    !> The default implementation sets the model velocity gradient and the imposed spin rate based on the provided velocity gradient.
-    subroutine meso_model_prepare_deformation(this, v_grad)
-        class(MesoModel), intent(inout):: this          !! Model instance
-        real(DP), dimension(3, 3), intent(in):: v_grad  !! Velocity gradient for the deformation being prepared
-
-        this%velocity_gradient = v_grad
-        this%imposed_spin_rate = spin_to_tensor(tensor_to_spin(v_grad)) !Strip symmetric part
     end subroutine
 end module
