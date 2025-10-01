@@ -16,7 +16,6 @@ module dmcEvolutionOutputRecord
         real(DP):: vm_strain_total = 0.D0    !< von Mises equivalent of the total strain across all steps
         real(DP):: norm_P_abs = 0.D0         !< norm of accumulated absolute plastic strain increment tensors
         real(DP):: dotWonA = 0.D0
-        real(DP):: taylor_factor = 0.D0
         real(DP):: scal_s = 0.D0
         real(DP):: norm_SonA = 0.D0
         real(DP):: R = 0.D0                  !< residual of search procedure
@@ -35,12 +34,11 @@ contains
 
 
     !> Make IncrementOutputRecord from increment data.
-    function IncrementOutputRecord_init(icv, De, Se, taylor_factor, target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm) result(this)
+    function IncrementOutputRecord_init(icv, De, Se, target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm) result(this)
     type(IncrementOutputRecord)                 :: this
     type(IncrementationControlVariables), intent(in):: icv
     real(DP), dimension(3, 3), intent(in)        ::  de, &
                                                     se
-    real(DP), intent(in)                 :: taylor_factor
     real(DP), dimension(5), intent(in):: target_stress_mode
     real(DP), dimension(5), intent(in):: strain_mode
     real(DP), dimension(5), intent(in):: stress_mode
@@ -55,8 +53,6 @@ contains
         this%scal_s = stress_norm
         this%norm_SonA = stress_norm
         this%R = residual_norm
-
-        this%taylor_factor = taylor_factor
 
         this%A = deviatoric_to_tensor(strain_mode)
         this%SonA = deviatoric_to_tensor(stress_mode)

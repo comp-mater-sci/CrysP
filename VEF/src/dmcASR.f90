@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+include "criMacros.fpp"
+
+>>>>>>> 8f960ecfb (Working on removing taylor factor)
 !> DMC Arbitrary Stress Response
 module dmcASR
     use conversions
@@ -73,26 +78,24 @@ contains
 
 
     subroutine ASRModule_run(this, info)
-    implicit none
-    class(ASRModule), intent(inout)          :: this
-    integer, intent(out)                     :: info
-    !
-    ! Quantities in the global (aka. material = texture) reference frame
-    real(DP), dimension(3, 3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
-    ! Quantities in rotated (aka. sample) reference frame
-!    type(SRTensor)                  :: sigma_rot
-    type(ASROutput)                 :: output
-    type(IncrementationControl)     :: icv
-    real(DP), dimension(3, 3)   :: Mrot
-    !
-    integer     :: istep, nsteps, ofunit
-    !
-        ! Open and initialize result files
+        class(ASRModule), intent(inout)          :: this
+        integer, intent(out)                     :: info
         !
-        info = this%openOutputFile('.asr',ofunit)
-        if (info /= VEF_OK) return
-        info = this%outputFile(ofunit, header=.true.)
-        if (info /= VEF_OK) return
+        ! Quantities in the global (aka. material = texture) reference frame
+        real(DP), dimension(3, 3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
+        ! Quantities in rotated (aka. sample) reference frame
+        ! type(SRTensor)                  :: sigma_rot
+        type(ASROutput)                 :: output
+        type(IncrementationControl)     :: icv
+        real(DP), dimension(3, 3)   :: Mrot
+        integer     :: istep, nsteps, ofunit
+
+        !
+        RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
+
+        ! Open and initialize result files
+        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.asr',ofunit))
+        RETURN_IF(info /= VEF_OK, info = this%outputFile(ofunit, header=.true.))
         !
         nsteps = size(this%steps)
         !
@@ -195,8 +198,7 @@ contains
                     write(iounit, fmt = 710, iostat = ierr) &
                                 output%step, v%icv%increment, & ! 2 fields
                                 v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
-                                v%icv%plastic_work_total, v%dotWonA, &
-                                v%taylor_factor, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
+                                v%icv%plastic_work_total, v%dotWonA, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
                                 tensor_to_unscaled_voigt(SonA), tensor_to_unscaled_voigt(v%SonA), &
                                 tensor_to_unscaled_voigt(A), tensor_to_unscaled_voigt(v%A), &
                                 tensor_to_unscaled_voigt(P_step), tensor_to_unscaled_voigt(P_step_rot), &
@@ -208,6 +210,6 @@ contains
         ! Formats for output file
         700 format(1X, 2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
         701 format('#',2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
-        710 format(1X, 2(I9, 1X), 10(ES18.9E3, 1X), 4(5X, 12(ES18.9E3, 1X)))
+        710 format(1X, 2(I9, 1X), 9(ES18.9E3, 1X), 4(5X, 12(ES18.9E3, 1X)))
     end function
 end module

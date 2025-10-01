@@ -23,34 +23,6 @@ module commonUtils
 
 contains
 
-      subroutine  getTaylorFactor(stepid, M, info)
-      use altayConfig
-      integer, intent(in)            :: stepid
-      real(DP), intent(out)  :: M
-      integer, intent(out)           :: info
-      !
-            info = -1
-            M = 0.D0
-            if (isStateOK(stepid)) then
-                  M = astate%simulCalls(stepid)%output%taylor_factor
-                  info = 0
-            endif
-      !
-      contains
-      !> Perform basic checks if the state variables in altayConfig are consistent.
-      logical function isStateOK(stepid)
-      use altayConfig
-      integer, intent(in)      :: stepid
-      !
-            isStateOK = .false.
-            if (allocated(astate%simulCalls)) then
-                  isStateOK = (size(astate%simulCalls) <= stepid) .and. (astate%this >= stepid)
-            endif
-      !
-      end function
-
-      end subroutine
-
       subroutine outputTexture(info)
       use altay
       integer, intent(out)     :: info

@@ -66,7 +66,6 @@ module simulation
                   i
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
-                   homogenized_taylor_factor, &
                    deformation_gradient_increment(3, 3), &
                    von_mises_strain_rate, &
                    stress_cluster(3, 3), &
@@ -83,25 +82,21 @@ module simulation
         call meso_update_model(velocity_gradient, t_inc)
         total_weight = 0._DP
         homogenized_stress = 0._DP
-        homogenized_taylor_factor = 0._DP
         !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate, velocity_gradient, t_inc) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
-            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, homogenized_taylor_factor)
+            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress)
                 do i = 1, n_clusters
                     call meso_apply_deformation_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
                     weight_cluster = clusters(i)%weight
                     total_weight = total_weight+weight_cluster
                     homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
-                    homogenized_taylor_factor = homogenized_taylor_factor+slip_cluster/von_mises_strain_rate*weight_cluster
                 end do
             !$OMP END DO
         !$OMP END PARALLEL
         homogenized_stress = homogenized_stress/total_weight
-        homogenized_taylor_factor = homogenized_taylor_factor/total_weight
 
         ! Get the homogenized quantities:
         associate (callout => astate%simulCalls(astate%this)%output)
             callout%stress_tensor = homogenized_stress
-            callout%taylor_factor = homogenized_taylor_factor
             callout%effective_macro_strain_tot = von_mises_strain
             callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
         end associate

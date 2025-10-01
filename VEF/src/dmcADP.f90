@@ -176,18 +176,17 @@ contains
                           associate(v => step_output%increments(increment))
                               l_voigt = tensor_to_unscaled_voigt(v%L)
                               write(iounit, fmt = 710, iostat = ierr) &
-                                          step, increment, &            ! 2 fields
-                                          v%L, &         ! 9 fields: velocity gradient
-                                          tensor_to_unscaled_voigt(v%L), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                          tensor_to_spin(v%L), &         ! 3 fields: spin tensor
-                                          normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
-                                          tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
-                                          v%vm_strain_begin, &
-                                          v%vm_strain_end, &
-                                          v%vMeqStrainRate, &
-                                          v%vm_stress, &
-                                          v%plastic_work_inc, &
-                                          v%taylor_factor
+                                  step, increment, &            ! 2 fields
+                                  v%L, &         ! 9 fields: velocity gradient
+                                  tensor_to_unscaled_voigt(v%L), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                  tensor_to_spin(v%L), &         ! 3 fields: spin tensor
+                                  normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
+                                  tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
+                                  v%vm_strain_begin, &
+                                  v%vm_strain_end, &
+                                  v%vMeqStrainRate, &
+                                  v%vm_stress, &
+                                  v%plastic_work_inc
                           end associate
                           if (ierr /= 0) return
                     enddo
@@ -197,7 +196,6 @@ contains
         endif
 
         ! Formats for the output file
-        710 format(1X, 2(I18, 1X), 38(ES18.9E3, 1X))
-    !
+        710 format(1X, 2(I18, 1X), 37(ES18.9E3, 1X))
     end function
 end module

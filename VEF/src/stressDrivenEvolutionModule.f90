@@ -53,7 +53,7 @@ contains
         type(IncrementOutputRecord), dimension(:), allocatable, intent(out):: output
         type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
         !
-        real(DP):: scaling_factor, control_variable, stop_control_variable, taylor_factor, stretch, X_tmp(3, 3)
+        real(DP):: scaling_factor, control_variable, stop_control_variable, stretch, X_tmp(3, 3)
         real(DP), dimension(5):: vDe, vSe
         type(IncrementationControl):: icv
         real(DP), dimension(6):: X_tmp_voigt
@@ -64,8 +64,6 @@ contains
                    stress(5), &
                    residual(5)
 
-
-        !
         type(IncrementOutputRecord)         :: tmp_record
         !> Results if the incrementation procedure.
         !>
@@ -104,13 +102,9 @@ contains
             target_stress_mode = target_stress_mode / target_stress_norm
             call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
-            ! Nasty hack: drilling a hole to libaltay to get the Taylor factor
-            call getTaylorFactor(1, taylor_factor, info)
-            !
             ! Make output record and prepare variables for updating icv
             tmp_record = IncrementOutputRecord(icv%IncrementationControlVariables, &
                                                zero, zero, &
-                                               taylor_factor, &
                                                target_stress_mode, &
                                                strain_mode, &
                                                stress/norm2(stress), &
@@ -196,7 +190,6 @@ contains
                 ! Update material state
                 call makeTextureUpdateStep(tmp_record%P_inc_evol, &
                                            tmp_record%S_evol, &
-                                           taylor_factor, &
                                            this%output%outputRequest, info)
                 if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
 
@@ -229,12 +222,11 @@ contains
         output = output(1:n_records)
     end function
 
-      subroutine makeTextureUpdateStep(D, S, M, output_flag, info)
+      subroutine makeTextureUpdateStep(D, S, output_flag, info)
       use altay
       use altayConfig
       real(DP), dimension(3, 3), intent(in)      :: D
       real(DP), dimension(3, 3), intent(out)     :: S
-      real(DP), intent(out)                    :: M
       logical, intent(in)                              :: output_flag
       integer, intent(out)                             :: info
       !
@@ -253,15 +245,11 @@ contains
             !
             ! Get the result
             S = astate%simulCalls(istp)%output%stress_tensor(:,:)
-            M = astate%simulCalls(istp)%output%taylor_factor
 
 #define MSG_GROUP_ERRORS
 #include "msgFormats.inc"
 #undef MSG_GROUP_ERRORS
       end subroutine
-
-
-
 
     !> Calculate the real roots of quadratic polynomial given in form
     !> a^2 x+b x+c = 0

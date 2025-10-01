@@ -23,7 +23,6 @@ module altayConfig
     type:: simulStepOutputData
         !> Macroscopic (homogenized) stress
         real(DP), dimension(3, 3)    :: stress_tensor = 0.D0
-        real(DP)                    :: taylor_factor = 0.D0             !< Macroscopic (homogenized) Taylor factor
         real(DP)                    :: effective_macro_strain_tot = 0.D0 !< Macroscopic (imposed) effective von Mises strain-total over the calls
         real(DP)                    :: effective_macro_strain_tot_end = 0.D0 !< Macroscopic (imposed) effective von Mises strain till the end of the current step-total over the calls
     end type

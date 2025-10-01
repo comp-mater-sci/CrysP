@@ -76,17 +76,6 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{dotW} The rate of plastic work \f$ \dot{W} \f$
 	</li>
 
-	<li> \outdef{M-factor} The volume-average Taylor factor \f$ \overline{M} \f$
-
-	It is obtained from volume-averaging the sum of microscopic slip rates
-	over all deformation systems \f$  \dot{\gamma} \f$, as
-	\f[
-		\overline{M}= \frac{\overline{ \dot{\gamma} }}{D_{vM}}
-	\f]
-	The von Mises equivalent strain rate \f$ D_{vM}=\sqrt{2/3} \| \mathbf{D} \| \f$ is
-	used as normalization factor.
-	</li>
-
 	<li> \outdef{scal_s} The norm of a normalized deviatoric stress
 	</li>
 
@@ -546,8 +535,6 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 -# \outdef{S_vM} Von Mises equivalent stress
 
 -# \outdef{dW,adp_dotW} plastic work rate \f$ W = \mathbf{D} : \mathbf{S} \f$
-
--# \outref{M-factor}
 
 ---
 
