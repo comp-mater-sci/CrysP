@@ -14,7 +14,6 @@ module simulation
     private
 
     real(DP):: von_mises_strain
-    real(DP), dimension(3, 3):: deformation_gradient = UNIT_MATRIX_3X3
     class(Cluster), dimension(:), allocatable:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
@@ -32,7 +31,6 @@ module simulation
         class(Cluster), dimension(:), allocatable, intent(inout):: clstrs
 
         call move_alloc(clstrs, clusters)
-        deformation_gradient = UNIT_MATRIX_3X3
         von_mises_strain = 0._DP
     end subroutine
 
@@ -76,17 +74,10 @@ module simulation
                    weight_cluster, &
                    t_inc                                    ! Time increment
 
-
-        !Check if the velocity gradient is purely deviatoric
-        if (abs(velocity_gradient(1,1) + velocity_gradient(2,2)+ velocity_gradient(3,3)) > TOLERANCE) &
-            call log_error(MOD_NAME, 'simulation_run', ERR_VAL, 'The velocity gradient must be purely deviatoric')
-
-
         n_clusters = size(clusters)
         t_inc = 1._DP
 
         von_mises_strain_rate = tensor_to_von_mises(velocity_gradient)
-        deformation_gradient_increment = matrix_exponential(velocity_gradient)
 
         !Set model state variables to correspond to end of time step so clusters can use this state to update their own state.
         call meso_update_model(velocity_gradient, t_inc)
@@ -116,11 +107,10 @@ module simulation
         end associate
 
         von_mises_strain = von_mises_strain+von_mises_strain_rate
-        deformation_gradient = matmul(deformation_gradient_increment, deformation_gradient)
     end subroutine
 
     subroutine output_current_state()
-        call cur_write_block(clusters, deformation_gradient)
+        call cur_write_block(clusters)
     end subroutine
 
     subroutine simulation_finalize()

@@ -83,11 +83,8 @@ contains
     end subroutine
 
     !Write the current state of all grains to file.
-    subroutine cur_write_block(clusters, deformation_gradient)
-        class(Cluster), dimension(:), intent(in)::  clusters !< List of all clusters which contains
-                                                                                 !  state of all grains
-        real(DP), dimension(3, 3), intent(in)::                         deformation_gradient
-
+    subroutine cur_write_block(clusters)
+        class(Cluster), dimension(:), intent(in)::  clusters !! List of all clusters
         integer:: n_grains, &
                   cluster_size, &
                   i, j, &
@@ -100,7 +97,7 @@ contains
 
         !Write general information
         write (IMP1, 402)
-        write (IMP1, 403) n_grains, deformation_gradient
+        write (IMP1, 403) n_grains
         write (IMP1, 401)
 
         !Write state of each grain
@@ -119,7 +116,7 @@ contains
             2X, 'F(1, 1)',4X, 'F(2, 1)',4X, 'F(3, 1)',4X,                           &
             2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
             2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)')
-         403 format(5X, i8, 41x, 3(2X, 3F10.6))
+         403 format(5X, i8)
 
     end subroutine
 
