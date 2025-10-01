@@ -1,5 +1,3 @@
-#include "criMacros.fpp"
-
 !> Strain-(rate) driven step
 module dmcStrainDrivenStep
     use base_defs

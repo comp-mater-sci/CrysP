@@ -1,5 +1,3 @@
-#include "criMacros.fpp"
-
 !> In-memory cache/table of the recent results from the multi-level model.
 module dmcResultTable
     use base_defs
@@ -66,7 +64,7 @@ contains
             forall (i = 1:this%n_records) angles(i) = vec_angle(S, this%table(i)%vSonA)
             min_idx_a = minloc(angles)
             if (present(max_angle)) then
-                CHOOSE(info, angles(min_idx) > max_angle, VEF_FAIL, VEF_OK)
+                info = merge(VEF_OK, VEF_FAIL, angles(min_idx) <= max_angle)
             else
                 info = VEF_OK
             endif

@@ -1,4 +1,3 @@
-#include "criMacros.fpp"
 !> Calculations of Equi-Work Contours
 module dmcEWC
     use conversions
@@ -69,17 +68,17 @@ contains
     implicit none
     class(EWCModule), intent(inout)            :: this
     integer, intent(in)                        :: cnfunit
-    !
+
     character(*), parameter:: PROC_NAME = 'EWCModule_readConfig'
 
     integer:: i, id
     logical:: use_default_settings
-    !
+
     ! Keywords for mode selection
     integer, parameter:: nmodes = 2, mode_reference_id = 1, mode_direct_id = 2
     type(MapItem), dimension(nmodes), parameter:: mode_keywords = [ MapItem('reference',mode_reference_id), &
                                                                    MapItem('direct',mode_direct_id) ]
-    !
+
         info = this%StressDrivenEvolutionModule%ReadConfig(cnfunit)
         if (info /= VEF_OK) return
         info = VEF_ERROR
@@ -91,10 +90,8 @@ contains
             case(mode_reference_id)
                 ! Evolution along the reference stress mode
                 if (.not. readValue(cnfunit, this%reference_stress_mode)) return
-                if (norm2(this%reference_stress_mode) < epsilon(0.D0)) then
-                    write(display_unit, fmt = 900) 'Norm of the reference mode must not be zero'
-                    return
-                endif
+                if (norm2(this%reference_stress_mode) < TOLERANCE) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Norm of the reference mode must not be zero')
                 this%use_reference_stress_mode = .true.
                 call IncrementationControlSettings_read(this%control, cnfunit, info, &
                                                         allowed=[scalingStrainTensor, &
@@ -105,11 +102,9 @@ contains
                 this%use_reference_stress_mode = .false.
             end select
         else
-            write(display_unit, fmt = 900) 'Unknown keyword for work level selection'
-            info = VEF_ERROR
-            return
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unknown keyword for work level selection')
         endif
-        !
+
         ! Contour lines
         if (.not. readValue(cnfunit, this%angular_resolution)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution.')
@@ -127,10 +122,8 @@ contains
             ! read(cnfunit, fmt=*,iostat = ioerr) this%reference_frame
             do i = 1, size(this%base_vectors, dim = 2)
                 if (.not. readValue(cnfunit, this%base_vectors(:,i))) return
-                if (norm2(this%base_vectors(:,i)) < epsilon(0.D0)) then
-                    write(display_unit, fmt = 900) 'Norm of each base vectors must not be zero'
-                    return
-                endif
+                if (norm2(this%base_vectors(:,i)) < TOLERANCE) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Norm of each base vectors must not be zero')
                 this%base_vectors(:,i) = this%base_vectors(:,i) / norm2(this%base_vectors(:,i))
             enddo
         endif
@@ -140,13 +133,7 @@ contains
         this%output%outputRequest = .false.       ! idem.
 
         info = VEF_OK
-        !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end function
-
 
     subroutine EWCModule_run(this, info)
         class(EWCModule), intent(inout)            :: this
@@ -267,27 +254,20 @@ contains
         else
             info = this%fileOutput(vPlasticWorkLevels, results, use_work_levels=.true.)
         endif
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end subroutine
-
 
     !> Post-process the result and generate the output.
     integer function EWCModule_fileOutput(this, vLevels, results, use_work_levels) result(info)
-    implicit none
-    class(EWCModule), intent(inout)              :: this
-    real(DP), dimension(:), intent(in)    :: vLevels
-    real(DP), dimension(0:,:), intent(in)  :: results
-    logical, optional, intent(in)                 :: use_work_levels
-    !
-    integer:: iounit, ierr, i, n_contours, n_columns
-    integer, parameter:: output_column_width = 25
-    character(len = output_column_width), dimension(:), allocatable:: header_columns
-    character(len = output_column_width):: tmp_str, label_str
-    !
+        class(EWCModule), intent(inout)              :: this
+        real(DP), dimension(:), intent(in)    :: vLevels
+        real(DP), dimension(0:,:), intent(in)  :: results
+        logical, optional, intent(in)                 :: use_work_levels
+
+        integer:: iounit, ierr, i, n_contours, n_columns
+        integer, parameter:: output_column_width = 25
+        character(len = output_column_width), dimension(:), allocatable:: header_columns
+        character(len = output_column_width):: tmp_str, label_str
+
         info = VEF_ERROR
         n_contours = ubound(results, dim = 1)
         if ((size(vLevels) /= n_contours)) return
@@ -299,7 +279,11 @@ contains
         n_columns = 1+n_contours  ! Theta followed by n_contours columns
         !
         ! Make the headers
-        CHOOSE(label_str, optionalDefault(use_work_levels, .false.), 'S|W=', 'S|eps_vM=')
+        if (optionalDefault(use_work_levels, .false.)) then
+            label_str = 'S|W='
+        else
+            label_str = 'S|eps_vM='
+        end if
         allocate(header_columns(n_columns))
         header_columns(1) = 'theta'
         do i = 1, n_columns-1
@@ -311,19 +295,16 @@ contains
         info = writeResultFile(iounit, results, header_columns, [output_column_width])
 
         close(iounit)
-    !
     end function
-
 
     !> Create meta-data output file.
     integer function EWCModule_fileOutputMeta(this, prefix, vEquivalentStrainLevels, vPlasticWorkLevels) result(info)
-    implicit none
-    class(EWCModule), intent(inout)              :: this
-    character(len=*), intent(in)                 :: prefix
-    real(DP), dimension(:), intent(in)    :: vEquivalentStrainLevels, vPlasticWorkLevels
-    !
-    integer:: iounit, ierr, i
-    !
+        class(EWCModule), intent(inout)              :: this
+        character(len=*), intent(in)                 :: prefix
+        real(DP), dimension(:), intent(in)    :: vEquivalentStrainLevels, vPlasticWorkLevels
+
+        integer:: iounit, ierr, i
+
         info = VEF_ERROR
         if (size(vEquivalentStrainLevels) /= size(vPlasticWorkLevels)) return
         info = VEF_ERROR
@@ -339,7 +320,5 @@ contains
         enddo
         if (ierr == 0) info = VEF_OK
         close(iounit)
-    !
     end function
-
 end module

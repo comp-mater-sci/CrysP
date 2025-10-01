@@ -41,7 +41,6 @@ micro/models/dsh_loop.f90
 #
 # Installation of the outputs in the build tree
 #
-set(altay_INCLUDE_DIRS "include" "include/altay")
 set(altay_INCLUDE_DIR "include")
 set(altay_LIBRARY_DIR "lib")
 
@@ -54,9 +53,6 @@ install(TARGETS ${libaltay}
 )
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/include/" DESTINATION "include/altay"
-	FILES_MATCHING PATTERN "*.fpp" PATTERN ".*" EXCLUDE)
-
 install(EXPORT "altayTargets" DESTINATION "cmake")
 
 # Generate package

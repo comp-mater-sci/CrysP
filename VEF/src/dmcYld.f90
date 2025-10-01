@@ -1,6 +1,3 @@
-#include "criMacros.fpp"
-
-!
 !> Yield locus calculations
 module dmcYld
     use conversions
@@ -105,12 +102,7 @@ contains
         this%output%outputRequest = .false.       ! idem.
         !
         info = VEF_OK
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
     end function
-
 
     subroutine YldModule_run(this, info)
         class(YldModule), intent(inout)            :: this
@@ -131,9 +123,8 @@ contains
                    stress(5), &
                    residual(5)
 
-
         info = VEF_ERROR
-        !
+
         npoints = ceiling(2*PI / this%angular_resolution - TOLERANCE)
 
         ! Open the main output file
@@ -191,11 +182,6 @@ contains
         call writeYldResults(ofunit, yldRes(:npoints), info, write_header = .true.)
         close(ofunit)
         info = VEF_OK
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end subroutine
 
 

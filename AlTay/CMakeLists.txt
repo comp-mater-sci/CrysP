@@ -6,6 +6,4 @@ project(altay Fortran)
 set(COMMON_DIR "../cmake-common")
 include("${COMMON_DIR}/basic-fortran-project.cmake")
 
-include_directories("include")
-
 add_subdirectory(src)

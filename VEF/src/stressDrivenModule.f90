@@ -1,4 +1,3 @@
-include "criMacros.fpp"
 include 'mkl_rci.f90'
 
 !> Implementation of a altay-based DMC computiational module.

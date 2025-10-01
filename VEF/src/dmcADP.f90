@@ -1,6 +1,3 @@
-#include "criMacros.fpp"
-
-
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
     use base_defs
@@ -14,6 +11,8 @@ module dmcADP
 
     private
     public:: ADPModule
+
+    character(*), parameter:: MOD_NAME = 'dmcADP'
 
     !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type, extends(BasicModule):: ADPModule
@@ -47,7 +46,6 @@ contains
         real(DP):: tmp_deformation(3,3), &
                    tmp_strain(6), &
                    step_size, &
-                   tmp, &
                    tmp_deformation_rate(3, 3)
         logical :: default_solver_config
 
@@ -84,16 +82,11 @@ contains
             case(strainmode_id)
                 if (.not. readValue(cnfunit, tmp_strain)) return
                 if (.not. readValue(cnfunit, step_size)) return
-                !
+
                 tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
-                ! Normalize the deformation
-                tmp = norm2(tmp_deformation_rate)
-                if (tmp < epsilon(0.D0)) then
-                    write(display_unit, fmt = 900) 'Norm of the strain mode must not be zero'
-                    return
-                endif
-                tmp_deformation_rate = tmp_deformation_rate/tmp*step_size
-            !
+                if (norm2(tmp_deformation_rate) < TOLERANCE) &
+                    call log_error(MOD_NAME, 'readconfig', ERR_IO, 'Strain mode must not be 0')
+                tmp_deformation_rate = tmp_deformation_rate/norm2(tmp_deformation_rate)*step_size
             case(strain_id)
                 if (.not. readValue(cnfunit, tmp_strain)) return
                 tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
@@ -108,13 +101,7 @@ contains
             this%steps(i)%output_state = this%output%outputRequest
         enddo
         info = VEF_OK
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end function
-
 
     !> Run the simulation
     subroutine ADPModule_run(this, info)
@@ -130,8 +117,11 @@ contains
         !
         ! Run the simulation
         info = VEF_ERROR
-        ALLOCATED_SIZE(n_steps, this%steps)
-        if (n_steps < 1) return
+        if (allocated(this%steps)) then
+            n_steps = size(this%steps)
+        else
+            return
+        end if
         !
         ! Storage for the calculated output
         allocate(output%steps(n_steps))
@@ -148,11 +138,6 @@ contains
                 if (info /= VEF_OK) return
             end associate
         enddo
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end subroutine
 
     !> Write out results to the output file

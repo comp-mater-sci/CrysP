@@ -1,5 +1,3 @@
-#include "criMacros.fpp"
-
 !> Implementation of a basic DMC computational module.
 module dmcBasicModule
     use, intrinsic:: iso_fortran_env, only: error_unit, output_unit
@@ -11,8 +9,7 @@ module dmcBasicModule
     use micro
     use parameters
     use logging
-    use altay, only: initAltay, finalizeAltay
-    use commonUtils
+    use altay, only: initAltay, finalizeAltay, outputcurrentstate
 
     implicit none
 
@@ -72,7 +69,7 @@ contains
 
             ! Output the initial state variables (non only texture but also BPM, MSS) if requested.
             if (this%output%outputRequest) then
-                  call outputTexture(ierr) !< \todo Rename with more general name
+                  call outputCurrentState(ierr)
                   if (ierr /= VEF_OK) &
                         call log_error(MOD_NAME, 'initialize', ERR_IO, 'Cannot write initial state.')
             endif
@@ -175,29 +172,20 @@ contains
       !> Read output configuration from top 3 lines after comment header in configuration file:
       !> prefix for output files, incremental output request flag, verbosity level
       subroutine readOutputConfigSection(cnfunit, cnf, info)
-      integer, intent(in)                  :: cnfunit !< configuration file
-      type(outputConfig), intent(inout)    :: cnf
-      integer, intent(out)                 :: info
+          integer, intent(in)                  :: cnfunit !< configuration file
+          type(outputConfig), intent(inout)    :: cnf
+          integer, intent(out)                 :: info
+
+          character(*), parameter:: PROC_NAME = 'readoutputconfigsection'
 
             info = VEF_ERROR
-            if (.not. readValue(cnfunit, cnf%outputPrefix)) then
-                write(error_unit, fmt = 900) 'Check output file prefix.'
-                return
-            endif
-            if (.not. readValue(cnfunit, cnf%outputRequest)) then
-                write(error_unit, fmt = 900) 'Check output request flag.'
-                return
-            endif
-            if (.not. readValue(cnfunit, cnf%verbosity)) then
-                write(error_unit, fmt = 900) 'Check verbosity level.'
-                return
-            endif
+            if (.not. readValue(cnfunit, cnf%outputPrefix)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read output file prefix')
+            if (.not. readValue(cnfunit, cnf%outputRequest)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read output request flag')
+            if (.not. readValue(cnfunit, cnf%verbosity)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read verbosity level')
             info = VEF_OK
-      !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-      !
       end subroutine
 
 
@@ -207,7 +195,9 @@ contains
       integer, intent(in)                  :: cnfunit
       type(altayConfigData), target, intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
       integer, intent(out)                 :: info
-      !
+
+      character(*), parameter:: PROC_NAME = 'readAltayConfigSection'
+
       integer                       :: model_id, dm_id
       logical                       :: use_default_microstructure
       logical                       :: dummy, dummy2
@@ -218,18 +208,14 @@ contains
 
       type(MapItem), dimension(2):: model_types = [MapItem('ALAMEL', modelAlamel), &
                                                    MapItem('FCTaylor', modelFCTaylor)]
-        character(*), parameter:: PROC_NAME = 'readAltayConfigSection'
             info = ERR_IO
            model_id = -1
            dm_id = -1
             ! Read input texture file name
             if (.not. readValue(cnfunit, cnf%texture_input_fname)) return
             ! Determine crystal plasticity model type
-            if (.not. readKeyword(cnfunit, model_types, model_id)) then
-                write(error_unit, fmt = 900) 'Unsupported crystal plasticity model.'
-                info = VEF_ERROR
-                return
-            endif
+            if (.not. readKeyword(cnfunit, model_types, model_id)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Invalid mesoscopic model.')
 
             dummy2 = readValue(cnfunit, dummy)
             read(cnfunit, '(A)') buffer
@@ -250,146 +236,131 @@ contains
             use_default_microstructure = .true.
             if (.not. readValue(cnfunit, use_default_microstructure)) return
             if (.not. use_default_microstructure) then
-                  if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
-                  ! Read user-supplied initial deformation gradient
-                  do i = 1, 3
-                        if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) then
-                            write(error_unit, fmt = 900) 'Cannot read deformation gradient.'
-                            info = VEF_ERROR
-                            return
-                        endif
-                  enddo
+                if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
+                ! Read user-supplied initial deformation gradient
+                do i = 1, 3
+                    if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) &
+                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read deformation gradient.')
+                enddo
             end if
             ! Process hardening model section
             call readHardeningSection(cnfunit, cnf, info)
-            if (info /= VEF_OK) then
-                write(error_unit, fmt = 900) 'Cannot read the hardening law section.'
-                return
-            endif
-
+            if (info /= VEF_OK) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot read the hardening law section.')
 
             ! the keyword is mapped to a proper model_id, we can instantly set it.
             call setModelType(cnf, model_id, info)
             if (info /= VEF_OK) return
-            !
-            !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-      !
       end subroutine
 
-      !> Read configuration of hardening model from configuration file
-      subroutine readHardeningSection(cnfunit, cnf, info)
-      integer, intent(in)                  :: cnfunit
+    !> Read configuration of hardening model from configuration file
+    subroutine readHardeningSection(cnfunit, cnf, info)
+        integer, intent(in)                  :: cnfunit
         type(AltayConfigData), intent(inout):: cnf
-      integer, intent(out)                 :: info
+        integer, intent(out)                 :: info
+
+        character(*), parameter:: PROC_NAME = 'readhardeningsection'
+
+        integer:: hardening_model_id, &
+                  nparunit, &
+                  ioerr, &
+                  i
         type(Parameter), dimension(:), allocatable, target:: params
-        integer:: hardening_model_id
         real(DP):: tmp(16)
         character(len = max_pathlen)          :: tmp_fname
-        integer                             :: nparunit, ioerr, i
-      !
-      logical:: use_default_hardening
-      logical:: read_state_dummy
-      type(Parameter), pointer:: param_ptr
-      !
+        logical:: use_default_hardening, &
+                  read_state_dummy
+        type(Parameter), pointer:: param_ptr
+
         info = VEF_OK
-            use_default_hardening = .true.
-            if (.not. readValue(cnfunit, use_default_hardening)) then  ! read default hardening flag
-                  write(error_unit, fmt = 900) 'Reading of the default hardening flag unsuccessful.'
-                  return
-            endif
-            if (.not. use_default_hardening) then
-                if (.not. readValue(cnfunit, hardening_model_id)) return
-                cnf%hardening_model_id = hardening_model_id
-                params = micro_get_parameters(hardening_model_id)
+        use_default_hardening = .true.
+        if (.not. readValue(cnfunit, use_default_hardening)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Can not read default hardening flag.')
 
-                  select case(hardening_model_id)
-                  case(HARDENING_VOCE)
-                        if (readValue(cnfunit, tmp(1:5))) then
-                            param_ptr => params .find. 'TIII1'
-                            param_ptr = tmp(1)
-                            param_ptr => params .find. 'TIIIS'
-                            param_ptr = tmp(2)
-                            param_ptr => params .find. 'TIVS'
-                            param_ptr = tmp(3)
-                            param_ptr => params .find. 'THIII1'
-                            param_ptr = tmp(4)
-                            param_ptr => params .find. 'THT'
-                            param_ptr = tmp(5)
-                            info = VEF_OK
-                        endif
-                  case(HARDENING_SWIFT)
-                        ! Read one line
-                        if (readValue(cnfunit, tmp(1:3))) then
-                            param_ptr => params .find. 'crss0'
-                            param_ptr = tmp(1)
-                            param_ptr => params .find. 'gamma0'
-                            param_ptr = tmp(2)
-                            param_ptr => params .find. 'n'
-                            param_ptr = tmp(3)
-                            info = VEF_OK
-                        endif
-                  !
-                  case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
-                        if (.not. readValue(cnfunit, tmp_fname)) return  ! read BP parameter file name
-                        open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
+        if (.not. use_default_hardening) then
+            if (.not. readValue(cnfunit, hardening_model_id)) return
+            cnf%hardening_model_id = hardening_model_id
+            params = micro_get_parameters(hardening_model_id)
 
-                        if (ioerr /= 0) then
-                        return
-                        endif
+              select case(hardening_model_id)
+              case(HARDENING_VOCE)
+                    if (readValue(cnfunit, tmp(1:5))) then
+                        param_ptr => params .find. 'TIII1'
+                        param_ptr = tmp(1)
+                        param_ptr => params .find. 'TIIIS'
+                        param_ptr = tmp(2)
+                        param_ptr => params .find. 'TIVS'
+                        param_ptr = tmp(3)
+                        param_ptr => params .find. 'THIII1'
+                        param_ptr = tmp(4)
+                        param_ptr => params .find. 'THT'
+                        param_ptr = tmp(5)
+                        info = VEF_OK
+                    endif
+              case(HARDENING_SWIFT)
+                    ! Read one line
+                    if (readValue(cnfunit, tmp(1:3))) then
+                        param_ptr => params .find. 'crss0'
+                        param_ptr = tmp(1)
+                        param_ptr => params .find. 'gamma0'
+                        param_ptr = tmp(2)
+                        param_ptr => params .find. 'n'
+                        param_ptr = tmp(3)
+                        info = VEF_OK
+                    endif
+              !
+              case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
+                    if (.not. readValue(cnfunit, tmp_fname)) return  ! read BP parameter file name
+                    open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
 
-                        do i = 1, 16
-                            read(nparunit, fmt = 100, err = 666, end = 666) tmp(i)
-                        end do
-100                     format(F12.5)
-                            param_ptr => params .find. 'b'
-                            param_ptr = tmp(1)
-                            param_ptr => params .find. 'G'
-                            param_ptr = tmp(2)
-                            param_ptr => params .find. 'alfa'
-                            param_ptr = tmp(3)
-                            param_ptr => params .find. 'f'
-                            param_ptr = tmp(4)
-                            param_ptr => params .find. 'tau0'
-                            param_ptr = tmp(5)
-                            param_ptr => params .find. 'I'
-                            param_ptr = tmp(6)
-                            param_ptr => params .find. 'R'
-                            param_ptr = tmp(7)
-                            param_ptr => params .find. 'Iwd'
-                            param_ptr = tmp(8)
-                            param_ptr => params .find. 'Rwd'
-                            param_ptr = tmp(9)
-                            param_ptr => params .find. 'Rncg'
-                            param_ptr = tmp(10)
-                            param_ptr => params .find. 'beta1'
-                            param_ptr = tmp(11)
-                            param_ptr => params .find. 'beta2'
-                            param_ptr = tmp(12)
-                            param_ptr => params .find. 'Iwp'
-                            param_ptr = tmp(13)
-                            param_ptr => params .find. 'Rwp'
-                            param_ptr = tmp(14)
-                            param_ptr => params .find. 'Rrev'
-                            param_ptr = tmp(15)
-                            param_ptr => params .find. 'R2'
-                            param_ptr = tmp(16)
-                        if (.not. readValue(cnfunit, read_state_dummy)) return
-                  end select
-                cnf%hardening_parameters = params
-            else
-                  cnf%hardening_model_id = HARDENING_NONE
-                  cnf%hardening_parameters = micro_get_parameters(HARDENING_NONE)
-            endif
+                    if (ioerr /= 0) then
+                    return
+                    endif
 
-666         return
-! message formats
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-      !
+                    do i = 1, 16
+                        read(nparunit, fmt = 100, err = 666, end = 666) tmp(i)
+                    end do
+100                   format(F12.5)
+                          param_ptr => params .find. 'b'
+                          param_ptr = tmp(1)
+                          param_ptr => params .find. 'G'
+                          param_ptr = tmp(2)
+                          param_ptr => params .find. 'alfa'
+                          param_ptr = tmp(3)
+                          param_ptr => params .find. 'f'
+                          param_ptr = tmp(4)
+                          param_ptr => params .find. 'tau0'
+                          param_ptr = tmp(5)
+                          param_ptr => params .find. 'I'
+                          param_ptr = tmp(6)
+                          param_ptr => params .find. 'R'
+                          param_ptr = tmp(7)
+                          param_ptr => params .find. 'Iwd'
+                          param_ptr = tmp(8)
+                          param_ptr => params .find. 'Rwd'
+                          param_ptr = tmp(9)
+                          param_ptr => params .find. 'Rncg'
+                          param_ptr = tmp(10)
+                          param_ptr => params .find. 'beta1'
+                          param_ptr = tmp(11)
+                          param_ptr => params .find. 'beta2'
+                          param_ptr = tmp(12)
+                          param_ptr => params .find. 'Iwp'
+                          param_ptr = tmp(13)
+                          param_ptr => params .find. 'Rwp'
+                          param_ptr = tmp(14)
+                          param_ptr => params .find. 'Rrev'
+                          param_ptr = tmp(15)
+                          param_ptr => params .find. 'R2'
+                          param_ptr = tmp(16)
+                      if (.not. readValue(cnfunit, read_state_dummy)) return
+                end select
+              cnf%hardening_parameters = params
+          else
+                cnf%hardening_model_id = HARDENING_NONE
+                cnf%hardening_parameters = micro_get_parameters(HARDENING_NONE)
+          endif
+
+666       return
       end subroutine
-
 end module
