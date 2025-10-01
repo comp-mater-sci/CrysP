@@ -549,9 +549,6 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 
 -# \outref{M-factor}
 
--# \outdef{gamma} total accumulated plastic slip
-
-
 ---
 
 Quick links

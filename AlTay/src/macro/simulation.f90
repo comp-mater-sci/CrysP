@@ -111,7 +111,6 @@ module simulation
         associate (callout => astate%simulCalls(astate%this)%output)
             callout%stress_tensor = homogenized_stress
             callout%taylor_factor = homogenized_taylor_factor
-            callout%effective_stress = sqrt(3._DP/2._DP)*norm2(homogenized_stress)
             callout%effective_macro_strain_tot = von_mises_strain
             callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
         end associate

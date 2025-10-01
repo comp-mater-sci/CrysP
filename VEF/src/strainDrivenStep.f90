@@ -32,7 +32,6 @@ module dmcStrainDrivenStep
                     vm_stress = 0._DP, &
                     plastic_work_inc = 0._DP, &
                     taylor_factor = 0._DP, &
-                    plastic_slip_tot = 0._DP, &
                     vmeqstrainrate = 0._DP
     end type
 
@@ -113,12 +112,11 @@ contains
                 increment_output%S = altay_output%stress_tensor
                 increment_output%vm_strain_begin = altay_output%effective_macro_strain_tot
                 increment_output%vm_strain_end = altay_output%effective_macro_strain_tot_end
-                increment_output%vm_stress = altay_output%effective_stress
+                increment_output%vm_stress = sqrt(3._DP/2._DP)*norm2(altay_output%stress_tensor)
                 ! D : S
                 increment_output%plastic_work_inc = increment_output%L .dot. increment_output%S !Works because S is symmetric
                 !
                 increment_output%taylor_factor = altay_output%taylor_factor
-                increment_output%plastic_slip_tot = altay_output%homogenised_slip_tot
                 increment_output%vMeqStrainRate = tensor_to_von_mises(increment_output%L)
 
             end associate
