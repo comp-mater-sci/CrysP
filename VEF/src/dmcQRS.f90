@@ -161,14 +161,9 @@ contains
                    stress(5), &
                    residual(5)
 
+        info = this%openOutputFile('.xqrs', ofunit)
+        if (info /= VEF_OK) return
 
-    !
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
-        !
-        info = VEF_ERROR
-        !
-        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xqrs', ofunit))
         !
         npoints = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
         results = QRSOutputData(npoints)

@@ -175,8 +175,6 @@ contains
         integer:: n_theta, n_contours
         logical:: tmp_flag
 
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
         !
         !Subtract tolerance to deal with roundoff errors
         n_theta = ceiling(2*PI / this%angular_resolution - TOLERANCE)

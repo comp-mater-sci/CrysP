@@ -144,29 +144,28 @@ contains
     !
     integer:: ierr
         ! Re-initialize AlTay
-        RETURN_IF(info /= VEF_OK, info = this%finalizeLibAltay())
+        info = this%finalizeLibAltay()
+        if (info /= VEF_OK) return
+
         !
         ! Reconfigure:
         !  - Set new prefix
         if (present(output_prefix)) this%altay%output_prefix = output_prefix
-        !
+
         call initAltay(this%altay, ierr)
-        CHOOSE(info, ierr == VEF_OK, VEF_OK, VEF_ERROR)
-    !
+        info = merge(VEF_OK, VEF_ERROR, ierr == VEF_OK)
     end function
 
     !> Finalize libAltay and perform additional actions on finalization.
     integer function BasicModule_finalizeLibAltay(this) result(info)
     class(BasicModule), intent(inout)        :: this
-    !
+
     integer:: ierr
-    !
+
         info = VEF_ERROR
-        RETURN_IF(ierr /= VEF_OK, call finalizeAltay(ierr))
-        !
-        ! Action on finalize:
+        call finalizeAltay(ierr)
+        if (ierr /= VEF_OK) return
         info = VEF_OK
-    !
     end function
 
       !

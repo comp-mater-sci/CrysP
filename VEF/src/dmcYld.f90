@@ -132,15 +132,13 @@ contains
                    residual(5)
 
 
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
-        !
         info = VEF_ERROR
         !
         npoints = ceiling(2*PI / this%angular_resolution - TOLERANCE)
 
         ! Open the main output file
-        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xyld', ofunit))
+        info = this%openOutputFile('.xyld', ofunit)
+        if (info /= VEF_OK) return
         !
         ! Fix the configuration: no need for anything except for the stresses.
         iunilen = 1.D0

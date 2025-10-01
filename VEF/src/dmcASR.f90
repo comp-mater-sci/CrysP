@@ -92,13 +92,12 @@ contains
     !
     integer     :: istep, nsteps, ofunit
     !
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
-        !
         ! Open and initialize result files
         !
-        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.asr',ofunit))
-        RETURN_IF(info /= VEF_OK, info = this%outputFile(ofunit, header=.true.))
+        info = this%openOutputFile('.asr',ofunit)
+        if (info /= VEF_OK) return
+        info = this%outputFile(ofunit, header=.true.)
+        if (info /= VEF_OK) return
         !
         nsteps = size(this%steps)
         !

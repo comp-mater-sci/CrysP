@@ -13,6 +13,8 @@ module dmcStrainDrivenStep
              StepOutput, &
              IncrementOutput
 
+    character(*), parameter:: MOD_NAME = 'straindrivenstep'
+
     !> A strain-(rate) driven step
     type:: StrainDrivenStep
         real(DP), dimension(3, 3):: velocity_gradient
@@ -61,7 +63,11 @@ contains
         increment_strain = this%velocity_gradient / n_increments
 
         ! Initialize AlTay structures
-        RETURN_ON_WITH(call initStepData(n_increments, astate, info), info /= 0, info = VEF_ERROR)
+        call initStepData(n_increments, astate, info)
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, 'execute', ERR, 'Could not initialize step data')
+
+
 
         ! Set-up the substeps
         do i=1,n_increments
@@ -76,25 +82,33 @@ contains
             end associate
         enddo
 
-        ! Call the AlTay
-        RETURN_ON_WITH(call runSteps(astate, info), info /= 0, info = VEF_ERROR)
-        RETURN_IF(info /= VEF_OK, info = step_output%collect(n_increments))
+        call runSteps(astate, info)
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, 'execute', ERR, 'Error while running steps')
+
+        info = step_output%collect(n_increments)
+        if (info /= VEF_OK) return
     end function
 
     !> Collect the outputs from the AlTay simulation
     integer function StepOutput_collect(this, n_increments) result(info)
-    use altayConfig
-    class(StepOutput), intent(inout)     :: this
-    integer, intent(in)                  :: n_increments
-    !
-    integer:: i, ierr, n_simulcalls
-    !
-        ! Check if the input and the state of libaltay correspond.
-        ALLOCATED_SIZE(n_simulcalls, astate%simulCalls)
-        RETURN_IF(n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls, info = VEF_ERROR)
+        class(StepOutput), intent(inout)     :: this
+        integer, intent(in)                  :: n_increments
         !
-        ! Allocate storage for output
-        RETURN_ON_WITH(allocate(this%increments(n_increments), stat = ierr), ierr /= 0, info = VEF_ERROR)
+        integer:: i, ierr, n_simulcalls
+        !
+        ! Check if the input and the state of libaltay correspond.
+        if (allocated(astate%simulcalls)) then
+            n_simulcalls = size(astate%simulcalls)
+            if (n_simulcalls < n_increments .or. n_simulcalls /= astate%nSimulCalls) then
+                 info = VEF_ERROR
+                 return
+            end if
+        else
+            call log_error(MOD_NAME, 'stepoutput_collect', ERR_VAL, 'Can not collect output if no simul calls are present')
+        end if
+
+        allocate(this%increments(n_increments))
         !
         ! collect the results
         do i = 1, n_increments
