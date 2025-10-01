@@ -16,23 +16,6 @@ module altayConfig
     !>@}
 
     type:: simulStepInputData  ! no hardening data!
-        logical                                   :: keep_texture = .true.  !< Flag that decides if this step leads to modification of the texture.
-        !> Flag that decides if this step leads to an update of the state components
-        !> (other than texture)
-        logical                                   :: keep_state = .true.
-        !> Flag that decides if the full model is to be employed.
-        !>   If set .false.: 1) a simplified formula is used for calculations of the microscopic stress
-        !>                   2) texture is NOT updated, so "keep_texture" must be set, too.
-        logical                                   :: full_model = .true.
-        !> Flag that decides if the initial texture should be written out as a CUR output of the step.
-        !> \note The texture is actually written out for initial configuration that is available
-        !> at the beginning of the step.
-        !> \remark This flag takes effect if outputConfig:: nfile is non-zero. \sa outputConfig:: nfile
-        logical                                   :: do_output_init = .false.
-        !> Flag that decides if the final texture (as it is at the end of the call) should be written out
-        !> as a a CUR output of the step.
-        !> \remark This flag takes effect if outputConfig:: nfile is non-zero. \sa outputConfig:: nfile
-        logical                 :: do_output_final = .false.
         integer                 :: nsteps = 1                    !< Number of steps per call
         real(DP), dimension(3, 3):: dgf  = 0.D0                   !< Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
     end type

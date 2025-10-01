@@ -72,11 +72,6 @@ contains
             ! Set input data for AlTay
             associate (input => astate%simulCalls(i)%input)
                 input%dgf = increment_strain
-                input%keep_texture = .not. this%update_state
-                input%keep_state = .not. this%update_state
-                input%full_model = .true.
-                input%do_output_init = .false.
-                input%do_output_final = this%output_state
             end associate
         enddo
 

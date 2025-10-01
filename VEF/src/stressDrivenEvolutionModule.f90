@@ -199,6 +199,7 @@ contains
                                            taylor_factor, &
                                            this%output%outputRequest, info)
                 if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
+
                 vSe = tensor_to_deviatoric(tmp_record%S_evol)
             else
                 vDe = 0.D0
@@ -227,6 +228,40 @@ contains
     !
         output = output(1:n_records)
     end function
+
+      subroutine makeTextureUpdateStep(D, S, M, output_flag, info)
+      use altay
+      use altayConfig
+      real(DP), dimension(3, 3), intent(in)      :: D
+      real(DP), dimension(3, 3), intent(out)     :: S
+      real(DP), intent(out)                    :: M
+      logical, intent(in)                              :: output_flag
+      integer, intent(out)                             :: info
+      !
+      integer, parameter:: istp = 1
+            info = -1
+
+            !
+            call initStepData(istp, astate, info)
+            if (info /= 0) return
+            ! Set input data for AlTay
+            associate (input => astate%simulCalls(istp)%input)
+                  input%dgf = D
+            end associate
+            call runSteps(astate, info)
+            if (info /= 0) return
+            !
+            ! Get the result
+            S = astate%simulCalls(istp)%output%stress_tensor(:,:)
+            M = astate%simulCalls(istp)%output%taylor_factor
+
+#define MSG_GROUP_ERRORS
+#include "msgFormats.inc"
+#undef MSG_GROUP_ERRORS
+      end subroutine
+
+
+
 
     !> Calculate the real roots of quadratic polynomial given in form
     !> a^2 x+b x+c = 0

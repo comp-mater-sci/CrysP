@@ -51,35 +51,13 @@ contains
 
       end subroutine
 
-    subroutine makeTextureUpdateStep(D, S, M, output_flag, info)
-        real(DP), dimension(3, 3), intent(in) :: D
-        real(DP), dimension(3, 3), intent(out):: S
-        real(DP), intent(out)                 :: M
-        logical, intent(in)                   :: output_flag
-        integer, intent(out)                  :: info
-        !
-        integer, parameter:: istp = 1
-
-        info = VEF_ERROR
-
-        call initStepData(istp, astate, info)
-        if (info /= VEF_OK) return
-        ! Set input data for AlTay
-        associate (input => astate%simulCalls(istp)%input)
-              input%dgf = D
-              input%keep_texture = .false.
-              input%keep_state = .false.
-              input%full_model = .true.
-              input%do_output_init = .false.
-              input%do_output_final = output_flag
-        end associate
-        call runSteps(astate, info)
-        if (info /= VEF_OK) return
-
-        ! Get the result
-        S = astate%simulCalls(istp)%output%stress_tensor(:,:)
-        M = astate%simulCalls(istp)%output%taylor_factor
-    end subroutine
+      subroutine outputTexture(info)
+      use altay
+      integer, intent(out)     :: info
+      !
+            call outputCurrentState(info)
+      !
+      end subroutine
 
     !> Test the presence of optional logical value, and return a default if the optional
     !> is not present.

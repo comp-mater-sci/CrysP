@@ -125,7 +125,7 @@ contains
             end do
             call simulation_run(v_grad)
 
-            if (steps%simulCalls(i)%input%do_output_final) call outputCurrentState(info)
+            call outputCurrentState(info)
         enddo
 
         info = VEF_OK
