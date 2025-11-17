@@ -134,11 +134,11 @@ contains
     !
     integer:: i, ierr, increment
     real(DP), dimension(3, 3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
-    integer, parameter:: ncolumn_labels = 2+10+4*2*6, column_width = 15, short_column_width = 9
+    integer, parameter:: ncolumn_labels = 2+9+4*2*6, column_width = 15, short_column_width = 9
     character(len = column_width), dimension(ncolumn_labels), parameter:: column_labels = &
             [ character(len = column_width) ::  &
                 'step','increment', & ! 2 fields
-                'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','M-factor','scal_s','S','residual', & ! 10 fields
+                'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','scal_s','S','residual', & ! 10 fields
                 'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
                 'S_xx','S_yy','S_zz','S_yz','S_xz','S_xy', & ! 6 fields
                 'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (II)
