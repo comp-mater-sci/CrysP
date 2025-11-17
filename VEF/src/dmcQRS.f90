@@ -212,12 +212,6 @@ contains
                 r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
                 r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
                 r%residuals(i) = norm2(deviatoric_to_unscaled_voigt(residual))
-                ! Optional: Taylor factor can be retrieved
-                if (this%calculate_MFactor) then
-                    call getTaylorFactor(1, r%mfactors(i), info)
-                    if (info /= 0) &
-                        call log_error(MOD_NAME, 'run', ERR, 'Unable to get Taylor factor')
-                endif
             end associate
 
             fi2 = fi2 + this%angular_resolution

@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-=======
-include "criMacros.fpp"
-
->>>>>>> 8f960ecfb (Working on removing taylor factor)
 !> DMC Arbitrary Stress Response
 module dmcASR
     use conversions
@@ -84,7 +79,6 @@ contains
         ! Quantities in the global (aka. material = texture) reference frame
         real(DP), dimension(3, 3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
         ! Quantities in rotated (aka. sample) reference frame
-        ! type(SRTensor)                  :: sigma_rot
         type(ASROutput)                 :: output
         type(IncrementationControl)     :: icv
         real(DP), dimension(3, 3)   :: Mrot

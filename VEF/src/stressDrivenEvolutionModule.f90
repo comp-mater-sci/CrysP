@@ -245,10 +245,6 @@ contains
             !
             ! Get the result
             S = astate%simulCalls(istp)%output%stress_tensor(:,:)
-
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
       end subroutine
 
     !> Calculate the real roots of quadratic polynomial given in form
