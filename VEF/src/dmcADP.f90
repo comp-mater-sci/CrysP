@@ -28,6 +28,8 @@ module dmcADP
         type(StepOutput), dimension(:), allocatable:: steps
     end type
 
+    real(DP):: acc_von_mises_strain
+
 contains
 
     !> Read configuration from IO unit (type-bound function)
@@ -105,6 +107,7 @@ contains
         allocate(output%steps(n_steps))
         !
         ! Main loop over the steps
+        acc_von_mises_strain = 0._DP
         do i_step = 1, n_steps
             associate(step => this%steps(i_step), &
                       step_output => output%steps(i_step))
@@ -127,7 +130,8 @@ contains
         integer, intent(in), optional                 :: step_id
         !
         integer:: step, increment, ierr, n_steps, first_step, last_step, n_increments
-        real(DP):: l_voigt(6)
+        real(DP):: l_voigt(6), &
+                   von_mises_strain_rate
         !
         integer, parameter:: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
         character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
@@ -173,7 +177,10 @@ contains
                         n_increments = size(step_output%increments)
 
                     do increment = 1, n_increments
+
                           associate(v => step_output%increments(increment))
+                              von_mises_strain_rate = tensor_to_von_mises(v%l)  !Small strain assumption
+
                               l_voigt = tensor_to_unscaled_voigt(v%L)
                               write(iounit, fmt = 710, iostat = ierr) &
                                   step, increment, &            ! 2 fields
@@ -182,11 +189,12 @@ contains
                                   tensor_to_spin(v%L), &         ! 3 fields: spin tensor
                                   normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
                                   tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
-                                  v%vm_strain_begin, &
-                                  v%vm_strain_end, &
-                                  v%vMeqStrainRate, &
+                                  acc_von_mises_strain, &
+                                  acc_von_mises_strain + von_mises_strain_rate, &
+                                  von_mises_strain_rate, &
                                   v%vm_stress, &
                                   v%plastic_work_inc
+                              acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
                           end associate
                           if (ierr /= 0) return
                     enddo

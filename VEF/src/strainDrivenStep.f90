@@ -27,11 +27,8 @@ module dmcStrainDrivenStep
     type:: IncrementOutput
         real(DP), dimension(3, 3):: L, &
                                     S
-        real(DP):: vm_strain_begin = 0._DP, &
-                    vm_strain_end = 0._DP, &
-                    vm_stress = 0._DP, &
-                    plastic_work_inc = 0._DP, &
-                    vmeqstrainrate = 0._DP
+        real(DP)::  vm_stress = 0._DP, &
+                    plastic_work_inc = 0._DP
     end type
 
     !> Outputs collected per step
@@ -104,17 +101,12 @@ contains
         ! collect the results
         do i = 1, n_increments
             associate (increment_output =>  this%increments(i), &
-                       altay_state => astate%simulCalls(i), &
-                       altay_output => astate%simulCalls(i)%output)   ! HGH: originally altay_output => altay_state%output
+                       altay_state => astate%simulCalls(i))
 
                 increment_output%L = altay_state%input%dgf
-                increment_output%S = altay_output%stress_tensor
-                increment_output%vm_strain_begin = altay_output%effective_macro_strain_tot
-                increment_output%vm_strain_end = altay_output%effective_macro_strain_tot_end
-                increment_output%vm_stress = sqrt(3._DP/2._DP)*norm2(altay_output%stress_tensor)
-                ! D : S
+                increment_output%S = altay_state%stress
+                increment_output%vm_stress = sqrt(3._DP/2._DP)*norm2(altay_state%stress)
                 increment_output%plastic_work_inc = increment_output%L .dot. increment_output%S !Works because S is symmetric
-                increment_output%vMeqStrainRate = tensor_to_von_mises(increment_output%L)
             end associate
         enddo
         info = VEF_OK

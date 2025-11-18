@@ -230,7 +230,17 @@ contains
     end procedure
 
     module procedure tensor_to_von_mises
-        von_mises = SQR0P67 * norm2((tensor + transpose(tensor))/2._DP)
+        real(DP):: trace, &
+                   traceless(3,3)
+        integer:: i
+
+        trace = math_trace33(tensor)
+        traceless = tensor
+
+        do i=1,3
+            traceless(i,i) = traceless(i,i) - trace / 3._DP
+        end do
+        von_mises = SQR0P67 * norm2((traceless + transpose(traceless))/2._DP)
     end procedure
 
     module procedure tensor_to_euler

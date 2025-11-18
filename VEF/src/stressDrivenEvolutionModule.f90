@@ -244,7 +244,7 @@ contains
             if (info /= 0) return
             !
             ! Get the result
-            S = astate%simulCalls(istp)%output%stress_tensor(:,:)
+            S = astate%simulCalls(istp)%stress(:,:)
       end subroutine
 
     !> Calculate the real roots of quadratic polynomial given in form

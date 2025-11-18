@@ -13,7 +13,6 @@ module simulation
     implicit none
     private
 
-    real(DP):: von_mises_strain
     class(Cluster), dimension(:), allocatable:: clusters
 
     character(*), parameter:: MOD_NAME = 'Simul'
@@ -31,7 +30,6 @@ module simulation
         class(Cluster), dimension(:), allocatable, intent(inout):: clstrs
 
         call move_alloc(clstrs, clusters)
-        von_mises_strain = 0._DP
     end subroutine
 
     function get_stress(velocity_gradient) result(homogenized_stress)
@@ -67,7 +65,6 @@ module simulation
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    deformation_gradient_increment(3, 3), &
-                   von_mises_strain_rate, &
                    stress_cluster(3, 3), &
                    slip_cluster, &
                    weight_cluster, &
@@ -76,13 +73,11 @@ module simulation
         n_clusters = size(clusters)
         t_inc = 1._DP
 
-        von_mises_strain_rate = tensor_to_von_mises(velocity_gradient)
-
         !Set model state variables to correspond to end of time step so clusters can use this state to update their own state.
         call meso_update_model(velocity_gradient, t_inc)
         total_weight = 0._DP
         homogenized_stress = 0._DP
-        !$OMP PARALLEL SHARED(clusters, n_clusters, von_mises_strain_rate, velocity_gradient, t_inc) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
+        !$OMP PARALLEL SHARED(clusters, n_clusters, velocity_gradient, t_inc) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
             !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress)
                 do i = 1, n_clusters
                     call meso_apply_deformation_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
@@ -92,16 +87,8 @@ module simulation
                 end do
             !$OMP END DO
         !$OMP END PARALLEL
-        homogenized_stress = homogenized_stress/total_weight
 
-        ! Get the homogenized quantities:
-        associate (callout => astate%simulCalls(astate%this)%output)
-            callout%stress_tensor = homogenized_stress
-            callout%effective_macro_strain_tot = von_mises_strain
-            callout%effective_macro_strain_tot_end = von_mises_strain+von_mises_strain_rate
-        end associate
-
-        von_mises_strain = von_mises_strain+von_mises_strain_rate
+        astate%simulCalls(astate%this)%stress = homogenized_stress / total_weight
     end subroutine
 
     subroutine output_current_state()

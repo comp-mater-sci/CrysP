@@ -20,17 +20,10 @@ module altayConfig
         real(DP), dimension(3, 3):: dgf  = 0.D0                   !< Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
     end type
 
-    type:: simulStepOutputData
-        !> Macroscopic (homogenized) stress
-        real(DP), dimension(3, 3)    :: stress_tensor = 0.D0
-        real(DP)                    :: effective_macro_strain_tot = 0.D0 !< Macroscopic (imposed) effective von Mises strain-total over the calls
-        real(DP)                    :: effective_macro_strain_tot_end = 0.D0 !< Macroscopic (imposed) effective von Mises strain till the end of the current step-total over the calls
-    end type
-
     !> type that subsumes step input and output data
     type:: simulStepData
-        type(simulStepInputData)            :: input
-        type(simulStepOutputData)           :: output
+        type(simulStepInputData):: input
+        real(DP), dimension(3,3):: stress
     end type
 
     type:: outputConfig

@@ -307,7 +307,6 @@ contains
         end do
     end function
 
-
     !> Calculate determinant of a symmetric 3x3 matrix.
     !>
     !> Imported from DAMASK
@@ -316,10 +315,8 @@ contains
 
       real(DP), dimension(3,3), intent(in) :: m
 
-
       math_detSym33 = -(m(1,1)*m(2,3)**2 + m(2,2)*m(1,3)**2 + m(3,3)*m(1,2)**2) &
                       + m(1,1)*m(2,2)*m(3,3) + 2.0_DP * m(1,2)*m(1,3)*m(2,3)
-
     end function  math_detSym33
 
     ! Determinant of 3x3 matrix
@@ -339,16 +336,13 @@ contains
       real(DP), intent(in) :: a
       real(DP), intent(in), optional :: left, right
 
-
       math_clip = a
       if (present(left))  math_clip = max(left,math_clip)
       if (present(right)) math_clip = min(right,math_clip)
       if (present(left) .and. present(right)) then
         if (left>right) error stop 'left > right'
       end if
-
     end function math_clip
-
 
     !> Calculate trace of a 3x3 matrix.
     !>
@@ -365,17 +359,11 @@ contains
     !> Imported from DAMASK
     !> https://damask2.mpie.de/bin/view/Home/WebHome.html
     pure function math_invariantsSym33(m)
-
-        real(DP), dimension(3,3), intent(in) :: m
-        real(DP), dimension(3) :: math_invariantsSym33
-
+        real(DP), dimension(3,3), intent(in):: m
+        real(DP), dimension(3):: math_invariantsSym33
 
         math_invariantsSym33(1) = math_trace33(m)
-        math_invariantsSym33(2) = m(1,1)*m(2,2) + m(1,1)*m(3,3) + m(2,2)*m(3,3) &
-                                -(m(1,2)**2     + m(1,3)**2     + m(2,3)**2)
+        math_invariantsSym33(2) = m(1,1)*m(2,2) + m(1,1)*m(3,3) + m(2,2)*m(3,3) - (m(1,2)**2 + m(1,3)**2 + m(2,3)**2)
         math_invariantsSym33(3) = math_detSym33(m)
-
     end function math_invariantsSym33
-
-
 end module
