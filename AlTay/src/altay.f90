@@ -117,7 +117,7 @@ contains
         do i = 1, steps%nSimulCalls
             steps%this = i
 
-            v_grad = steps%simulcalls(i)%input%dgf
+            v_grad = steps%simulcalls(i)%velocity_gradient
             !Remove hydrostatic part from velocity gradient
             hydrostatic_part = (v_grad(1,1) + v_grad(2,2) + v_grad(3,3)) / 3._DP
             do j=1,3

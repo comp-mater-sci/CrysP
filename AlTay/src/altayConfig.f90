@@ -15,15 +15,10 @@ module altayConfig
     integer, parameter:: modelFCTaylor = 1, modelAlamel = 2
     !>@}
 
-    type:: simulStepInputData  ! no hardening data!
-        integer                 :: nsteps = 1                    !< Number of steps per call
-        real(DP), dimension(3, 3):: dgf  = 0.D0                   !< Deformation gradient tensor to be imposed. (MB: this is rather a velocity gradient.)
-    end type
-
     !> type that subsumes step input and output data
     type:: simulStepData
-        type(simulStepInputData):: input
-        real(DP), dimension(3,3):: stress
+        real(DP), dimension(3,3):: velocity_gradient !! Velocity gradient applied during the step
+        real(DP), dimension(3,3):: stress            !! Homogenized stress tensor over the sample
     end type
 
     type:: outputConfig

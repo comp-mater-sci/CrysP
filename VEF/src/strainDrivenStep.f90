@@ -60,14 +60,9 @@ contains
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, 'execute', ERR, 'Could not initialize step data')
 
-
-
         ! Set-up the substeps
         do i=1,n_increments
-            ! Set input data for AlTay
-            associate (input => astate%simulCalls(i)%input)
-                input%dgf = increment_strain
-            end associate
+            astate%simulCalls(i)%velocity_gradient = increment_strain
         enddo
 
         call runSteps(astate, info)
@@ -103,7 +98,7 @@ contains
             associate (increment_output =>  this%increments(i), &
                        altay_state => astate%simulCalls(i))
 
-                increment_output%L = altay_state%input%dgf
+                increment_output%L = altay_state%velocity_gradient
                 increment_output%S = altay_state%stress
                 increment_output%vm_stress = sqrt(3._DP/2._DP)*norm2(altay_state%stress)
                 increment_output%plastic_work_inc = increment_output%L .dot. increment_output%S !Works because S is symmetric

@@ -237,9 +237,7 @@ contains
             call initStepData(istp, astate, info)
             if (info /= 0) return
             ! Set input data for AlTay
-            associate (input => astate%simulCalls(istp)%input)
-                  input%dgf = D
-            end associate
+            astate%simulCalls(istp)%velocity_gradient = D
             call runSteps(astate, info)
             if (info /= 0) return
             !
