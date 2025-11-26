@@ -1,5 +1,3 @@
-#include "criMacros.fpp"
-
 !> Common set of procedures for producing plain text column-based output of numerical data.
 module dmcResultFileOutput
 use base_defs
@@ -13,11 +11,6 @@ implicit none
     integer,parameter,private ::  max_int_digits = 10
 
 contains
-
-!> \todo Move TADJUSTL macro to some more suitable place (FCRI?)
-#define TADJUSTL(str) trim(adjustl(str))
-
-
 
     !> Driver function for writing numerical data
     integer function writeResultFile(iounit, data, column_names, column_widths, &
@@ -72,9 +65,9 @@ contains
         if (size(column_widths) == 1) then
             column_width = column_widths(1)
             fmt_string = '("#",1X,' // tostring(ncolumns) // &
-                         '(A'// TADJUSTL(tostring(column_width)) // ',1X))'
+                         '(A'// trim(adjustl(tostring(column_width))) // ',1X))'
             write(iounit,fmt=fmt_string,iostat=ierr) (toString(i), i = 1, ncolumns)
-            CHOOSE(info, ierr == 0, VEF_OK, VEF_ERROR)
+            info = merge(VEF_OK, VEF_ERROR, ierr==0)
             !
         elseif(size(column_widths) == ncolumns) then
             info = VEF_ERROR ! not yet implemented
@@ -100,7 +93,7 @@ contains
             ! Format: two leading spaces, followed by columns
             fmt_string = '(2X,'// tostring(ncolumns) // '(A,1X))'
             write(iounit,fmt=fmt_string,iostat=ierr) (column_names(i), i = 1, ncolumns)
-            CHOOSE(info, ierr==0, VEF_OK, VEF_ERROR)
+            info = merge(VEF_OK, VEF_ERROR, ierr==0)
             !
         elseif(size(column_widths) == ncolumns) then
 
@@ -113,14 +106,13 @@ contains
 
     !> Write out standard header: two lines: #1: column numbers, #2 column names
     integer function writeStandardHeader(iounit, column_names, column_widths) result(info)
-    integer,intent(in)                      :: iounit !< Output IO unit
-    character(len=*),dimension(:)           :: column_names ! Names of columns
-    integer,dimension(:),intent(in)         :: column_widths ! Widths of columns
-    !
+        integer,intent(in)                      :: iounit !< Output IO unit
+        character(len=*),dimension(:)           :: column_names ! Names of columns
+        integer,dimension(:),intent(in)         :: column_widths ! Widths of columns
+
         info = writeColumnNumbers(iounit, size(column_names), column_widths)
         if (info /= VEF_OK) return
         info = writeColumnNames(iounit, column_names, column_widths)
-    !
     end function
 
 
@@ -150,13 +142,13 @@ contains
         nrows = size(data, dim=2)
         !
         if (size(column_widths) == 1) then
-            fmt_string = '(' // TADJUSTL(tostring(ncolumns)) // &
-                                TADJUSTL(data_formats(1)) // ')'
+            fmt_string = '(' // trim(adjustl(tostring(ncolumns))) // &
+                                trim(adjustl(data_formats(1))) // ')'
             do i = 1, nrows
                 write(iounit,fmt=fmt_string,iostat=ierr) data(:,i)
                 if (ierr /= 0) exit
             enddo
-            CHOOSE(info, ierr==0, VEF_OK, VEF_ERROR)
+            info = merge(VEF_OK, VEF_ERROR, ierr==0)
             !
         elseif(size(column_widths) == ncolumns) then
 
@@ -164,16 +156,5 @@ contains
         else
             info = VEF_ERROR
         endif
-
-
-    !
     end function
-
-
-    !function makeFormatString_double(specifier,width,n_repeat,sep)
-
-
-    !end function
-#undef TADJUSTL
-
 end module

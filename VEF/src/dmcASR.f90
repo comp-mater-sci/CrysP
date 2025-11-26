@@ -1,5 +1,3 @@
-#include "criMacros.fpp"
-
 !> DMC Arbitrary Stress Response
 module dmcASR
     use conversions
@@ -8,11 +6,14 @@ module dmcASR
     use dmcStressDrivenEvolutionModule
     use dmcEvolutionOutputRecord
     use commonUtils
+    use logging
 
     implicit none
 
     private
     public:: ASRModule
+
+    character(*), parameter:: MOD_NAME = 'ASRModule'
 
     type:: StressDrivenStep
         real(DP), dimension(6)   :: stress_mode = 0.D0
@@ -51,10 +52,8 @@ contains
         ! Read parameters specific for the ASRModule
         if (.not. readValue(cnfunit, this%rotframe)) return
         if (.not. readValue(cnfunit, n_steps)) return
-        if (n_steps <= 0) then
-            write(display_unit, fmt = 902) 'ASR module'
-            return
-        endif
+        if (n_steps <= 0) &
+            call log_error(MOD_NAME, 'readconfig', ERR_VAL, 'Number of steps must at least be 1.')
         allocate(this%steps(n_steps))
         do i = 1, n_steps
             associate (step => this%steps(i))
@@ -70,10 +69,6 @@ contains
                 end associate
         enddo
         info = VEF_OK
-
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
     end function
 
 
@@ -92,13 +87,12 @@ contains
     !
     integer     :: istep, nsteps, ofunit
     !
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
-        !
         ! Open and initialize result files
         !
-        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.asr',ofunit))
-        RETURN_IF(info /= VEF_OK, info = this%outputFile(ofunit, header=.true.))
+        info = this%openOutputFile('.asr',ofunit)
+        if (info /= VEF_OK) return
+        info = this%outputFile(ofunit, header=.true.)
+        if (info /= VEF_OK) return
         !
         nsteps = size(this%steps)
         !
@@ -106,38 +100,28 @@ contains
         Mrot = euler_to_tensor(deg_to_rad(this%rotframe))
         !
         do  istep = 1, nsteps
-                        !
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
-                !
                 ! Acquire full stress tensor sigma
                 sigma = unscaled_voigt_to_tensor(step%stress_mode)
                 ! Follow the stress path
                 info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, &
                                                 incrementation_control = icv)
-                if (info /= VEF_OK) then
-                    write(display_unit, fmt = 960)
-                    exit
-                endif
-                !
-                ! Collect the outputs
-                !
-                output%step = istep
-                output%rotation_matrix = Mrot
-                !
-                ! Post-process & report
-                !
-                info = this%outputFile(ofunit, output)
-                if (info /= VEF_OK) then
-                    write(display_unit, fmt = 900) 'Cannot make output for the current step'
-                    exit
-                endif
             end associate
+
+            if (info /= VEF_OK) &
+                call log_error(MOD_NAME, 'run', ERR, 'Unable to calculate stress path.')
+            !
+            ! Collect the outputs
+            !
+            output%step = istep
+            output%rotation_matrix = Mrot
+            !
+            ! Post-process & report
+            !
+            info = this%outputFile(ofunit, output)
+            if (info /= VEF_OK) &
+                call log_error(MOD_NAME, 'run', ERR_IO, 'Can not write output')
         enddo
-
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-
     end subroutine
 
 
@@ -225,7 +209,5 @@ contains
         700 format(1X, 2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
         701 format('#',2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
         710 format(1X, 2(I9, 1X), 10(ES18.9E3, 1X), 4(5X, 12(ES18.9E3, 1X)))
-    !
     end function
-
 end module

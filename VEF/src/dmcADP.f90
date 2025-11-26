@@ -1,6 +1,3 @@
-#include "criMacros.fpp"
-
-
 !> Arbitrary Deformation Path strain-(rate) driven simulations
 module dmcADP
     use base_defs
@@ -14,6 +11,8 @@ module dmcADP
 
     private
     public:: ADPModule
+
+    character(*), parameter:: MOD_NAME = 'dmcADP'
 
     !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type, extends(BasicModule):: ADPModule
@@ -47,7 +46,6 @@ contains
         real(DP):: tmp_deformation(3,3), &
                    tmp_strain(6), &
                    step_size, &
-                   tmp, &
                    tmp_deformation_rate(3, 3)
         logical :: default_solver_config
 
@@ -64,10 +62,13 @@ contains
         ! Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
         !
-        RETURN_IF_WITH(n_steps < 1, info = VEF_ERROR)
+        if (n_steps < 1) then
+            info = VEF_ERROR
+            return
+        end if
 
-        RETURN_ON_WITH(allocate(this%steps(n_steps), stat = ierr), ierr /= 0, info = VEF_ERROR)
-        !
+        allocate(this%steps(n_steps))
+
         do i = 1, n_steps
             ! Read the step definition and convert it into
             !  StrainDrivenStep object step
@@ -81,16 +82,11 @@ contains
             case(strainmode_id)
                 if (.not. readValue(cnfunit, tmp_strain)) return
                 if (.not. readValue(cnfunit, step_size)) return
-                !
+
                 tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
-                ! Normalize the deformation
-                tmp = norm2(tmp_deformation_rate)
-                if (tmp < epsilon(0.D0)) then
-                    write(display_unit, fmt = 900) 'Norm of the strain mode must not be zero'
-                    return
-                endif
-                tmp_deformation_rate = tmp_deformation_rate/tmp*step_size
-            !
+                if (norm2(tmp_deformation_rate) < TOLERANCE) &
+                    call log_error(MOD_NAME, 'readconfig', ERR_IO, 'Strain mode must not be 0')
+                tmp_deformation_rate = tmp_deformation_rate/norm2(tmp_deformation_rate)*step_size
             case(strain_id)
                 if (.not. readValue(cnfunit, tmp_strain)) return
                 tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
@@ -105,33 +101,27 @@ contains
             this%steps(i)%output_state = this%output%outputRequest
         enddo
         info = VEF_OK
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end function
-
 
     !> Run the simulation
     subroutine ADPModule_run(this, info)
-    implicit none
-    class(ADPModule), intent(inout)  :: this
-    integer, intent(out)             :: info
-    !
-    type(ADPOutputData):: output
-    integer:: iounit, i_step, n_steps
-    !
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%BasicModule%run(info))
+        class(ADPModule), intent(inout)  :: this
+        integer, intent(out)             :: info
         !
+        type(ADPOutputData):: output
+        integer:: iounit, i_step, n_steps
+
         ! Open output file
-        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.adp',iounit))
+        info = this%openOutputFile('.adp',iounit)
+        if (info /= VEF_OK) return
         !
         ! Run the simulation
         info = VEF_ERROR
-        ALLOCATED_SIZE(n_steps, this%steps)
-        if (n_steps < 1) return
+        if (allocated(this%steps)) then
+            n_steps = size(this%steps)
+        else
+            return
+        end if
         !
         ! Storage for the calculated output
         allocate(output%steps(n_steps))
@@ -141,35 +131,28 @@ contains
             associate(step => this%steps(i_step), &
                       step_output => output%steps(i_step))
                 ! Execute the step
-                RETURN_IF(info /= VEF_OK, info = step%execute(step_output))
+                info = step%execute(step_output)
+                if (info /= VEF_OK) return
                 ! Output the results
-                RETURN_IF(info /= VEF_OK, info = this%fileOutput(iounit, output, header=(i_step == 1), step_id = i_step))
+                info = this%fileOutput(iounit, output, header=(i_step == 1), step_id = i_step)
                 if (info /= VEF_OK) return
             end associate
         enddo
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end subroutine
-
-
 
     !> Write out results to the output file
     integer function ADPModule_fileOutput(this, iounit, output, header, step_id) result(info)
-    implicit none
-    class(ADPModule), intent(in)                 :: this
-    integer, intent(in)                          :: iounit !< Output IO unit
-    type(ADPOutputData), intent(in), optional     :: output !< Data to be written out
-    logical, intent(in), optional                 :: header !< Header to be written out
-    integer, intent(in), optional                 :: step_id
-    !
-    integer:: step, increment, ierr, n_steps, first_step, last_step, n_increments
-    real(DP):: l_voigt(6)
-    !
-    integer, parameter:: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
-    character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
+        class(ADPModule), intent(in)                 :: this
+        integer, intent(in)                          :: iounit !< Output IO unit
+        type(ADPOutputData), intent(in), optional     :: output !< Data to be written out
+        logical, intent(in), optional                 :: header !< Header to be written out
+        integer, intent(in), optional                 :: step_id
+        !
+        integer:: step, increment, ierr, n_steps, first_step, last_step, n_increments
+        real(DP):: l_voigt(6)
+        !
+        integer, parameter:: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
+        character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
         'step', 'increment', & ! 2 fields
         'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  & ! 9 fields  (I)
         'D_11','D_22','D_33','D_23','D_13','D_12', & ! 6 fields  (I)
@@ -190,36 +173,44 @@ contains
         endif
         !
         if (present(output)) then
-            ALLOCATED_SIZE(n_steps, output%steps)
+            n_steps = 0
+            if (allocated(output%steps)) &
+                n_steps = size(output%steps)
+
             first_step = optionalDefault(step_id, 1)
             last_step = optionalDefault(step_id, n_steps)
-            RETURN_IF_WITH(first_step < 1 .or. last_step > n_steps, info = VEF_ERROR)
+
+            if (first_step < 1 .or. last_step > n_steps) then
+                info = VEF_ERROR
+                return
+            end if
             !
             info = VEF_ERROR
             !
             ! Write the data
             do step = first_step, last_step
                 associate(step_output => output%steps(step))
-                    !
-                    ALLOCATED_SIZE(n_increments, step_output%increments)
-                    !
+                    n_increments = 0
+                    if (allocated(step_output%increments)) &
+                        n_increments = size(step_output%increments)
+
                     do increment = 1, n_increments
                           associate(v => step_output%increments(increment))
                               l_voigt = tensor_to_unscaled_voigt(v%L)
                               write(iounit, fmt = 710, iostat = ierr) &
-                                          step, increment, &            ! 2 fields
-                                          v%L, &         ! 9 fields: velocity gradient
-                                          tensor_to_unscaled_voigt(v%L), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                          tensor_to_spin(v%L), &         ! 3 fields: spin tensor
-                                          normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
-                                          tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
-                                          v%vm_strain_begin, &
-                                          v%vm_strain_end, &
-                                          v%vMeqStrainRate, &
-                                          v%vm_stress, &
-                                          v%plastic_work_inc, &
-                                          v%taylor_factor, &
-                                          v%plastic_slip_tot
+                                  step, increment, &            ! 2 fields
+                                  v%L, &         ! 9 fields: velocity gradient
+                                  tensor_to_unscaled_voigt(v%L), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                  tensor_to_spin(v%L), &         ! 3 fields: spin tensor
+                                  normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
+                                  tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
+                                  v%vm_strain_begin, &
+                                  v%vm_strain_end, &
+                                  v%vMeqStrainRate, &
+                                  v%vm_stress, &
+                                  v%plastic_work_inc, &
+                                  v%taylor_factor, &
+                                  v%plastic_slip_tot
                           end associate
                           if (ierr /= 0) return
                     enddo
@@ -228,12 +219,7 @@ contains
             info = VEF_OK
         endif
 
-        !
         ! Formats for the output file
         710 format(1X, 2(I18, 1X), 39(ES18.9E3, 1X))
-    !
     end function
-
-
-
 end module

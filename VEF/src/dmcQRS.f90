@@ -1,5 +1,3 @@
-#include "criMacros.fpp"
-
 !> dmcQRS calculates plastic anisotropic properties, expressed in terms of q-values,
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
@@ -161,14 +159,9 @@ contains
                    stress(5), &
                    residual(5)
 
+        info = this%openOutputFile('.xqrs', ofunit)
+        if (info /= VEF_OK) return
 
-    !
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
-        !
-        info = VEF_ERROR
-        !
-        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xqrs', ofunit))
         !
         npoints = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
         results = QRSOutputData(npoints)
@@ -222,10 +215,8 @@ contains
                 ! Optional: Taylor factor can be retrieved
                 if (this%calculate_MFactor) then
                     call getTaylorFactor(1, r%mfactors(i), info)
-                    if (info /= 0) then
-                        write(display_unit, 980)
-                        exit
-                    endif
+                    if (info /= 0) &
+                        call log_error(MOD_NAME, 'run', ERR, 'Unable to get Taylor factor')
                 endif
             end associate
 
@@ -234,11 +225,6 @@ contains
 
         info = this%fileOutput(ofunit, results, header=.true.)
         close(ofunit)
-
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end subroutine
 
 
@@ -266,7 +252,9 @@ contains
         if (present(data_record)) then
             info = VEF_ERROR
             ! FIXME: flawed assumption, other arrays may have different size
-            ALLOCATED_SIZE(npoints, data_record%phis)
+            npoints = 0
+            if (allocated(data_record%phis)) &
+                npoints = size(data_record%phis)
             ! Write output file
             if (this%fold_symmetry) then
                 ! Average over symmetric positions
@@ -330,8 +318,4 @@ contains
         n = size(a)
         if (n >= 1) average = sum(a) / dble(n)
     end function
-
-
-
-
 end module

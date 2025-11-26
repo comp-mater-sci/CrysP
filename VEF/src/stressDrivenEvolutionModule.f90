@@ -1,5 +1,3 @@
-#include "criMacros.fpp"
-
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule

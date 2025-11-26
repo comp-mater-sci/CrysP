@@ -1,6 +1,3 @@
-#include "criMacros.fpp"
-
-!
 !> Yield locus calculations
 module dmcYld
     use conversions
@@ -105,12 +102,7 @@ contains
         this%output%outputRequest = .false.       ! idem.
         !
         info = VEF_OK
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
     end function
-
 
     subroutine YldModule_run(this, info)
         class(YldModule), intent(inout)            :: this
@@ -131,16 +123,13 @@ contains
                    stress(5), &
                    residual(5)
 
-
-        ! Super-class first
-        RETURN_IF(info /= VEF_OK, call this%StressDrivenModule%run(info))
-        !
         info = VEF_ERROR
-        !
+
         npoints = ceiling(2*PI / this%angular_resolution - TOLERANCE)
 
         ! Open the main output file
-        RETURN_IF(info /= VEF_OK, info = this%openOutputFile('.xyld', ofunit))
+        info = this%openOutputFile('.xyld', ofunit)
+        if (info /= VEF_OK) return
         !
         ! Fix the configuration: no need for anything except for the stresses.
         iunilen = 1.D0
@@ -193,11 +182,6 @@ contains
         call writeYldResults(ofunit, yldRes(:npoints), info, write_header = .true.)
         close(ofunit)
         info = VEF_OK
-    !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end subroutine
 
 

@@ -36,27 +36,12 @@ contains
 
     !> Read configuration from IO unit
     integer function DeformationDrivenModule_readConfig(this,cnfunit) result(info)
-    class(DeformationDrivenModule),intent(inout)   :: this
-    integer,intent(in)              :: cnfunit !< IO input unit
-    !
-    logical :: default_solver_config
+        class(DeformationDrivenModule),intent(inout)   :: this
+        integer,intent(in)              :: cnfunit !< IO input unit
+        !
+        logical :: default_solver_config
         !
         ! read output and AlTay configuration sections
         info = this%BasicModule%readConfig(cnfunit)
-        !
-        ! Read "solver config flag" that belongs to the global section
-        ! as it is done in the stressDrivenModule.
-        if (.not. readValue(cnfunit, default_solver_config)) return
-        ! For the time being, only default solver configuration is accepted for this module.
-        if (.not. default_solver_config) then
-            write(display_unit, fmt=900) 'This module does not allow non-default solver settings'
-            info = VEF_ERROR
-        endif
-        !
-#define MSG_GROUP_ERRORS
-#include "msgFormats.inc"
-#undef MSG_GROUP_ERRORS
-    !
     end function
-
 end module
