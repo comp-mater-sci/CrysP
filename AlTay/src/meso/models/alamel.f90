@@ -35,16 +35,12 @@ module alamel
     !> Implementation of the ALAMEL model
     type, extends(MesoModel):: AlamelModel
         real(DP), dimension(3, 3):: deformation_gradient                    !! Description of the current grain shape (at the beginning of the current time step). Considered identical for all grains.
-        real(DP), dimension(3, 3):: deformation_gradient_during_time_step   !! Grain shape in the middle of the time step being simulated
-        real(DP), dimension(3, 3):: next_deformation_gradient               !! Grain shape at the end of the time step.
-        real(DP), dimension(3, 3):: deformation_gradient_increment          !! Increment of the deformation gradient over *half* a time step.
     contains
         procedure, nopass:: get_parameters => alamel_get_parameters         !! Inherited from [[MesoModel]]
         procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
         procedure:: update                 => alamel_update                 !! Inherited from [[MesoModel]]
-        procedure:: prepare_deformation    => alamel_prepare_deformation    !! Inherited from [[MesoModel]]
     end type
 
 contains
@@ -115,15 +111,6 @@ contains
                 j = merge(1, j+1, j == size(boundaries, 2))
             end do
         end select
-    end subroutine
-
-    !> See [[MesoModel:update]]
-    subroutine alamel_update(this)
-        class(AlamelModel), intent(inout):: this
-
-        this%deformation_gradient = this%next_deformation_gradient
-        this%deformation_gradient_during_time_step = matmul(this%deformation_gradient_increment, this%deformation_gradient)
-        this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
     end subroutine
 
     !> Get the number of slip systems of each grain in the cluster.
@@ -239,24 +226,25 @@ contains
         stress = homogenize_stress_state(cluster_ptr, stress_cluster)
     end function
 
-    !> See [[MesoModel:prepare_deformation]]
-    subroutine alamel_prepare_deformation(this, v_grad)
+    !> See [[MesoModel:update]]
+    subroutine alamel_update(this, velocity_gradient, time)
         class(AlamelModel), intent(inout):: this
-        real(DP), dimension(3, 3), intent(in):: v_grad
+        real(DP), dimension(3,3), intent(in):: velocity_gradient
+        real(DP), intent(in):: time
 
-        this%velocity_gradient = v_grad
-        this%imposed_spin_rate = spin_to_tensor(tensor_to_spin(v_grad)) !Strip symmetric component
-        this%deformation_gradient_increment =  matrix_exponential(this%velocity_gradient/2._DP)
-        this%deformation_gradient_during_time_step = matmul(this%deformation_gradient_increment, this%deformation_gradient)
-        this%next_deformation_gradient = matmul(this%deformation_gradient_increment, this%deformation_gradient_during_time_step)
+        !F(t+1) = e^(Ldt) * F(t)
+        this%deformation_gradient = matmul(matrix_exponential(time*velocity_gradient), this%deformation_gradient)
     end subroutine
 
     !> See [[MesoModel:apply_step]]
-    subroutine alamel_deform(this, cluster_, stress, slip)
+    subroutine alamel_deform(this, cluster_, velocity_gradient, time, stress, slip)
         class(AlamelModel), intent(in):: this
-        class(Cluster), target, intent(inout):: cluster_
-        real(DP), dimension(3, 3), intent(out):: stress
-        real(DP), intent(out):: slip
+        class(Cluster), target,   intent(inout):: cluster_
+        real(DP), dimension(3,3), intent(in):: velocity_gradient
+        real(DP),                 intent(in):: time
+        real(DP), dimension(3,3), intent(out):: stress
+        real(DP),                 intent(out):: slip
+
         real(DP)::                  strain_grain(5), &
                                     strain_relaxations(5), &
                                     slip_grain, &
@@ -285,8 +273,7 @@ contains
         n_systems = get_n_systems(cluster_)
         offset_relaxations = sum(n_systems)
 
-        call update_relaxations(cluster_ptr, this%deformation_gradient_during_time_step)
-        imposed_strain_rate = calc_imposed_strain_rate(cluster_ptr, this%velocity_gradient)
+        imposed_strain_rate = calc_imposed_strain_rate(cluster_ptr, velocity_gradient)
 
         taylor_coeffs = get_taylor_coeffs(cluster_ptr)
 
@@ -342,15 +329,15 @@ contains
                 spin_relax = matmul(spin_coeffs_relaxations, slip_rates_relaxations)
 
                 v_grad_relax = (deviatoric_to_tensor(deformation_relax) + spin_to_tensor(spin_relax)) .fromframe. grain_%orientation
-                v_grad_grain = this%velocity_gradient - v_grad_relax
+                v_grad_grain = velocity_gradient - v_grad_relax
 
-                call micro_deform(grain_, 1._DP, slip_rates_grain, v_grad_grain)
+                call micro_deform(grain_, time, slip_rates_grain, v_grad_grain)
             end associate
         end do
 
         !Update cluster state to be consistent with the end of the time step.
-        call update_relaxations(cluster_ptr, this%next_deformation_gradient)
-        cluster_ptr%weight = cluster_weight(cluster_ptr, this%next_deformation_gradient)
+        call update_relaxations(cluster_ptr, this%deformation_gradient)
+        cluster_ptr%weight = cluster_weight(cluster_ptr, this%deformation_gradient)
     end subroutine
 
     !> Determine the weight of a cluster

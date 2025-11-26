@@ -62,14 +62,6 @@ module meso
                                                                               !! simulation at the mesoscopic level.
         end subroutine
 
-        !> Prepare for a deformation according to a given velocity gradient.
-        !>
-        !> Allows meso models to update state variables to correspond to the selected velocity gradient. Useful because often several
-        !> quantities are derived from the velocity gradient, which remains constant over all clusters and often many time steps.
-        module subroutine meso_prepare_deformation(velocity_gradient)
-            real(DP), dimension(3, 3), intent(in):: velocity_gradient !! Velocity gradient for the upcoming deformation.
-        end subroutine
-
         !> Get the stress state of a cluster when a certain velocity gradient is applied.
         !>
         !> The cluster is not deformed.
@@ -86,8 +78,10 @@ module meso
         !> Calculates and outputs the stress state and slip rates of the cluster during the time step.
         !> All quantities are assumed constant during the time step.
         !> On return, the cluster state is updated to correspond to the end of the time step.
-        module subroutine meso_apply_deformation_step(cluster_, stress, slip)
+        module subroutine meso_apply_deformation_step(cluster_, velocity_gradient, time, stress, slip)
             class(Cluster), intent(inout):: cluster_        !! Cluster to deform
+            real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient to apply to the cluster
+            real(DP), intent(in):: time                     !! Duration of the deformation step
             real(DP), dimension(3, 3), intent(out):: stress !! Homogenized stress state of the cluster during the time step in the
                                                             !! macroscopic frame.
             real(DP), intent(out):: slip                    !! Total slip which occured in the cluster during the time step
@@ -97,7 +91,9 @@ module meso
         !>
         !> Useful because the model may contain state that is constant for all cluster at a particular time but needs to update as
         !> time passes.
-        module subroutine meso_update_model()
+        module subroutine meso_update_model(velocity_gradient, time)
+            real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
+            real(DP), intent(in):: time                              !! Duration of the time step.
         end subroutine
 
         !> Finalize the mesoscopic model.
@@ -168,18 +164,13 @@ contains
     end procedure
 
     !> See interface definition in meso module.
-    module procedure meso_prepare_deformation
-        call model%prepare_deformation(velocity_gradient)
-    end procedure
-
-    !> See interface definition in meso module.
     module procedure meso_apply_deformation_step
-        call model%apply_step(cluster_, stress, slip)
+        call model%apply_step(cluster_, velocity_gradient, time, stress, slip)
     end procedure
 
     !> See interface definition in meso module.
     module procedure meso_update_model
-        call model%update()
+        call model%update(velocity_gradient, time)
     end procedure
 
     !> See interface definition in meso module.
