@@ -342,32 +342,22 @@ contains
 
     !> Determine the weight of a cluster
     !>
-    !> Rough estimation based on the boundary plane orientation relative to the grain shape.
-    real(DP) function cluster_weight(alamel_cluster, def_grad) result(weight)
+    !> The boundary influence zone is assumed to be proportional to the surface area of the boundary.
+    !> Using Nanson's formula we can calculate the area of a deformed boundary.
+    !> The area of the boundary in the undeformed (equiaxed) configuration is considered 1.
+    !> Replaces the approach from Van Houtte et. al., 2004: Appendix A
+    function cluster_weight(alamel_cluster, def_grad) result(weight)
         type(AlamelCluster), intent(in):: alamel_cluster
         real(DP), intent(in):: def_grad(3, 3)
-        real(DP):: grain_axes(3, 3), &
-                   axis_lengths(3), &
-                   alignment_factor
+        real(DP):: weight
 
-        !Applying deformation gradient to initial grain boundary orientation yields deformed grain axes
-        grain_axes = matmul(def_grad, alamel_cluster%initial_boundary_orientation)
+        real(DP):: boundary_normal(3), &
+                   oriented_area(3)
 
-        axis_lengths = norm2(grain_axes, 1)
-        !Alignment factor equals sin(axes 2 and 3) * cos(axis 1 and normal to plane defined by axes 2 and 3)
-        !The more the axes are orthogonal, the more alignment factor tends to 1.
-        alignment_factor = abs(grain_axes(:,1) .dot. (grain_axes(:,2) .cross. grain_axes(:,3))) / product(axis_lengths)
-
-        !See Van Houtte et. al., 2004: Appendix A
-        select case(minloc(axis_lengths, 1))
-            case(1)
-                weight = alignment_factor * (2._DP*(axis_lengths(2)-axis_lengths(1))*axis_lengths(1)**2+4.D0*axis_lengths(1)**3/3._DP)
-            case(2)
-                weight = alignment_factor * (2._DP*(axis_lengths(1)-axis_lengths(2))*axis_lengths(2)**2+4.D0*axis_lengths(2)**3/3._DP)
-            case (3)
-                weight = alignment_factor * (4._DP*(axis_lengths(1)-axis_lengths(3))*(axis_lengths(2)-axis_lengths(3))*axis_lengths(3) + &
-                2._DP*(axis_lengths(1)+axis_lengths(2) - 2._DP*axis_lengths(3))*axis_lengths(3)**2+4._DP*axis_lengths(3)**3/3._DP)
-        end select
+        !Nanson's formula
+        boundary_normal = matmul(alamel_cluster%initial_boundary_orientation, [0._DP, 0._DP, 1._DP])
+        oriented_area = det(def_grad) * matmul(invert(transpose(def_grad)), boundary_normal)
+        weight = norm2(oriented_area)
     end function
 
     !> Get the basis matrix of a cluster.
