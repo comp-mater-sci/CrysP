@@ -469,34 +469,15 @@ available option in \ref config_search_procedure is to use the default settings.
 -# \confdef{n_steps,integer,n_steps_ADP} sets the number of subsequent deformation steps,
    each one being specified by later configuration settings and their optional
    subsettings. These subsettings are repeated \conffield{n_steps} times in configuration
-   file, in the same order as they are to be applied to the virtual sample.
--# \confdef{deformation_type,string} specifies how the deformation is imposed in the given
-   step. Possible values are:
-    - `deformation`
+   file, in the same order as they are to be applied to the virtual sample:
+    -# \confdef{Velocity_gradient,srtensor_voigt} Velocity gradient tensor expressed in [Voigt notation](@ref srtensor_option_voigt)
 
-      If this option is used, the next line is:
-      -# \confdef{velocity_gradient_tensor,srtensor_voigt} velocity gradient tensor
-         \f$ \mathbf{L} \f$ expressed in [Voigt notation](@ref srtensor_option_voigt)
-
-    - `strainmode`
-
-      If this option is used, the next two lines are:
-      -# \confdef{strain_mode,symsrtensor} Strain rate mode to be imposed, given in
-         [Voigt notation](@ref symsrtensor_option). If \conffield{strain_mode} is not of
-         unit length, it will be normalized automatically.
-      -# \confdef{strain_magnitude,real} Magnitude of strain to be imposed.
-
-    - `strain`
-
-      If this option is used, the next line is:
-      -# \confdef{strain,symsrtensor} Strain increment to be imposed during the step,
-         given in [Voigt notation](@ref symsrtensor_option)
-
--# \confdef{update_state,logical,update_state_ADP} controls updating the material state
+    -# \confdef{strain_magnitude,real} Magnitude of strain to be imposed.
+    -# \confdef{update_state,logical,update_state_ADP} controls updating the material state
    in the given step. When set to:
-   - `False` then the stresses and other outputs are queried without finite deformation and
+        - `False` then the stresses and other outputs are queried without finite deformation and
      without associated evolution of state.
-   - `True` then the deformation is actually imposed, resulting in evolution of state.
+        - `True` then the deformation is actually imposed, resulting in evolution of state.
 
 ---
 

@@ -37,14 +37,8 @@ contains
 
         integer, parameter:: n_deformation_types = 3
         integer, parameter:: deformation_id = 1, strainmode_id = 2, strain_id = 3
-        type(MapItem), dimension(n_deformation_types):: deformation_type_names = [&
-            MapItem('deformation', deformation_id), &
-            MapItem('strainmode', strainmode_id), &
-            MapItem('strain', strain_id)]
-
-        integer:: n_steps, ierr, i, deformation
-        real(DP):: tmp_deformation(3,3), &
-                   tmp_strain(6), &
+        integer:: n_steps, ierr, i
+        real(DP):: tmp_strain(6), &
                    step_size, &
                    tmp_deformation_rate(3, 3)
         logical :: default_solver_config
@@ -72,29 +66,13 @@ contains
         do i = 1, n_steps
             ! Read the step definition and convert it into
             !  StrainDrivenStep object step
-            ! Read the step input type
-            if (.not. readKeyword(cnfunit, deformation_type_names, deformation)) return
-            select case(deformation)
-            case(deformation_id)
-                if (.not. readValue(cnfunit, tmp_deformation)) return
-                tmp_deformation_rate = tmp_deformation
+            if (.not. readValue(cnfunit, tmp_deformation_rate)) return
+            if (.not. readValue(cnfunit, step_size)) return
 
-            case(strainmode_id)
-                if (.not. readValue(cnfunit, tmp_strain)) return
-                if (.not. readValue(cnfunit, step_size)) return
+            if (norm2(tmp_deformation_rate) < TOLERANCE) &
+                call log_error(MOD_NAME, 'readconfig', ERR_IO, 'Strain mode must not be 0')
+            tmp_deformation_rate = tmp_deformation_rate/norm2(tmp_deformation_rate)*step_size
 
-                tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
-                if (norm2(tmp_deformation_rate) < TOLERANCE) &
-                    call log_error(MOD_NAME, 'readconfig', ERR_IO, 'Strain mode must not be 0')
-                tmp_deformation_rate = tmp_deformation_rate/norm2(tmp_deformation_rate)*step_size
-            case(strain_id)
-                if (.not. readValue(cnfunit, tmp_strain)) return
-                tmp_deformation_rate = unscaled_voigt_to_tensor(tmp_strain)
-            !
-            case default
-                return
-            end select
-            !
             if (.not. readValue(cnfunit, this%steps(i)%update_state)) return
             !
             this%steps(i)%velocity_gradient = tmp_deformation_rate
