@@ -40,12 +40,11 @@ module dmcASR
 contains
 
     integer function ASRModule_readConfig(this, cnfunit) result(info)
-    implicit none
-    class(ASRModule), intent(inout)            :: this
-    integer, intent(in)                        :: cnfunit
-    !
-    integer:: i, n_steps
-    !
+        class(ASRModule), intent(inout)            :: this
+        integer, intent(in)                        :: cnfunit
+        !
+        integer:: i, n_steps
+        !
         info = this%StressDrivenEvolutionModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
         info = VEF_ERROR
@@ -126,16 +125,15 @@ contains
     !>
     !> The procedure writes either header, data or both.
     integer function ASRModule_outputFile(this, iounit, output, header) result(info)
-    implicit none
-    class(ASRModule), intent(in)         :: this
-    integer, intent(in)                  :: iounit   !< I/O output unit
-    type(ASROutput), intent(in), optional:: output   !< Data to be written out
-    logical, intent(in), optional         :: header   !< Request for header to be written out
-    !
-    integer:: i, ierr, increment
-    real(DP), dimension(3, 3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
-    integer, parameter:: ncolumn_labels = 2+9+4*2*6, column_width = 15, short_column_width = 9
-    character(len = column_width), dimension(ncolumn_labels), parameter:: column_labels = &
+        class(ASRModule), intent(in)         :: this
+        integer, intent(in)                  :: iounit   !< I/O output unit
+        type(ASROutput), intent(in), optional:: output   !< Data to be written out
+        logical, intent(in), optional         :: header   !< Request for header to be written out
+        !
+        integer:: i, ierr, increment
+        real(DP), dimension(3, 3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
+        integer, parameter:: ncolumn_labels = 2+9+4*2*6, column_width = 15, short_column_width = 9
+        character(len = column_width), dimension(ncolumn_labels), parameter:: column_labels = &
             [ character(len = column_width) ::  &
                 'step','increment', & ! 2 fields
                 'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','scal_s','S','residual', & ! 10 fields
