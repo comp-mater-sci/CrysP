@@ -347,7 +347,7 @@ contains
     !> Calculate trace of a 3x3 matrix.
     !>
     !> Imported from DAMASK
-    !> https://damask2.mpie.de/bin/view/Home/WebHome.html
+    !> https://github.com/damask-multiphysics/DAMASK/blob/4d0e88b0774a15ddeb92c1341981462dad44302b/src/math.f90#L650
     real(DP) pure function math_trace33(m)
       real(DP), dimension(3,3), intent(in) :: m
 
