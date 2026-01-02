@@ -76,7 +76,7 @@ module meso_model
             real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient to apply to the cluster
             real(DP), intent(in):: time                         !! Duration of the time step
             real(DP), dimension(3, 3), intent(out):: stress     !! Homogenized stress state of the cluster during the time step.
-            real(DP), intent(out):: slip                        !! Total slip that occured in the cluster to realize the deformation during this time step.
+            real(DP), intent(out):: slip                        !! Homogenized slip that occured in the cluster to realize the deformation during this time step.
         end subroutine
     end interface
 

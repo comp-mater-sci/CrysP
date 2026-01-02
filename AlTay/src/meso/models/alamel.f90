@@ -317,7 +317,7 @@ contains
                 end if
 
                 slip_grain = sum(abs(slip_rates_grain))
-                slip = slip+slip_grain
+                slip = slip+slip_grain / 2._DP
 
 
                 !Get spin coefficients of the relaxations corresponding to the current grain

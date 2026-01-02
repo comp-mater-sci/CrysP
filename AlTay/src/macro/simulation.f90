@@ -58,10 +58,11 @@ module simulation
         homogenized_stress = homogenized_stress/total_weight
     end function
 
-    subroutine simulation_run(velocity_gradient)
+    subroutine simulation_run(velocity_gradient, taylor_factor)
         real(DP), intent(in):: velocity_gradient(3, 3)
-        integer:: n_clusters, &
-                  i
+        real(DP), intent(out):: taylor_factor           !! Homoginized taylor factor over all grains.
+
+        integer:: i
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    deformation_gradient_increment(3, 3), &
@@ -70,25 +71,27 @@ module simulation
                    weight_cluster, &
                    t_inc                                    ! Time increment
 
-        n_clusters = size(clusters)
         t_inc = 1._DP
 
         !Set model state variables to correspond to end of time step so clusters can use this state to update their own state.
         call meso_update_model(velocity_gradient, t_inc)
         total_weight = 0._DP
         homogenized_stress = 0._DP
-        !$OMP PARALLEL SHARED(clusters, n_clusters, velocity_gradient, t_inc) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
-            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress)
-                do i = 1, n_clusters
+        taylor_factor = 0._DP
+        !$OMP PARALLEL SHARED(clusters, velocity_gradient, t_inc) PRIVATE(stress_cluster, slip_cluster, weight_cluster)
+            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, taylor_factor)
+                do i = 1, size(clusters)
                     call meso_apply_deformation_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
                     weight_cluster = clusters(i)%weight
                     total_weight = total_weight+weight_cluster
                     homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
+                    taylor_factor = taylor_factor + slip_cluster * weight_cluster
                 end do
             !$OMP END DO
         !$OMP END PARALLEL
 
         astate%simulCalls(astate%this)%stress = homogenized_stress / total_weight
+        taylor_factor = taylor_factor / total_weight / tensor_to_von_mises(velocity_gradient)
     end subroutine
 
     subroutine output_current_state()

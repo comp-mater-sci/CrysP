@@ -90,6 +90,7 @@ contains
         !
         type(ADPOutputData):: output
         integer:: iounit, i_step, n_steps
+        real(DP):: taylor_factor
 
         ! Open output file
         info = this%openOutputFile('.adp',iounit)
@@ -112,28 +113,29 @@ contains
             associate(step => this%steps(i_step), &
                       step_output => output%steps(i_step))
                 ! Execute the step
-                info = step%execute(step_output)
+                info = step%execute(step_output, taylor_factor)
                 if (info /= VEF_OK) return
                 ! Output the results
-                info = this%fileOutput(iounit, output, header=(i_step == 1), step_id = i_step)
+                info = this%fileOutput(iounit, output, header=(i_step == 1), step_id = i_step, taylor_factor = taylor_factor)
                 if (info /= VEF_OK) return
             end associate
         enddo
     end subroutine
 
     !> Write out results to the output file
-    integer function ADPModule_fileOutput(this, iounit, output, header, step_id) result(info)
+    integer function ADPModule_fileOutput(this, iounit, output, header, step_id, taylor_factor) result(info)
         class(ADPModule), intent(in)                 :: this
         integer, intent(in)                          :: iounit !< Output IO unit
         type(ADPOutputData), intent(in), optional     :: output !< Data to be written out
         logical, intent(in), optional                 :: header !< Header to be written out
         integer, intent(in), optional                 :: step_id
+        real(DP), intent(in):: taylor_factor
         !
         integer:: step, increment, ierr, n_steps, first_step, last_step, n_increments
         real(DP):: l_voigt(6), &
                    von_mises_strain_rate
         !
-        integer, parameter:: ncolumn_labels = 2+9+3*6+3+7, column_width = 18
+        integer, parameter:: ncolumn_labels = 2+9+3*6+3+6, column_width = 18
         character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
         'step', 'increment', & ! 2 fields
         'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  & ! 9 fields  (I)
@@ -141,7 +143,7 @@ contains
         'O_12','O_23','O_13', & ! 3 fields  (I)
         'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (I)
         'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
-        'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M-factor', 'gamma' & ! 7 fields
+        'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M' & ! 6 fields
         ]
         !
         info = VEF_ERROR
@@ -193,7 +195,8 @@ contains
                                   acc_von_mises_strain + von_mises_strain_rate, &
                                   von_mises_strain_rate, &
                                   v%vm_stress, &
-                                  v%plastic_work_inc
+                                  v%plastic_work_inc, &
+                                  taylor_factor
                               acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
                           end associate
                           if (ierr /= 0) return
@@ -204,6 +207,6 @@ contains
         endif
 
         ! Formats for the output file
-        710 format(1X, 2(I18, 1X), 37(ES18.9E3, 1X))
+        710 format(1X, 2(I18, 1X), 38(ES18.9E3, 1X))
     end function
 end module

@@ -43,9 +43,10 @@ contains
     !> Execute step and store the output in step_output
     !>
     !> Returns VEF_OK on success.
-    integer function StrainDrivenStep_execute(this, step_output) result(info)
+    integer function StrainDrivenStep_execute(this, step_output, taylor_factor) result(info)
         class(StrainDrivenStep), intent(inout)  :: this
         class(StepOutput), intent(out)               :: step_output
+        real(DP), intent(out):: taylor_factor
 
         integer:: n_increments, i
         real(DP):: increment_size, &
@@ -65,7 +66,7 @@ contains
             astate%simulCalls(i)%velocity_gradient = increment_strain
         enddo
 
-        call runSteps(astate, info)
+        call runSteps(astate, info, taylor_factor)
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, 'execute', ERR, 'Error while running steps')
 

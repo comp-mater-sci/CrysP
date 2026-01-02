@@ -98,9 +98,11 @@ contains
     end subroutine
 
     !> Run the AlTay for the set of steps
-    subroutine runSteps(steps, info)
+    subroutine runSteps(steps, info, taylor_factor)
         type(altayStateData), intent(inout)        :: steps !< Definiton of the steps.
         integer, intent(out)                       :: info  !< Exit code: 0 on success.
+        real(DP), intent(out):: taylor_factor               !< Homogenized taylor factor over all grains at the end of the simuiation.
+
         integer:: i, j
         logical:: input_ok
         real(DP):: v_grad(3, 3)
@@ -114,6 +116,7 @@ contains
         ! Assign steps with astate
         astate = steps
 
+        taylor_factor = 0._DP
         do i = 1, steps%nSimulCalls
             steps%this = i
 
@@ -123,7 +126,7 @@ contains
             do j=1,3
                 v_grad(j,j) = v_grad(j,j) - hydrostatic_part
             end do
-            call simulation_run(v_grad)
+            call simulation_run(v_grad, taylor_factor)
 
             call outputCurrentState(info)
         enddo

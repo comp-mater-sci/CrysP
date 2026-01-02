@@ -7,6 +7,8 @@ use dmcStressDrivenModule
 use dmcIncrementationControl
 use dmcEvolutionOutputRecord
 use commonUtils
+use altay
+use altayconfig
 
 implicit none
 
@@ -223,22 +225,23 @@ contains
     end function
 
       subroutine makeTextureUpdateStep(D, S, output_flag, info)
-      use altay
-      use altayConfig
       real(DP), dimension(3, 3), intent(in)      :: D
       real(DP), dimension(3, 3), intent(out)     :: S
       logical, intent(in)                              :: output_flag
       integer, intent(out)                             :: info
-      !
+
+      real(DP):: taylor_factor
+
       integer, parameter:: istp = 1
             info = -1
+
 
             !
             call initStepData(istp, astate, info)
             if (info /= 0) return
             ! Set input data for AlTay
             astate%simulCalls(istp)%velocity_gradient = D
-            call runSteps(astate, info)
+            call runSteps(astate, info, taylor_factor)
             if (info /= 0) return
             !
             ! Get the result

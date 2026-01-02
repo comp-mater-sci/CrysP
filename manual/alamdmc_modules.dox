@@ -536,6 +536,8 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 
 -# \outdef{dW,adp_dotW} plastic work rate \f$ W = \mathbf{D} : \mathbf{S} \f$
 
+-# \outdef{M} Taylor factor of the last increment in the step.
+
 ---
 
 Quick links
