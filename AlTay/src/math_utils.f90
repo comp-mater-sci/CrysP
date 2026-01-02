@@ -357,7 +357,7 @@ contains
     !> invariants of symmetrix 3x3 matrix
     !>
     !> Imported from DAMASK
-    !> https://damask2.mpie.de/bin/view/Home/WebHome.html
+    !> https://github.com/damask-multiphysics/DAMASK/blob/4d0e88b0774a15ddeb92c1341981462dad44302b/src/math.f90#L1202
     pure function math_invariantsSym33(m)
         real(DP), dimension(3,3), intent(in):: m
         real(DP), dimension(3):: math_invariantsSym33
