@@ -38,25 +38,19 @@ module conversions
             real(DP), dimension(3,3):: tensor         !! Antisymmetric spin tensor.
         end function
 
-        !> Calculate the Von Mises equivalent of a deviatoric stress or strain.
-        !>
-        !> Only valid in small strain settings.
-        module pure function deviatoric_to_von_mises(deviatoric) result(von_mises)
-            real(DP), dimension(5), intent(in):: deviatoric !! Deviatoric stress/strain following the later Paul Van Houtte convention.
+        !> Calculate the Von Mises equivalent of a deviatoric strain.
+        module pure function deviatoric_strain_to_von_mises(deviatoric) result(von_mises)
+            real(DP), dimension(5), intent(in):: deviatoric !! Deviatoric strain following the later Paul Van Houtte convention.
             real(DP):: von_mises                            !! Von Mises equivalent stress/strain.
         end function
 
         !> Convert a deviatoric stress/strain to unscaled voigt representation.
-        !>
-        !> Only valid in small strain settings.
         module pure function deviatoric_to_unscaled_voigt(deviatoric) result(voigt)
             real(DP), dimension(5), intent(in):: deviatoric !! Deviatoric stress/strain following the later Paul Van Houtte convention.
             real(DP), dimension(6):: voigt                  !! Stress/strain following the standard voigt component order but without any scaling.
         end function
 
         !> Convert a deviatoric stress/strain to a tensor.
-        !>
-        !> Only valid in small strain settings.
         module pure function deviatoric_to_tensor(deviatoric) result(tensor)
             real(DP), dimension(5), intent(in):: deviatoric !! Deviatoric stress/strain following the later Paul Van Houtte convention.
             real(DP), dimension(3,3):: tensor               !! Symmetric tensor with 0 trace
@@ -65,15 +59,12 @@ module conversions
         !> Extract the deviatoric component from a stress or strain in unscaled voigt notation.
         !>
         !> Eliminates any hydrostatic component.
-        !> Only valid in small strain settings.
         module pure function unscaled_voigt_to_deviatoric(voigt) result(deviatoric)
             real(DP), dimension(6), intent(in):: voigt !! Stress/strain following the standard voigt component order but without any scaling.
             real(DP), dimension(5):: deviatoric        !! Deviatoric component following the later Van Houtte convention.
         end function
 
         !> Convert a stress/strain in unscaled voigt notation to a tensor.
-        !>
-        !> Only valid in small strain settings.
         module pure function unscaled_voigt_to_tensor(voigt) result(tensor)
             real(DP), dimension(6), intent(in):: voigt !! Stress/strain following the standard voigt component order but without any scaling.
             real(DP), dimension(3,3):: tensor          !! Symmetric tensor.
@@ -83,7 +74,7 @@ module conversions
         !>
         !> Symmitrizes the tensor. Even useful for proper stress/strain tensors to get rid of roundoff errors during the simulation.
         !> Only valid in small strain settings.
-        module pure function tensor_to_von_mises(tensor) result(von_mises)
+        module pure function strain_tensor_to_von_mises(tensor) result(von_mises)
             real(DP), dimension(3,3), intent(in):: tensor   !! Tensor
             real(DP):: von_mises                            !! Von mises equivalent stress/strain of the tensor.
         end function
@@ -109,7 +100,7 @@ module conversions
 
         !> Extract the deviatoric component of a tensor.
         !>
-        !> Only valid in small strain settings.
+        !> Applicable to stresses, small strains and velocity gradients.
         !> Eliminates rotational and hydrostatic components.
         module pure function tensor_to_deviatoric(tensor) result(deviatoric)
             real(DP), dimension(3,3), intent(in):: tensor !! Tensor in small strain setting.
@@ -183,7 +174,7 @@ contains
         tensor(3, 2) = -tensor(2, 3)
     end procedure
 
-    module procedure deviatoric_to_von_mises
+    module procedure deviatoric_strain_to_von_mises
         von_mises = SQR0P67 * norm2(deviatoric)
     end procedure
 
@@ -216,7 +207,6 @@ contains
         deviatoric(5) = SQR2 * voigt(6)
     end procedure
 
-
     module procedure unscaled_voigt_to_tensor
         tensor(1, 1) = voigt(1)
         tensor(2, 2) = voigt(2)
@@ -229,18 +219,18 @@ contains
         tensor(3, 2) = tensor(2, 3)
     end procedure
 
-    module procedure tensor_to_von_mises
+    module procedure strain_tensor_to_von_mises
         real(DP):: trace, &
-                   traceless(3,3)
+                   isochoric(3,3)
         integer:: i
 
         trace = math_trace33(tensor)
-        traceless = tensor
+        isochoric = tensor
 
         do i=1,3
-            traceless(i,i) = traceless(i,i) - trace / 3._DP
+            isochoric(i,i) = isochoric(i,i) - trace / 3._DP
         end do
-        von_mises = SQR0P67 * norm2((traceless + transpose(traceless))/2._DP)
+        von_mises = SQR0P67 * norm2(isochoric)
     end procedure
 
     module procedure tensor_to_euler
@@ -329,4 +319,3 @@ contains
     end procedure
 
 end submodule
-

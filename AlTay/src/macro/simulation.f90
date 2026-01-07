@@ -91,7 +91,7 @@ module simulation
         !$OMP END PARALLEL
 
         astate%simulCalls(astate%this)%stress = homogenized_stress / total_weight
-        taylor_factor = taylor_factor / total_weight / tensor_to_von_mises(velocity_gradient)
+        taylor_factor = taylor_factor / total_weight / strain_tensor_to_von_mises((velocity_gradient + transpose(velocity_gradient))/2._DP)
     end subroutine
 
     subroutine output_current_state()

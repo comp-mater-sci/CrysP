@@ -181,7 +181,7 @@ contains
                     do increment = 1, n_increments
 
                           associate(v => step_output%increments(increment))
-                              von_mises_strain_rate = tensor_to_von_mises(v%l)  !Small strain assumption
+                              von_mises_strain_rate = strain_tensor_to_von_mises((v%l+transpose(v%l))/2._DP)  !Small strain assumption
 
                               l_voigt = tensor_to_unscaled_voigt(v%L)
                               write(iounit, fmt = 710, iostat = ierr) &
