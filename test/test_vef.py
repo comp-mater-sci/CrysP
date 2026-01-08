@@ -124,7 +124,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         if mode == 'ADP':
             cols = ['S_11','S_22','S_33','S_12','S_23','S_13']
         elif mode == 'ASR':
-            cols = ['eps_xx', 'eps_yy', 'eps_zz', 'eps_xy', 'eps_yz', 'eps_xz']
+            cols = ['A_xx', 'A_yy', 'A_zz', 'A_xy', 'A_yz', 'A_xz']
         elif mode == 'YLD':
             cols = ['sigma_x', 'sigma_y']
         elif mode == 'QRS':

@@ -131,30 +131,18 @@ contains
         logical, intent(in), optional         :: header   !< Request for header to be written out
         !
         integer:: i, ierr, increment
-        real(DP), dimension(3, 3)    :: SonA, A, P_step, P_step_rot, P_total_rot, P_total_end, P_total_end_rot
-        integer, parameter:: ncolumn_labels = 2+9+4*2*6, column_width = 15, short_column_width = 9
-        character(len = column_width), dimension(ncolumn_labels), parameter:: column_labels = &
+        integer, parameter:: ncolumn_labels = 18, column_width = 12
+        character(len = column_width), dimension(ncolumn_labels):: column_labels = &
             [ character(len = column_width) ::  &
-                'step','increment', & ! 2 fields
-                'eps_vM', 'eps_norm','Pnorm','eps_total_vM','W','dotW','scal_s','S','residual', & ! 10 fields
-                'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
+                'step','inc', & ! 2 fields
+                'eps_vM', 'S_vM', 'dotW','M', & ! 4 fields
                 'S_xx','S_yy','S_zz','S_yz','S_xz','S_xy', & ! 6 fields
-                'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (II)
-                'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy', & ! 6 fields
-                'eps_11','eps_22','eps_33','eps_23','eps_13','eps_12', & ! 6 fields  (III)
-                'eps_xx','eps_yy','eps_zz','eps_yz','eps_xz','eps_xy', & ! 6 fields
-                'eps_tot_11','eps_tot_22','eps_tot_33','eps_tot_23','eps_tot_13','eps_tot_12', & ! 6 fields (IV)
-                'eps_tot_xx','eps_tot_yy','eps_tot_zz','eps_tot_yz','eps_tot_xz','eps_tot_xy'& ! 6 fields
+                'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy' & ! 6 fields
             ]
         !
         info = VEF_OK
 
-        A = 0._DP
-        sonA = 0._DP
-        P_step = 0._DP
-        P_total_end = 0._DP
-        P_step_rot = 0._DP
-        P_total_end_rot = 0._DP
+        column_labels = adjustr(column_labels)
 
         !
         ! Write out header lines
@@ -162,12 +150,8 @@ contains
         if (optionalDefault(header, .false.)) then
             info = VEF_ERROR
             ! Column numbers
-            write(iounit, 701, iostat = ierr) (toString(i), i = 1, 2), &
-                                          (toString(i), i = 3, ncolumn_labels)
-            if (ierr /= 0) return
-            ! Column labels
-            write(iounit, 700, iostat = ierr) (column_labels(i)(1:short_column_width), i = 1, 2), &
-                                          (column_labels(i), i = 3, ncolumn_labels)
+            write(iounit, '(18(I12))', iostat = ierr) (i, i = 1, ncolumn_labels)
+            write(iounit, '(18(A12))', iostat = ierr) (column_labels(i), i = 1, ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif
@@ -178,30 +162,21 @@ contains
             info = VEF_ERROR
             !
             do increment = 1, size(output%evolution_output)
-                associate(v => output%evolution_output(increment), &
-                          Mrot => output%rotation_matrix)
-                    !
-                    ! Step deviatoric strain
-                    P_step_rot = deviatoric_to_tensor(v%icv%vP_step)
-                    ! Total deviatoric strain
-                    P_total_rot = deviatoric_to_tensor(v%icv%vP_total)  ! at the beginning of the increment
-                    P_total_end_rot = P_total_rot+v%P_inc_evol  ! at the end of the increment
-
+                associate(v => output%evolution_output(increment))
                     write(iounit, fmt = 710, iostat = ierr) &
-                                output%step, v%icv%increment, & ! 2 fields
-                                v%vm_strain, norm2(v%icv%vP_step), v%norm_P_abs, v%vm_strain_total, &
-                                v%icv%plastic_work_total, v%dotWonA, v%scal_s, v%norm_SonA, v%R, & ! 9 fields
-                                tensor_to_unscaled_voigt(SonA), tensor_to_unscaled_voigt(v%SonA), &
-                                tensor_to_unscaled_voigt(A), tensor_to_unscaled_voigt(v%A), &
-                                tensor_to_unscaled_voigt(P_step), tensor_to_unscaled_voigt(P_step_rot), &
-                                tensor_to_unscaled_voigt(P_total_end), tensor_to_unscaled_voigt(P_total_end_rot)
+                                output%step, &
+                                v%icv%increment, & ! 2 fields
+                                v%vm_strain_total, &
+                                sqrt(1.5_DP) * norm2(v%SonA), &
+                                v%dotWonA, &
+                                v%taylor_factor, &
+                                tensor_to_unscaled_voigt(v%SonA), &
+                                tensor_to_unscaled_voigt(v%A)
                 end associate
             enddo
             if (ierr == 0) info = VEF_OK
         endif
         ! Formats for output file
-        700 format(1X, 2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
-        701 format('#',2(A9, 1X), 10(A18,  1X), 4(5X, 12(A18, 1X)))
-        710 format(1X, 2(I9, 1X), 9(ES18.9E3, 1X), 4(5X, 12(ES18.9E3, 1X)))
+        710 format(2(I12), 16(ES12.3E2))
     end function
 end module

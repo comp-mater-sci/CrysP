@@ -42,7 +42,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{step} The deformation step sequence number
 	</li>
 
-	<li> \outdef{increment, increment_ASR} The increment sequence number of the current
+	<li> \outdef{inc, increment_ASR} The increment sequence number of the current
 	deformation step
 	</li>
 
@@ -51,57 +51,28 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 
 	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as:
 	\f[
-		\epsilon_{vM,step}=\sqrt{2/3} \| \boldsymbol{\epsilon}_{step} \|
+		\epsilon_{vM,total}=\sqrt{2/3} \| \boldsymbol{\epsilon}_{total} \|
 	\f]
 	</li>
 
-	<li> \outdef{Pnorm} The norm of accumulated absolute plastic strain increment tensors:
-		\f[
-			P_{norm} = \left\| \sum_{i=1}^{increment} |\Delta\boldsymbol{\epsilon}| \right\|
-		\f]
-	</li>
-
-	<li> \outdef{eps_total_vM} The von Mises equivalent of the _total_ strain,
-	\f$ \epsilon_{vM} \f$
-
-	It is derived from the incremental strain tensor \f$ \Delta \boldsymbol{\epsilon}_{i} \f$ of an increment \f$ i \f$, as:
+	<li> \outdef{S_vM} The von Mises equivalent stress  of the current increment. It is derived from the deviatoric stress tensor as follows:
 	\f[
-		\epsilon_{vM}=\sqrt{2/3} \| \sum_{i=1}^{N increments} \Delta \boldsymbol{\epsilon}_{i} \|
+		S_{vM,step}=\sqrt{3/2} \| \boldsymbol{S}_{step} \|
 	\f]
-	</li>
-
-	<li> \outdef{W} The accumulated plastic work \f$ W \f$
 	</li>
 
 	<li> \outdef{dotW} The rate of plastic work \f$ \dot{W} \f$
 	</li>
 
-	<li> \outdef{scal_s} The norm of a normalized deviatoric stress
-	</li>
+	<li> \outdef{M} The volume-average Taylor factor \f$ \overline{M} \f$
 
-	<li> \outdef{S, norm_SonA} The norm of deviatoric stress that corresponds to plastic strain mode:
-	\f$ \| \mathbf{S}(\mathbf{A}) \| \f$
-	</li>
-
-	<li> \outdef{residual} The residual of \ref config_search_procedure "search procedure"
-	\f$ Res \f$
-
-	\note As a rule of thumb, the search procedure is supposed to reach the convergence
-	if \f$ Res \ll 10^{-2} \f$.
-	</li>
-
-	<li> \outdef{S_11} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$
-	in the material (`123`) reference frame
-	</li>
-	<li> \outdef{S_22} Similar to \ref S_11
-	</li>
-	<li> \outdef{S_33} Similar to \ref S_11
-	</li>
-	<li> \outdef{S_12} Similar to \ref S_11
-	</li>
-	<li> \outdef{S_23} Similar to \ref S_11
-	</li>
-	<li> \outdef{S_13} Similar to \ref S_11
+	It is obtained from volume-averaging the sum of microscopic slip rates
+	over all deformation systems \f$  \dot{\gamma} \f$, as
+	\f[
+		\overline{M}= \frac{\overline{ \dot{\gamma} }}{D_{vM}}
+	\f]
+	The von Mises equivalent strain rate \f$ D_{vM}=\sqrt{2/3} \| \mathbf{D} \| \f$ is
+	used as normalization factor.
 	</li>
 
 	<li> \outdef{S_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$
@@ -118,25 +89,6 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{S_xz} Similar to \ref S_xx
 	</li>
 
-	<li> \outdef{A_11,asr_A_11} A component of the strain mode tensor \f$ \mathbf{A} \f$ in
-	the material (`123`) reference frame
-
-	It is derived from the strain rate tensor \f$ \mathbf{D} \f$ as
-	\f[
-		\mathbf{A}=\frac{\mathbf{D}}{\| \mathbf{D} \|}
-	\f]
-	</li>
-	<li> \outdef{A_22} Similar to \ref asr_A_11 "A_11"
-	</li>
-	<li> \outdef{A_33} Similar to \ref asr_A_11 "A_11"
-	</li>
-	<li> \outdef{A_12} Similar to \ref asr_A_11 "A_11"
-	</li>
-	<li> \outdef{A_23} Similar to \ref asr_A_11 "A_11"
-	</li>
-	<li> \outdef{A_13} Similar to \ref asr_A_11 "A_11"
-	</li>
-
 	<li> \outdef{A_xx} A component of the strain mode tensor \f$ \mathbf{A} \f$ in
 	the sample (`xyz`) reference frame
 	</li>
@@ -149,62 +101,6 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{A_yz} Similar to \ref A_xx
 	</li>
 	<li> \outdef{A_xz} Similar to \ref A_xx
-	</li>
-
-	<li> \outdef{eps_11} A component of the strain tensor of current step
-	\f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the material (`123`) reference frame
-	</li>
-	<li> \outdef{eps_22} Similar to \ref eps_11
-	</li>
-	<li> \outdef{eps_33} Similar to \ref eps_11
-	</li>
-	<li> \outdef{eps_12} Similar to \ref eps_11
-	</li>
-	<li> \outdef{eps_23} Similar to \ref eps_11
-	</li>
-	<li> \outdef{eps_13} Similar to \ref eps_11
-	</li>
-
-	<li> \outdef{eps_xx} A component of the strain tensor of current step
-	\f$ \Delta \boldsymbol{\epsilon}_{step} \f$ in the sample (`xyz`) reference frame
-	</li>
-	<li> \outdef{eps_yy} Similar to \ref eps_xx
-	</li>
-	<li> \outdef{eps_zz} Similar to \ref eps_xx
-	</li>
-	<li> \outdef{eps_xy} Similar to \ref eps_xx
-	</li>
-	<li> \outdef{eps_yz} Similar to \ref eps_xx
-	</li>
-	<li> \outdef{eps_xz} Similar to \ref eps_xx
-	</li>
-
-	<li> \outdef{eps_tot_11} A component of the total strain tensor
-	\f$ \boldsymbol{\epsilon} \f$ in the material (`123`) reference frame
-	</li>
-	<li> \outdef{eps_tot_22} Similar to \ref eps_tot_11
-	</li>
-	<li> \outdef{eps_tot_33} Similar to \ref eps_tot_11
-	</li>
-	<li> \outdef{eps_tot_12} Similar to \ref eps_tot_11
-	</li>
-	<li> \outdef{eps_tot_23} Similar to \ref eps_tot_11
-	</li>
-	<li> \outdef{eps_tot_13} Similar to \ref eps_tot_11
-	</li>
-
-	<li> \outdef{eps_tot_xx} A component of the total strain tensor
-	\f$ \boldsymbol{\epsilon} \f$ in the sample (`xyz`) reference frame
-	</li>
-	<li> \outdef{eps_tot_yy} Similar to \ref eps_tot_xx
-	</li>
-	<li> \outdef{eps_tot_zz} Similar to \ref eps_tot_xx
-	</li>
-	<li> \outdef{eps_tot_xy} Similar to \ref eps_tot_xx
-	</li>
-	<li> \outdef{eps_tot_yz} Similar to \ref eps_tot_xx
-	</li>
-	<li> \outdef{eps_tot_xz} Similar to \ref eps_tot_xx
 	</li>
 </ol>
 
