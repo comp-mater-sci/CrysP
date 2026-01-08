@@ -46,7 +46,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	deformation step
 	</li>
 
-	<li> \outdef{eps_vM, eps_vM_ASR} The von Mises equivalent strain of the current step
+	<li> \outdef{epsilon_vM, eps_vM_ASR} The von Mises equivalent strain of the current step
 	\f$ \epsilon_{vM,step} \f$
 
 	It is derived from the strain tensor of current step \f$ \boldsymbol{\epsilon}_{step} \f$ as:
@@ -55,9 +55,9 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	\f]
 	</li>
 
-	<li> \outdef{S_vM} The von Mises equivalent stress  of the current increment. It is derived from the deviatoric stress tensor as follows:
+	<li> \outdef{sigma_vM} The von Mises equivalent stress  of the current increment. It is derived from the deviatoric stress tensor as follows:
 	\f[
-		S_{vM,step}=\sqrt{3/2} \| \boldsymbol{S}_{step} \|
+		\sigma_{vM,step}=\sqrt{3/2} \| \boldsymbol{\sigma}_{step} \|
 	\f]
 	</li>
 
@@ -75,18 +75,21 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	used as normalization factor.
 	</li>
 
-	<li> \outdef{S_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$
+	<li> \outdef{residual} The norm of the difference between the stress mode requested by the user and the stress mode obtained by the model.
+	</li>
+
+	<li> \outdef{sigma_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$
 	in the sample (`xyz`) reference frame
 	</li>
-	<li> \outdef{S_yy} Similar to \ref S_xx
+	<li> \outdef{sigma_yy} Similar to \ref sigma_xx
 	</li>
-	<li> \outdef{S_zz} Similar to \ref S_xx
+	<li> \outdef{sigma_zz} Similar to \ref sigma_xx
 	</li>
-	<li> \outdef{S_xy} Similar to \ref S_xx
+	<li> \outdef{sigma_xy} Similar to \ref sigma_xx
 	</li>
-	<li> \outdef{S_yz} Similar to \ref S_xx
+	<li> \outdef{sigma_yz} Similar to \ref sigma_xx
 	</li>
-	<li> \outdef{S_xz} Similar to \ref S_xx
+	<li> \outdef{sigma_xz} Similar to \ref sigma_xx
 	</li>
 
 	<li> \outdef{A_xx} A component of the strain mode tensor \f$ \mathbf{A} \f$ in

@@ -131,12 +131,12 @@ contains
         logical, intent(in), optional         :: header   !< Request for header to be written out
         !
         integer:: i, ierr, increment
-        integer, parameter:: ncolumn_labels = 18, column_width = 12
+        integer, parameter:: ncolumn_labels = 19, column_width = 12
         character(len = column_width), dimension(ncolumn_labels):: column_labels = &
             [ character(len = column_width) ::  &
-                'step','inc', & ! 2 fields
-                'eps_vM', 'S_vM', 'dotW','M', & ! 4 fields
-                'S_xx','S_yy','S_zz','S_yz','S_xz','S_xy', & ! 6 fields
+                'step','increment', & ! 2 fields
+                'epsilon_vM', 'sigma_vM', 'dotW','M', 'residual', & ! 5 fields
+                'sigma_xx','sigma_yy','sigma_zz','sigma_yz','sigma_xz','sigma_xy', & ! 6 fields
                 'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy' & ! 6 fields
             ]
         !
@@ -150,8 +150,8 @@ contains
         if (optionalDefault(header, .false.)) then
             info = VEF_ERROR
             ! Column numbers
-            write(iounit, '(18(I12))', iostat = ierr) (i, i = 1, ncolumn_labels)
-            write(iounit, '(18(A12))', iostat = ierr) (column_labels(i), i = 1, ncolumn_labels)
+            write(iounit, '(19(I12))', iostat = ierr) (i, i = 1, ncolumn_labels)
+            write(iounit, '(19(A12))', iostat = ierr) (column_labels(i), i = 1, ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif
@@ -170,6 +170,7 @@ contains
                                 sqrt(1.5_DP) * norm2(v%SonA), &
                                 v%dotWonA, &
                                 v%taylor_factor, &
+                                v%R, &
                                 tensor_to_unscaled_voigt(v%SonA), &
                                 tensor_to_unscaled_voigt(v%A)
                 end associate
@@ -177,6 +178,6 @@ contains
             if (ierr == 0) info = VEF_OK
         endif
         ! Formats for output file
-        710 format(2(I12), 16(ES12.3E2))
+        710 format(2(I12), 17(ES12.3E2))
     end function
 end module
