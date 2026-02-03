@@ -30,7 +30,7 @@ TEST_INPUT = TEST_ROOT/'input'
 MODES = ['ADP', 'ASR', 'EWC','QRS','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
-HARDENING_MODELS = ['NONE', 'VOCE', 'SWIFT', 'DSH_EDGE', 'DSH_SCREW', 'DSH_LOOP']
+HARDENING_MODELS = ['NONE', 'VOCE', 'HOCKETT_SHERBY', 'SWIFT', 'DSH_EDGE', 'DSH_SCREW', 'DSH_LOOP']
 
 #Unit tests
 UNITS = [('altayAlgorithms','eigenv'),      \

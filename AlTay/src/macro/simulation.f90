@@ -7,6 +7,7 @@ module simulation
     use omp_lib
     use meso
     use parameters
+    use, intrinsic :: ieee_arithmetic
 
     implicit none
     private
@@ -71,6 +72,12 @@ module simulation
                    weight_cluster, &
                    t_inc                                    ! Time increment
 
+        !Check if the velocity gradient is purely deviatoric
+        if (abs(velocity_gradient(1,1) + velocity_gradient(2,2)+ velocity_gradient(3,3)) > TOLERANCE) &
+            call log_error(MOD_NAME, 'simulation_run', ERR_VAL, 'The velocity gradient must be purely deviatoric')
+
+
+        n_clusters = size(clusters)
         t_inc = 1._DP
 
         !Set model state variables to correspond to end of time step so clusters can use this state to update their own state.

@@ -26,12 +26,13 @@ module micro
     !> Constants set for backwards compatibility with input file format.
     !> @endnote
     enum, bind(C)
-        enumerator:: HARDENING_NONE       = 0  !! No hardening.
-        enumerator:: HARDENING_VOCE       = 1  !! Isotropic hardening according to Voce law.
-        enumerator:: HARDENING_SWIFT      = 3  !! Isotropic hardening according to SWift law.
-        enumerator:: HARDENING_DSH_EDGE   = 11 !! Physics-based hardening model based on edge dislocation movement.
-        enumerator:: HARDENING_DSH_SCREW  = 12 !! Variant of DSH hardening using screw dislocations.
-        enumerator:: HARDENING_DSH_LOOP   = 13 !! Variant of DSH hardening using loop dislocations.
+        enumerator:: HARDENING_NONE             = 0  !! No hardening.
+        enumerator:: HARDENING_VOCE             = 1  !! Isotropic hardening according to Voce law.
+        enumerator:: HARDENING_HOCKETT_SHERBY   = 2  !! Isotropic hardening according to Hockett-Sherby law.
+        enumerator:: HARDENING_SWIFT            = 3  !! Isotropic hardening according to SWift law.
+        enumerator:: HARDENING_DSH_EDGE         = 11 !! Physics-based hardening model based on edge dislocation movement.
+        enumerator:: HARDENING_DSH_SCREW        = 12 !! Variant of DSH hardening using screw dislocations.
+        enumerator:: HARDENING_DSH_LOOP         = 13 !! Variant of DSH hardening using loop dislocations.
     end enum
 
     !> Supported deformation mechanisms (i.e. slip system sets).
@@ -121,6 +122,7 @@ contains
     function get_model_instance(model_id) result(instance)
         use none
         use swift
+        use hockett_sherby
         use voce
         use dsh_edge
         use dsh_screw
@@ -134,6 +136,8 @@ contains
                 allocate(ConstitutiveModelNone:: instance)
             case(HARDENING_VOCE)
                 allocate(ConstitutiveModelVoce:: instance)
+            case(HARDENING_HOCKETT_SHERBY)
+                allocate(ConstitutiveModelHockettSherby:: instance)
             case(HARDENING_SWIFT)
                 allocate(ConstitutiveModelSwift:: instance)
             case(HARDENING_DSH_EDGE)

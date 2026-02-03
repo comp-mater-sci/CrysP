@@ -29,6 +29,7 @@ micro/constitutive_model.f90
 micro/models/none.f90
 micro/models/swift.f90
 micro/models/voce.f90
+micro/models/hockett_sherby.f90
 micro/models/dsh.f90
 micro/models/dsh_edge.f90
 micro/models/dsh_screw.f90
