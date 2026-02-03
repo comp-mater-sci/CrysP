@@ -167,7 +167,7 @@ contains
                                 output%step, &
                                 v%icv%increment, & ! 2 fields
                                 v%vm_strain_total, &
-                                sqrt(1.5_DP) * norm2(v%SonA), &
+                                sqrt(1.5_DP) * v%norm_sona, &
                                 v%dotWonA, &
                                 v%taylor_factor, &
                                 v%R, &

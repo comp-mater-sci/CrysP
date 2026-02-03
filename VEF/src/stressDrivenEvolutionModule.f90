@@ -104,7 +104,8 @@ contains
                                                target_stress_mode, &
                                                strain_mode, &
                                                stress/norm2(stress), &
-                                               norm2(stress)/target_stress_norm, &
+                                               norm2(stress), &
+                                               target_stress_norm, &
                                                norm2(deviatoric_to_unscaled_voigt(residual)))
 
             ! Check if we start a/another increment
@@ -182,6 +183,7 @@ contains
                 !
                 ! Calculate strain increment for material state evolution
                 vDe = strain_mode * scaling_factor
+                tmp_record%dotwona = tmp_record%dotwona * scaling_factor !Assuming 1s time steps
                 tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
                 ! Update material state
                 call makeTextureUpdateStep(tmp_record%P_inc_evol, &

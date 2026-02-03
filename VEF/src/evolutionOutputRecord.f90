@@ -34,7 +34,7 @@ contains
 
 
     !> Make IncrementOutputRecord from increment data.
-    function IncrementOutputRecord_init(icv, De, Se, target_stress_mode, strain_mode, stress_mode, stress_norm, residual_norm) result(this)
+    function IncrementOutputRecord_init(icv, De, Se, taylor_factor, target_stress_mode, strain_mode, stress_mode, stress_norm, target_stress_norm, residual_norm) result(this)
     type(IncrementOutputRecord)                 :: this
     type(IncrementationControlVariables), intent(in):: icv
     real(DP), dimension(3, 3), intent(in)        ::  de, &
@@ -43,6 +43,7 @@ contains
     real(DP), dimension(5), intent(in):: strain_mode
     real(DP), dimension(5), intent(in):: stress_mode
     real(DP), intent(in):: stress_norm
+    real(DP), intent(in):: target_stress_norm
     real(DP), intent(in):: residual_norm
 
         this%vm_strain = deviatoric_strain_to_von_mises(icv%vP_step)
@@ -50,7 +51,7 @@ contains
         this%norm_P_abs = norm2(icv%vP_abs)
         !
         this%dotWonA = strain_mode .dot. stress_mode * stress_norm
-        this%scal_s = stress_norm
+        this%scal_s = stress_norm / target_stress_norm
         this%norm_SonA = stress_norm
         this%R = residual_norm
 
