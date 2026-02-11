@@ -7,7 +7,6 @@ module simulation
     use omp_lib
     use meso
     use parameters
-    use, intrinsic :: ieee_arithmetic
 
     implicit none
     private

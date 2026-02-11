@@ -2,8 +2,6 @@ module simplex
     use base_defs
     use math_utils
     use logging
-    use, intrinsic :: ieee_arithmetic
-
 
     implicit none
     private
@@ -119,9 +117,7 @@ contains
             if (iter > max_iters) return
             iter = iter+1
             ! Search which active slip system must be deactivated (removed from basis)
-
             new_basis_vector = matmul(inverse_basis, taylor_coeffs(:,most_overstressed_system))
-
             system_to_remove = 0
 
             do i = 1, size(taylor_coeffs, 1)
@@ -214,7 +210,6 @@ contains
         integer:: i
 
         stress = matmul(rss_basis, inverse_basis)
-
         rss = matmul(stress, taylor_coeffs)
         max_overstress = 0._DP
         most_overstressed_system = 0

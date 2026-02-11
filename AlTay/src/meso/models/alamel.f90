@@ -411,8 +411,6 @@ contains
 
         !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
         !must always recalculate the inverse basis.
-
-
         do i = 1, 2
             call alamel_cluster%relaxations(i)%update(boundary_to_crystal)
         end do
