@@ -150,8 +150,8 @@ contains
         if (optionalDefault(header, .false.)) then
             info = VEF_ERROR
             ! Column numbers
-            write(iounit, '(19(I12))', iostat = ierr) (i, i = 1, ncolumn_labels)
-            write(iounit, '(19(A12))', iostat = ierr) (column_labels(i), i = 1, ncolumn_labels)
+            write(iounit, '(18(I12))', iostat = ierr) (i, i = 1, ncolumn_labels)
+            write(iounit, '(18(A12))', iostat = ierr) (column_labels(i), i = 1, ncolumn_labels)
             if (ierr /= 0) return
             info = VEF_OK
         endif
