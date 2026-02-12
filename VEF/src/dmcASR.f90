@@ -162,12 +162,14 @@ contains
             info = VEF_ERROR
             !
             do increment = 1, size(output%evolution_output)
+
+
                 associate(v => output%evolution_output(increment))
                     write(iounit, fmt = 710, iostat = ierr) &
                                 output%step, &
                                 v%icv%increment, & ! 2 fields
                                 v%vm_strain_total, &
-                                sqrt(1.5_DP) * v%norm_sona, &
+                                v%scal_s, &
                                 v%dotWonA, &
                                 v%taylor_factor, &
                                 v%R, &
