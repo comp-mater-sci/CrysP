@@ -27,6 +27,8 @@ gcc:
     cd test
     export OMP_NUM_THREADS=3
     pytest --update=logout -v
+  artifacts:
+    expire_in: 30 days
 
 ifx:
   image: intel/hpckit:latest
@@ -42,3 +44,5 @@ ifx:
     cd test
     export OMP_NUM_THREADS=3
     pytest --update=logout -v
+  artifacts:
+    expire_in: 30 days
