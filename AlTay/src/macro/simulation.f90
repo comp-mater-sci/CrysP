@@ -58,11 +58,13 @@ module simulation
         homogenized_stress = homogenized_stress/total_weight
     end function
 
-    subroutine simulation_run(velocity_gradient, taylor_factor)
-        real(DP), intent(in):: velocity_gradient(3, 3)
-        real(DP), intent(out):: taylor_factor           !! Homoginized taylor factor over all grains.
+    subroutine simulation_run(velocity_gradient, stress, taylor_factor)
+        real(DP), dimension(3,3), intent(in):: velocity_gradient
+        real(DP), dimension(3,3), intent(out):: stress
+        real(DP), intent(out):: taylor_factor
 
-        integer:: i
+        integer:: n_clusters, &
+                  i
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    deformation_gradient_increment(3, 3), &
@@ -90,7 +92,7 @@ module simulation
             !$OMP END DO
         !$OMP END PARALLEL
 
-        astate%simulCalls(astate%this)%stress = homogenized_stress / total_weight
+        stress = homogenized_stress / total_weight
         taylor_factor = taylor_factor / total_weight / strain_tensor_to_von_mises((velocity_gradient + transpose(velocity_gradient))/2._DP)
     end subroutine
 

@@ -103,15 +103,15 @@ contains
         else
             return
         end if
-        !
+
         ! Storage for the calculated output
         allocate(output%steps(n_steps))
-        !
+
         ! Main loop over the steps
         acc_von_mises_strain = 0._DP
         do i_step = 1, n_steps
             associate(step => this%steps(i_step), &
-                      step_output => output%steps(i_step))
+                step_output => output%steps(i_step))
                 ! Execute the step
                 info = step%execute(step_output, taylor_factor)
                 if (info /= VEF_OK) return
@@ -181,23 +181,23 @@ contains
                     do increment = 1, n_increments
 
                           associate(v => step_output%increments(increment))
-                              von_mises_strain_rate = strain_tensor_to_von_mises((v%l+transpose(v%l))/2._DP)  !Small strain assumption
+                              von_mises_strain_rate = strain_tensor_to_von_mises((v%velocity_gradient+transpose(v%velocity_gradient))/2._DP)  !Small strain assumption
 
-                              l_voigt = tensor_to_unscaled_voigt(v%L)
+                              l_voigt = tensor_to_unscaled_voigt(v%velocity_gradient)
                               write(iounit, fmt = 710, iostat = ierr) &
                                   step, increment, &            ! 2 fields
-                                  v%L, &         ! 9 fields: velocity gradient
-                                  tensor_to_unscaled_voigt(v%L), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                  tensor_to_spin(v%L), &         ! 3 fields: spin tensor
-                                  normalize(tensor_to_unscaled_voigt(v%L)), &         ! 6 fields: strain mode
-                                  tensor_to_unscaled_voigt(v%S), &         ! 6 fields: deviatoric stress
+                                  v%velocity_gradient, &         ! 9 fields: velocity gradient
+                                  tensor_to_unscaled_voigt(v%velocity_gradient), &         ! 6 fields: rate for deformation tensor (strain rate)
+                                  tensor_to_spin(v%velocity_gradient), &         ! 3 fields: spin tensor
+                                  normalize(tensor_to_unscaled_voigt(v%velocity_gradient)), &         ! 6 fields: strain mode
+                                  tensor_to_unscaled_voigt(v%stress), &         ! 6 fields: deviatoric stress
                                   acc_von_mises_strain, &
                                   acc_von_mises_strain + von_mises_strain_rate, &
                                   von_mises_strain_rate, &
-                                  v%vm_stress, &
-                                  v%plastic_work_inc, &
+                                  sqrt(3._DP/2._DP)*norm2(v%stress), &
+                                  v%velocity_gradient .dot. v%stress, &
                                   taylor_factor
-                              acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
+                                  acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
                           end associate
                           if (ierr /= 0) return
                     enddo

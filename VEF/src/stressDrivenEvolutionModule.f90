@@ -225,27 +225,15 @@ contains
     end function
 
       subroutine makeTextureUpdateStep(D, S, output_flag, info)
-      real(DP), dimension(3, 3), intent(in)      :: D
-      real(DP), dimension(3, 3), intent(out)     :: S
-      logical, intent(in)                              :: output_flag
-      integer, intent(out)                             :: info
+          real(DP), dimension(3, 3), intent(in)      :: D
+          real(DP), dimension(3, 3), intent(out)     :: S
+          logical, intent(in)                              :: output_flag
+          integer, intent(out)                             :: info
 
-      real(DP):: taylor_factor
+          real(DP):: taylor_factor
 
-      integer, parameter:: istp = 1
-            info = -1
-
-
-            !
-            call initStepData(istp, astate, info)
-            if (info /= 0) return
-            ! Set input data for AlTay
-            astate%simulCalls(istp)%velocity_gradient = D
-            call runSteps(astate, info, taylor_factor)
-            if (info /= 0) return
-            !
-            ! Get the result
-            S = astate%simulCalls(istp)%stress(:,:)
+          call deformation_step(D, S, taylor_factor)
+          info = VEF_OK
       end subroutine
 
     !> Calculate the real roots of quadratic polynomial given in form

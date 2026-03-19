@@ -6,11 +6,13 @@ module base_defs
 
     public
 
-    integer, parameter::  DP = selected_real_kind(15, 307)  !! Kind for reals corresponding to the classic notion of a double precision floating point number of 8 bytes.
-    real(DP), parameter:: TOLERANCE  = 1.E-9_DP             !! Default tolerance on floating point calculations to compensate for inherent inaccuracy of floating point arithmetic, especially for multithreaded computations.
-    real(DP), parameter:: ACCURACY = 1.E-2_DP               !! Accuracy on linear approximations.
-    integer, parameter:: MAX_PATHLEN = 2048          !! Maximum file path length.
-    integer, parameter:: display_unit = output_unit  !! Identifier for stdout. Used in write statements.
+    integer, parameter:: DP = selected_real_kind(15, 307)  !! Kind for reals corresponding to the classic notion of a double precision floating point number of 8 bytes.
+    integer, parameter:: MAX_PATHLEN = 2048                !! Maximum file path length.
+    integer, parameter:: FNAME_LEN = 512                   !< Length of filenames
+    integer, parameter:: DISPLAY_UNIT = output_unit        !! Identifier for stdout. Used in write statements.
+    real(DP), parameter:: TOLERANCE  = 1.E-9_DP            !! Default tolerance on floating point calculations to compensate for inherent inaccuracy of floating point arithmetic,
+                                                           !! especially for multithreaded computations.
+    real(DP), parameter:: ACCURACY = 1.E-2_DP              !! Accuracy on linear approximations.
 
     !> Status codes. Used to communicate information on the completion of a procedure to the caller.
     enum, bind(C)

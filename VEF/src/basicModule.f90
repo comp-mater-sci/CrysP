@@ -7,9 +7,11 @@ module dmcBasicModule
     use altayConfig, only: altayConfigData
     use base_defs
     use micro
+    use meso
     use parameters
     use logging
-    use altay, only: initAltay, finalizeAltay, outputcurrentstate
+    use altay, only: initAltay, finalizeAltay
+    use simulation
 
     implicit none
 
@@ -56,7 +58,7 @@ contains
 
             info = VEF_ERROR
             ! Finish the configuration:
-            this%altay%output_config%nfile = merge(1, 0, this%output%outputRequest)
+            this%altay%nfile = merge(1, 0, this%output%outputRequest)
             this%altay%output_prefix = trim(this%output%outputPrefix)
             this%altay%jobtitle = trim(this%output%outputPrefix)
 
@@ -68,11 +70,8 @@ contains
             31 format(1X, A)
 
             ! Output the initial state variables (non only texture but also BPM, MSS) if requested.
-            if (this%output%outputRequest) then
-                  call outputCurrentState(ierr)
-                  if (ierr /= VEF_OK) &
-                        call log_error(MOD_NAME, 'initialize', ERR_IO, 'Cannot write initial state.')
-            endif
+            if (this%output%outputRequest) &
+                  call output_current_state()
             info = VEF_OK
       end function
 
@@ -189,69 +188,62 @@ contains
       end subroutine
 
 
-      !> Read configuration of libaltay
-      subroutine readAlTayConfigSection(cnfunit, cnf, info)
-      use altayConfig
-      integer, intent(in)                  :: cnfunit
-      type(altayConfigData), target, intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
-      integer, intent(out)                 :: info
+    !> Read configuration of libaltay
+    subroutine readAlTayConfigSection(cnfunit, cnf, info)
+        integer, intent(in)                  :: cnfunit
+        type(altayConfigData), target, intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
+        integer, intent(out)                 :: info
 
-      character(*), parameter:: PROC_NAME = 'readAltayConfigSection'
+        character(*), parameter:: PROC_NAME = 'readAltayConfigSection'
 
-      integer                       :: model_id, dm_id
-      logical                       :: use_default_microstructure
-      logical                       :: dummy, dummy2
-      integer                       :: i
-      character(:), allocatable:: slip
-      character(5):: buffer
-      type(Parameter), pointer:: param_ptr
+        integer                       :: model_id
+        logical                       :: use_default_microstructure
+        logical                       :: dummy, dummy2
+        integer                       :: i
+        character(20):: buffer
+        type(Parameter), pointer:: param_ptr
 
-      type(MapItem), dimension(2):: model_types = [MapItem('ALAMEL', modelAlamel), &
-                                                   MapItem('FCTaylor', modelFCTaylor)]
-            info = ERR_IO
-           model_id = -1
-           dm_id = -1
-            ! Read input texture file name
-            if (.not. readValue(cnfunit, cnf%texture_input_fname)) return
-            ! Determine crystal plasticity model type
-            if (.not. readKeyword(cnfunit, model_types, model_id)) &
+        info = ERR_IO
+
+        ! Read input texture file name
+        if (.not. readValue(cnfunit, cnf%texture_input_fname)) return
+
+        ! Determine crystal plasticity model type
+        read(cnfunit, '(A)') buffer
+        select case (buffer)
+            case ('FCTaylor')
+                cnf%model_id = MESO_MODEL_FCTAYLOR
+            case ('ALAMEL')
+                cnf%model_id = MESO_MODEL_ALAMEL
+            case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Invalid mesoscopic model.')
+        end select
 
-            dummy2 = readValue(cnfunit, dummy)
-            read(cnfunit, '(A)') buffer
-            slip = buffer
+        dummy2 = readValue(cnfunit, dummy)
 
-            select case (slip)
-                case ('fcc12')
-                    cnf%deformation_mechanism = SLIP_SYSTEMS_FCC
-                case ('bcc24')
-                    cnf%deformation_mechanism = SLIP_SYSTEMS_BCC24
-                case ('bcc48')
-                    cnf%deformation_mechanism = SLIP_SYSTEMS_BCC48
-                case default
-                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
-            end select
+        read(cnfunit, '(A)') buffer
+        select case (buffer)
+            case ('fcc12')
+                cnf%deformation_mechanism = SLIP_SYSTEMS_FCC
+            case ('bcc24')
+                cnf%deformation_mechanism = SLIP_SYSTEMS_BCC24
+            case ('bcc48')
+                cnf%deformation_mechanism = SLIP_SYSTEMS_BCC48
+            case default
+                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
+        end select
 
-            ! Process advanced microstructure characterization
-            use_default_microstructure = .true.
-            if (.not. readValue(cnfunit, use_default_microstructure)) return
-            if (.not. use_default_microstructure) then
-                if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
-                ! Read user-supplied initial deformation gradient
-                do i = 1, 3
-                    if (.not. readValue(cnfunit, cnf%simul_init%Fmicro(:,i))) &
-                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read deformation gradient.')
-                enddo
-            end if
-            ! Process hardening model section
-            call readHardeningSection(cnfunit, cnf, info)
-            if (info /= VEF_OK) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot read the hardening law section.')
-
-            ! the keyword is mapped to a proper model_id, we can instantly set it.
-            call setModelType(cnf, model_id, info)
-            if (info /= VEF_OK) return
-      end subroutine
+        ! Process advanced microstructure characterization
+        use_default_microstructure = .true.
+        if (.not. readValue(cnfunit, use_default_microstructure)) return
+        if (.not. use_default_microstructure) then
+            if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
+        end if
+        ! Process hardening model section
+        call readHardeningSection(cnfunit, cnf, info)
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot read the hardening law section.')
+    end subroutine
 
     !> Read configuration of hardening model from configuration file
     subroutine readHardeningSection(cnfunit, cnf, info)

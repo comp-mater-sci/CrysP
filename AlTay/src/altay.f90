@@ -31,19 +31,20 @@ contains
         type(Parameter), pointer:: param_ptr
         type(PhaseDescriptor):: phase_
 
-        integer:: ierr, cluster_size
+        integer:: ierr, &
+                  meso_model_id
 
         ierr = 0
         !Set the singleton object to the cnf
         acnf = cnf
 
-        cluster_size    = cnf%simul_init%NGR
+        meso_model_id    = cnf%model_id
 
         !Get the initial texture
         orientations = read_texture(trim(cnf%texture_input_fname))
 
-        params = meso_get_parameters(cluster_size)
-        if (cluster_size == 2) then
+        params = meso_get_parameters(meso_model_id)
+        if (meso_model_id == 2) then
             param_ptr  => params .find. "Boundaries"
             param_ptr = read_boundaries(cnf%micros_fname)
         end if
@@ -62,7 +63,7 @@ contains
 
         !Initialize altay modules
         call micro_init([phase_], grains)
-        call meso_init(cnf%simul_init%ngr, grains, params, clusters)
+        call meso_init(meso_model_id, grains, params, clusters)
         call macro_init(clusters)
 
         info = VEF_OK
@@ -73,65 +74,18 @@ contains
         integer, intent(out)                 :: info     !< exit code (0 on success)
 
         call simulation_finalize()
-        if (allocated(astate%simulCalls)) then
-              deallocate(astate%simulCalls)
-              astate%nSimulCalls = 0
-        endif
         info = 0
     end subroutine
 
-    !> Initialization of input and output data for the steps.
-    subroutine initStepData(nsteps, steps, info)
-        integer, intent(in)                  :: nsteps   !< Number of steps to be created
-        type(altayStateData), intent(out)    :: steps    !< Definiton of the steps.
-        integer, intent(out)                 :: info     !< Exit code: 0 on success
-        integer:: ierr
-
-        info = 1
-        if (nsteps <= 0) return
-        allocate(steps%simulCalls(nsteps), stat = ierr)
-        steps%nSimulCalls = nsteps
-        steps%this = 0
-        ! No need to specifically initialize other components,
-        ! since there are initializers provided in the datatype.
-        info = ierr
-    end subroutine
-
     !> Run the AlTay for the set of steps
-    subroutine runSteps(steps, info, taylor_factor)
-        type(altayStateData), intent(inout)        :: steps !< Definiton of the steps.
-        integer, intent(out)                       :: info  !< Exit code: 0 on success.
-        real(DP), intent(out):: taylor_factor               !< Homogenized taylor factor over all grains at the end of the simuiation.
+    subroutine deformation_step(velocity_gradient, stress, taylor_factor)
+        real(DP), dimension(3,3), intent(in):: velocity_gradient
+        real(DP), dimension(3,3), intent(out):: stress
+        real(DP), intent(out):: taylor_factor
 
-        integer:: i, j
-        logical:: input_ok
-        real(DP):: v_grad(3, 3)
-        real(DP):: hydrostatic_part
-
-        ! Validate input
-        info = VEF_ERROR
-        input_ok = .false.
-        if (allocated(steps%simulCalls)) input_ok = (size(steps%simulCalls) == steps%nSimulCalls)
-        if (.not. input_ok) return
-        ! Assign steps with astate
-        astate = steps
-
-        taylor_factor = 0._DP
-        do i = 1, steps%nSimulCalls
-            steps%this = i
-
-            v_grad = steps%simulcalls(i)%velocity_gradient
-            !Remove hydrostatic part from velocity gradient
-            hydrostatic_part = (v_grad(1,1) + v_grad(2,2) + v_grad(3,3)) / 3._DP
-            do j=1,3
-                v_grad(j,j) = v_grad(j,j) - hydrostatic_part
-            end do
-            call simulation_run(v_grad, taylor_factor)
-
-            call outputCurrentState(info)
-        enddo
-
-        info = VEF_OK
+        call simulation_run(velocity_gradient, stress, taylor_factor)
+        if (acnf%nfile == 1) &
+            call output_current_state()
     end subroutine
 
     function altay_get_stress_state(velocity_gradient) result(stress_state)
@@ -148,16 +102,5 @@ contains
 
         !Transpose both input and output because C is row major and Fortran column major.
         stress_state = anint(tensor_to_deviatoric(get_stress(deviatoric_to_tensor(strain_rate)))/TOLERANCE) * TOLERANCE
-    end subroutine
-
-    !> Write out the current state variables.
-    !> The call may involve IO units: IMP1 (CUR file)
-    !> Appropriate control fields in acnf%output_config are checked to decide if the data have to
-    !> be actually written to corresponding IO units.
-    subroutine outputCurrentState(info)
-        integer, intent(out)           :: info
-
-        info = VEF_OK
-        if (acnf%output_config%nfile == 1) call output_current_state()
     end subroutine
 end module

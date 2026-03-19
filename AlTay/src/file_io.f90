@@ -130,7 +130,7 @@ contains
         fname_prefix = cnf%output_prefix
         info = VEF_ERROR
 
-        if (cnf%output_config%nfile /= 0) then
+        if (cnf%nfile /= 0) then
             fname = trim(fname_prefix)//'.CUR'
             ! IMP1 = output file with successive "current situations"
             open (unit = IMP1, file = fname, status='replace',err = 9999)

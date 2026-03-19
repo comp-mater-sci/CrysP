@@ -129,7 +129,7 @@ contains
         endif
 
         ! Override the requests for outputs:
-        this%altay%output_config%nfile = 0   ! texture
+        this%altay%nfile = 0   ! texture
         this%output%outputRequest = .false.       ! idem.
 
         info = VEF_OK
