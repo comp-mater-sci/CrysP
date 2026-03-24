@@ -20,14 +20,12 @@ criConfigReader.f90
 criLinearMap.f90
 criNumerics.f90
 criUncomment.f90
-abstractModule.f90
 basicModule.f90
 commonUtils.f90
 dmcResultFileOutput.f90
 evolutionOutputRecord.f90
 incrementationControl.f90
 resultTable.f90
-strainDrivenStep.f90
 stressDrivenEvolutionModule.f90
 stressDrivenModule.f90
 dmcADP.f90

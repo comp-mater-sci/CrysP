@@ -229,7 +229,6 @@ contains
           real(DP), dimension(3, 3), intent(out)     :: S
           logical, intent(in)                              :: output_flag
           integer, intent(out)                             :: info
-
           real(DP):: taylor_factor
 
           call deformation_step(D, S, taylor_factor)

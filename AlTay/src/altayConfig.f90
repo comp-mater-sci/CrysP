@@ -8,7 +8,7 @@ module altayConfig
 
    !> Root-level configuration structure of Altay
    type:: altayConfigData
-        integer                                   :: model_id = 2
+        integer                                     :: model_id = 2
         character(len = fname_len)                  :: output_prefix = 'alamel'
         character(len = fname_len)                  :: jobtitle      = 'alamel'
         character(len = fname_len)                  :: micros_fname  = 'equiaxed.smt'

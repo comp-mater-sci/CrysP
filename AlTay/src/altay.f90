@@ -84,6 +84,7 @@ contains
         real(DP), intent(out):: taylor_factor
 
         call simulation_run(velocity_gradient, stress, taylor_factor)
+
         if (acnf%nfile == 1) &
             call output_current_state()
     end subroutine

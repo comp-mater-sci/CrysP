@@ -462,11 +462,6 @@ available option in \ref config_search_procedure is to use the default settings.
     -# \confdef{Velocity_gradient,srtensor_voigt} Velocity gradient tensor expressed in [Voigt notation](@ref srtensor_option_voigt)
 
     -# \confdef{strain_magnitude,real} Magnitude of strain to be imposed.
-    -# \confdef{update_state,logical,update_state_ADP} controls updating the material state
-   in the given step. When set to:
-        - `False` then the stresses and other outputs are queried without finite deformation and
-     without associated evolution of state.
-        - `True` then the deformation is actually imposed, resulting in evolution of state.
 
 ---
 

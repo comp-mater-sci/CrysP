@@ -3,7 +3,6 @@ module dmcBasicModule
     use, intrinsic:: iso_fortran_env, only: error_unit, output_unit
     use criUncomment
     use criConfigReader
-    use dmcAbstractModule
     use altayConfig, only: altayConfigData
     use base_defs
     use micro
@@ -37,7 +36,7 @@ module dmcBasicModule
     !>       method (including the ones that have an actual implementation
     !>       in BasicModule) in the OO-acceptable style:
     !>       `this%ParentClassName%method()`
-    type, extends(abstractModule):: BasicModule
+    type:: BasicModule
           type(outputConfig)            :: output
           type(altayConfigData)         :: altay !< Root-level configuration structure of texture and hardening
     contains

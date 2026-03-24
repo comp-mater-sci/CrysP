@@ -4,7 +4,6 @@ module dmcADP
     use conversions
     use criConfigReader
     use dmcResultFileOutput
-    use dmcStrainDrivenStep
     use dmcBasicModule
 
     implicit none
@@ -23,9 +22,17 @@ module dmcADP
         procedure, pass(this):: fileOutput => ADPModule_fileOutput
     end type
 
-    !> Outputs collected by the simulation run
-    type:: ADPOutputData
-        type(StepOutput), dimension(:), allocatable:: steps
+
+    type:: Increment
+        real(DP), dimension(3,3):: velocity_gradient
+        real(DP), dimension(3,3):: stress
+        real(DP)::                 taylor_factor
+    end type
+
+    !> A strain-(rate) driven step
+    type:: StrainDrivenStep
+        real(DP), dimension(3, 3):: velocity_gradient
+        type(Increment), dimension(:), allocatable:: increments
     end type
 
     real(DP):: acc_von_mises_strain
@@ -52,12 +59,12 @@ contains
         ! as it is done in the stressDrivenModule.
         info = VEF_ERROR
         if (.not. readValue(cnfunit, default_solver_config)) return
-        ! For the time being, only default solver configuration is accepted for this module.
+        !For the time being, only default solver configuration is accepted for this module.
         if (.not. default_solver_config) return
 
-        ! Read the module-specific config
+        !Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
-        !
+
         if (n_steps < 1) then
             info = VEF_ERROR
             return
@@ -67,7 +74,7 @@ contains
 
         do i = 1, n_steps
             ! Read the step definition and convert it into
-            !  StrainDrivenStep object step
+            ! StrainDrivenStep object step
             if (.not. readValue(cnfunit, tmp_deformation_rate)) return
             if (.not. readValue(cnfunit, step_size)) return
 
@@ -75,10 +82,7 @@ contains
                 call log_error(MOD_NAME, 'readconfig', ERR_IO, 'Strain mode must not be 0')
             tmp_deformation_rate = tmp_deformation_rate/norm2(tmp_deformation_rate)*step_size
 
-            if (.not. readValue(cnfunit, this%steps(i)%update_state)) return
-            !
             this%steps(i)%velocity_gradient = tmp_deformation_rate
-            this%steps(i)%output_state = this%output%outputRequest
         enddo
         info = VEF_OK
     end function
@@ -88,53 +92,47 @@ contains
         class(ADPModule), intent(inout)  :: this
         integer, intent(out)             :: info
         !
-        type(ADPOutputData):: output
-        integer:: iounit, i_step, n_steps
-        real(DP):: taylor_factor
+        integer:: iounit, &
+                  i_step, i_inc, &
+                  n_incs
+        real(DP):: v_grad_inc(3,3), &      !! Velocity gradient for an increment. Assumed time step of 1s
+                   taylor_factor
 
-        ! Open output file
-        info = this%openOutputFile('.adp',iounit)
-        if (info /= VEF_OK) return
-        !
-        ! Run the simulation
+        !Run the simulation
         info = VEF_ERROR
-        if (allocated(this%steps)) then
-            n_steps = size(this%steps)
-        else
-            return
-        end if
 
-        ! Storage for the calculated output
-        allocate(output%steps(n_steps))
+        if (.not. allocated(this%steps)) &
+            call log_error(MOD_NAME, 'run', ERR_VAL, 'Steps array not initialized')
 
         ! Main loop over the steps
         acc_von_mises_strain = 0._DP
-        do i_step = 1, n_steps
-            associate(step => this%steps(i_step), &
-                step_output => output%steps(i_step))
+        do i_step = 1, size(this%steps)
+            associate(step => this%steps(i_step))
                 ! Execute the step
-                info = step%execute(step_output, taylor_factor)
-                if (info /= VEF_OK) return
-                ! Output the results
-                info = this%fileOutput(iounit, output, header=(i_step == 1), step_id = i_step, taylor_factor = taylor_factor)
-                if (info /= VEF_OK) return
+                n_incs = ceiling(norm2(step%velocity_gradient)/ ACCURACY)
+                v_grad_inc = step%velocity_gradient / n_incs
+
+                allocate(step%increments(n_incs))
+                do i_inc=1,n_incs
+                    step%increments(i_inc)%velocity_gradient = v_grad_inc
+                    call deformation_step(v_grad_inc, step%increments(i_inc)%stress, step%increments(i_inc)%taylor_factor)
+                end do
             end associate
         enddo
+        info = this%fileOutput()
     end subroutine
 
     !> Write out results to the output file
-    integer function ADPModule_fileOutput(this, iounit, output, header, step_id, taylor_factor) result(info)
+    integer function ADPModule_fileOutput(this) result(info)
         class(ADPModule), intent(in)                 :: this
-        integer, intent(in)                          :: iounit !< Output IO unit
-        type(ADPOutputData), intent(in), optional     :: output !< Data to be written out
-        logical, intent(in), optional                 :: header !< Header to be written out
-        integer, intent(in), optional                 :: step_id
-        real(DP), intent(in):: taylor_factor
-        !
-        integer:: step, increment, ierr, n_steps, first_step, last_step, n_increments
+
+        integer:: step, &
+                  increment, &
+                  ierr, &
+                  iounit
         real(DP):: l_voigt(6), &
                    von_mises_strain_rate
-        !
+
         integer, parameter:: ncolumn_labels = 2+9+3*6+3+6, column_width = 18
         character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
         'step', 'increment', & ! 2 fields
@@ -145,66 +143,48 @@ contains
         'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
         'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M' & ! 6 fields
         ]
-        !
+
         info = VEF_ERROR
-        if (optionalDefault(header, .false.)) then
-            ! Write column numbers
-            info = writeColumnNumbers(iounit, size(column_names), [column_width] )
-            if (info /= VEF_OK) return
-            ! Write column labels
-            info = writeColumnNames(iounit, column_names, [column_width] )
-            if (info /= VEF_OK) return
-        endif
-        !
-        if (present(output)) then
-            n_steps = 0
-            if (allocated(output%steps)) &
-                n_steps = size(output%steps)
 
-            first_step = optionalDefault(step_id, 1)
-            last_step = optionalDefault(step_id, n_steps)
+        ! Open output file
+        info = this%openOutputFile('.adp',iounit)
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, 'fileoutput', ERR_IO, 'Could not open output file.')
 
-            if (first_step < 1 .or. last_step > n_steps) then
-                info = VEF_ERROR
-                return
-            end if
-            !
-            info = VEF_ERROR
-            !
-            ! Write the data
-            do step = first_step, last_step
-                associate(step_output => output%steps(step))
-                    n_increments = 0
-                    if (allocated(step_output%increments)) &
-                        n_increments = size(step_output%increments)
+        ! Write column numbers
+        info = writeColumnNumbers(iounit, size(column_names), [column_width] )
+        if (info /= VEF_OK) return
+        ! Write column labels
+        info = writeColumnNames(iounit, column_names, [column_width] )
+        if (info /= VEF_OK) return
 
-                    do increment = 1, n_increments
+        ! Write the data
+        do step = 1, size(this%steps)
+            do increment = 1, size(this%steps(step)%increments)
+                  associate(v => this%steps(step)%increments(increment))
+                      von_mises_strain_rate = strain_tensor_to_von_mises(v%velocity_gradient)  !Small strain assumption
 
-                          associate(v => step_output%increments(increment))
-                              von_mises_strain_rate = strain_tensor_to_von_mises((v%velocity_gradient+transpose(v%velocity_gradient))/2._DP)  !Small strain assumption
+                      l_voigt = tensor_to_unscaled_voigt(v%velocity_gradient)
+                      write(iounit, fmt = 710, iostat = ierr) &
+                          step, increment, &            ! 2 fields
+                          v%velocity_gradient, &         ! 9 fields: velocity gradient
+                          tensor_to_unscaled_voigt(v%velocity_gradient), &         ! 6 fields: rate for deformation tensor (strain rate)
+                          tensor_to_spin(v%velocity_gradient), &         ! 3 fields: spin tensor
+                          normalize(tensor_to_unscaled_voigt(v%velocity_gradient)), &         ! 6 fields: strain mode
+                          tensor_to_unscaled_voigt(v%stress), &         ! 6 fields: deviatoric stress
+                          acc_von_mises_strain, &
+                          acc_von_mises_strain + von_mises_strain_rate, &
+                          von_mises_strain_rate, &
+                          sqrt(3._DP/2._DP)*norm2(v%stress), &
+                          v%velocity_gradient .dot. v%stress, &
+                          v%taylor_factor
 
-                              l_voigt = tensor_to_unscaled_voigt(v%velocity_gradient)
-                              write(iounit, fmt = 710, iostat = ierr) &
-                                  step, increment, &            ! 2 fields
-                                  v%velocity_gradient, &         ! 9 fields: velocity gradient
-                                  tensor_to_unscaled_voigt(v%velocity_gradient), &         ! 6 fields: rate for deformation tensor (strain rate)
-                                  tensor_to_spin(v%velocity_gradient), &         ! 3 fields: spin tensor
-                                  normalize(tensor_to_unscaled_voigt(v%velocity_gradient)), &         ! 6 fields: strain mode
-                                  tensor_to_unscaled_voigt(v%stress), &         ! 6 fields: deviatoric stress
-                                  acc_von_mises_strain, &
-                                  acc_von_mises_strain + von_mises_strain_rate, &
-                                  von_mises_strain_rate, &
-                                  sqrt(3._DP/2._DP)*norm2(v%stress), &
-                                  v%velocity_gradient .dot. v%stress, &
-                                  taylor_factor
-                                  acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
-                          end associate
-                          if (ierr /= 0) return
-                    enddo
-                end associate
+                      acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
+                  end associate
+                  if (ierr /= 0) return
             enddo
-            info = VEF_OK
-        endif
+        enddo
+        info = VEF_OK
 
         ! Formats for the output file
         710 format(1X, 2(I18, 1X), 38(ES18.9E3, 1X))
