@@ -9,7 +9,6 @@ module dmcBasicModule
     use parameters
     use logging
     use altay
-    use simulation
     use file_io
 
     implicit none

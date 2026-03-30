@@ -1,62 +1,20 @@
-module simulation
+module deformation
     use base_defs
     use conversions
-    use grain_module
-    use logging
     use cluster_module
     use omp_lib
     use meso
-    use parameters
 
     implicit none
+
     private
-
-    class(Cluster), dimension(:), allocatable:: clusters
-
-    character(*), parameter:: MOD_NAME = 'Simul'
+    public:: deform
 
 
-    public:: macro_init, &
-             simulation_run, &
-             simulation_finalize, &
-             get_stress, &
-             clusters
-    contains
+contains
 
-    ! initialization call
-    subroutine macro_init(clstrs)
-        class(Cluster), dimension(:), allocatable, intent(inout):: clstrs
-
-        call move_alloc(clstrs, clusters)
-    end subroutine
-
-    function get_stress(velocity_gradient) result(homogenized_stress)
-        real(DP), dimension(3, 3), intent(in):: velocity_gradient
-        real(DP), dimension(3, 3):: homogenized_stress
-
-        integer:: i, &
-                  n_clusters, &
-                  cluster_size
-        real(DP):: total_weight
-
-        n_clusters = size(clusters)
-        cluster_size = size(clusters(1)%grains)
-        homogenized_stress = 0._DP
-        total_weight = 0._DP
-
-        !$OMP PARALLEL SHARED(clusters, velocity_gradient, n_clusters)
-            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION (+:total_weight, homogenized_stress)
-                do i = 1, n_clusters
-                    homogenized_stress = homogenized_stress+meso_get_stress(clusters(i), velocity_gradient) * clusters(i)%weight
-                    total_weight = total_weight+clusters(i)%weight
-                end do
-            !$OMP END DO
-        !$OMP END PARALLEL
-
-        homogenized_stress = homogenized_stress/total_weight
-    end function
-
-    subroutine simulation_run(velocity_gradient, stress, taylor_factor)
+    subroutine deform(clusters, velocity_gradient, stress, taylor_factor)
+        class(Cluster), dimension(:), intent(inout):: clusters
         real(DP), dimension(3,3), intent(in):: velocity_gradient
         real(DP), dimension(3,3), intent(out):: stress
         real(DP), intent(out):: taylor_factor
@@ -100,8 +58,5 @@ module simulation
         taylor_factor = taylor_factor / total_weight / strain_tensor_to_von_mises((velocity_gradient + transpose(velocity_gradient))/2._DP)
     end subroutine
 
-    subroutine simulation_finalize()
-        call meso_finalize()
-        deallocate(clusters)
-    end subroutine
+
 end module

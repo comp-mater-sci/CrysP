@@ -3,7 +3,7 @@ module file_io
     use logging
     use cluster_module
     use grain_module
-    use simulation
+    use macro
 
     implicit none
 
