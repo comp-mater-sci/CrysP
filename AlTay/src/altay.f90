@@ -1,3 +1,6 @@
+!> Top-level AlTay Module
+!>
+!> Provides inerface to callers and formats data to be used in underlying modules.
 module altay
     use iso_c_binding
     use base_defs
