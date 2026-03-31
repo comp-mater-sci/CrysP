@@ -7,12 +7,12 @@ set(libaltay "altay")
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 add_library(${libaltay} STATIC
-base_defs.f90
-math_utils.f90
-conversions.f90
-logging.f90
+utils/base_defs.f90
+utils/math_utils.f90
+utils/conversions.f90
+utils/logging.f90
 altay.f90
-parameters.f90
+utils/parameters.f90
 macro/macro.f90
 macro/deformation.f90
 macro/stress_mode.f90
