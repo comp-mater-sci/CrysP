@@ -1,5 +1,3 @@
-include 'mkl_rci.f90'
-
 !> Implementation of a altay-based DMC computiational module.
 module dmcStressDrivenModule
     use, intrinsic:: iso_fortran_env, only: error_unit
@@ -29,19 +27,6 @@ module dmcStressDrivenModule
         procedure, pass(this):: finalize => StressDrivenModule_finalize
         procedure, pass(this):: findSolution => StressDrivenModule_findSolution
     end type
-
-    interface
-        integer(C_INT) function trust_region_solve(target_stress_mode, strain_mode, jacobi, stress, residual) bind(C) result(mkl_result_code)
-            import C_INT, &
-                   C_DOUBLE
-
-            real(C_DOUBLE), dimension(5), intent(in)::       target_stress_mode
-            real(C_DOUBLE), dimension(5), intent(inout)::    strain_mode
-            real(C_DOUBLE), dimension(5, 5), intent(inout):: jacobi
-            real(C_DOUBLE), dimension(5), intent(out)::      stress
-            real(C_DOUBLE), dimension(5), intent(out)::      residual
-        end function
-    end interface
 
 contains
 
@@ -80,7 +65,6 @@ contains
         real(DP), dimension(5), intent(out):: residual
 
         real(DP), parameter:: pretry_search_angle = 0.035_DP !! Approx. 2 degrees
-        real(DP):: jacobi(5,5)
 
         if (associated(this%ptr_db)) then
             if (this%ptr_db%get(target_stress_mode, strain_mode, pretry_search_angle) /= VEF_OK) &
@@ -89,8 +73,7 @@ contains
             strain_mode = target_stress_mode
         end if
 
-        if(trust_region_solve(target_stress_mode, strain_mode, jacobi, stress, residual) /= TR_SUCCESS) &
-            call log_error(MOD_NAME, 'multilevelYlp', ERR, 'Error in MKL')
+        call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
 
         if (associated(this%ptr_db)) &
             call this%ptr_db%put(strain_mode, stress/norm2(stress))

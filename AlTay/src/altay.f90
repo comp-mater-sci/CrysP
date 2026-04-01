@@ -49,12 +49,18 @@ contains
         call macro_deform(velocity_gradient, stress, taylor_factor)
     end subroutine
 
-    !Result rounded to 9 digits
-    subroutine altay_get_stress_state_c(strain_rate, stress_state) bind(C)
-        real(C_DOUBLE), dimension(5), intent(in):: strain_rate
-        real(C_DOUBLE), dimension(5), intent(out):: stress_state
+    !> Calculate strain mode and stress corresponding to a desired stress mode.
+    !>
+    !> Uses iterative search to find an accurate match for the strain mode and stress state corresponding to the d  esired stress mode.
+    !> An accurate initial guess for the strain mode should be provided to improve convergence and performance. Th  e residual of the search is returned to provide
+    !> an estimation of search accuracy.
+    subroutine altay_simulate_stress_mode(stress_mode, strain_mode, stress, residual)
+        real(DP), dimension(5), intent(in)::  stress_mode   !! Intended stress mode
+        real(DP), dimension(5), intent(inout):: strain_mode !! On entry, contains an initial guess of the strain m  ode matching the
+                                                            !! target stress mode. On exit, contains the actual st  rain mode.
+        real(DP), dimension(5), intent(out):: stress        !! Actual stress state found.
+        real(DP), dimension(5), intent(out):: residual      !! Residual of the the search.
 
-        !Transpose both input and output because C is row major and Fortran column major.
-        stress_state = anint(tensor_to_deviatoric(macro_get_stress(deviatoric_to_tensor(strain_rate)))/TOLERANCE) * TOLERANCE
+        call macro_simulate_stress_mode(stress_mode, strain_mode, stress, residual)
     end subroutine
 end module

@@ -15,7 +15,7 @@ module macro
 
     public:: macro_init, &
              macro_finalize, &
-             macro_get_stress, &
+             macro_simulate_stress_mode, &
              macro_deform, &
              clusters
     contains
@@ -27,12 +27,16 @@ module macro
         call move_alloc(clstrs, clusters)
     end subroutine
 
-    function macro_get_stress(velocity_gradient) result(stress)
-        real(DP), dimension(3,3), intent(in):: velocity_gradient
-        real(DP), dimension(3,3):: stress
+    subroutine macro_simulate_stress_mode(stress_mode, strain_mode, stress, residual)
+        real(DP), dimension(5), intent(in)::  stress_mode
+        real(DP), dimension(5), intent(inout):: strain_mode
 
-        stress = get_stress(clusters, velocity_gradient)
-    end function
+        real(DP), dimension(5), intent(out):: stress
+        real(DP), dimension(5), intent(out):: residual
+
+        call simulate_stress_mode(clusters, stress_mode, strain_mode, stress, residual)
+    end subroutine
+
 
     subroutine macro_deform(velocity_gradient, stress, taylor_factor)
         real(DP), dimension(3,3), intent(in):: velocity_gradient

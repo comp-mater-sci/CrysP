@@ -12,9 +12,6 @@ endif()
 
 list(APPEND Fortran_FLAGS ${alamDMC_FLAGS})
 
-add_library(trust_region STATIC trust_region.c)
-
-
 add_executable(alamDMC
 criConfigReader.f90
 criLinearMap.f90
@@ -37,7 +34,7 @@ alamDMC.f90
 file_io.f90
 )
 
-target_link_libraries(alamDMC altay trust_region)
+target_link_libraries(alamDMC altay)
 set_target_properties(alamDMC PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 install(TARGETS alamDMC RUNTIME DESTINATION bin)

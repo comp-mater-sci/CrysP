@@ -8,7 +8,7 @@
  */
 
 //Alternate implementation of get_stress_state for easy C interop
-extern void altay_get_stress_state_c(double* strain_mode, double* stress_state);
+extern void get_stress(void* clusters, double* strain_mode, double* stress_state);
 
 const MKL_INT DIM = 5;      //Dimensionality of the problem.
 const double TOL = 1.0e-9;  //Tolerance on internal calculations.
@@ -31,9 +31,9 @@ inline void normalize(double* stress_state)
 }
 
 //Wrapper for get_stress_state specifically for use from calc_jacobi to avoid code duplication.
-inline void altay_wrapper_jacobi(const double* strain_rate, double* stress_mode)
+inline void altay_wrapper_jacobi(const void* clusters, const double* strain_rate, double* stress_mode)
 {
-    altay_get_stress_state_c(strain_rate, stress_mode);
+    get_stress(clusters, strain_rate, stress_mode);
     normalize(stress_mode);
 
     //Multiply by -1 because the jacobi of the minimization algorithm is
@@ -45,7 +45,7 @@ inline void altay_wrapper_jacobi(const double* strain_rate, double* stress_mode)
 }
 
 //Calculate the jacobi of AlTay using the finite difference algorithm from MKL. The finite difference interval is provided by the caller. This procedure may recursively call itself with a larger interval. Strain rate and jacobi are both of size DIM. Note that jacobi is stored column major.
-int jacobi_helper(const double* strain_rate, double* jacobi, const double interval)
+int jacobi_helper(const void* clusters, const double* strain_rate, double* jacobi, const double interval)
 {
     _JACOBIMATRIX_HANDLE_t handle;
     double strain_rate_buffer[DIM];
@@ -67,10 +67,10 @@ int jacobi_helper(const double* strain_rate, double* jacobi, const double interv
         switch (rci_req)
         {
             case 1:
-                altay_wrapper_jacobi(strain_rate_buffer, f1);
+                altay_wrapper_jacobi(clusters, strain_rate_buffer, f1);
                 break;
             case 2:
-                altay_wrapper_jacobi(strain_rate_buffer, f2);
+                altay_wrapper_jacobi(clusters, strain_rate_buffer, f2);
                 break;
         }
     } while (rci_req > 0);
@@ -83,20 +83,20 @@ int jacobi_helper(const double* strain_rate, double* jacobi, const double interv
     {
         if (norm2(jacobi+i*DIM) < TOL)
             //Doubling the interval was experimentally determined to be optimal.
-            return jacobi_helper(strain_rate, jacobi, 2.0*interval);
+            return jacobi_helper(clusters, strain_rate, jacobi, 2.0*interval);
     }
     return TR_SUCCESS;
 }
 
 //Calculate the Jacobi. Strain_mode had dimension DIM and jacobi DIM*DIM.
-int calc_jacobi(const double* strain_mode, double* jacobi)
+int calc_jacobi(const void* clusters, const double* strain_mode, double* jacobi)
 {
     //Starting interval of 0.02 was experimentally determined to be optimal.
-    return jacobi_helper(strain_mode, jacobi, 0.02);
+    return jacobi_helper(clusters, strain_mode, jacobi, 0.02);
 }
 
 //Calculate the strain mode corresponding as closely as possible to the imposed stress state. All inputs and outputs must be initialized externally and are of dimension DIM, except for jacobi, which is of dimension DIM*DIM.
-int trust_region_solve(const double* target_stress_mode, double* strain_mode, double* jacobi, double* stress, double* residual)
+int trust_region_solve(const void* clusters, const double* target_stress_mode, double* strain_mode, double* jacobi, double* stress, double* residual)
 {
 
     _TRNSPBC_HANDLE_t handle;
@@ -126,7 +126,7 @@ int trust_region_solve(const double* target_stress_mode, double* strain_mode, do
             case 1:
             {
                 double stress_mode[DIM];
-                altay_get_stress_state_c(strain_mode, stress);
+                get_stress(clusters, strain_mode, stress);
                 for (int i=0;i<DIM;i++)
                     stress_mode[i] = stress[i];
                 normalize(stress_mode);
@@ -136,7 +136,7 @@ int trust_region_solve(const double* target_stress_mode, double* strain_mode, do
             }
             case 2:
             {
-                mkl_err = calc_jacobi(strain_mode, jacobi);
+                mkl_err = calc_jacobi(clusters, strain_mode, jacobi);
                 if (mkl_err != TR_SUCCESS) return mkl_err;
                 break;
             }

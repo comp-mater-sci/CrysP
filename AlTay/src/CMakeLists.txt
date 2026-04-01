@@ -1,4 +1,4 @@
-project(AlTay Fortran)
+project(AlTay LANGUAGES C Fortran)
 
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
@@ -7,6 +7,7 @@ set(libaltay "altay")
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 add_library(${libaltay} STATIC
+    macro/trust_region.c
 utils/base_defs.f90
 utils/math_utils.f90
 utils/conversions.f90
@@ -38,6 +39,8 @@ micro/models/dsh_screw.f90
 micro/models/dsh_loop.f90
 )
 
+target_link_libraries(altay)
+set_target_properties(altay PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl      _core -lpthread -lm -ldl")
 
 #
 # Installation of the outputs in the build tree
