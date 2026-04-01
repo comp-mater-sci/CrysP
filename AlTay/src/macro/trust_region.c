@@ -120,7 +120,7 @@ int trust_region_solve(const void* clusters, const double* target_stress_mode, d
     MKL_INT rci_req = 0;
     while (rci_req >= 0)
     {
-        mkl_err = dtrnlspbc_solve(&handle, residual, jacobi, &rci_req);
+        mkl_err = dtrnlspbc_solve(&handle, residual, &jacobi[0][0], &rci_req);
         if (mkl_err != TR_SUCCESS) return mkl_err;
 
         switch (rci_req)
@@ -138,7 +138,7 @@ int trust_region_solve(const void* clusters, const double* target_stress_mode, d
             }
             case 2:
             {
-                mkl_err = calc_jacobi(clusters, strain_mode, jacobi);
+                mkl_err = calc_jacobi(clusters, strain_mode, &jacobi[0][0]);
                 if (mkl_err != TR_SUCCESS) return mkl_err;
                 break;
             }
