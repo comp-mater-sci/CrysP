@@ -96,7 +96,7 @@ int calc_jacobi(const void* clusters, const double* strain_mode, double* jacobi)
 }
 
 //Calculate the strain mode corresponding as closely as possible to the imposed stress state. All inputs and outputs must be initialized externally and are of dimension DIM, except for jacobi, which is of dimension DIM*DIM.
-int trust_region_solve(const void* clusters, const double* target_stress_mode, double* strain_mode, double* jacobi, double* stress, double* residual)
+int trust_region_solve(const void* clusters, const double* target_stress_mode, double* strain_mode, double* stress, double* residual)
 {
 
     _TRNSPBC_HANDLE_t handle;
@@ -110,6 +110,8 @@ int trust_region_solve(const void* clusters, const double* target_stress_mode, d
     const MKL_INT ITER1 = 350;
     const MKL_INT ITER2 = 50;
     const double  INITIAL_TRUST_REGION = 0.1;
+
+    double jacobi[5][5];
 
     //See MKL documentation for details.
     MKL_INT mkl_err = dtrnlspbc_init(&handle, &DIM, &DIM, strain_mode, LOWER_BOUND, UPPER_BOUND, EPS, &ITER1, &ITER2, &INITIAL_TRUST_REGION);
