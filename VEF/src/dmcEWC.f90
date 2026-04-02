@@ -1,14 +1,12 @@
 !> Calculations of Equi-Work Contours
 module dmcEWC
+    use commonUtils
     use conversions
-    use criNumerics
-    use criLinearMap
-    use criConfigReader
+    use file_io
     use dmcStressDrivenEvolutionModule
     use dmcIncrementationControl
     use dmcEvolutionOutputrecord
     use dmcResultFileOutput
-    use commonUtils
     use base_defs
     use logging
 

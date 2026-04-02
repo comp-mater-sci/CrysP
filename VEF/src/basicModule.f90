@@ -1,8 +1,6 @@
 !> Implementation of a basic DMC computational module.
 module dmcBasicModule
     use, intrinsic:: iso_fortran_env, only: error_unit, output_unit
-    use criUncomment
-    use criConfigReader
     use base_defs
     use micro
     use meso

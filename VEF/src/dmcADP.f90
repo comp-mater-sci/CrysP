@@ -2,7 +2,6 @@
 module dmcADP
     use base_defs
     use conversions
-    use criConfigReader
     use dmcResultFileOutput
     use dmcBasicModule
     use file_io

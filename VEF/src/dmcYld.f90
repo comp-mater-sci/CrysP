@@ -1,10 +1,10 @@
 !> Yield locus calculations
 module dmcYld
     use conversions
-    use criUncomment, only: readValue
     use dmcStressDrivenModule
     use commonUtils
     use logging
+    use file_io
 
     implicit none
 

@@ -1,7 +1,7 @@
 !> DMC Arbitrary Stress Response
 module dmcASR
     use conversions
-    use criUncomment, only: readValue
+    use file_io
     use dmcIncrementationControl
     use dmcStressDrivenEvolutionModule
     use dmcEvolutionOutputRecord

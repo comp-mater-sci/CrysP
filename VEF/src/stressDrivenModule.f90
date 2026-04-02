@@ -3,7 +3,6 @@ module dmcStressDrivenModule
     use, intrinsic:: iso_fortran_env, only: error_unit
     use iso_c_binding
     use conversions
-    use criUncomment, only: readValue
     use dmcResultTable
     use dmcBasicModule
     use logging

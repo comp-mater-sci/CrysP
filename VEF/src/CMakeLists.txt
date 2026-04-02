@@ -13,10 +13,6 @@ endif()
 list(APPEND Fortran_FLAGS ${alamDMC_FLAGS})
 
 add_executable(alamDMC
-criConfigReader.f90
-criLinearMap.f90
-criNumerics.f90
-criUncomment.f90
 basicModule.f90
 commonUtils.f90
 dmcResultFileOutput.f90

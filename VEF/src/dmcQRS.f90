@@ -2,8 +2,8 @@
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
     use conversions
-    use criUncomment, only: readValue
     use dmcStressDrivenModule
+    use file_io
     use commonUtils
     use dmcResultFileOutput
     use logging

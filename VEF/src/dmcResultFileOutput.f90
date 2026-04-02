@@ -1,8 +1,10 @@
 !> Common set of procedures for producing plain text column-based output of numerical data.
 module dmcResultFileOutput
-use base_defs
-use commonUtils
-implicit none
+    use base_defs
+    use file_io
+    use commonUtils
+
+    implicit none
 
     integer,parameter,private :: fmt_string_length = 128
 

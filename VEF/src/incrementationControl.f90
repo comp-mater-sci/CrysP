@@ -2,8 +2,9 @@
 !> evolution of material state.
 module dmcIncrementationControl
     use base_defs
-use criLinearMap, only: MapItem
-implicit none
+    use file_io
+
+    implicit none
 
     integer, parameter:: scalingNone = 0, &
                          scalingStrainTensor = 1, &
@@ -142,16 +143,14 @@ contains
 
     !> Read IncrementationControlSettings from configuration file
     subroutine IncrementationControlSettings_read(this, cnfunit, info, allowed)
-    use criConfigReader
-    use criUncomment
-    type(IncrementationControlSettings), intent(out)   :: this
-    integer, intent(in)                                :: cnfunit
-    integer, intent(out)                               :: info
-    integer, dimension(:), optional                     :: allowed
-    !
-    integer:: id, i
-    logical:: is_allowed
-    !
+        type(IncrementationControlSettings), intent(out)   :: this
+        integer, intent(in)                                :: cnfunit
+        integer, intent(out)                               :: info
+        integer, dimension(:), optional                     :: allowed
+        !
+        integer:: id, i
+        logical:: is_allowed
+        !
         info = VEF_ERROR
         if (.not. readKeyword(cnfunit, scaling_type_names, id)) return
         ! Check for additional constraints on the scaling type
