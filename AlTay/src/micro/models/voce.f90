@@ -3,7 +3,6 @@
 module voce
     use base_defs, only: dp
     use constitutive_model
-    use altayConfig
     use logging
     use parameters
 
@@ -39,7 +38,7 @@ module voce
 contains
 
     !> Convert a generic HardeningState to a pointer to a VoceState object
-    !> 
+    !>
     !> Closest Fortran comes to type casting
     !> If the provided state is not of type voce_state, the program crashes.
     function to_voce_state(state) result(voce_state_ptr)

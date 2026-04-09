@@ -2,7 +2,6 @@
 
 module swift
     use base_defs, only: dp
-    use altayConfig
     use constitutive_model
     use logging
     use parameters
@@ -21,14 +20,14 @@ module swift
 
     !> Classic isotropic SWIFT hardening model.
     type, extends(ConstitutiveModel):: ConstitutiveModelSwift
-        real(DP):: k      !! Scaling factor 
+        real(DP):: k      !! Scaling factor
         real(DP):: gamma0 !! Initial sum of slip across all slip systems
         real(DP):: n      !! Exponent
     contains
         procedure, nopass:: get_parameters      => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: validate_parameters => swift_validate_parameters !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => swift_init                !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                      => swift_deform              !! Inherited from [[ConstitutiveModel]] 
+        procedure:: deform                      => swift_deform              !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains

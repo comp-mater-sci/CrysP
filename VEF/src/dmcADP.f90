@@ -5,6 +5,7 @@ module dmcADP
     use criConfigReader
     use dmcResultFileOutput
     use dmcBasicModule
+    use file_io
 
     implicit none
 
@@ -116,6 +117,8 @@ contains
                 do i_inc=1,n_incs
                     step%increments(i_inc)%velocity_gradient = v_grad_inc
                     call deformation_step(v_grad_inc, step%increments(i_inc)%stress, step%increments(i_inc)%taylor_factor)
+                    if (this%altay%nfile /=0) &
+                        call cur_write_block()
                 end do
             end associate
         enddo
@@ -178,7 +181,6 @@ contains
                           sqrt(3._DP/2._DP)*norm2(v%stress), &
                           v%velocity_gradient .dot. v%stress, &
                           v%taylor_factor
-
                       acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
                   end associate
                   if (ierr /= 0) return

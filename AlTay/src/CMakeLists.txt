@@ -8,11 +8,9 @@ list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 add_library(${libaltay} STATIC
 base_defs.f90
-file_io.f90
 math_utils.f90
 conversions.f90
 logging.f90
-altayConfig.f90
 altay.f90
 parameters.f90
 macro/simulation.f90

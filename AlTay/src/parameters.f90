@@ -1,7 +1,7 @@
 !> This module defines a generic, type-safe parameter type.
 !>
-!> Parameters can be used to store key-value pairs of many different types, 
-!> which is very useful for model configuration because higher-level modules need no knowledge of the parameters required by concrete models. 
+!> Parameters can be used to store key-value pairs of many different types,
+!> which is very useful for model configuration because higher-level modules need no knowledge of the parameters required by concrete models.
 !> The key is always a character(*). The value is one of several predefined types.
 !> Many operators are defined to make working with parameters as easy as possible.
 
@@ -34,22 +34,22 @@ module parameters
     interface
         !> Initialize a parameter.
         !>
-        !> If the type is invalid, this procedure crashes the program. 
-        !> A default value may be provided. 
+        !> If the type is invalid, this procedure crashes the program.
+        !> A default value may be provided.
         !> If its type does not correspond to the declared type of the parameter, the routine crashes the program..
         module type(Parameter) function parameter_init(param_name, param_type, default_value) result(param)
             character(*), intent(in):: param_name                         !! Name to give the new parameter
             integer, intent(in):: param_type                              !! Type of the new parameter. Must exist in the list of types at the top of this module.
-            class(*), dimension(..), intent(in), optional:: default_value !! Optional default value for the parameter. If omitted, the content of param%value is undefined. 
+            class(*), dimension(..), intent(in), optional:: default_value !! Optional default value for the parameter. If omitted, the content of param%value is undefined.
                                                                           !! The type must correspond to param_type.
         end function parameter_init
 
         !> Find the number of elements stored in a parameter.
         !>
-        !> The exact interpretation of 'number of elements' is defined for each parameter type individually:   
-        !> - **TYPE_INTEGER**: 1   
-        !> - **TYPE_REAL**: 1  
-        !> - **TYPE_STRING**: The number of characters in the string  
+        !> The exact interpretation of 'number of elements' is defined for each parameter type individually:
+        !> - **TYPE_INTEGER**: 1
+        !> - **TYPE_REAL**: 1
+        !> - **TYPE_STRING**: The number of characters in the string
         !> - **TYPE_ANGLES_LIST**: The number of Euler angle triplets stored in the list
         module integer function parameter_size(param) result(size)
             type(Parameter):: param     !! Input parameter
@@ -57,8 +57,8 @@ module parameters
 
         !> Validate if a parameter lies within a specified range.
         !>
-        !> Only makes sense for parameters of numerical type (TYPE_INTEGER or TYPE_REAL). 
-        !> May be called with only lower bound, only upper bound, or both. 
+        !> Only makes sense for parameters of numerical type (TYPE_INTEGER or TYPE_REAL).
+        !> May be called with only lower bound, only upper bound, or both.
         !> By default the bounds are treated as inclusive, but through optional arguments they can be treated as exclusive.
         !>
         !> Crashes the program if the parameter is not of numerical type or its value lies outside the given bounds.
@@ -66,7 +66,7 @@ module parameters
             type(Parameter), intent(in):: param             !! Parameter of numerical type
             class(*), intent(in), optional:: lower          !! Lower bound. Inclusive by default
             class(*), intent(in), optional:: upper          !! Upper bound. Inclusive by default
-            logical, intent(in), optional:: lower_inclusive !! Treat lower bound as inclusive. 
+            logical, intent(in), optional:: lower_inclusive !! Treat lower bound as inclusive.
             logical, intent(in), optional:: upper_inclusive !! Treat upper bound as inclusive.
         end subroutine
     end interface
@@ -74,7 +74,7 @@ module parameters
     interface assignment(=)
         !> Assign the value of a parameter to an integer.
         !>
-        !> Allows a clean and type-safe way to extract the value of a parameter. 
+        !> Allows a clean and type-safe way to extract the value of a parameter.
         !> The parameter must be of TYPE_INTEGER. If not, the routine crashes the program.
         module subroutine get_val_int(val, param)
             integer, intent(out):: val             !! Value to which to assign the content of the parameter
@@ -98,7 +98,7 @@ module parameters
 
         !> Set the value of a parameter to some provided integer.
         !>
-        !> Allows a clean and type-safe way to set the value of a parameter. 
+        !> Allows a clean and type-safe way to set the value of a parameter.
         !> The parameter must be of TYPE_INTEGER. If not, the routine crashes the program.
         module subroutine set_val_int(param, val)
             type(Parameter), intent(inout):: param !! TYPE_INTEGER parameter to assign a value to
@@ -121,12 +121,22 @@ module parameters
         end subroutine
     end interface
 
+
+    interface operator(.includes.)
+        !> Check if a parameter list includes a parameter by a given name.
+        module pure logical function parameter_includes(params, name) result(inc)
+            type(Parameter), dimension(:), intent(in):: params !! Parameter list
+            character(*), intent(in):: name                            !! Name of the parameter to find.
+        end function
+    end interface
+
+
     interface operator(.find.)
         !> Find the parameter with a specific name in a list of parameters.
         !>
         !> If the list does not contain a parameter with the requested name, the routine crashes the program.
         module function parameter_find_by_name(params, name) result(param)
-            type(Parameter), dimension(:), target, intent(in):: params !! Paremeter list
+            type(Parameter), dimension(:), target, intent(in):: params !! Parameter list
             character(*), intent(in):: name                            !! Name of the parameter to find.
             type(Parameter), pointer:: param                           !! Pointer to the parameter with the requested name.
         end function
@@ -138,13 +148,13 @@ module parameters
         !> Both input arguments must represent numerical values. If not, the routine crashes the program.
         module pure real(DP) function parameter_difference(param, arg) result(difference)
             type(Parameter), intent(in):: param !! Parameter of numerical type (TYPE_INTEGER or TYPE_REAL).
-            class(*), intent(in)       :: arg   !! Value to compare the parameter to. Must be an integer, real 
+            class(*), intent(in)       :: arg   !! Value to compare the parameter to. Must be an integer, real
                                                 !! or parameter of TYPE_INTEGER or TYPE_REAL.
         end function
     end interface
 
     interface operator(*)
-        !> Analogous to parameter_difference 
+        !> Analogous to parameter_difference
         module pure real(DP) function parameter_mult(param, arg) result(prod)
             type(Parameter), intent(in):: param
             real(DP), intent(in):: arg
@@ -162,8 +172,8 @@ module parameters
     interface operator(==)
         !> Check if a parameter holds a value equivalent to some provided value or the value held by another parameter.
         !>
-        !> What exactly it means to be equivalent depends on the type of the parameter/value:   
-        !> A parameter is equivalent to a value if the parameter type corresponds to the type of the value as defined in the interface definition above 
+        !> What exactly it means to be equivalent depends on the type of the parameter/value:
+        !> A parameter is equivalent to a value if the parameter type corresponds to the type of the value as defined in the interface definition above
         !> and the parameter value is equal to the value as per intrinsic == operator.
         !> 2 parameters are equivalent if their types and values are identical.
         !> @note
@@ -188,7 +198,7 @@ module parameters
         !> Both input arguments must represent numerical values (see argument list for details). If not, the routine crashes the program.
         module pure logical function parameter_gt(param, arg) result(gt)
             type(Parameter), intent(in):: param !! The parameter holding the value to be tested. Must be of TYPE_INTEGER or TYPE_REAL.
-            class(*), intent(in)        :: arg  !! The value to compare the parameter to. Must be an integer, a real 
+            class(*), intent(in)        :: arg  !! The value to compare the parameter to. Must be an integer, a real
                                                 !! or a Parameter of type TYPE_INTEGER or TYPE_REAL.
         end function
     end interface
@@ -358,6 +368,19 @@ contains
         end select
     end procedure
 
+
+    module procedure parameter_includes
+        integer:: i
+
+        inc = .false.
+        do i = 1, size(params)
+            if (params(i)%name == name) then
+                inc = .true.
+                return
+            end if
+        end do
+    end procedure
+
     module procedure parameter_find_by_name
         integer:: i
 
@@ -373,10 +396,10 @@ contains
 
     !> Get the numerical representation of some value.
     !>
-    !> Attempts to convert a value to its floating point representation. 
+    !> Attempts to convert a value to its floating point representation.
     !> If such a representation does not exist, the routine crashes the program.
     pure real(DP) function get_numerical_value(val) result(num)
-        class(*), intent(in):: val !! The value to convert to a floating point. 
+        class(*), intent(in):: val !! The value to convert to a floating point.
                                    !! Must be integer, real or Parameter of type TYPE_INTEGER or TYPE_REAL
 
         select type (val)

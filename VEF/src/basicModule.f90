@@ -3,14 +3,14 @@ module dmcBasicModule
     use, intrinsic:: iso_fortran_env, only: error_unit, output_unit
     use criUncomment
     use criConfigReader
-    use altayConfig, only: altayConfigData
     use base_defs
     use micro
     use meso
     use parameters
     use logging
-    use altay, only: initAltay, finalizeAltay
+    use altay
     use simulation
+    use file_io
 
     implicit none
 
@@ -20,6 +20,20 @@ module dmcBasicModule
               readAlTayConfigSection
 
     character(*), parameter:: MOD_NAME = 'basicModule'
+
+
+   !> Root-level configuration structure of Altay
+   type:: altayConfigData
+        integer                                     :: model_id = MESO_MODEL_ALAMEL
+        character(len = fname_len)                  :: output_prefix = 'alamel'
+        character(len = fname_len)                  :: jobtitle      = 'alamel'
+        character(len = fname_len)                  :: micros_fname  = 'equiaxed.smt'
+        character(len = fname_len)                  :: texture_input_fname = ''
+        integer:: hardening_model_id
+        type(Parameter), allocatable:: hardening_parameters(:)
+        integer:: deformation_mechanism
+        integer                                   :: nfile = 0
+   end type
 
     type:: outputConfig
         character(max_pathlen)  :: outputPrefix = '' !< Prefix for the output files.
@@ -51,28 +65,69 @@ module dmcBasicModule
 
 contains
 
+    subroutine init_altay(altay_config)
+        type(AltayConfigData), intent(in):: altay_config
+
+        integer:: meso_model_id, &
+                  info
+        type(Parameter), dimension(:), allocatable, target:: meso_params
+        type(Parameter), pointer:: param_ptr
+        type(PhaseDescriptor):: phase_
+
+        meso_model_id = altay_config%model_id
+        meso_params = meso_get_parameters(meso_model_id)
+        if (meso_params .includes. "Boundaries") then
+            param_ptr => meso_params .find. "Boundaries"
+            param_ptr = read_boundaries(altay_config%micros_fname)
+        end if
+
+        call open_output_files(altay_config%output_prefix, altay_config%nfile, info)
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, 'initialize', ERR_IO, 'Cannot open output files.')
+
+        !Even though the back-end logic can handle n phases, the current I/O structure only sopports 1 phase. Therefore, wrap the
+        !description of this one phase in a phase descriptor and pass it as a 1-element list to micro_init
+        phase_%model_id = altay_config%hardening_model_id
+        phase_%deformation_mechanism = altay_config%deformation_mechanism
+        phase_%parameters = altay_config%hardening_parameters
+        phase_%orientations = read_texture(trim(altay_config%texture_input_fname))
+
+        call altay_init(meso_model_id, meso_params, [phase_])
+    end subroutine
+
+
     integer function BasicModule_initialize(this) result(info)
-      class(BasicModule), intent(inout)          :: this
-      integer:: ierr
+        class(BasicModule), intent(inout)          :: this
 
-            info = VEF_ERROR
-            ! Finish the configuration:
-            this%altay%nfile = merge(1, 0, this%output%outputRequest)
-            this%altay%output_prefix = trim(this%output%outputPrefix)
-            this%altay%jobtitle = trim(this%output%outputPrefix)
+        info = VEF_ERROR
+        ! Finish the configuration:
+        this%altay%nfile = merge(1, 0, this%output%outputRequest)
+        this%altay%output_prefix = trim(this%output%outputPrefix)
+        this%altay%jobtitle = trim(this%output%outputPrefix)
 
-            call initAltay(this%altay, ierr)
+        call init_altay(this%altay)
 
-            if (ierr /= VEF_OK) return
+        !Output the initial state variables (non only texture but also BPM, MSS) if requested.
+        if (this%output%outputRequest) &
+              call cur_write_block()
+        info = VEF_OK
+    end function
 
-            30 format('Initializing the multilevel model...')
-            31 format(1X, A)
+    integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
+        class(BasicModule), intent(inout)        :: this
+        character(len=*), intent(in), optional    :: output_prefix !< File prefix
 
-            ! Output the initial state variables (non only texture but also BPM, MSS) if requested.
-            if (this%output%outputRequest) &
-                  call output_current_state()
-            info = VEF_OK
-      end function
+        integer:: ierr
+
+        info = this%finalizeLibAltay()
+        if (info /= VEF_OK) return
+
+        ! Reconfigure:
+        !  - Set new prefix
+        if (present(output_prefix)) this%altay%output_prefix = output_prefix
+
+        call init_altay(this%altay)
+    end function
 
     !> read output and AlTay configuration sections
     integer function BasicModule_readConfig(this, cnfunit) result(info)
@@ -131,24 +186,6 @@ contains
             call log_error(MOD_NAME, 'open_output_file', ERR_IO, 'Could not open output file.')
 
         info = VEF_OK
-    end function
-
-    integer function BasicModule_reinitializeLibAltay(this, output_prefix) result(info)
-    class(BasicModule), intent(inout)        :: this
-    character(len=*), intent(in), optional    :: output_prefix !< File prefix
-    !
-    integer:: ierr
-        ! Re-initialize AlTay
-        info = this%finalizeLibAltay()
-        if (info /= VEF_OK) return
-
-        !
-        ! Reconfigure:
-        !  - Set new prefix
-        if (present(output_prefix)) this%altay%output_prefix = output_prefix
-
-        call initAltay(this%altay, ierr)
-        info = merge(VEF_OK, VEF_ERROR, ierr == VEF_OK)
     end function
 
     !> Finalize libAltay and perform additional actions on finalization.

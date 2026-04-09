@@ -1,27 +1,22 @@
 !> Implementation of a DMC computiational module that allows stress-driven evolution of
 !> material state.
 module dmcStressDrivenEvolutionModule
-use base_defs
-use conversions
-use dmcStressDrivenModule
-use dmcIncrementationControl
-use dmcEvolutionOutputRecord
-use commonUtils
-use altay
-use altayconfig
+    use base_defs
+    use conversions
+    use dmcStressDrivenModule
+    use dmcIncrementationControl
+    use dmcEvolutionOutputRecord
+    use commonUtils
+    use file_io
 
-implicit none
+    implicit none
 
-    public:: StressDrivenEvolutionModule
     private
-
+    public:: StressDrivenEvolutionModule
 
     type, extends(StressDrivenModule):: StressDrivenEvolutionModule
-
         type(IncrementationControlSettings):: control
-
     contains
-
         !> Main loop of incremental stress driven state evolution
         !>
         !> Under normal circumstances the subclasses do not need to override this method.
@@ -32,7 +27,6 @@ implicit none
     end type
 
 contains
-
 
     !> Main loop of incremental stress driven state evolution
     integer function StressDrivenEvolutionModule_calculateStressPath(this, sigma, control, output, rotmat, &
@@ -232,6 +226,8 @@ contains
           real(DP):: taylor_factor
 
           call deformation_step(D, S, taylor_factor)
+          if (output_flag) &
+              call cur_write_block()
           info = VEF_OK
       end subroutine
 

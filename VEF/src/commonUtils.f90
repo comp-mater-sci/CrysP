@@ -6,7 +6,6 @@
 module commonUtils
     use base_defs
     use altay
-    use altayConfig
 
     implicit none
 

@@ -2,10 +2,8 @@ module simulation
     use base_defs
     use conversions
     use grain_module
-    use altayConfig
     use logging
     use cluster_module
-    use file_io
     use omp_lib
     use meso
     use parameters
@@ -21,8 +19,8 @@ module simulation
     public:: macro_init, &
              simulation_run, &
              simulation_finalize, &
-             output_current_state, &
-             get_stress
+             get_stress, &
+             clusters
     contains
 
     ! initialization call
@@ -94,10 +92,6 @@ module simulation
 
         stress = homogenized_stress / total_weight
         taylor_factor = taylor_factor / total_weight / strain_tensor_to_von_mises((velocity_gradient + transpose(velocity_gradient))/2._DP)
-    end subroutine
-
-    subroutine output_current_state()
-        call cur_write_block(clusters)
     end subroutine
 
     subroutine simulation_finalize()

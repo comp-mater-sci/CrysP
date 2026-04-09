@@ -3,7 +3,7 @@ module file_io
     use logging
     use cluster_module
     use grain_module
-    use altayConfig
+    use simulation
 
     implicit none
 
@@ -83,8 +83,7 @@ contains
     end subroutine
 
     !Write the current state of all grains to file.
-    subroutine cur_write_block(clusters)
-        class(Cluster), dimension(:), intent(in)::  clusters !! List of all clusters
+    subroutine cur_write_block()
         integer:: n_grains, &
                   cluster_size, &
                   i, j, &
@@ -117,21 +116,21 @@ contains
             2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
             2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)')
          403 format(5X, i8)
-
     end subroutine
 
-    subroutine open_output_files(cnf, info)
-        type(altayConfigData), intent(in)    :: cnf      !< configuration data
+    subroutine open_output_files(prefix, nfile, info)
+        character(len=fname_len), intent(in):: prefix
+        integer, intent(in):: nfile
+
         integer, intent(out)                 :: info     !< exit code (altay_OK on success)
 
-        character(len = fname_len):: fname_prefix, fname
+        character(len = fname_len):: fname
         character(*), parameter:: PROC_NAME = 'openOutputFiles'
 
-        fname_prefix = cnf%output_prefix
         info = VEF_ERROR
 
-        if (cnf%nfile /= 0) then
-            fname = trim(fname_prefix)//'.CUR'
+        if (nfile /= 0) then
+            fname = trim(prefix)//'.CUR'
             ! IMP1 = output file with successive "current situations"
             open (unit = IMP1, file = fname, status='replace',err = 9999)
         endif

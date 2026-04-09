@@ -34,6 +34,7 @@ dmcEWC.f90
 dmcQRS.f90
 dmcYld.f90
 alamDMC.f90
+file_io.f90
 )
 
 target_link_libraries(alamDMC altay trust_region)
