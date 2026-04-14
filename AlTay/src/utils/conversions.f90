@@ -123,6 +123,23 @@ module conversions
             real(DP), dimension(3,3), intent(in):: F
             real(DP), dimension(3,3):: R  !Rotational component of the deformation gradient in passive convention
         end function
+
+        !> Extract the true (logarithmic) strain from any deformation gradient.
+        !>
+        !> Uses finite strain kenematics.
+        module function deformation_gradient_to_true_strain(deformation_gradient) result(true_strain)
+            real(DP), dimension(3,3), intent(in):: deformation_gradient  !! Deformation gradient
+            real(DP), dimension(3,3)::             true_strain !! Von mises equivalent strain of the input.
+        end function
+
+        !> Extract the von mises equivalent true (logarithmic) strain from any deformation gradient.
+        !>
+        !> Uses finite strain kenematics.
+        module function deformation_gradient_to_von_mises_true_strain(deformation_gradient) result(von_mises_true_strain)
+            real(DP), dimension(3,3), intent(in):: deformation_gradient  !! Deformation gradient
+            real(DP)::                             von_mises_true_strain !! Von mises equivalent strain of the input.
+        end function
+
     end interface
 end module
 
@@ -318,4 +335,14 @@ contains
       R = transpose(R*det(R)**(-1.0_DP/3.0_DP))
     end procedure
 
+    module procedure deformation_gradient_to_true_strain
+        real(DP):: right_stretch(3,3)
+
+        call polar_decomposition(deformation_gradient, stretch=right_stretch)
+        true_strain = matrix_log(right_stretch)
+    end procedure
+
+    module procedure deformation_gradient_to_von_mises_true_strain
+        von_mises_true_strain = strain_tensor_to_von_mises(deformation_gradient_to_true_strain(deformation_gradient))
+    end procedure
 end submodule

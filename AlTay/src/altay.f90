@@ -12,6 +12,7 @@ module altay
     use grain_module
     use parameters
     use meso
+    use deformation
 
     implicit none
 
@@ -41,12 +42,12 @@ contains
     end subroutine
 
     !> Run the AlTay for the set of steps
-    subroutine deformation_step(velocity_gradient, stress, taylor_factor)
-        real(DP), dimension(3,3), intent(in):: velocity_gradient
-        real(DP), dimension(3,3), intent(out):: stress
-        real(DP), intent(out):: taylor_factor
+    subroutine altay_deform(velocity_gradient, total_strain, increments)
+        real(DP), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
+        real(DP), intent(in)::                 total_strain      !! Total von mises equivalent true strain to be reached.
+        type(Increment), dimension(:), allocatable, intent(out):: increments !! List of increments of the deformation.
 
-        call macro_deform(velocity_gradient, stress, taylor_factor)
+        call macro_deform(velocity_gradient, total_strain, increments)
     end subroutine
 
     !> Calculate strain mode and stress corresponding to a desired stress mode.

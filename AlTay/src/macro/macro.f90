@@ -38,12 +38,12 @@ module macro
     end subroutine
 
 
-    subroutine macro_deform(velocity_gradient, stress, taylor_factor)
+    subroutine macro_deform(velocity_gradient, total_strain, increments)
         real(DP), dimension(3,3), intent(in):: velocity_gradient
-        real(DP), dimension(3,3), intent(out):: stress
-        real(DP), intent(out):: taylor_factor
+        real(DP), intent(in)::                 total_strain
+        type(Increment), dimension(:), allocatable, intent(out):: increments
 
-        call deform(clusters, velocity_gradient, stress, taylor_factor)
+        call deform(clusters, velocity_gradient, total_strain, increments)
     end subroutine
 
     subroutine macro_finalize()

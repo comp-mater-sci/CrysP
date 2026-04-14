@@ -366,4 +366,67 @@ contains
         math_invariantsSym33(2) = m(1,1)*m(2,2) + m(1,1)*m(3,3) + m(2,2)*m(3,3) - (m(1,2)**2 + m(1,3)**2 + m(2,3)**2)
         math_invariantsSym33(3) = math_detSym33(m)
     end function math_invariantsSym33
+
+    !> Perform polar decomposition on a 3x3 matrix
+    !>
+    !> According to which output arguments are provided, the stretch and/or rotation is returned.
+    !> Performs singular value decomposition via LAPACK under the hood.
+    subroutine polar_decomposition(matrix, stretch, rotation)
+        real(DP), dimension(3,3), intent(in):: matrix              !! Input matrix. Must be 3x3
+        real(DP), dimension(3,3), intent(out), optional:: stretch  !! If provided by caller, contains right stretch tensor.
+        real(DP), dimension(3,3), intent(out), optional:: rotation !! If provided by caller, contains rortation tensro.
+
+        integer:: i, &                !! Iterator
+                  info                !! Return code for LAPACK call.
+        real(DP):: U(3,3), &          !! See LAPACK documentation
+                   VT(3,3), &         !! See LAPACK documentation
+                   values(3), &       !! Singular values of matrix
+                   values_mat(3,3), & !! Matrix form of singular values for easy calculation of stretch tensor.
+                   work(15), &        !! Workspace for LAPACK call. See LAPACK documentation for size
+                   buffer(3,3)        !! Buffer for the input matrix as it is overwritten by LAPACK.
+
+
+        ! Perform SVD: M = U * S * VT
+        buffer = matrix
+        call dgesvd('A', 'A', 3, 3, buffer, 3, values, U, 3, VT, 3, work, size(work), info)
+
+        !Calculate right stretch tensor if requested
+        if (present(stretch)) then
+            values_mat = 0._DP
+            do i=1,3
+                values_mat(i,i) = values(i)
+            end do
+            stretch = matmul(transpose(VT), matmul(values_mat,VT))
+        end if
+
+        !Calculate rotation if requested
+        if (present(rotation)) &
+            rotation = matmul(U,VT)
+    end subroutine
+
+    !> Take the matrix logartihm of a 3x3 matrix
+    !>
+    !> Performs eigenvalue decomposition via LAPACK under the hood.
+    function matrix_log(matrix) result(logarithm)
+        real(DP), dimension(3,3), intent(in):: matrix  !! 3x3 input matrix.
+        real(DP), dimension(3,3):: logarithm           !! Matrix logarithm of the input.
+
+        integer:: i, &                !! Iterator
+                  info                !! Return code for LAPACK call.
+        real(DP):: values(3), &       !! Singular values of matrix
+                   values_mat(3,3), & !! Matrix form of singular values for easy calculation of stretch tensor.
+                   work(15), &        !! Workspace for LAPACK call. See LAPACK documentation for size
+                   buffer(3,3)        !! Buffer for the input matrix as it is overwritten by LAPACK.
+
+        buffer = matrix
+        !Eigenvalue decomposition
+        call dsyev('V', 'U', 3, buffer, 3, values, work, size(work), info)
+
+        values_mat = 0._DP
+        do i=1,3
+            values_mat(i,i) = log(values(i))
+        end do
+        logarithm = matmul(buffer, matmul(values_mat, transpose(buffer))) !After call to dsyev right_stretch contains
+    end function
+
 end module

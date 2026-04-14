@@ -47,20 +47,30 @@ contains
         !> (default: false)
         logical, intent(in), optional                         :: use_icv_as_is
         type(IncrementOutputRecord), dimension(:), allocatable, intent(out):: output
-        type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
-        !
-        real(DP):: scaling_factor, control_variable, stop_control_variable, stretch, X_tmp(3, 3)
-        real(DP), dimension(5):: vDe, vSe
-        type(IncrementationControl):: icv
-        real(DP), dimension(6):: X_tmp_voigt
 
-        real(DP):: target_stress_mode(5), &
+        real(DP), parameter:: STRETCH_RATIO = 1e-3_DP
+        real(DP), dimension(3, 3), parameter:: ZERO = 0._DP
+
+        logical:: stop_flag
+        integer:: i, &
+                  n_roots, &
+                  n_records
+        real(DP):: scaling_factor, &
+                   control_variable, &
+                   stop_control_variable, &
+                   stretch, &
+                   X_tmp(3, 3), &
+                   vde(5), &
+                   vse(5), &
+                   x_tmp_voigt(6), &
+                   target_stress_mode(5), &
                    target_stress_norm, &
                    strain_mode(5), &
                    stress(5), &
-                   residual(5)
+                   residual(5),  &
+                   xi(2), &
+                   target_strain
 
-        type(IncrementOutputRecord)         :: tmp_record
         !> Results if the incrementation procedure.
         !>
         !> On successful exit it will include  n+1 entries, where n is the number of
@@ -69,11 +79,10 @@ contains
         !> AND strain incrementation), while the last one just the result of the search for
         !> the strain rate. Therefore, the last entry corresponds to the state of
         !> the material at the end of the step.
-        integer:: i, n_roots, n_records
-        real(DP), dimension(2):: xi
-        logical:: stop_flag
-        real(DP), parameter:: stretch_ratio = 1e-3_DP
-        real(DP), dimension(3, 3):: zero = 0._DP
+        type(IncrementationControl):: icv
+        type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
+        type(IncrementOutputRecord)         :: tmp_record
+        type(Increment), allocatable:: incs(:)
 
         n_records = 0
 
@@ -183,13 +192,15 @@ contains
                 !
                 ! Calculate strain increment for material state evolution
                 vDe = strain_mode * scaling_factor
-                tmp_record%dotwona = tmp_record%dotwona * scaling_factor !Assuming 1s time steps
+
+                !Because we know the velocity gradient does not  contain rotation, L*t = true strain.
+                target_strain  = deviatoric_strain_to_von_mises(vDe)
+
                 tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
+
                 ! Update material state
-                call makeTextureUpdateStep(tmp_record%P_inc_evol, &
-                                           tmp_record%S_evol, &
-                                           this%output%outputRequest, info)
-                if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
+                call altay_deform(tmp_record%P_inc_evol, target_strain, incs)
+                tmp_record%S_evol = incs(size(incs))%stress
 
                 vSe = tensor_to_deviatoric(tmp_record%S_evol)
             else
@@ -219,19 +230,6 @@ contains
     !
         output = output(1:n_records)
     end function
-
-      subroutine makeTextureUpdateStep(D, S, output_flag, info)
-          real(DP), dimension(3, 3), intent(in)      :: D
-          real(DP), dimension(3, 3), intent(out)     :: S
-          logical, intent(in)                              :: output_flag
-          integer, intent(out)                             :: info
-          real(DP):: taylor_factor
-
-          call deformation_step(D, S, taylor_factor)
-          if (output_flag) &
-              call cur_write_block()
-          info = VEF_OK
-      end subroutine
 
     !> Calculate the real roots of quadratic polynomial given in form
     !> a^2 x+b x+c = 0

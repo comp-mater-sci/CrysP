@@ -22,16 +22,10 @@ module dmcADP
         procedure, pass(this):: fileOutput => ADPModule_fileOutput
     end type
 
-
-    type:: Increment
-        real(DP), dimension(3,3):: velocity_gradient
-        real(DP), dimension(3,3):: stress
-        real(DP)::                 taylor_factor
-    end type
-
     !> A strain-(rate) driven step
     type:: StrainDrivenStep
         real(DP), dimension(3, 3):: velocity_gradient
+        real(DP):: target_strain
         type(Increment), dimension(:), allocatable:: increments
     end type
 
@@ -47,9 +41,7 @@ contains
         integer, parameter:: n_deformation_types = 3
         integer, parameter:: deformation_id = 1, strainmode_id = 2, strain_id = 3
         integer:: n_steps, ierr, i
-        real(DP):: tmp_strain(6), &
-                   step_size, &
-                   tmp_deformation_rate(3, 3)
+        real(DP):: tmp_strain(6)
         logical :: default_solver_config
 
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
@@ -75,15 +67,9 @@ contains
         do i = 1, n_steps
             ! Read the step definition and convert it into
             ! StrainDrivenStep object step
-            if (.not. readValue(cnfunit, tmp_deformation_rate)) return
-            if (.not. readValue(cnfunit, step_size)) return
-
-            if (norm2(tmp_deformation_rate) < TOLERANCE) &
-                call log_error(MOD_NAME, 'readconfig', ERR_IO, 'Strain mode must not be 0')
-            tmp_deformation_rate = tmp_deformation_rate/norm2(tmp_deformation_rate)*step_size
-
-            this%steps(i)%velocity_gradient = tmp_deformation_rate
-        enddo
+            if (.not. readValue(cnfunit, this%steps(i)%velocity_gradient)) return
+            if (.not. readValue(cnfunit, this%steps(i)%target_strain)) return
+        end do
         info = VEF_OK
     end function
 
@@ -108,17 +94,9 @@ contains
         acc_von_mises_strain = 0._DP
         do i_step = 1, size(this%steps)
             associate(step => this%steps(i_step))
-                ! Execute the step
-                n_incs = ceiling(norm2(step%velocity_gradient)/ ACCURACY)
-                v_grad_inc = step%velocity_gradient / n_incs
-
-                allocate(step%increments(n_incs))
-                do i_inc=1,n_incs
-                    step%increments(i_inc)%velocity_gradient = v_grad_inc
-                    call deformation_step(v_grad_inc, step%increments(i_inc)%stress, step%increments(i_inc)%taylor_factor)
-                    if (this%altay%nfile /=0) &
-                        call cur_write_block()
-                end do
+                call altay_deform(step%velocity_gradient, step%target_strain, step%increments)
+                if (this%altay%nfile /=0) &
+                    call cur_write_block()
             end associate
         enddo
         info = this%fileOutput()
@@ -133,17 +111,13 @@ contains
                   ierr, &
                   iounit
         real(DP):: l_voigt(6), &
-                   von_mises_strain_rate
+                   total_strain
 
-        integer, parameter:: ncolumn_labels = 2+9+3*6+3+6, column_width = 18
+        integer, parameter:: ncolumn_labels = 4+6+2, column_width = 18
         character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
-        'step', 'increment', & ! 2 fields
-        'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  & ! 9 fields  (I)
-        'D_11','D_22','D_33','D_23','D_13','D_12', & ! 6 fields  (I)
-        'O_12','O_23','O_13', & ! 3 fields  (I)
-        'A_11','A_22','A_33','A_23','A_13','A_12', & ! 6 fields  (I)
+        'step', 'increment', 'duration', 'strain', & ! 4 fields
         'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
-        'eps_vM_begin', 'eps_vM_end', 'D_vM', 'S_vM', 'dW', 'M' & ! 6 fields
+        'eps_vM_end', 'M' & ! 2 fields
         ]
 
         info = VEF_ERROR
@@ -161,33 +135,27 @@ contains
         if (info /= VEF_OK) return
 
         ! Write the data
+        total_strain = 0._DP
         do step = 1, size(this%steps)
-            do increment = 1, size(this%steps(step)%increments)
-                  associate(v => this%steps(step)%increments(increment))
-                      von_mises_strain_rate = strain_tensor_to_von_mises(v%velocity_gradient)  !Small strain assumption
-
-                      l_voigt = tensor_to_unscaled_voigt(v%velocity_gradient)
-                      write(iounit, fmt = 710, iostat = ierr) &
-                          step, increment, &            ! 2 fields
-                          v%velocity_gradient, &         ! 9 fields: velocity gradient
-                          tensor_to_unscaled_voigt(v%velocity_gradient), &         ! 6 fields: rate for deformation tensor (strain rate)
-                          tensor_to_spin(v%velocity_gradient), &         ! 3 fields: spin tensor
-                          normalize(tensor_to_unscaled_voigt(v%velocity_gradient)), &         ! 6 fields: strain mode
-                          tensor_to_unscaled_voigt(v%stress), &         ! 6 fields: deviatoric stress
-                          acc_von_mises_strain, &
-                          acc_von_mises_strain + von_mises_strain_rate, &
-                          von_mises_strain_rate, &
-                          sqrt(3._DP/2._DP)*norm2(v%stress), &
-                          v%velocity_gradient .dot. v%stress, &
-                          v%taylor_factor
-                      acc_von_mises_strain = acc_von_mises_strain + von_mises_strain_rate !Assumes 1s time step
-                  end associate
-                  if (ierr /= 0) return
-            enddo
+            associate (stp => this%steps(step))
+                do increment = 1, size(stp%increments)
+                    associate (inc => stp%increments(increment))
+                        write(iounit, fmt = 710, iostat = ierr) &
+                            step, increment, &            ! 2 fields
+                            inc%duration, &
+                            inc%strain, &
+                            tensor_to_unscaled_voigt(inc%stress), &         ! 6 fields: deviatoric stress
+                            total_strain+inc%strain, &
+                            inc%taylor_factor
+                        if (ierr /= 0) return
+                    end associate
+                enddo
+                total_strain = total_strain + stp%increments(size(stp%increments))%strain
+            end associate
         enddo
         info = VEF_OK
 
         ! Formats for the output file
-        710 format(1X, 2(I18, 1X), 38(ES18.9E3, 1X))
+        710 format(1X, 2(I18, 1X), 10(ES18.9E3, 1X))
     end function
 end module
