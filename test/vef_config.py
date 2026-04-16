@@ -20,15 +20,6 @@ MODE_CONFIG =  {'ADP':                                              \
                     + '-1.0 -1.0 0.0 0.0 0.0 0.0\n'                 \
                     + 'True\n'                                      \
                     + DEFAULT_INCREMENT,                            \
-               'EWC':                                               \
-                     'reference\n'                                   \
-                    + '1.0 0.0 0.0 0.0 0.0 0.0\n'                   \
-                    + DEFAULT_INCREMENT + '\n'                      \
-                    + '36.0\n'                                      \
-                    + '0.3\n'                                       \
-                    + '0.1\n'                                       \
-                    + '2\n'                                         \
-                    + 'True',                                       \
                'QRS':                                               \
                       '1.0\n'                         \
                     + 'True',                                       \

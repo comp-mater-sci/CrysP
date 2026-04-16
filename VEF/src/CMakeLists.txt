@@ -23,7 +23,6 @@ stressDrivenEvolutionModule.f90
 stressDrivenModule.f90
 dmcADP.f90
 dmcASR.f90
-dmcEWC.f90
 dmcQRS.f90
 dmcYld.f90
 alamDMC.f90

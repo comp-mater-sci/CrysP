@@ -4,7 +4,6 @@ program alamDMC
     use dmcASR
     use dmcQRS
     use dmcYld
-    use dmcEWC
     use dmcADP
 
     implicit none
@@ -41,8 +40,6 @@ program alamDMC
             allocate(ASRModule:: the_module)
         case('YLD')
             allocate(YldModule:: the_module)
-        case('EWC')
-            allocate(EWCModule:: the_module)
         case('ADP')
             allocate(ADPModule:: the_module)
         case default

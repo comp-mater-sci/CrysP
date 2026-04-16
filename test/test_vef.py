@@ -19,7 +19,7 @@ import pandas as pd
 import numpy as np
 
 #File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
-EXTENSIONS = {'ADP':'adp','ASR':'asr', 'EWC':'ewc', 'QRS':'xqrs', 'YLD':'xyld'}
+EXTENSIONS = {'ADP':'adp','ASR':'asr', 'QRS':'xqrs', 'YLD':'xyld'}
 GENERATED_DATA = []
 TEST_ROOT = Path.cwd()
 TEST_RUN = TEST_ROOT/'run'
@@ -27,7 +27,7 @@ TEST_REF = TEST_ROOT/'reference'
 TEST_INPUT = TEST_ROOT/'input'
 
 #Configurations that can be tested
-MODES = ['ADP', 'ASR', 'EWC','QRS','YLD']
+MODES = ['ADP', 'ASR', 'QRS','YLD']
 ALGORITHMS = ['ALAMEL', 'FCTaylor']
 SLIP_SYSTEMS = ['fcc12','bcc24','bcc48']
 HARDENING_MODELS = ['NONE', 'VOCE', 'HOCKETT_SHERBY', 'SWIFT', 'DSH_EDGE', 'DSH_SCREW', 'DSH_LOOP']
