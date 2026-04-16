@@ -19,7 +19,6 @@ dmcResultFileOutput.f90
 evolutionOutputRecord.f90
 incrementationControl.f90
 resultTable.f90
-stressDrivenEvolutionModule.f90
 stressDrivenModule.f90
 dmcADP.f90
 dmcASR.f90
