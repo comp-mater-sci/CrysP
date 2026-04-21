@@ -18,7 +18,7 @@ module dmcASR
 
     type:: StressDrivenStep
         real(DP), dimension(6)   :: stress_mode = 0.D0
-        type(IncrementationControlSettings)             :: incrementation_control
+        type(IncrementationControlSettings)             :: icv
         logical                                         :: update_state = .false.
     end type
 
@@ -31,7 +31,6 @@ module dmcASR
         procedure:: readConfig => ASRModule_readConfig
         procedure:: run =>        ASRModule_run
         procedure:: outputFile => ASRModule_outputFile
-        procedure, pass(this)    :: calculateStressPath => asr_calculateStressPath
     end type
 
     type:: ASROutput
@@ -63,7 +62,7 @@ contains
                 if (.not. readValue(cnfunit, step%stress_mode)) return
                 if (.not. readValue(cnfunit, step%update_state)) return
                 if (step%update_state) then
-                    call IncrementationControlSettings_read(step%incrementation_control, cnfunit, info, &
+                    call IncrementationControlSettings_read(step%icv, cnfunit, info, &
                                                             allowed=[scalingStrainTensor, &
                                                                      scalingStrainTensorIncrement, &
                                                                      scalingPlasticWork])
@@ -78,13 +77,44 @@ contains
     subroutine ASRModule_run(this, info)
         class(ASRModule), intent(inout)          :: this
         integer, intent(out)                     :: info
+
+        real(DP), parameter:: STRETCH_RATIO = 1e-3_DP
+        real(DP), dimension(3, 3), parameter:: ZERO = 0._DP
+        character(*), parameter:: PROC_NAME =  "ASRModule_run"
+
+        logical:: stop_flag
+        integer:: istep, &
+                  nsteps, &
+                  ofunit, &
+                  i, &
+                  n_roots, &
+                  n_records
         ! Quantities in the global (aka. material = texture) reference frame
-        real(DP), dimension(3, 3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
+        real(DP):: sigma(3,3), &
+                   S(3,3), &
+                   Pressure(3,3), &  !< total stress, deviatoric stress, hydrostatic stress
+                   Mrot(3,3), &
+                   scaling_factor, &
+                   control_variable, &
+                   stop_control_variable, &
+                   stretch, &
+                   X_tmp(3, 3), &
+                   vDe(5), &
+                   vSe(5), &
+                   X_tmp_voigt(6), &
+                   target_stress_mode(5), &
+                   target_stress_norm, &
+                   strain_mode(5), &
+                   stress(5), &
+                   residual(5), &
+                   taylor_factor, &
+                   xi(2)
+
         ! Quantities in rotated (aka. sample) reference frame
-        type(ASROutput)                 :: output
-        type(IncrementationControl)     :: icv
-        real(DP), dimension(3, 3)   :: Mrot
-        integer     :: istep, nsteps, ofunit
+        type(ASROutput):: output
+        type(IncrementationControl):: icv
+        type(IncrementOutputRecord), allocatable:: buffer(:)
+        type(IncrementOutputRecord):: tmp_record
 
         !
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
@@ -99,11 +129,130 @@ contains
         Mrot = euler_to_tensor(deg_to_rad(this%rotframe))
 
         do  istep = 1, nsteps
-            associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
+            associate(step => this%steps(istep), &
+                      control => this%steps(istep)%icv)
                 ! Acquire full stress tensor sigma
                 sigma = unscaled_voigt_to_tensor(step%stress_mode)
-                ! Follow the stress path
-                call this%calculateStressPath(sigma, control, output%evolution_output, Mrot, incrementation_control = icv)
+                n_records = 0
+
+                !Trick: allow the increment to "stretch" a bit.
+                !The trick is used in the stop condition of the loop to prevent starting
+                !a new increment because stop_control_variable-control%step_size gives some
+                !small positive value. The trick does not eliminate the main cause of that
+                !drift, which is the accumulation of increment tensor components of different sign.
+                stretch = stretch_ratio*control%increment_size
+                !
+                ! Follow the evolution line along S
+                ! in the main loop over deformation increments
+                do
+                    ! Calculate the strain rate mode
+                    target_stress_mode = tensor_to_deviatoric(sigma)
+                    target_stress_norm = norm2(target_stress_mode)
+                    target_stress_mode = target_stress_mode / target_stress_norm
+                    call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+
+                    ! Make output record and prepare variables for updating icv
+                    tmp_record = IncrementOutputRecord(icv%IncrementationControlVariables, &
+                                                       zero, zero, &
+                                                       target_stress_mode, &
+                                                       strain_mode, &
+                                                       stress/norm2(stress), &
+                                                       norm2(stress), &
+                                                       target_stress_norm, &
+                                                       norm2(deviatoric_to_unscaled_voigt(residual)))
+
+                    ! Check if we start a/another increment
+                    stop_flag = .false.
+                    select case(control%scaling_type)
+                    case(scalingStrainTensor, scalingStrainTensorIncrement)
+                        stop_control_variable = norm2(icv%vP_step)
+                    case(scalingPlasticWork)
+                        stop_control_variable = icv%plastic_work_total
+                    case(scalingStrainTensorComponent)
+                        ! Get total plastic strain in appropriate reference frame
+                        ! and check the tensor component of interest.
+                        X_tmp = deviatoric_to_tensor(icv%vP_step)
+                        X_tmp = rotate_to(X_tmp, Mrot)
+                        X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
+                        stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
+                    case default
+                        ! Make sure it stops immediately
+                        stop_flag = .true.
+                        stop_control_variable = control%step_size+control%increment_size
+                    end select
+
+                    stop_flag = stop_flag &
+                                .or.(stop_control_variable+stretch > control%step_size)
+                    if (.not. stop_flag) then
+                        !
+                        ! Calculate incrementation control variables
+                        !
+                        ! Calculate increment of plastic strain to be imposed for texture evolution:
+                        select case(control%scaling_type)
+                        case(scalingStrainTensorIncrement)
+                            control_variable = 1._DP
+                        !
+                        case(scalingStrainTensor)
+                            ! Find scaling factor x such as
+                            ! ||vP_step-x vA|| - ||vP_step|| = increment_size   (*)
+                            n_roots = solveQuadraticPolynomial(a = strain_mode .dot. strain_mode, &
+                                                               b = 2 * strain_mode .dot. icv%vp_step, &
+                                                               c = (icv%vp_step .dot. icv%vp_step) - &
+                                                                   (control%increment_size+norm2(icv%vp_step))**2, &
+                                                               x=xi)
+                            ! Up to two roots; we pick the largest one;
+                            control_variable = -1.0_DP
+                            if (n_roots > 0) control_variable = control%increment_size/maxval(xi(1:n_roots))
+                            ! If control variable is negative (the only way to satisfy (*) is
+                            ! to decrease the strain), fall back to a less accurate scheme.
+                            if (control_variable < 0.D0) control_variable = 1._DP
+                            !
+                        case(scalingPlasticWork)
+                            control_variable = strain_mode .dot. stress
+                        !
+                        case(scalingStrainTensorComponent)
+                            X_tmp = rotate_to(deviatoric_to_tensor(strain_mode), Mrot)
+                            X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
+                            control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
+                        !
+                        case default
+                            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, "Invalid incrementation type.")
+                        end select
+                        scaling_factor = (control%increment_size/control_variable)
+                        !
+                        ! Calculate strain increment for material state evolution
+                        vDe = strain_mode * scaling_factor
+                        tmp_record%dotwona = tmp_record%dotwona * scaling_factor !Assuming 1s time steps
+                        tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
+
+                        ! Update material state
+                        call deformation_step(tmp_record%P_inc_evol, tmp_record%S_evol, taylor_factor)
+
+                        vSe = tensor_to_deviatoric(tmp_record%S_evol)
+                    else
+                        vDe = 0.D0
+                        vSe = 0.D0
+                    endif
+
+                    ! Append the output record
+                    if (.not. allocated(output%evolution_output)) then
+                        allocate(output%evolution_output(8))
+                    else if (size(output%evolution_output) == n_records) then
+                        allocate(buffer(2*size(output%evolution_output)))
+                        buffer(1:n_records) = output%evolution_output
+                        call move_alloc(buffer, output%evolution_output)
+                    end if
+                    n_records = n_records+1
+                    output%evolution_output(n_records) = tmp_record
+
+                    ! Update icv
+                    call icv%update(vDe, vSe, info)
+                    if (info /= VEF_OK) &
+                        call log_error(MOD_NAME, PROC_NAME, ERR, "Unable to update incrementation control variables.")
+                    if (stop_flag) &
+                        exit
+                enddo
+                output%evolution_output = output%evolution_output(1:n_records)
             end associate
 
             if (info /= VEF_OK) &
@@ -120,186 +269,6 @@ contains
             if (info /= VEF_OK) &
                 call log_error(MOD_NAME, 'run', ERR_IO, 'Can not write output')
         enddo
-    end subroutine
-
-    !> Main loop of incremental stress driven state evolution
-    subroutine asr_calculateStressPath(this, sigma, control, output, rotmat, incrementation_control)
-        class(ASRModule), intent(inout):: this
-        real(DP), dimension(3, 3), intent(in)              :: sigma !< Imposed stress tensor
-        !> Settings that control the incrementation process
-        class(IncrementationControlSettings), intent(inout):: control
-                !> Rotation matrix. Relevant only if scalingStrainTensorComponent is used
-        real(DP), dimension(3, 3), intent(in), optional  :: rotmat
-        !> Incrementation control variables to override the defaults.
-        !>
-        !> Typical use is to inherit some control variables (the totals) from a previous
-        !> call to this function.
-        !> On exit, the parameter will contain updated control variables.
-        type(IncrementationControl), intent(inout), optional  :: incrementation_control
-        type(IncrementOutputRecord), dimension(:), allocatable, intent(out):: output
-        type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
-
-        character(*), parameter:: PROC_NAME =  "asr_calculateStressPath"
-        !
-        real(DP):: scaling_factor, control_variable, stop_control_variable, stretch, X_tmp(3, 3)
-        real(DP), dimension(5):: vDe, vSe
-        type(IncrementationControl):: icv
-        real(DP), dimension(6):: X_tmp_voigt
-
-        real(DP):: target_stress_mode(5), &
-                   target_stress_norm, &
-                   strain_mode(5), &
-                   stress(5), &
-                   residual(5), &
-                   taylor_factor
-
-        type(IncrementOutputRecord):: tmp_record
-        !> Results if the incrementation procedure.
-        !>
-        !> On successful exit it will include  n+1 entries, where n is the number of
-        !> increments needed to reach the end of the step.
-        !> The leading n contain complete results (search for strain rate
-        !> AND strain incrementation), while the last one just the result of the search for
-        !> the strain rate. Therefore, the last entry corresponds to the state of
-        !> the material at the end of the step.
-        integer:: i, n_roots, n_records, info
-        real(DP), dimension(2):: xi
-        logical:: stop_flag
-        real(DP), parameter:: stretch_ratio = 1e-3_DP
-        real(DP), dimension(3, 3):: zero = 0._DP
-
-        n_records = 0
-
-
-        if (present(incrementation_control)) &
-            icv = incrementation_control
-
-        !Trick: allow the increment to "stretch" a bit.
-        !The trick is used in the stop condition of the loop to prevent starting
-        !a new increment because stop_control_variable-control%step_size gives some
-        !small positive value. The trick does not eliminate the main cause of that
-        !drift, which is the accumulation of increment tensor components of different sign.
-        stretch = stretch_ratio*control%increment_size
-        !
-        ! Follow the evolution line along S
-        ! in the main loop over deformation increments
-        do
-            ! Calculate the strain rate mode
-            target_stress_mode = tensor_to_deviatoric(sigma)
-            target_stress_norm = norm2(target_stress_mode)
-            target_stress_mode = target_stress_mode / target_stress_norm
-            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
-
-            ! Make output record and prepare variables for updating icv
-            tmp_record = IncrementOutputRecord(icv%IncrementationControlVariables, &
-                                               zero, zero, &
-                                               target_stress_mode, &
-                                               strain_mode, &
-                                               stress/norm2(stress), &
-                                               norm2(stress), &
-                                               target_stress_norm, &
-                                               norm2(deviatoric_to_unscaled_voigt(residual)))
-
-            ! Check if we start a/another increment
-            stop_flag = .false.
-            select case(control%scaling_type)
-            case(scalingStrainTensor, scalingStrainTensorIncrement)
-                stop_control_variable = norm2(icv%vP_step)
-            case(scalingPlasticWork)
-                stop_control_variable = icv%plastic_work_total
-            case(scalingStrainTensorComponent)
-                ! Get total plastic strain in appropriate reference frame
-                ! and check the tensor component of interest.
-                X_tmp = deviatoric_to_tensor(icv%vP_step)
-                if (present(rotmat)) X_tmp = rotate_to(X_tmp, rotmat)
-                X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
-                stop_control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
-            case default
-                ! Make sure it stops immediately
-                stop_flag = .true.
-                stop_control_variable = control%step_size+control%increment_size
-            end select
-
-            stop_flag = stop_flag &
-                        .or.(stop_control_variable+stretch > control%step_size)
-            if (.not. stop_flag) then
-                !
-                ! Calculate incrementation control variables
-                !
-                ! Calculate increment of plastic strain to be imposed for texture evolution:
-                select case(control%scaling_type)
-                case(scalingStrainTensorIncrement)
-                    control_variable = 1._DP
-                !
-                case(scalingStrainTensor)
-                    ! Find scaling factor x such as
-                    ! ||vP_step-x vA|| - ||vP_step|| = increment_size   (*)
-                    n_roots = solveQuadraticPolynomial(a = strain_mode .dot. strain_mode, &
-                                                       b = 2 * strain_mode .dot. icv%vp_step, &
-                                                       c = (icv%vp_step .dot. icv%vp_step) - &
-                                                           (control%increment_size+norm2(icv%vp_step))**2, &
-                                                       x=xi)
-                    ! Up to two roots; we pick the largest one;
-                    control_variable = -1.0_DP
-                    if (n_roots > 0) control_variable = control%increment_size/maxval(xi(1:n_roots))
-                    ! If control variable is negative (the only way to satisfy (*) is
-                    ! to decrease the strain), fall back to a less accurate scheme.
-                    if (control_variable < 0.D0) control_variable = 1._DP
-                    !
-                case(scalingPlasticWork)
-                    control_variable = strain_mode .dot. stress
-                !
-                case(scalingStrainTensorComponent)
-                    if (present(rotmat)) then
-                        X_tmp = rotate_to(deviatoric_to_tensor(strain_mode), rotmat)
-                    else
-                        X_tmp = deviatoric_to_tensor(strain_mode)
-                    endif
-                    X_tmp_voigt = tensor_to_unscaled_voigt(X_tmp)
-                    control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
-                !
-                case default
-                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, "Invalid incrementation type.")
-                end select
-                scaling_factor = (control%increment_size/control_variable)
-                !
-                ! Calculate strain increment for material state evolution
-                vDe = strain_mode * scaling_factor
-                tmp_record%dotwona = tmp_record%dotwona * scaling_factor !Assuming 1s time steps
-                tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
-
-                ! Update material state
-                call deformation_step(tmp_record%P_inc_evol, tmp_record%S_evol, taylor_factor)
-
-                vSe = tensor_to_deviatoric(tmp_record%S_evol)
-            else
-                vDe = 0.D0
-                vSe = 0.D0
-            endif
-
-            ! Append the output record
-            if (.not. allocated(output)) then
-                allocate(output(8))
-            else if (size(output) == n_records) then
-                allocate(buffer(2*size(output)))
-                buffer(1:n_records) = output
-                call move_alloc(buffer, output)
-            end if
-            n_records = n_records+1
-            output(n_records) = tmp_record
-
-            ! Update icv
-            call icv%update(vDe, vSe, info)
-            if (info /= VEF_OK) &
-                call log_error(MOD_NAME, PROC_NAME, ERR, "Unable to update incrementation control variables.")
-            if (stop_flag) &
-                exit
-        enddo
-
-        ! Report back the incrementation control variables if requested
-        if (present(incrementation_control)) incrementation_control = icv
-
-        output = output(1:n_records)
     end subroutine
 
     !> Calculate the real roots of quadratic polynomial given in form
