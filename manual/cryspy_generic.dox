@@ -1,5 +1,5 @@
 /*!
-\page page_alamdmc_generic AlamDMC Generic Configuration
+\page page_cryspy_generic Generic Configuration
 
 Generic configuration settings are applicable to all AlamDMC modules.
 As described in \ref alamdmc_format_basics, these settings are located in the leading part of the

@@ -1,28 +1,14 @@
 /*!
-\mainpage Home
+\mainpage
 
-Welcome to the manual of the Virtual Experimentation Framework software suite!
-
-New to the VEF?
+Contents
 ---------------
-- \ref guided_tour gives a step-by-step tour of some typical use cases where the VEF is applied.
+- \ref page_conventions summarizes conventions used by the CrysPy framework, as well as notations used in this manual.
 
-Ready to run your own VEF simulations?
----------------
-The \ref user_reference presents the main components of the VEF and discusses
-  how to operate them.
-  It covers:
-- \ref page_conventions that explain how to specify the inputs and interpret the outputs,
-- \ref page_expert_mode that provides a complete control over all the knobs  in the VEF software,
-- \ref page_theory that introduces the foundations of the VEF software and multi-scale crystal
-plasticity models it utilizes.
 
-Need a helping hand?
----------------
-
-\ref page_resources contain:
-  - \ref examples - a collection of sample problems bundled with the VEF.
-
+- \ref page_cryspy_usage outlines the CrysPy workflow.
+- \ref page_cryspy_format discusses the formatting to be used in CrysPy configuration files.
+- \ref page_cryspy_generic explains in detail the configuration settings common to all CrysPy modules.
+- \ref page_cryspy_modules details the configuration settings and outputs specific to each CrysPy module.
+- \ref page_theory introduces the foundations of the CrysPy framework and the ALAMEL crystal plasticity model, which was the original catalyst for developing this framework.
 */
-
-
