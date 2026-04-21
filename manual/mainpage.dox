@@ -9,21 +9,17 @@ New to the VEF?
 
 Ready to run your own VEF simulations?
 ---------------
-The \ref user_reference presents the main components of the VEF and discusses 
-  how to operate them. 
+The \ref user_reference presents the main components of the VEF and discusses
+  how to operate them.
   It covers:
-- \ref page_conventions that explain how to specify the inputs and interpret the outputs, 
-- \ref page_expert_mode that provides a complete control over all the knobs  in the VEF software, 
+- \ref page_conventions that explain how to specify the inputs and interpret the outputs,
+- \ref page_expert_mode that provides a complete control over all the knobs  in the VEF software,
 - \ref page_theory that introduces the foundations of the VEF software and multi-scale crystal
 plasticity models it utilizes.
 
 Need a helping hand?
---------------- 
+---------------
 
-Included \ref page_tutorials are:
-  - \ref guided_tour "Guided tour in the expert mode"
-  - \ref tutorial_swift "Identification of Swift parameters from tensile data"
-  
 \ref page_resources contain:
   - \ref examples - a collection of sample problems bundled with the VEF.
 
