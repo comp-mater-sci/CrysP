@@ -78,7 +78,6 @@ contains
     subroutine ASRModule_run(this, info)
         class(ASRModule), intent(inout)          :: this
         integer, intent(out)                     :: info
-        !
         ! Quantities in the global (aka. material = texture) reference frame
         real(DP), dimension(3, 3)    :: sigma, S,  Pressure  !< total stress, deviatoric stress, hydrostatic stress
         ! Quantities in rotated (aka. sample) reference frame
@@ -95,16 +94,16 @@ contains
         RETURN_IF(info /= VEF_OK, info = this%outputFile(ofunit, header=.true.))
         !
         nsteps = size(this%steps)
-        !
+
         ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
         Mrot = euler_to_tensor(deg_to_rad(this%rotframe))
-        !
+
         do  istep = 1, nsteps
             associate(step => this%steps(istep), control => this%steps(istep)%incrementation_control)
                 ! Acquire full stress tensor sigma
                 sigma = unscaled_voigt_to_tensor(step%stress_mode)
                 ! Follow the stress path
-                info = this%calculateStressPath(sigma, control, output%evolution_output, Mrot, incrementation_control = icv)
+                call this%calculateStressPath(sigma, control, output%evolution_output, Mrot, incrementation_control = icv)
             end associate
 
             if (info /= VEF_OK) &
@@ -124,7 +123,7 @@ contains
     end subroutine
 
     !> Main loop of incremental stress driven state evolution
-    integer function asr_calculateStressPath(this, sigma, control, output, rotmat, incrementation_control) result(info)
+    subroutine asr_calculateStressPath(this, sigma, control, output, rotmat, incrementation_control)
         class(ASRModule), intent(inout):: this
         real(DP), dimension(3, 3), intent(in)              :: sigma !< Imposed stress tensor
         !> Settings that control the incrementation process
@@ -139,6 +138,8 @@ contains
         type(IncrementationControl), intent(inout), optional  :: incrementation_control
         type(IncrementOutputRecord), dimension(:), allocatable, intent(out):: output
         type(IncrementOutputRecord), dimension(:), allocatable  :: buffer
+
+        character(*), parameter:: PROC_NAME =  "asr_calculateStressPath"
         !
         real(DP):: scaling_factor, control_variable, stop_control_variable, stretch, X_tmp(3, 3)
         real(DP), dimension(5):: vDe, vSe
@@ -152,7 +153,7 @@ contains
                    residual(5), &
                    taylor_factor
 
-        type(IncrementOutputRecord)         :: tmp_record
+        type(IncrementOutputRecord):: tmp_record
         !> Results if the incrementation procedure.
         !>
         !> On successful exit it will include  n+1 entries, where n is the number of
@@ -161,13 +162,14 @@ contains
         !> AND strain incrementation), while the last one just the result of the search for
         !> the strain rate. Therefore, the last entry corresponds to the state of
         !> the material at the end of the step.
-        integer:: i, n_roots, n_records
+        integer:: i, n_roots, n_records, info
         real(DP), dimension(2):: xi
         logical:: stop_flag
         real(DP), parameter:: stretch_ratio = 1e-3_DP
         real(DP), dimension(3, 3):: zero = 0._DP
 
         n_records = 0
+
 
         if (present(incrementation_control)) &
             icv = incrementation_control
@@ -203,10 +205,8 @@ contains
             select case(control%scaling_type)
             case(scalingStrainTensor, scalingStrainTensorIncrement)
                 stop_control_variable = norm2(icv%vP_step)
-            !
             case(scalingPlasticWork)
                 stop_control_variable = icv%plastic_work_total
-            !
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
                 ! and check the tensor component of interest.
@@ -218,12 +218,10 @@ contains
                 ! Make sure it stops immediately
                 stop_flag = .true.
                 stop_control_variable = control%step_size+control%increment_size
-            !
             end select
-            !
+
             stop_flag = stop_flag &
                         .or.(stop_control_variable+stretch > control%step_size)
-            !
             if (.not. stop_flag) then
                 !
                 ! Calculate incrementation control variables
@@ -261,14 +259,8 @@ contains
                     control_variable = abs(X_tmp_voigt(control%selected_tensor_component))
                 !
                 case default
-                    info = VEF_ERROR
-                    exit
+                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, "Invalid incrementation type.")
                 end select
-                !
-                if (control_variable < epsilon(0.D0)) then
-                      info = VEF_ERROR
-                      exit
-                endif
                 scaling_factor = (control%increment_size/control_variable)
                 !
                 ! Calculate strain increment for material state evolution
@@ -278,9 +270,6 @@ contains
 
                 ! Update material state
                 call deformation_step(tmp_record%P_inc_evol, tmp_record%S_evol, taylor_factor)
-
-
-                if (info /= 0) exit !< \fixme Literal constant in makeTextureUpdateStep
 
                 vSe = tensor_to_deviatoric(tmp_record%S_evol)
             else
@@ -301,15 +290,17 @@ contains
 
             ! Update icv
             call icv%update(vDe, vSe, info)
-            if (stop_flag .or. (info /= VEF_OK)) exit
+            if (info /= VEF_OK) &
+                call log_error(MOD_NAME, PROC_NAME, ERR, "Unable to update incrementation control variables.")
+            if (stop_flag) &
+                exit
         enddo
-        if (info /= VEF_OK) return
 
         ! Report back the incrementation control variables if requested
         if (present(incrementation_control)) incrementation_control = icv
-    !
+
         output = output(1:n_records)
-    end function
+    end subroutine
 
     !> Calculate the real roots of quadratic polynomial given in form
     !> a^2 x+b x+c = 0
