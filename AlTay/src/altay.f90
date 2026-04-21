@@ -52,7 +52,7 @@ contains
     !> Calculate strain mode and stress corresponding to a desired stress mode.
     !>
     !> Uses iterative search to find an accurate match for the strain mode and stress state corresponding to the d  esired stress mode.
-    !> An accurate initial guess for the strain mode should be provided to improve convergence and performance. Th  e residual of the search is returned to provide
+    !> An accurate initial guess for the strain mode should be provided to improve convergence and performance. The residual of the search is returned to provide
     !> an estimation of search accuracy.
     subroutine altay_simulate_stress_mode(stress_mode, strain_mode, stress, residual)
         real(DP), dimension(5), intent(in)::  stress_mode   !! Intended stress mode

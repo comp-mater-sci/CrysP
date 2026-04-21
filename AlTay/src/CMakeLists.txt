@@ -40,7 +40,7 @@ micro/models/dsh_loop.f90
 )
 
 target_link_libraries(altay)
-set_target_properties(altay PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl      _core -lpthread -lm -ldl")
+set_target_properties(altay PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 #
 # Installation of the outputs in the build tree
