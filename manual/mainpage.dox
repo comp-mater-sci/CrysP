@@ -5,7 +5,7 @@ Contents
 ---------------
 - \ref page_conventions summarizes the notation conventions in this manual.
 - \ref page_cryspy_usage outlines the CrysPy workflow.
-- \ref page_cryspy_format discusses the formatting to be used in CrysPy configuration files.
+- \ref page_cryspy_format specify the format used for CrysPy inputs and outputs.
 - \ref page_cryspy_specification details the configuration settings and outputs for CrysPy simulations.
 - \ref page_theory introduces the foundations of the CrysPy framework and the ALAMEL crystal plasticity model, which was the original catalyst for developing this framework.
 */

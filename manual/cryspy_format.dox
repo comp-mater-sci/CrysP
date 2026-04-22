@@ -1,10 +1,27 @@
 /*!
-\page page_cryspy_format Configuration File Format
+\page page_cryspy_format Formatting Rules
 
 [TOC]
 
 The AlamDMC configuration file (.cfg) has to follow some basic formatting rules.
 Some dedicated formats for a number of special configuration options may also apply.
+
+Reference frame   {#convention_reference_frame}
+----------------
+
+All The VEF uses two different reference frames in the physical, 3-dimensional space:
+
+1. **The material reference frame**: the reference frame in which the material data, such as crystallographic texture,
+   are given. This frame can be considered as the global reference frame.
+
+   To denote the components of second-order tensors in the material reference frame,
+   numeral indices are used. Repeated axes can be omitted.
+
+   \egs \f$ \sigma_{11} \f$, \f$ D_{22} \f$, \f$ S_{13} \f$.
+
+Both material and sample reference frames do not change during a simulation and are fixed in space.
+
+
 
 \section alamdmc_format_basics Basic Formatting rules
 
