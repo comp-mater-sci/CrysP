@@ -1,4 +1,4 @@
-Common notation conventions     {#page_conventions}
+Notation conventions     {#page_conventions}
 ===============================
 
 This section describes the notation conventions commonly used throughout the VEF software.

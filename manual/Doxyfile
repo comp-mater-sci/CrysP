@@ -842,8 +842,7 @@ INPUT                  = mainpage.dox \
                          conventions.md \
                          cryspy_usage.dox \
                          cryspy_format.dox \
-                         cryspy_generic.dox \
-                         cryspy_modules.dox \
+                         cryspy_specification.dox \
                          examples.dox \
                          theory.dox \
                          illustrations.dox \
