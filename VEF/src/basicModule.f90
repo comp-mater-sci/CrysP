@@ -231,7 +231,6 @@ contains
 
         integer                       :: model_id
         logical                       :: use_default_microstructure
-        logical                       :: dummy, dummy2
         integer                       :: i
         character(20):: buffer
         type(Parameter), pointer:: param_ptr
@@ -251,8 +250,6 @@ contains
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Invalid mesoscopic model.')
         end select
-
-        dummy2 = readValue(cnfunit, dummy)
 
         read(cnfunit, '(A)') buffer
         select case (buffer)

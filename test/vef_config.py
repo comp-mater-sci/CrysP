@@ -74,7 +74,6 @@ def generate_config(mode, algorithm, slip_system, hardening_model):
            + '2\n'                                      \
            + 'texture.smt\n'                            \
            + algorithm + '\n'                           \
-           + 'True\n'                                   \
            + slip_system + '\n'                         \
            + 'True\n'                                   \
            + 'False\n'                                  \
