@@ -1,8 +1,17 @@
 Notation conventions     {#page_conventions}
 ===============================
-This page describes the notation conventions throughout this manual.
+This page describes the notation conventions used throughout this manual, and by extension CrysPy as a whole.
 
 [TOC]
+
+<HR>
+
+Reference frame   {#convention_reference_frame}
+----------------
+
+All directional quantities are expressed in the material reference frame. The user is free to define this frame, and CrysPy adopts it implicitly. In practice, this means that the user must simply ensure that all inputs are expressed in the same reference frame, and be aware that the outputs are expressed relative to the frame used for the input. The frame does not change during a simulation and is fixed in space.
+
+<HR>
 
 Physical quantities {#convention_physicalquantities}
 -------------------
@@ -32,6 +41,8 @@ Exceptions from these rules are clearly indicated where appropriate.
 Note that strain tensors (and derived quantities) mentioned in the VEF are the
 __plastic strains__ unless stated otherwise. Likewise, the stresses calculated and
 reported by the VEF are usually the __deviatoric stresses__.
+
+<HR>
 
 Index notation   {#convention_indexnotation}
 --------------
@@ -65,6 +76,7 @@ Throughout this manual, indices are used to specify various quantities:
 
   \eg \f$ \dot\gamma_s \f$ is the slip rate on slip system \f$ s \f$
 
+<HR>
 
 Mathematical operators   {#convention_operators}
 ----------------------

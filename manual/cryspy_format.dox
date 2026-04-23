@@ -3,38 +3,13 @@
 
 [TOC]
 
-The AlamDMC configuration file (.cfg) has to follow some basic formatting rules.
-Some dedicated formats for a number of special configuration options may also apply.
+Configuration of any CrysPy Kernel simulation is file-based. Each input file consists of a number of comments and configuration options, which themselves consist of one or more option fields. This page first describes how to construct configuration options, after which it outlines the different types of configuration files that may be constructed from these options.
 
-Reference frame   {#convention_reference_frame}
-----------------
+<HR>
 
-All The VEF uses two different reference frames in the physical, 3-dimensional space:
+\section sec_format_comments Comments
+Some configuration files can include comments that are ignored by the program. A comment starts with `#` and spans till the end of the line. A comment may start at the beginning of the line or after a data field.
 
-1. **The material reference frame**: the reference frame in which the material data, such as crystallographic texture,
-   are given. This frame can be considered as the global reference frame.
-
-   To denote the components of second-order tensors in the material reference frame,
-   numeral indices are used. Repeated axes can be omitted.
-
-   \egs \f$ \sigma_{11} \f$, \f$ D_{22} \f$, \f$ S_{13} \f$.
-
-Both material and sample reference frames do not change during a simulation and are fixed in space.
-
-
-
-\section alamdmc_format_basics Basic Formatting rules
-
-\anchor desc_alamdmc_format
-Configuration files of the `alamDMC` program have a fixed format. The files are read and interpreted by the program according to Fortran formatted input rules, which implies that:
-- the files are processed line by line,
-- empty lines are typically interpreted as containing 'zero' of the type being read,
-- tabulators are not allowed as blank characters.
-
-\attention Please make sure that AlamDMC configuration files do not contain tabulators.
-
-\anchor desc_alamdmc_comments
-Additionally, the configuration files can include comments that are ignored by the program. A comment starts with `#` and spans till the end of the line. A comment may start at the beginning of the line or after a data field.
 \par Example:
 ~~~~~~~~~~~~~{.txt}
 # This is a comment
@@ -44,117 +19,102 @@ Additionally, the configuration files can include comments that are ignored by t
 
 \note If a comment does not start at the first position in a line, the line is interpreted as containing a data field.
 
-\attention Comment lines are <em>not allowed</em> if they break [compound data] (@ref compound) across two or more lines. An example is given [here] (@ref option_discrete).
+\note Not all input files may contain comments. See \ref sec_format_files which files can and cannot.
 
-Generally, the user is supposed to provide correct configuration files. Although the program attempts some rudimentary detection of errors and mistakes in the configuration file, the user is advised not to rely on that feature. 
+<HR>
 
-\section alamdmc_format_structure Configuration File Structure
+\section sec_format_fields Configuration Option Fields
+The basic building block of any configuration option is the configuration field. There are only a few valid types of fields, each with their specific formatting rules. These are all described below.
 
-The configuration file is structured in two consecutive parts, as follows:
+\subsection sec_format_fields_integer Integer
+Integer fields express whole numbers. It is formatted exactly as you would expect:
 
- -# generic configuration settings, and 
- -# settings related to the specific module.
+\par Example:
+~~~~~~~~~~~~~{.txt}
+1  # positive integer field
+-1 # negative integer field
+~~~~~~~~~~~~~
 
-Only the second part varies from one module to another. For instance, let's have a look at the configuration file `AKDQf_asr.cfg` located in `examples` directory. The file contains:
-\includelineno AKDQf_asr.cfg
- 
-As in the example above, a leading part of the configuration file (up to line 21) relates to the generic 
-configuration, while a trailing part (from line 25 onwards) pertains to module-specific configuration.
+\subsection sec_format_fields_real Real
+Real fields express real numbers. They can be written in decimal or scientific notation. Trailing 0s may be omitted.
 
-\section alamdmc_format_configoptions Configuration Options
+\par Example:
+~~~~~~~~~~~~~{.txt}
+-0.1   # real field in decimal notation
+0.     # real field with omitted trailing 0s
+5.e-5  # real field in scientific notation
+~~~~~~~~~~~~~
 
-Any line in the configuration file that is not a comment line, belongs to a _configuration option_.
-A configuration option consists of one or more _configuration fields_. Each configuration field has a certain _type_ \anchor field_type, which can be
-- trivial data types (`path`, `string`, `logical`, `integer` or `real`), or
-- compound data types \anchor compound  (e.g. `srtensor`, `symsrtensor` and `realarray`). 
+\subsection sec_format_fields_logical Logical
+Logical fields represent boolean values, and only have 2 valid values: True or False.
 
-There are [specific notation conventions] (@ref convention_configuration) for configuration options, fields and field declarations.
+\par Example:
+~~~~~~~~~~~~~{.txt}
+True  # logical True field
+False # logical False field
+~~~~~~~~~~~~~
+
+\subsection sec_format_fields_string Text
+Text fields contain any sequence of alphanumeric characters, as long as the sequence does not contain white space.
+
+\par Example:
+~~~~~~~~~~~~~{.txt}
+Some_Text_123     # text field
+path/to/file.txt  # text field used to define a file path
+~~~~~~~~~~~~~
+
+\attention Text fields are case sensitive!
+
+<HR>
+
+\section sec_format_options Configuration Options
+Any line in a configuration file that is not a comment line, belongs to a _configuration option_.
+A configuration option consists of one or more \ref sec_format_fields.
 
 Any configuration option belongs to one of the two groups:
--# _single-line options_: such options always occupy exactly one line in the configuration 
-   file. One or more fields per line is allowed. 
--# _multi-line options_: depending on the values of the fields in the first line, 
-   __zero or more__ subsequent lines may follow. As in the case of the single-line 
+-# _single-line options_: such options always occupy exactly one line in the configuration
+   file. One or more fields per line are allowed.
+-# _multi-line options_: depending on the values of the fields in the first line,
+   __zero or more__ subsequent lines may follow. As in the case of the single-line
    options, any line may contain one or more fields.
 
-There are a number of recurrent configuration options that deserve some more explanation: 
-   
-\subsection euler_option  Configuration option for expressing Euler angles.
+Each configuration option has a certain type. The type of configuration options with only one field is simply the type of the field. The possible types for configuration options with multiple fields are described below.
 
-A general description of orientation (of a certain reference frame, of a crystal, etc.) is 
-given by a set of Euler angles. All Euler angles are given in Bunge 
-notation and expressed in degrees. It is a single-line option: 
+\subsection sec_format_options_euler  Euler Angles
 
--# \confdef{eulerangles,euler} specifies a set of Euler angles as a compound datatype that consists of 3 fields (type `real`), ordered as: \f$ \phi_1 \space \mit\Phi \space \phi_2 \f$.
+
+\confdef{Euler_Angles, euler} describe an orientation or rotation in 3D space. All Euler angles are given in Bunge notation and expressed in degrees. It is a single-line option that consists of 3 fields (type \ref sec_format_fields_real), ordered as: \f$ \phi_1 \space \mit\Phi \space \phi_2 \f$.
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}
 0. 45. 0. # Goss orientation
-~~~~~~~~~~~~~ 
+~~~~~~~~~~~~~
 
-\subsection symsrtensor_option Configuration option for expressing symmetric second-order tensors
+\subsection sec_format_options_symmatrix Symmetric Matrices
+\confdef{Symmetric_Matrix,symmatrix} Symmetric second-order tensors are expressed in unscaled Voigt notation, as a single-line option that consists of 6 \ref sec_format_fields_real fields.
 
+The symmetric matrix \f$ \mathbf{X} \f$ is expressed as:
 
-Symmetric second-order tensors are expressed in the configuration files in 
-Voigt notation, as a single-line option of the compound datatype `symsrtensor` that consists of 6 `real` types. Let \f$ \mathbf{X} \f$ be a symmetric second-order tensor, then: 
-
--# \confdef{tensor,symsrtensor,symsrtensor} lists the components of \f$ \mathbf{X} \f$ in the standard voigt notation order: 
-<ul>
-<li> \f$ X_{11} \space X_{22} \space X_{33} \space X_{23} \space X_{13} \space X_{12} \f$ </li>
-</ul>
-for \f$ \mathbf{X} \f$ expressed in the material (`123`) reference frame, or:
-<ul>
-<li> \f$ X_{xx} \space X_{yy} \space X_{zz} \space X_{yz} \space X_{xz} \space X_{xy} \f$ </li>
-</ul>
-for \f$ \mathbf{X} \f$ expressed in the sample (`xyz`) reference frame. 
+\f$ X_{11} \space X_{22} \space X_{33} \space X_{23} \space X_{13} \space X_{12} \f$
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}
 1.0 0.0 0.0 0.0 0.0 0.0 # All tensor components are zero, except 11- (or xx-)component.
-~~~~~~~~~~~~~ 
- 
-\subsection srtensor_option Configuration option for expressing second-order tensors
+~~~~~~~~~~~~~
 
-\subsubsection srtensor_option_matrix Second-order tensors in direct (matrix-like) notation 
-Second-order tensors may be expressed as a 3-line option of the compound datatype `srtensor` that contains 3 `real` types per line:
--# \confdef{tensor,srtensor,srtensor} gives the components for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as follows:
-<ul>
-<li> <em>line 1: </em>\f$ X_{11} \space X_{12} \space X_{13} \f$ </li>
-<li> <em>line 2: </em>\f$ X_{21} \space X_{22} \space X_{23} \f$ </li>
-<li> <em>line 3: </em>\f$ X_{31} \space X_{32} \space X_{33} \f$ </li>
-</ul>
-if \f$ \mathbf{X} \f$ is expressed in the material (`123`) reference frame, or:
-<ul>
-<li> <em>line 1: </em>\f$ X_{xx} \space X_{xy} \space X_{xz} \f$ </li>
-<li> <em>line 2: </em>\f$ X_{yx} \space X_{yy} \space X_{yz} \f$ </li>
-<li> <em>line 3: </em>\f$ X_{zx} \space X_{zy} \space X_{zz} \f$ </li>
-</ul>
-if \f$ \mathbf{X} \f$ is expressed in the sample (`xyz`) reference frame.
-
-\par Example:
-~~~~~~~~~~~~~{.txt}
- 0.0 0.0 1.0 # All tensor components are zero,
- 0.0 0.0 0.0 #  except 13- (or xz-)component.
- 0.0 0.0 0.0 #
-~~~~~~~~~~~~~ 
-
-\subsubsection srtensor_option_voigt Second-order tensors in Voigt notation 
-Second-order tensors may be expressed as a one-line option of the compound datatype `srtensor_voigt` that contains 9 `real` values:
--# \confdef{tensor,srtensor_voigt,srtensor_voigt} gives the components for \f$ \mathbf{X} \f$ being a second-order tensor, ordered as according to Voigt convention:
+\subsection sec_format_options_matrix Matrices
+\confdef{Matrix,matrix} General second-order tensors are expressed as 9 \ref sec_format_fields_real fields in column major order:
 
    \f$ X_{11} \space X_{21} \space X_{31} \space X_{12} \space X_{22} \space X_{32} \space X_{13} \space X_{23} \space X_{33}\f$
 
 \par Example
-If the example given above were represented as \conffield{srtensor_voigt}, it would read:
 ~~~~~~~~~~~~~{.txt}
-0.0 0.0. 0.0 0.0 0.0. 0.0 0.0 0.0. 1.0 # All tensor components are zero, except 33- (or zz-)component.
-~~~~~~~~~~~~~ 
+0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 # All tensor components are zero, except 33- (or zz-)component.
+~~~~~~~~~~~~~
 
+\subsection format_options_inc Configuration options for strain incrementation
 
-
-\subsection incrementation_option Configuration options for strain incrementation
-
-The VEF provides several ways to control how the deformation is incremented if strain evolution of the material is analyzed, as follows:
+CrysPy provides several ways to control how the deformation is incremented if strain evolution of the material is analyzed, as follows:
 
 -# \confdef{incrementation_type,string} specifies how the strain increments will be calculated. If the option takes the value:
    - `StrainTensor`: the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
@@ -174,12 +134,50 @@ The VEF provides several ways to control how the deformation is incremented if s
 
 
 <HR>
-Quick links
------------
-\ref page_expert_mode
-- \ref page_alamdmc_usage
-- \ref page_alamdmc_format
-- \ref page_alamdmc_generic
-- \ref page_alamdmc_modules
+
+\section sec_format_files Input Files
+CrysPy simulations are formulated by combining the \ref sec_format_options meaningully into a set of input files. Typically, one needs at least a main configuration file and a texture file. This page describes the general layout for each of these files.
+
+All configuration files have a fixed format. It is read and interpreted by the program according to Fortran formatted input rules, which implies that:
+- the files are processed line by line,
+- empty lines are typically interpreted as containing 'zero' of the type being read,
+- tabulators are not allowed as blank characters.
+
+\attention Please make sure that configuration files do not contain tabulators.
+
+<HR>
+
+\subsection sec_format_files_texture Texture File
+The texture file describes the texture of the material. It contains the following \ref sec_format_options:
+
+- n_orientations(\ref sec_format_fields_integer): The number of orientations in the texture file
+- orientation_1(\ref sec_format_options_euler): The first orientation
+- ...
+- orientation_n(\ref sec_format_options_euler): The n-th orientation
+
+\par Example:
+~~~~~~~~~~~~~{.txt}
+ 3
+     0.000    20.000   145.000
+    67.500    65.000   -65.000
+    12.500    27.500    30.000
+~~~~~~~~~~~~~
+
+\attention Texture files must not contain comments!
+
+<HR>
+
+\subsection sec_format_files_main Main Configuration File
+The main configuration file describes the simulation and ties together all the input data. Its exact structure depends on the module being executed and is described in \ref page_cryspy_specification. All modules nevertheless use the same general format, which is described here.
+
+The configuration file is structured in two consecutive parts, as follows:
+
+ -# generic configuration settings, and
+ -# settings related to the specific module.
+
+Only the second part varies from one module to another. For instance, let's have a look at the configuration file `example_asr_config.cfg` located in `examples` directory. The file contains:
+\includelineno example_asr_config.cfg
+
+As in the example above, the leading part of the configuration file relates to the generic configuration, while the rest pertains specifically to the ASR module.
 
 */
