@@ -80,8 +80,15 @@ Any configuration option belongs to one of the two groups:
 
 Each configuration option has a certain type. The type of configuration options with only one field is simply the type of the field. The possible types for configuration options with multiple fields are described below.
 
-\subsection sec_format_options_euler  Euler Angles
+\subsection sec_format_options_real_array Real Array
+Various configuration options are best described as a fixed-length set of real values. The number of values in the set is declared within square brackets ([]) in this manual for clarity.
 
+\par Example:
+~~~~~~~~~~~~~{.txt}
+0.1 4.8 8.2 2.4 5.0 # Real array of size [5]
+~~~~~~~~~~~~~
+
+\subsection sec_format_options_euler  Euler Angles
 
 \confdef{Euler_Angles, euler} describe an orientation or rotation in 3D space. All Euler angles are given in Bunge notation and expressed in degrees. It is a single-line option that consists of 3 fields (type \ref sec_format_fields_real), ordered as: \f$ \phi_1 \space \mit\Phi \space \phi_2 \f$.
 

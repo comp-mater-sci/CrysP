@@ -76,6 +76,5 @@ def generate_config(mode, algorithm, slip_system, hardening_model):
            + algorithm + '\n'                           \
            + slip_system + '\n'                         \
            + 'True\n'                                   \
-           + 'False\n'                                  \
            + HARDENING_CONFIG[hardening_model] + '\n'   \
            + MODE_CONFIG[mode]

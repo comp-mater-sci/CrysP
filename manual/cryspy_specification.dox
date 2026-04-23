@@ -41,28 +41,17 @@ The following \ref sec_format_options pertain to the multiscale model used for t
         - **bcc24**: BCC crystal with 12 slip systems of {110}&lt;111&gt; type, plus 12 slip systems of {112}&lt;111&gt; type.
         - **bcc48**: BCC crystal with 12 bcc slip systems of {110}&lt;111&gt; type, plus 12 slip systems of {112}&lt;111&gt; type, plus 24 slip systems of {123}&lt;111&gt; type.
 
--# \confdef{use_default_microstructure,logical} specifies if the default microstructural description should be used, namely equi-axed grained microstructure. If \conffield{use_default_microstructure} is
-  - `False`<BR> then the required suboption is:
-      -# \confdef{microstructure_file,path} specifies the file with microstructure definition. Its first line contains the number of grain boundary orientations and a title for the microstructure. Each of the following lines contains a set of Euler angles (in the order: \f$\phi_2\f$, \f$\Phi\f$, \f$\phi_1\f$).\n
+-# \confdef{use_default_microstructure,\ref sec_format_fields_logical} specifies if the default microstructural description should be used. Possible values are:
 
-\par Example
-~~~~~~~~~~~~~{.txt}
- 1000     Micr
-     3.285    61.555   171.650              1            1.0
-   296.169   153.316   162.828              1            1.0
-   307.452   105.118   301.893              1            1.0
-~~~~~~~~~~~~~
-<BR>
-      The example above show the first 4 lines of a microstructure file. Note that the last two columns are not read.
+  - **True**: The simulation assumes an equi-axed microstructure.
+  - **False**: The user must specify the following suboption:
 
--# \confdef{use_default_hardening,logical} specifies if the default hardening description should be used. As default, non-hardening slip systems are assumed having a critical resolved shear stress equal to 1.0, independent of deformation. If \conffield{use_default_hardening} is
-  - `False`<BR> it is followed by suboption:
-    -# \confdef{hardening_model,integer} specifies the micro-scale hardening law, in general as the dependency of the critical resolved shear stress \f$ \tau \f$ on one or more internal state variables. An example of internal state variable is the accumulated slip of a grain \f$ \gamma \f$.
-	   Supported values of \conffield{hardening_model} are:
-      - `0` \anchor hardening_model0 <BR> for non-hardening slip systems. This is equivalent to the default hardening description.
-      - `1` \anchor hardening_model1 <BR> for Voce-type of isotropic hardening.
-	  If this hardening law is chosen, it is followed by suboption specifying the parameters of Voce hardening law:
-        -# \confdef{voce_parameters,realarray} contains 5 parameter values that are ordered as: \f$ \tau_0 \space \tau^{III}_{sat} \space \tau^{IV}_{sat} \space \theta_0 \space \theta_T \f$.
+    \confdef{microstructure_file,\ref sec_format_fields_string} specifies the file with microstructure definition. The file must contain a set of inter-grain boundary plane normals. Its format is identical to that of the \ref sec_format_files_texture.
+
+-# \confdef{hardening_model,\ref sec_format_fields_integer} specifies the micro-scale hardening law used for the simulation. The hardening law maps the critical resolved shear stress \f$ \tau \f$ of the slip systems one some set of internal state variables. These internal state variables usually require configuration as well, and are specified as a configuration option directly after the hardening law identifier. The supported hardening laws and their corresponding configuration parameters are the following:
+
+      - **0**: No hardening occurs. The critical resolved shear stress on each slip system is set to 1.0. This hardening law requires no configuration suboptions.
+      - **1**: 2-stage Voce hardening law. Its configuration suboptions are (\ref sec_format_options_real_array[5]): \f$ \tau_0 \space \tau^{III}_{sat} \space \tau^{IV}_{sat} \space \theta_0 \space \theta_T \f$.
 
 		The classical Voce hardening law assumes that the hardening rate \f$ \theta=\frac{d\tau}{d\gamma} \f$ decreases linearly as a function of \f$ \tau \f$.
 		Current implementation is more generic: besides such *one-stage* hardening behavior, also *two-stage* hardening behaviour is supported.
@@ -83,26 +72,9 @@ The following \ref sec_format_options pertain to the multiscale model used for t
 		\end{split} \f]
 		\n
 		Here, \f$ \gamma_T \f$ and \f$ \tau_T \f$ are two dependent Voce parameters that denote the accumulated slip and the flow stress at the transition point, respectively.
-      - `2` \anchor hardening_model2 <BR> for Swift hardening law (variant SwiftK). It has as suboption:
-        -# \confdef{swiftk_parameters,realarray} holds 3 parameter values ordered as: \f$ K \space \gamma_0 \space n \f$.
+      - **2**: Hockett-Sherby hardening. Its configuration suboptions are the following:
 
-		This variant of the Swift hardening law is given by the formula:
-		\f[
-			\tau = K \left(\gamma + \gamma_0 \right)^n
-		\f]
-		Only positive values of parameters are acceptable (constraints: \f$ 0 < K \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
 
-		\par Example:
-~~~~~~~~~~~~~{.txt}
-AKDQFF.smt           # Path to the texture file
-ALAMEL               # Model type: either ALAMEL or FCTaylor
-bcc24                # Family of slip systems
-True                 # Flag: use default microstructural description
-False                # Flag: use default hardening
-2                    # Selection of Swift law (K-variant)
-65.0 1.e-3 0.24      # Swift parameters: K, eps0 and n
-~~~~~~~~~~~~~
-<BR>
       - `3` \anchor hardening_model3 <BR> for Swift hardening law (variant SwiftS), with suboption:
         -# \confdef{swifts_parameters,realarray} contains 3 parameter values in following order: \f$ \tau_0 \space \gamma_0 \space n \f$.
 

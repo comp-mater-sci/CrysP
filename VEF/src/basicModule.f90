@@ -290,112 +290,102 @@ contains
         type(Parameter), dimension(:), allocatable, target:: params
         real(DP):: tmp(16)
         character(len = max_pathlen)          :: tmp_fname
-        logical:: use_default_hardening, &
-                  read_state_dummy
+        logical:: read_state_dummy
         type(Parameter), pointer:: param_ptr
 
         info = VEF_OK
-        use_default_hardening = .true.
-        if (.not. readValue(cnfunit, use_default_hardening)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Can not read default hardening flag.')
 
-        if (.not. use_default_hardening) then
-            if (.not. readValue(cnfunit, hardening_model_id)) return
-            cnf%hardening_model_id = hardening_model_id
-            params = micro_get_parameters(hardening_model_id)
+        if (.not. readValue(cnfunit, hardening_model_id)) return
+        cnf%hardening_model_id = hardening_model_id
+        params = micro_get_parameters(hardening_model_id)
 
-              select case(hardening_model_id)
-                case(HARDENING_VOCE)
-                      if (readValue(cnfunit, tmp(1:5))) then
-                          param_ptr => params .find. 'TIII1'
-                          param_ptr = tmp(1)
-                          param_ptr => params .find. 'TIIIS'
-                          param_ptr = tmp(2)
-                          param_ptr => params .find. 'TIVS'
-                          param_ptr = tmp(3)
-                          param_ptr => params .find. 'THIII1'
-                          param_ptr = tmp(4)
-                          param_ptr => params .find. 'THT'
-                          param_ptr = tmp(5)
-                          info = VEF_OK
-                      endif
-                case(HARDENING_SWIFT)
-                      ! Read one line
-                      if (readValue(cnfunit, tmp(1:3))) then
-                          param_ptr => params .find. 'crss0'
-                          param_ptr = tmp(1)
-                          param_ptr => params .find. 'gamma0'
-                          param_ptr = tmp(2)
-                          param_ptr => params .find. 'n'
-                          param_ptr = tmp(3)
-                          info = VEF_OK
-                      endif
+        select case(hardening_model_id)
+            case(HARDENING_VOCE)
+                if (readValue(cnfunit, tmp(1:5))) then
+                    param_ptr => params .find. 'TIII1'
+                    param_ptr = tmp(1)
+                    param_ptr => params .find. 'TIIIS'
+                    param_ptr = tmp(2)
+                    param_ptr => params .find. 'TIVS'
+                    param_ptr = tmp(3)
+                    param_ptr => params .find. 'THIII1'
+                    param_ptr = tmp(4)
+                    param_ptr => params .find. 'THT'
+                    param_ptr = tmp(5)
+                    info = VEF_OK
+                endif
+            case(HARDENING_SWIFT)
+                if (readValue(cnfunit, tmp(1:3))) then
+                    param_ptr => params .find. 'crss0'
+                    param_ptr = tmp(1)
+                    param_ptr => params .find. 'gamma0'
+                    param_ptr = tmp(2)
+                    param_ptr => params .find. 'n'
+                    param_ptr = tmp(3)
+                    info = VEF_OK
+                endif
+            case(HARDENING_HOCKETT_SHERBY)
+                if (readValue(cnfunit, tmp(1:4))) then
+                    param_ptr => params .find. 'tau_0'
+                    param_ptr = tmp(1)
+                    param_ptr => params .find. 'tau_sat'
+                    param_ptr = tmp(2)
+                    param_ptr => params .find. 'b'
+                    param_ptr = tmp(3)
+                    param_ptr => params .find. 'n'
+                    param_ptr = tmp(4)
+                    info = VEF_OK
+                endif
+            case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
+                if (.not. readValue(cnfunit, tmp_fname)) return  ! read BP parameter file name
+                open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
 
-                case(HARDENING_HOCKETT_SHERBY)
-                      ! Read one line
-                      if (readValue(cnfunit, tmp(1:4))) then
-                          param_ptr => params .find. 'tau_0'
-                          param_ptr = tmp(1)
-                          param_ptr => params .find. 'tau_sat'
-                          param_ptr = tmp(2)
-                          param_ptr => params .find. 'b'
-                          param_ptr = tmp(3)
-                          param_ptr => params .find. 'n'
-                          param_ptr = tmp(4)
-                          info = VEF_OK
-                      endif
-                !
-                case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
-                      if (.not. readValue(cnfunit, tmp_fname)) return  ! read BP parameter file name
-                      open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
+                if (ioerr /= 0) then
+                return
+                endif
 
-                      if (ioerr /= 0) then
-                      return
-                      endif
+                do i = 1, 16
+                    read(nparunit, fmt = 100, err = 666, end = 666) tmp(i)
+                end do
+100               format(F12.5)
 
-                      do i = 1, 16
-                          read(nparunit, fmt = 100, err = 666, end = 666) tmp(i)
-                      end do
-100                     format(F12.5)
-                            param_ptr => params .find. 'b'
-                            param_ptr = tmp(1)
-                            param_ptr => params .find. 'G'
-                            param_ptr = tmp(2)
-                            param_ptr => params .find. 'alfa'
-                            param_ptr = tmp(3)
-                            param_ptr => params .find. 'f'
-                            param_ptr = tmp(4)
-                            param_ptr => params .find. 'tau0'
-                            param_ptr = tmp(5)
-                            param_ptr => params .find. 'I'
-                            param_ptr = tmp(6)
-                            param_ptr => params .find. 'R'
-                            param_ptr = tmp(7)
-                            param_ptr => params .find. 'Iwd'
-                            param_ptr = tmp(8)
-                            param_ptr => params .find. 'Rwd'
-                            param_ptr = tmp(9)
-                            param_ptr => params .find. 'Rncg'
-                            param_ptr = tmp(10)
-                            param_ptr => params .find. 'beta1'
-                            param_ptr = tmp(11)
-                            param_ptr => params .find. 'beta2'
-                            param_ptr = tmp(12)
-                            param_ptr => params .find. 'Iwp'
-                            param_ptr = tmp(13)
-                            param_ptr => params .find. 'Rwp'
-                            param_ptr = tmp(14)
-                            param_ptr => params .find. 'Rrev'
-                            param_ptr = tmp(15)
-                            param_ptr => params .find. 'R2'
-                            param_ptr = tmp(16)
-                        if (.not. readValue(cnfunit, read_state_dummy)) return
-                end select
-              cnf%hardening_parameters = params
-          else
-                cnf%hardening_model_id = HARDENING_NONE
-                cnf%hardening_parameters = micro_get_parameters(HARDENING_NONE)
-          endif
+                param_ptr => params .find. 'b'
+                param_ptr = tmp(1)
+                param_ptr => params .find. 'G'
+                param_ptr = tmp(2)
+                param_ptr => params .find. 'alfa'
+                param_ptr = tmp(3)
+                param_ptr => params .find. 'f'
+                param_ptr = tmp(4)
+                param_ptr => params .find. 'tau0'
+                param_ptr = tmp(5)
+                param_ptr => params .find. 'I'
+                param_ptr = tmp(6)
+                param_ptr => params .find. 'R'
+                param_ptr = tmp(7)
+                param_ptr => params .find. 'Iwd'
+                param_ptr = tmp(8)
+                param_ptr => params .find. 'Rwd'
+                param_ptr = tmp(9)
+                param_ptr => params .find. 'Rncg'
+                param_ptr = tmp(10)
+                param_ptr => params .find. 'beta1'
+                param_ptr = tmp(11)
+                param_ptr => params .find. 'beta2'
+                param_ptr = tmp(12)
+                param_ptr => params .find. 'Iwp'
+                param_ptr = tmp(13)
+                param_ptr => params .find. 'Rwp'
+                param_ptr = tmp(14)
+                param_ptr => params .find. 'Rrev'
+                param_ptr = tmp(15)
+                param_ptr => params .find. 'R2'
+                param_ptr = tmp(16)
+
+                if (.not. readValue(cnfunit, read_state_dummy)) return
+          end select
+
+          cnf%hardening_parameters = params
 
 666       return
       end subroutine
