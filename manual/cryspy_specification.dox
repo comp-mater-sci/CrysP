@@ -132,14 +132,10 @@ The following \ref sec_format_options pertain to the multiscale model used for t
 
 Module-Specific configuration
 ==================
-
-
-Each AlamDMC module has its own module-specific configuration, which
-is located in the trailing part of the configuration file.
-Furthermore, each module will generate its own specific output data.
+Each CrysPy Kernel module has its own module-specific configuration, which is appended to the configuration file directly after the general configuration options.
+Furthermore, each module will generate its own specific output data. All of this module-specific specification is grouped here.
 
 \section module_asr Multiaxial Stress Test Module (keyword: ASR)
-
 The Multiaxial Stress Test Module prescribes a generic stress loading on a virtual sample.
 Several subsequent deformation _steps_ may be imposed;
 each step imposes a certain (constant) stress mode for a certain deformation (which may be infinitesimally small).
@@ -149,7 +145,7 @@ The imposed stress state is described with reference to this sample reference fr
 
 \subsection configuration_asr Module-specific configuration
 
--# \confdef{sample_orientation,euler} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
+-# \confdef{sample_orientation, \ref sec_format_options_euler} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
 -# \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
 -# \confdef{stress_mode,symsrtensor} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option.
