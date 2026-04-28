@@ -20,10 +20,9 @@ MODE_CONFIG =  {'ADP':                                              \
                     + 'True\n'                                      \
                     + DEFAULT_INCREMENT,                            \
                'QRS':                                               \
-                      '1.0\n'                         \
-                    + 'True',                                       \
+                      '1.0',                                        \
                'YLD':                                               \
-                      '36.0\n'                            \
+                      '36.0\n'                                      \
                     + 'True'}
 
 HARDENING_CONFIG = {'NONE':                         \

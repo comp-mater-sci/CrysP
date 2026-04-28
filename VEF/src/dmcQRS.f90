@@ -15,7 +15,6 @@ module dmcQRS
 
     character(*), parameter:: MOD_NAME = 'dmcQRS'
 
-
     type qrsData
           real(DP) :: qvalue = 0.D0
           real(DP) :: rvalue = 0.D0
@@ -24,36 +23,18 @@ module dmcQRS
 
     type, extends(StressDrivenModule):: QRSModule
         real(DP):: angular_resolution
-
-        real(DP)                          :: rho = 0.D0
-
-        logical                                   :: calculate_Mfactor = .false.
-
-        logical                                   :: use_stability_improvements = .false.
-
-        logical                                   :: fold_symmetry = .false.
-
     contains
-
-        !>@{ \name Interface methods of AbstractModule
-
         procedure, pass(this)    :: readConfig => QRSModule_readConfig
-
         procedure, pass(this)    :: run => QRSModule_run
-
-        !>@}
-
         procedure, pass(this)    :: fileOutput => QRSModule_fileOutput
-
     end type
 
 
     !> Container for output datapoints of QRS module
     type:: QRSOutputData
-        real(DP), dimension(:), allocatable   :: residuals, mfactors, phis, sigmas_x
+        real(DP), dimension(:), allocatable   :: residuals, phis
         type(qrsData), dimension(:), allocatable      :: qrsvalues
     end type
-
 
     !> Constructors of QRSOutputData objects
     interface QRSOutputData
@@ -62,26 +43,6 @@ module dmcQRS
 
 contains
 
-    type(qrsData) pure function avgQRS(qrsvalues)
-        type(qrsData),dimension(:),intent(in)     :: qrsvalues
-        real(DP) :: frc
-        integer :: i,n
-
-        avgQRS = qrsData(0.D0, 0.D0, 0.D0)
-        n = size(qrsvalues)
-        if (n > 0) then
-            do i=1,n
-               avgQRS%qvalue= avgQRS%qvalue +  qrsvalues(i)%qvalue
-               avgQRS%rvalue= avgQRS%rvalue +  qrsvalues(i)%rvalue
-               avgQRS%svalue= avgQRS%svalue +  qrsvalues(i)%svalue
-            enddo
-            frc = 1.D0 / dble(n)
-            avgQRS%qvalue = avgQRS%qvalue * frc
-            avgQRS%rvalue = avgQRS%rvalue * frc
-            avgQRS%svalue = avgQRS%svalue * frc
-        endif
-
-    end function
 
     type(qrsData) pure function calculateQRS(Dt,s) result(qrsvalue)
         real(DP),dimension(3,3),intent(in)      :: Dt
@@ -115,15 +76,6 @@ contains
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
 
         this%angular_resolution = deg_to_rad(this%angular_resolution)
-
-        if (.not. readValue(cnfunit, use_default_settings)) return
-        if (.not. use_default_settings) then
-                info = VEF_ERROR
-                if (.not. readValue(cnfunit, this%rho)) return
-                if (.not. readValue(cnfunit, this%calculate_MFactor)) return
-                if (.not. readValue(cnfunit, this%fold_symmetry)) return
-                if (.not. readValue(cnfunit, this%use_stability_improvements)) return
-        endif
 
         ! Override the requests for outputs:
         this%altay%nfile = 0   ! texture
@@ -168,11 +120,8 @@ contains
         !
         fi2 = 0._DP
         !
-        ! Set sigma_t in such way that deviatoric part is of unit length
         sigma_t = 0._DP
-        sigma_t(1, 1) = sqrt(1.5_DP)/sqrt(this%rho**2-this%rho+1._DP)
-        sigma_t(2, 2) = this%rho*sigma_t(1, 1)
-        !
+        sigma_t(1, 1) = 1._DP
 
         do i=1,npoints
             !
@@ -190,27 +139,19 @@ contains
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
             call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
-            !
+            print *, target_stress_mode, strain_mode
+
             SonA = deviatoric_to_tensor(stress)
             SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode
 
             ! Rotate back to the "tensile test" coordinate system
             D_t = rotate_from(deviatoric_to_tensor(strain_mode), Mrot)
             S_t = rotate_from(SonA, Mrot)
-            !
-            !(***) Prepare next iteration if re-using is requested.
-            if (this%use_stability_improvements) then
-                Dresume_t = D_t
-                residual_resume = norm2(deviatoric_to_unscaled_voigt(residual))
-            endif
-            !
+
             ! Calculate output variables
-            !
             associate(r => results)
-                !
                 r%phis(i) = rad_to_deg(fi2)
                 r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
-                r%sigmas_x(i) = S_t(1, 1) - S_t(3, 3)
                 r%residuals(i) = norm2(deviatoric_to_unscaled_voigt(residual))
             end associate
 
@@ -232,10 +173,10 @@ contains
     !
     integer:: i, npoints, left, right, stride, ierr
     !
-    integer, parameter:: ncolumn_labels = 8, column_width = 18
+    integer, parameter:: ncolumn_labels = 5, column_width = 18
     character(len = column_width), dimension(ncolumn_labels):: column_names = &
         [ character(len = column_width) ::  &
-        'angle','rho','q-value','r-value','s-value','sigma_xx','M-factor','residual' ]
+        'angle','q-value','r-value','s-value','residual' ]
     !
         info = VEF_ERROR
         if (optionalDefault(header, .false.)) then
@@ -249,37 +190,12 @@ contains
             npoints = 0
             if (allocated(data_record%phis)) &
                 npoints = size(data_record%phis)
-            ! Write output file
-            if (this%fold_symmetry) then
-                ! Average over symmetric positions
-                left = 1
-                right = npoints
-                do
-                    if (left > right) exit
-                    stride = right-left
-                    if (stride == 0) stride = 1
-                    write(iounit, fmt = 710, iostat = ierr) data_record%phis(left), &
-                                                      this%rho,                 &
-                                                      avgQRS(data_record%qrsvalues(left:right:stride)), &
-                                                      average(data_record%sigmas_x(left:right:stride)), &
-                                                      average(data_record%mfactors(left:right:stride)), &
-                                                      average(data_record%residuals(left:right:stride))
-                    if (ierr /= 0) return
-                    left = left+1
-                    right = right-1
-                enddo
-            else
-                ! Output complete set of points
-                do i = 1, npoints
-                    write(iounit, fmt = 710, iostat = ierr) data_record%phis(i), &
-                                                      this%rho, &
-                                                      data_record%qrsvalues(i), &
-                                                      data_record%sigmas_x(i), &
-                                                      data_record%mfactors(i), &
-                                                      data_record%residuals(i)
-                    if (ierr /= 0) return
-                enddo
-            endif
+            do i = 1, npoints
+                write(iounit, fmt = 710, iostat = ierr) data_record%phis(i), &
+                                                  data_record%qrsvalues(i), &
+                                                  data_record%residuals(i)
+                if (ierr /= 0) return
+            enddo
         endif
         !
         info = VEF_OK
@@ -299,17 +215,7 @@ contains
         ! Other entities are of the same type, but they can not be treated in a single
         ! statement if SOURCE is provided...
         allocate(res%residuals(npoints), source = 0.D0)
-        allocate(res%sigmas_x(npoints), source = 0.D0)
-        allocate(res%mfactors(npoints), source = 0.D0)
         allocate(res%phis(npoints), source = 0.D0)
     !
-    end function
-
-    real(DP) pure function average(a)
-        real(DP), dimension(:), intent(in):: a
-        integer:: n
-
-        n = size(a)
-        if (n >= 1) average = sum(a) / dble(n)
     end function
 end module

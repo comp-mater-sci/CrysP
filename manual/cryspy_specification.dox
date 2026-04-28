@@ -145,11 +145,11 @@ The imposed stress state is described with reference to this sample reference fr
 
 \subsection configuration_asr Module-specific configuration
 
--# \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
+-# \confdef{n_steps, \ref sec_format_fields_integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
--# \confdef{stress_mode,symsrtensor} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option.
+-# \confdef{stress_mode, \ref sec_format_options_symmatrix} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option.
 Note that the hydrostatic part of the imposed stress mode is ignored, as well as its norm.
--# \confdef{update_state,logical} is a switch that controls update of material state for given step. When set to
+-# \confdef{update_state, \ref sec_format_fields_logical} is a switch that controls update of material state for given step. When set to
   - `False` <BR> then \conffield{stress_mode} is merely queried without finite deformation and without associated evolution of state.
   - `True` <BR> then a finite deformation has to be specified as follows:
     -# \conffield{incrementation_type} specifies how the deformation increments will be calculated. The only allowed values in this module are:
@@ -167,7 +167,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{step} The deformation step sequence number
 	</li>
 
-	<li> \outdef{inc, increment_ASR} The increment sequence number of the current
+	<li> \outdef{increment, increment_ASR} The increment sequence number of the current
 	deformation step
 	</li>
 
@@ -192,8 +192,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{residual} The norm of the difference between the stress mode requested by the user and the stress mode obtained by the model.
 	</li>
 
-	<li> \outdef{sigma_xx} A component of the deviatoric stress tensor \f$ \mathbf{S} \f$
-	in the sample (`xyz`) reference frame
+	<li> \outdef{sigma_xx} The xx-component of the deviatoric stress tensor \f$ \mathbf{S} \f$
 	</li>
 	<li> \outdef{sigma_yy} Similar to \ref sigma_xx
 	</li>
@@ -206,8 +205,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{sigma_xz} Similar to \ref sigma_xx
 	</li>
 
-	<li> \outdef{A_xx} A component of the strain mode tensor \f$ \mathbf{A} \f$ in
-	the sample (`xyz`) reference frame
+	<li> \outdef{A_xx} The xx-component of the strain mode tensor \f$ \mathbf{A} \f$
 	</li>
 	<li> \outdef{A_yy} Similar to \ref A_xx
 	</li>
@@ -234,15 +232,10 @@ Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 
 \subsection configuration_qrs Module-specific configuration
 
--# \confdef{angular_resolution, real} defines the angle in degrees between consecutive sampling directions in the xy-plane.
--# \conffield{pure_uniaxial_state} is defined [here](@ref pure_uniaxial_state_anchor).
--# \confdef{calculate_Mfactor,logical} is a flag to request calculation of average Taylor factor in module-specific output file. If `True`, it may
-increase calculation time for certain model assumptions.
--# \confdef{fold_symmetry,logical} enables or disables averaging of output variables over symmetrically equivalent positions.
+-# \confdef{angular_resolution, \ref sec_format_fields_real} defines the angle in degrees between consecutive sampling directions in the xy-plane.
 
 \par Example
-Please see the configuration file `AKDQf_qrs.cfg` from `examples` directory:
-\includelineno AKDQf_qrs.cfg
+\includelineno example_qrs_config.cfg
 
 \subsection output_qrs Module-specific output
 
