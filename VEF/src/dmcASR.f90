@@ -25,7 +25,6 @@ module dmcASR
 
 
     type, extends(StressDrivenModule):: ASRModule
-        real(DP)::                              rotframe(3)
         type(StressDrivenStep), allocatable::   steps(:)
         type(IncrementationControlSettings):: control
     contains
@@ -37,7 +36,6 @@ module dmcASR
     type:: ASROutput
         integer                 :: step = 0
         type(IncrementOutputRecord), dimension(:), allocatable   :: evolution_output
-        real(DP), dimension(3, 3)   :: rotation_matrix = UNIT_MATRIX_3X3
     end type
 
 contains
@@ -53,7 +51,6 @@ contains
 
         info = VEF_ERROR
         ! Read parameters specific for the ASRModule
-        if (.not. readValue(cnfunit, this%rotframe)) return
         if (.not. readValue(cnfunit, n_steps)) return
         if (n_steps <= 0) &
             call log_error(MOD_NAME, 'readconfig', ERR_VAL, 'Number of steps must at least be 1.')
@@ -118,7 +115,6 @@ contains
         type(IncrementOutputRecord), allocatable:: buffer(:)
         type(IncrementOutputRecord):: tmp_record
         type(Increment), allocatable:: incs(:)
-
         !
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
 
@@ -127,9 +123,6 @@ contains
         RETURN_IF(info /= VEF_OK, info = this%outputFile(ofunit, header=.true.))
         !
         nsteps = size(this%steps)
-
-        ! Calculate rotation matrix (active rotation from material (=texture) to sample frame)
-        Mrot = euler_to_tensor(deg_to_rad(this%rotframe))
 
         do  istep = 1, nsteps
             associate(step => this%steps(istep), &
@@ -265,7 +258,6 @@ contains
             ! Collect the outputs
             !
             output%step = istep
-            output%rotation_matrix = Mrot
             !
             ! Post-process & report
             !

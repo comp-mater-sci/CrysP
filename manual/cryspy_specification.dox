@@ -145,7 +145,6 @@ The imposed stress state is described with reference to this sample reference fr
 
 \subsection configuration_asr Module-specific configuration
 
--# \confdef{sample_orientation, \ref sec_format_options_euler} specifies the orientation of the sample reference frame of the virtual specimen, in format specified in \ref euler_option.
 -# \confdef{n_steps,integer} sets the number of subsequent deformation steps, each one being specified by the configuration settings 3.-4. and their optional subsettings.
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
 -# \confdef{stress_mode,symsrtensor} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option.
@@ -159,8 +158,7 @@ Note that the hydrostatic part of the imposed stress mode is ignored, as well as
 	-# \conffield{increment_magnitude} sets the magnitude of deformation increments.
 
 \par Example
-Please see the configuration file `AKDQf_asr.cfg` from `examples` directory:
-\includelineno AKDQf_asr.cfg
+\includelineno example_asr_config.cfg
 
 \subsection output_asr Module-specific output
 
