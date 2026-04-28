@@ -290,7 +290,6 @@ contains
         type(Parameter), dimension(:), allocatable, target:: params
         real(DP):: tmp(16)
         character(len = max_pathlen)          :: tmp_fname
-        logical:: read_state_dummy
         type(Parameter), pointer:: param_ptr
 
         info = VEF_OK
@@ -381,8 +380,6 @@ contains
                 param_ptr = tmp(15)
                 param_ptr => params .find. 'R2'
                 param_ptr = tmp(16)
-
-                if (.not. readValue(cnfunit, read_state_dummy)) return
           end select
 
           cnf%hardening_parameters = params

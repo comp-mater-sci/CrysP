@@ -40,16 +40,13 @@ HARDENING_CONFIG = {'NONE':                         \
                         + '12.39 1.e-3 0.24',       \
                     'DSH_EDGE':                           \
                         '11\n'                      \
-                        + 'DSHparaset.txt\n'        \
-                        + 'False',                  \
+                        + 'DSHparaset.txt',        \
                     'DSH_SCREW':                   \
                         '12\n'                      \
-                        + 'DSHparaset.txt\n'        \
-                        + 'False',                  \
+                        + 'DSHparaset.txt',        \
                     'DSH_LOOP':                    \
                         '13\n'                      \
-                        + 'DSHparaset.txt\n'        \
-                        + 'False'}
+                        + 'DSHparaset.txt'}
 
 DSH_CONFIG = '2.48E-10\n'   \
              + '8.16E4\n'   \
