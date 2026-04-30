@@ -279,30 +279,22 @@ There is no evolution of state associated with this module.
 
 \subsection configuration_yld Module-specific configuration
 
--# \confdef{angular_resolution,real} Angle between sample points, expressed in degrees and measured from the 1st section base vector towards the 2nd section base vector.
--# \confdef{section_default,logical} is a flag to request default or non-default section definition and yield locus scaling.
+-# \confdef{angular_resolution, \ref sec_format_fields_real} Angle between sample points, expressed in degrees and measured from the 1st section base vector towards the 2nd section base vector.
+-# \confdef{section_default, \ref sec_format_fields_logical} is a flag to request default or non-default section definition and yield locus scaling.
 If \conffield{section_default} equals
   - `True` <BR> then the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis. Furthermore, the yield locus will be scaled by the yield stress corresponding to uniaxial tension along the RD.
   - `False` <BR> then the following suboptions are required:
-    -# \confdef{normalize_base,logical}. If `True`, then the base tensors specified by the following configuration 	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
-	-# \confdef{base_sigma_X,symsrtensor} is the base tensor along the X-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
-	-# \confdef{base_sigma_Y,symsrtensor} is the base tensor along the Y-axis of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
-	-# \confdef{base_sigma_offset,symsrtensor} is the base tensor that determines the mode of the stress that coincides with the origin of the yield locus section, in [Voigt notation](@ref symsrtensor_option).
-	-# \confdef{normalize_stress,logical}
-	-# \confdef{use_scaling,logical}. If it equals
+    -# \confdef{normalize_base,\ref sec_format_fields_logical}. If `True`, then the base tensors specified by the following configuration 	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
+	-# \confdef{base_sigma_X,\ref sec_format_options_symmatrix} is the base tensor along the X-axis of the yield locus section.
+	-# \confdef{base_sigma_Y,\ref sec_format_options_symmatrix} is the base tensor along the Y-axis of the yield locus section.
+	-# \confdef{base_sigma_offset,\ref sec_format_options_symmatrix} is the base tensor that determines the mode of the stress that coincides with the origin of the yield locus section.
+	-# \confdef{normalize_stress,\ref sec_format_fields_logical}
+	-# \confdef{use_scaling,\ref sec_format_fields_logical}. If it equals
 	  - `False` <BR> then the suboption
-        -# \confdef{scaling_stress_mode,symsrtensor} is the stress mode for which the yield point is used as scaling factor, in [Voigt notation](@ref symsrtensor_option).
+        -# \confdef{scaling_stress_mode,\ref sec_format_options_symmatrix} is the stress mode for which the yield point is used as scaling factor.
 
 \par Example
-Please see the configuration file `AKDQf_yld.cfg` from `examples` directory:
-\includelineno AKDQf_yld.cfg
-
-\par Example
-Please see the configuration file `sid1687f_yld.cfg` from `examples` directory:
-\includelineno sid1687f_yld.cfg
-
-
-
+\includelineno example_yld_config.cfg
 
 \subsection output_yld Module-specific output
 
@@ -310,10 +302,6 @@ The module-specific outputfile `<output_prefix>.xyld` makes column-wise reportin
 <ol>
 	<li> \outdef{theta,yldout_theta} The angle \f$ \theta \f$ corresponding to a yield locus
 	point, as requested in \conffield{theta_range}, expressed in degrees.
-	</li>
-
-	<li> \outdef{w} The multiplier for the yield locus offset tensor, as requested in
-	\conffield{offset_range}
 	</li>
 
 	<li> \outdef{sigma} The radial coordinate of the yield locus point

@@ -97,7 +97,7 @@ Various configuration options are best described as a fixed-length set of real v
 0. 45. 0. # Goss orientation
 ~~~~~~~~~~~~~
 
-\subsection sec_format_options_symmatrix Symmetric Matrices
+\subsection sec_format_options_symmatrix Symmetric Matrix
 \confdef{Symmetric_Matrix,symmatrix} Symmetric second-order tensors are expressed in unscaled Voigt notation, as a single-line option that consists of 6 \ref sec_format_fields_real fields.
 
 The symmetric matrix \f$ \mathbf{X} \f$ is expressed as:
@@ -109,7 +109,7 @@ The symmetric matrix \f$ \mathbf{X} \f$ is expressed as:
 1.0 0.0 0.0 0.0 0.0 0.0 # All tensor components are zero, except 11- (or xx-)component.
 ~~~~~~~~~~~~~
 
-\subsection sec_format_options_matrix Matrices
+\subsection sec_format_options_matrix Matrix
 \confdef{Matrix,matrix} General second-order tensors are expressed as 9 \ref sec_format_fields_real fields in column major order:
 
    \f$ X_{11} \space X_{21} \space X_{31} \space X_{12} \space X_{22} \space X_{32} \space X_{13} \space X_{23} \space X_{33}\f$

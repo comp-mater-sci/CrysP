@@ -46,7 +46,6 @@ module dmcYld
     !> Data that describe a single yield locus point
     type:: yldResult
         real(DP):: theta = 0.D0
-        real(DP):: w = 0.D0
         real(DP):: scal_s = 0.D0
         real(DP):: scal_s_rel = 0.D0
         real(DP):: norm_sona = 0.D0
@@ -108,7 +107,6 @@ contains
         class(YldModule), intent(inout)            :: this
         integer, intent(out)                       :: info
         real(DP):: theta, &
-                    w,  &
                     iunilen, &
                     scal_s_rel, &
                     sigma_vector(6)
@@ -160,7 +158,7 @@ contains
 
             scal_s_rel = norm2(stress)/target_stress_norm*iunilen
 
-            yldRes(i) = yldResult(rad_to_deg(theta), 1._DP, norm2(stress), scal_s_rel, &
+            yldRes(i) = yldResult(rad_to_deg(theta), norm2(stress)/target_stress_norm, scal_s_rel, &
                                   norm2(stress), &
                                   strain_mode .dot. stress, &
                                   [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
@@ -193,9 +191,9 @@ contains
     logical, intent(in), optional               :: write_header
     !
     integer:: i, ierr
-    integer, parameter:: column_width = 18, ncolumns = 12
+    integer, parameter:: column_width = 18, ncolumns = 11
     character(len = column_width), dimension(ncolumns), parameter  :: column_labels = [ character(len = column_width) :: &
-        'theta', 'w', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
+        'theta', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
     !
         info = VEF_ERROR
         ! Write the header
@@ -214,10 +212,10 @@ contains
         if (ierr == 0) info = VEF_OK
         !
         ! Formats for output file
-        700 format('#',12(A18, 1X))
-        701 format(1X, 12(A18, 1X))
+        700 format('#',11(A18, 1X))
+        701 format(1X, 11(A18, 1X))
         !710 format(1X, 16(ES18.9E3, 1X))
-        710 format(1X, 12(ES18.9E3, 1X))
+        710 format(1X, 11(ES18.9E3, 1X))
         720 format(/)  ! Double empty line
     !
     end subroutine
