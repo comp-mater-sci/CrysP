@@ -50,9 +50,6 @@ contains
         ! Read "solver config flag" that belongs to the global section
         ! as it is done in the stressDrivenModule.
         info = VEF_ERROR
-        if (.not. readValue(cnfunit, default_solver_config)) return
-        !For the time being, only default solver configuration is accepted for this module.
-        if (.not. default_solver_config) return
 
         !Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return

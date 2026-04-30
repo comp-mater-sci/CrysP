@@ -419,30 +419,24 @@ Both these outputfiles make column-wise reporting of:
 
 \section module_adp Arbirtary Deformation Path (keyword: ADP)
 
-The Arbitrary Deformation Path prescribes an arbitrary generic deformation on a virtual
+The Arbitrary Deformation Path prescribes an arbitrary strain-driven deformation on a virtual
 sample. Several subsequent deformation _steps_ may be imposed; each step imposes a certain
-(constant) deformation. The module can also be used to simply calculate stress response of
-the virtual sample to a superimposed deformation. All inputs and outputs are reported in the
-global material frame.
-
-\note This module implements a deformation-driven crystal plasticity model. The only
-available option in \ref config_search_procedure is to use the default settings.
+(constant) velocity gradient.
 
 \subsection configuration_adp Module-specific configuration
 
--# \confdef{n_steps,integer,n_steps_ADP} sets the number of subsequent deformation steps,
+-# \confdef{n_steps,\ref sec_format_fields_integer} sets the number of subsequent deformation steps,
    each one being specified by later configuration settings and their optional
    subsettings. These subsettings are repeated \conffield{n_steps} times in configuration
    file, in the same order as they are to be applied to the virtual sample:
-    -# \confdef{Velocity_gradient,srtensor_voigt} Velocity gradient tensor expressed in [Voigt notation](@ref srtensor_option_voigt)
+    -# \confdef{Velocity_gradient, \ref sec_format_options_matrix} Velocity gradient tensor.
 
-    -# \confdef{strain_magnitude,real} Magnitude of strain to be imposed.
+    -# \confdef{strain_magnitude, \ref sec_format_fields_real} Magnitude of the von-mises equivalent logarihmic strain to be reached in this step.
 
 ---
 
 \par Example
-Please see the configuration file `sid1687f_adp.cfg` from `examples` directory:
-\includelineno sid1687f_adp.cfg
+\includelineno example_adp_config.cfg
 
 \subsection output_adp Module-specific output
 
