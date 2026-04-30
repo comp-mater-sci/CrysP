@@ -241,10 +241,7 @@ Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 
 The module-specific outputfile `<output_prefix>.xqrs` makes column-wise reporting of:
 <ol>
-	<li> \outdef{angle} The in-plane orientation angle, as requested in \conffield{sample_orientation_range}
-	</li>
-
-	<li> \outdef{rho} The requested imposed stress ratio \f$ \rho \f$, as requested in \conffield{pure_uniaxial_state}. See also \ref stress_ratio_rho
+	<li> \outdef{angle} The in-plane orientation angle in degrees.
 	</li>
 
 	<li> \outdef{q-value} The instantaneous q-value \f$ q_i \f$
@@ -268,22 +265,7 @@ The module-specific outputfile `<output_prefix>.xqrs` makes column-wise reportin
 	\f$ \displaystyle r_i = \frac{q_i}{1-q_i} \f$.
 	</li>
 
-	<li> \outdef{s-value} A normalised flow stress \f$ s \f$
-	</li>
-
-	<li> \outdef{sigma_xx} The normal component along the x-axis of the total stress
-	\f$\sigma_{xx}\f$
-
-	This component of the _total_ stress  \f$\boldsymbol{\sigma}\f$ is derived from
-	the deviatoric stress tensor \f$\mathbf{S}\f$ as:
-	\f[
-		\sigma_{xx}=S_{xx}+\sigma_h=S_{xx}-S_{zz}
-	\f]
-	in which the hydrostatic stress \f$ \sigma_h \f$ is derived from the assumption that
-	the sample is stress-free along the z-axis: \f$ \sigma_{zz}=S_{zz}+\sigma_h=0 \f$.
-	</li>
-
-	<li> \outref{M-factor}
+	<li> \outdef{s-value} The norm of the deviatoric stress tensor in the tested direction.
 	</li>
 
 	<li> \outref{residual}

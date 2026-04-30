@@ -139,8 +139,6 @@ contains
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
             call this%findsolution(target_stress_mode, strain_mode, stress, residual)
 
-            print *, target_stress_mode, strain_mode
-
             SonA = deviatoric_to_tensor(stress)
             SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode
 
