@@ -107,15 +107,12 @@ contains
                   increment, &
                   ierr, &
                   iounit
-        real(DP):: l_voigt(6), &
-                   total_strain
-
-        integer, parameter:: ncolumn_labels = 4+6+2, column_width = 18
+        integer, parameter:: ncolumn_labels = 21, column_width = 18
         character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
-        'step', 'increment', 'duration', 'strain', & ! 4 fields
-        'S_11','S_22','S_33','S_23','S_13','S_12', & ! 6 fields  (I)
-        'eps_vM_end', 'M' & ! 2 fields
-        ]
+        'step', 'increment', 'duration', 'vm_strain', &
+        'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  &
+        'S_11','S_22','S_33','S_23','S_13','S_12', &
+        'M']
 
         info = VEF_ERROR
 
@@ -132,7 +129,6 @@ contains
         if (info /= VEF_OK) return
 
         ! Write the data
-        total_strain = 0._DP
         do step = 1, size(this%steps)
             associate (stp => this%steps(step))
                 do increment = 1, size(stp%increments)
@@ -141,18 +137,17 @@ contains
                             step, increment, &            ! 2 fields
                             inc%duration, &
                             inc%vm_strain, &
+                            step%velocity_gradient
                             tensor_to_unscaled_voigt(inc%stress), &         ! 6 fields: deviatoric stress
-                            total_strain+inc%vm_strain, &
                             inc%taylor_factor
                         if (ierr /= 0) return
                     end associate
                 enddo
-                total_strain = total_strain + stp%increments(size(stp%increments))%vm_strain
             end associate
         enddo
         info = VEF_OK
 
         ! Formats for the output file
-        710 format(1X, 2(I18, 1X), 10(ES18.9E3, 1X))
+        710 format(1X, 2(I18, 1X), 19(ES18.9E3, 1X))
     end function
 end module
