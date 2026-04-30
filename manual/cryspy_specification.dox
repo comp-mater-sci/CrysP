@@ -361,11 +361,11 @@ The equi-work contour of plastic work \f$ W=0 \f$ is identical to the yield locu
 	  -# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be simulated in the reference test.
 		A proper selection of contour levels implies \conffield{step_magnitude} must be set equal or greater than the largest value	of \conffield{contour_levels_range}.
 	  -# \conffield{increment_magnitude} sets the magnitude of deformation increments for the reference test.
--# \confdef{angular_resolution,real} defines the angle between subsequent strain modes used as sample points to generate the work contour at each work level. The resolution is expressed in degrees and is measured from the 1st section base vector towards the 2nd section base vector.
--# \confdef{max_strain,real} defines the maximum strain or work to be achieved by the last contour level.
--# \confdef{strain_increment,real} defines the increments of strain or plastic work between different contour levels. Note that if \conffield{max_strain} can not be divided exactly by \conffield{strain_increment}, the final contour level will exceed \conffield{max_strain} to match the specified \conffield{strain_increment}.
--# \confdef{points_per_contour,integer} sets the number of increments to be performed in-between two subsequent contour levels, for all virtual tests that generate the equi-work contour levels.
--# \confdef{use_default_settings,logical} specifies whether or not the default section in stress space is to be used.
+-# \confdef{angular_resolution,\ref sec_format_fields_real} defines the angle between subsequent strain modes used as sample points to generate the work contour at each work level. The resolution is expressed in degrees and is measured from the 1st section base vector towards the 2nd section base vector.
+-# \confdef{max_strain,\ref sec_format_fields_real} defines the maximum strain or work to be achieved by the last contour level.
+-# \confdef{strain_increment,\ref sec_format_fields_real} defines the increments of strain or plastic work between different contour levels. Note that if \conffield{max_strain} can not be divided exactly by \conffield{strain_increment}, the final contour level will exceed \conffield{max_strain} to match the specified \conffield{strain_increment}.
+-# \confdef{points_per_contour,\ref sec_format_fields_integer} sets the number of increments to be performed in-between two subsequent contour levels, for all virtual tests that generate the equi-work contour levels.
+-# \confdef{use_default_settings,\ref sec_format_fields_logical} specifies whether or not the default section in stress space is to be used.
 If \conffield{use_default_settings} equals
   - `True` then the equi-work contour section is defined by \f$\sigma_{11}\f$ along the
     \f$X\f$-axis, and \f$\sigma_{22}\f$ along the \f$Y\f$-axis.
@@ -378,15 +378,14 @@ If \conffield{use_default_settings} equals
        in [Voigt notation](@ref symsrtensor_option).
 
 \par Example
-Please see the configuration file `AKDQf_ewc.cfg` from `examples` directory:
-\includelineno AKDQf_ewc.cfg
+\includelineno example_ewc_config.cfg
 
 \subsection output_ewc Module-specific output
 
 The module-specific outputfile `<output_prefix>_ewc.ewc` makes column-wise reporting of:
 <ol>
 	<li> \outdef{theta} The angle \f$ \theta \f$ corresponding to a equi-work contour
-	point, as requested in \conffield{theta_range}, expressed in degrees
+	point, expressed in degrees
 	</li>
 
 	<li> \outdef{S,yld_S} The radial coordinate of the equi-work contour point, for requested
@@ -414,7 +413,7 @@ Both these outputfiles make column-wise reporting of:
 	\f]
 	</li>
 
-	<li> \outref{W}
+	<li> \outdef{W}: The amount of dissipated plastic work corresponding to the contourlevel.
 	</li>
 </ol>
 
