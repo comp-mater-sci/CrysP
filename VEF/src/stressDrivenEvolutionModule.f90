@@ -193,7 +193,7 @@ contains
                 ! Calculate strain increment for material state evolution
                 vDe = strain_mode * scaling_factor
 
-                !Because we know the velocity gradient does not  contain rotation, L*t = true strain.
+                !Because we know the velocity gradient does not contain rotation, L*t = true strain.
                 target_strain  = deviatoric_strain_to_von_mises(vDe)
 
                 tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
