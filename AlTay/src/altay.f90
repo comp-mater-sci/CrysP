@@ -64,4 +64,12 @@ contains
 
         call macro_simulate_stress_mode(stress_mode, strain_mode, stress, residual)
     end subroutine
+
+    !> Calculate stress state corresponding to a given strain mode.
+    subroutine altay_simulate_strain_mode(strain_mode, stress)
+        real(DP), dimension(5), intent(in)::    strain_mode !! Deviatoric strain mode
+        real(DP), dimension(5), intent(out)::   stress      !! Stress state corresponding to the strain mode.
+
+        call macro_simulate_strain_mode(strain_mode, stress)
+    end subroutine
 end module

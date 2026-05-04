@@ -16,7 +16,7 @@ altay.f90
 utils/parameters.f90
 macro/macro.f90
 macro/deformation.f90
-macro/stress_mode.f90
+macro/mode.f90
 meso/meso.f90
 meso/meso_model.f90
 meso/taylor_ambiguity.f90

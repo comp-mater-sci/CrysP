@@ -12,11 +12,11 @@ module deformation
              deform
 
     type:: Increment
-        real(DP):: duration
+        real(DP):: duration = 0._DP
         real(DP), dimension(3,3):: deformation_gradient !! Technically redundant but saves a lot of computation
-        real(DP):: vm_strain                            !! Von mises true strain. Technically redundant but saves a lot of computation
+        real(DP):: vm_strain = 0._DP                            !! Von mises true strain. Technically redundant but saves a lot of computation
         real(DP), dimension(3,3):: stress
-        real(DP):: taylor_factor
+        real(DP):: taylor_factor = 0._DP
     end type
 
 contains

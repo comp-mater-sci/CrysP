@@ -5,6 +5,7 @@ module dmcADP
     use dmcResultFileOutput
     use dmcBasicModule
     use file_io
+    use altay
 
     implicit none
 
@@ -28,8 +29,6 @@ module dmcADP
         real(DP):: target_strain
         type(Increment), dimension(:), allocatable:: increments
     end type
-
-    real(DP):: acc_von_mises_strain
 
 contains
 
@@ -62,8 +61,6 @@ contains
         allocate(this%steps(n_steps))
 
         do i = 1, n_steps
-            ! Read the step definition and convert it into
-            ! StrainDrivenStep object step
             if (.not. readValue(cnfunit, this%steps(i)%velocity_gradient)) return
             if (.not. readValue(cnfunit, this%steps(i)%target_strain)) return
         end do
@@ -88,12 +85,16 @@ contains
             call log_error(MOD_NAME, 'run', ERR_VAL, 'Steps array not initialized')
 
         ! Main loop over the steps
-        acc_von_mises_strain = 0._DP
         do i_step = 1, size(this%steps)
             associate(step => this%steps(i_step))
-                call altay_deform(step%velocity_gradient, step%target_strain, step%increments)
-                if (this%altay%nfile /=0) &
-                    call cur_write_block()
+                if (step%target_strain == 0._DP) then
+                    allocate(step%increments(1))
+                    call altay_simulate_strain_mode(step%velocity_gradient, step%increments(1)%stress)
+                else
+                    call altay_deform(step%velocity_gradient, step%target_strain, step%increments)
+                    if (this%altay%nfile /=0) &
+                        call cur_write_block()
+                end if
             end associate
         enddo
         info = this%fileOutput()
@@ -115,6 +116,7 @@ contains
         'M']
 
         info = VEF_ERROR
+        acc_von_mises_strain = 0._DP
 
         ! Open output file
         info = this%openOutputFile('.adp',iounit)

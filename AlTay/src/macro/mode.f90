@@ -1,7 +1,7 @@
 include 'mkl_rci.f90'
 
-!> This module finds the strain mode and stress state corresponding to a given stress mode.
-module stress_mode
+!> This modurule analyzes a particular stress or strain mode without deforming the material.
+module mode
     use iso_c_binding
     use base_defs
     use conversions
@@ -14,7 +14,8 @@ module stress_mode
     implicit none
 
     private
-    public:: simulate_stress_mode
+    public:: simulate_stress_mode, &
+             simulate_strain_mode
 
     character(*), parameter:: MOD_NAME = "stress_mode"
 
@@ -52,7 +53,7 @@ contains
 
     !> Calculate the stress state for a given strain rate
     !>
-    !> Desined as a callback for the trust region optimization in C
+    !> Designed as a callback for the trust region optimization in C
     subroutine get_stress(clusters_wrapper_ptr, strain_rate, stress) bind(C)
         type(C_PTR), intent(in):: clusters_wrapper_ptr          !! C pointer to the clusters wrapper object needed for simulation.
         real(C_DOUBLE), dimension(5), intent(in):: strain_rate  !! Strain rate for which to calculate the stress state.
@@ -67,7 +68,21 @@ contains
 
         call c_f_pointer(clusters_wrapper_ptr, wrapper)
         clusters => wrapper%clusters
-        velocity_gradient = deviatoric_to_tensor(strain_rate)
+        call simulate_strain_mode(clusters, strain_rate, stress)
+    end subroutine
+
+    !> Find the stress state corresponding to a particular strain mode
+    subroutine simulate_strain_mode(clusters, strain_mode, stress)
+        class(Cluster), dimension(:), intent(inout):: clusters
+        real(DP), dimension(5), intent(in):: strain_mode       !! Deviatoric strain mode to be imposed.
+        real(DP), dimension(5), intent(out):: stress           !! Deviatoric stress state
+
+        integer:: i
+        real(DP):: total_weight, &
+                   velocity_gradient(3,3), &
+                   homogenized_stress(3,3)
+
+        velocity_gradient = deviatoric_to_tensor(strain_mode)
         homogenized_stress = 0._DP
         total_weight = 0._DP
 

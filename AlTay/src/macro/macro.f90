@@ -1,7 +1,7 @@
 module macro
     use base_defs
     use cluster_module
-    use stress_mode
+    use mode
     use deformation
     use meso
 
@@ -16,6 +16,7 @@ module macro
     public:: macro_init, &
              macro_finalize, &
              macro_simulate_stress_mode, &
+             macro_simulate_strain_mode, &
              macro_deform, &
              clusters
     contains
@@ -37,6 +38,12 @@ module macro
         call simulate_stress_mode(clusters, stress_mode, strain_mode, stress, residual)
     end subroutine
 
+    subroutine macro_simulate_strain_mode(strain_mode, stress)
+        real(DP), dimension(5), intent(in)::  strain_mode
+        real(DP), dimension(5), intent(out):: stress
+
+        call simulate_strain_mode(clusters, strain_mode, stress)
+    end subroutine
 
     subroutine macro_deform(velocity_gradient, total_strain, increments)
         real(DP), dimension(3,3), intent(in):: velocity_gradient
