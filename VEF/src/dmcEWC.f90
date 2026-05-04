@@ -186,11 +186,7 @@ contains
             ! equivalent plastic strain.
             vEquivalentStrain_ref = ref_output%vm_strain_total
             vPlasticWork_ref = ref_output%icv%plastic_work_total
-            call BarycentricInterpolator_init(bi, interpolation_order, vEquivalentStrain_ref, vPlasticWork_ref, info)
-            if (info /= VEF_OK) then
-                info = VEF_ERROR
-                return
-            endif
+            call BarycentricInterpolator_init(bi, interpolation_order, vEquivalentStrain_ref, vPlasticWork_ref)
             do i = 1, n_contours
                 vPlasticWorkLevels(i) = interpolate(bi, vEquivalentStrainLevels(i))
             enddo
@@ -213,6 +209,7 @@ contains
         !            prevents exploiting that.
         npoints = n_theta
         theta = 0._DP
+
         do i=1,npoints
             !
             vTheta(i) = rad_to_deg(theta)
@@ -233,14 +230,10 @@ contains
             !
             vPlasticWork = output%icv%plastic_work_total
             vScalS = output%scal_s
-            call BarycentricInterpolator_init(bi, interpolation_order, vPlasticWork, vScalS, info)
-            if (info == VEF_OK) then
-                do j = 1, size(vPlasticWorkLevels)
-                    results(j, i) = interpolate(bi, vPlasticWorkLevels(j))
-                enddo
-            else
-                call log_error(MOD_NAME, 'run', ERR_VAL, 'Error in input data')
-            endif
+            call BarycentricInterpolator_init(bi, interpolation_order, vPlasticWork, vScalS)
+            do j = 1, size(vPlasticWorkLevels)
+                results(j, i) = interpolate(bi, vPlasticWorkLevels(j))
+            enddo
             theta = theta + this%angular_resolution
         enddo
         if (info /= VEF_OK) return

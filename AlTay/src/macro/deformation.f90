@@ -46,6 +46,7 @@ contains
         type(Increment):: inc
         type(Increment), allocatable:: increments_buffer(:) !! Needed for when we need to increase size
 
+
         def_grad = UNIT_MATRIX_3X3
         cur_vm_strain = 0._DP
         n_incs = 0

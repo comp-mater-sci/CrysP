@@ -9,6 +9,8 @@ module commonUtils
 
     implicit none
 
+    character(*), parameter, private:: MOD_NAME = 'commonutils'
+
     !> Data needed by barycentric interpolation
     type :: BarycentricInterpolator
 
@@ -92,21 +94,19 @@ contains
     end function
 
     !> Initialize and set BarycentricInterpolator object
-    subroutine BarycentricInterpolator_init(this, order, xi, yi, info)
+    subroutine BarycentricInterpolator_init(this, order, xi, yi)
         type(BarycentricInterpolator),intent(out)   :: this
         integer,intent(in)                          :: order
         real(DP),dimension(:),intent(in)    :: xi
         real(DP),dimension(:),intent(in)    :: yi
-        integer,intent(out)                         :: info
 
         integer :: i
 
-        info = VEF_ERROR
-        if (size(xi) /= size(yi)) return
+        if (size(xi) /= size(yi)) call log_error(MOD_NAME, 'BarycentricInterpolator_init', ERR_VAL, 'Sizes of inputs do not match')
+
         ! TODO: check if the nodes are in strictly ascending order
 
-        call BarycentricInterpolator_init_allocate(this, order, size(xi), info)
-        if (info /= VEF_OK) return
+        call BarycentricInterpolator_init_allocate(this, order, size(xi))
 
         this%xi = xi
         this%yi = yi
@@ -116,68 +116,49 @@ contains
         ! points as the interpolation nodes.
 
         do i = 1, size(this%xi) - order
-            call barycentric_weights(this%xi(i:i+order), this%wi(:,i), info)
+            call barycentric_weights(this%xi(i:i+order), this%wi(:,i))
         enddo
 
     contains
 
         !> Allocate internal structures of BarycentricInterpolator object
-        subroutine BarycentricInterpolator_init_allocate(this, order, npoints, info)
-        type(BarycentricInterpolator),intent(out)   :: this
-        integer,intent(in)  :: order
-        integer,intent(in)  :: npoints
-        integer,intent(out) :: info
-        !
-            info = VEF_ERROR
-            if ((order < 1) .or. (npoints <= order)) return
-            !
+        subroutine BarycentricInterpolator_init_allocate(this, order, npoints)
+            type(BarycentricInterpolator),intent(out)   :: this
+            integer,intent(in)  :: order
+            integer,intent(in)  :: npoints
+
+            character(*), parameter:: PROC_NAME = 'BarycentricInterpolator_init_allocate'
+
+            if (order < 1) call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Order must not be negative')
+            if (npoints <= order) call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too few points.')
+
             this%npoints = npoints
             this%order = order
             allocate(this%xi(npoints), this%yi(npoints))
             allocate(this%wi(order+1, npoints - order))
-            info = VEF_OK
-        !
         end subroutine
 
         !> Compute barycentric weights of interpolation points
         !>
         !> [1] J-P Berrut and L.N. Trefethen, Barycentric Lagrange Interpolation, SIAM Rev.
         !>     46(3), 501\96517. DOI:10.1137/S0036144502417715
-        pure subroutine barycentric_weights(xi, wi, info)
-        real(DP),dimension(0:),intent(in)   :: xi
-        real(DP),dimension(0:),intent(out)  :: wi
-        integer,intent(out)                         :: info
-        !
-        integer :: j,k, n
-        ! real(DP),dimension(0:ubound(xi,dim=1)) :: xdiff
-        !
-            info = VEF_ERROR
+        subroutine barycentric_weights(xi, wi)
+            real(DP),dimension(0:),intent(in)   :: xi
+            real(DP),dimension(0:),intent(out)  :: wi
+
+            integer :: j,k, n
+
             n = ubound(xi,dim=1)
-            if (n /= ubound(wi,dim=1)) return
+            if (n /= ubound(wi,dim=1)) call log_error(MOD_NAME, 'barycentric_weights', ERR_VAL, 'Too few values')
             !
             ! Follow (3.2) in [1]
             do j = 0, n
                 wi(j) = 1.0_DP
-                ! \prod_{k \ne j} (x_j - x_k)
                 do k = 0, n
                     if (j /= k) wi(j) = wi(j) * (xi(j) - xi(k))
                 enddo
             enddo
             wi = 1.D0 / wi
-            info = VEF_OK
-
-            ! A better alternative: follow the algorithm given in [1]
-            ! Deplorably, the code below is buggy...
-            !wi(0) = 1.D0
-            !xdiff = 0.D0
-            !do j = 1, n
-            !    xdiff(:j) = xi(j)-xi(:j)
-            !    wi(:j-1) = wi(:j-1) * xdiff(:j-1)
-            !    wi(j) = product(-xdiff(:j))
-            !enddo
-            ! wi = 1.D0 / wi
-            info = VEF_OK
-        !
         end subroutine
     end subroutine
 

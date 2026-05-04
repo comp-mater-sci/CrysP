@@ -3,6 +3,8 @@
 module dmcIncrementationControl
     use base_defs
     use file_io
+    use deformation
+    use conversions
 
     implicit none
 
@@ -96,19 +98,34 @@ module dmcIncrementationControl
 
 contains
 
-    subroutine IncrementationControl_update(this, vDe, vSe, info)
-    class(IncrementationControl), intent(inout)      :: this
-    real(DP), dimension(5), intent(in):: vDe, vSe
-    integer, intent(out)                             :: info
-    !
+    subroutine IncrementationControl_update(this, vDe, increments, info)
+        class(IncrementationControl), intent(inout)      :: this
+        real(DP), dimension(5), intent(in):: vDe
+        type(Increment), dimension(:), intent(in):: increments
+        integer, intent(out)                             :: info
+
+        integer:: i
+        real(DP):: work, &
+                   v_grad(3,3), &
+                   time
+
+        v_grad = deviatoric_to_tensor(vde)
+        work = 0._DP
+        time = 0._DP
+
+        do i=1,size(increments)
+            work = work + (v_grad .dot. increments(i)%stress) * increments(i)%duration
+            time = time + increments(i)%duration
+        end do
+
         ! Plastic work in the current increment
-        this%plastic_work_inc = dot_product(vDe, vSe)
+        this%plastic_work_inc = work
         ! Plastic work in the current step
         this%plastic_work_step = this%plastic_work_step+this%plastic_work_inc
         ! Total plastic work
         this%plastic_work_total = this%plastic_work_total+this%plastic_work_inc
         ! Increment of plastic strain
-        this%vP_inc = vDe
+        this%vP_inc = vDe * time
         ! Total plastic strain in the current step
         this%vP_step = this%vP_step+this%vP_inc
         ! Total plastic strain:
@@ -117,7 +134,6 @@ contains
         this%vP_abs = this%vP_abs+abs(this%vP_inc)
         this%increment = this%increment  + 1
         info = VEF_OK
-    !
     end subroutine
 
 

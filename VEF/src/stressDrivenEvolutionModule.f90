@@ -122,10 +122,8 @@ contains
             select case(control%scaling_type)
             case(scalingStrainTensor, scalingStrainTensorIncrement)
                 stop_control_variable = norm2(icv%vP_step)
-            !
             case(scalingPlasticWork)
                 stop_control_variable = icv%plastic_work_total
-            !
             case(scalingStrainTensorComponent)
                 ! Get total plastic strain in appropriate reference frame
                 ! and check the tensor component of interest.
@@ -137,7 +135,6 @@ contains
                 ! Make sure it stops immediately
                 stop_flag = .true.
                 stop_control_variable = control%step_size+control%increment_size
-            !
             end select
             !
             stop_flag = stop_flag &
@@ -195,6 +192,9 @@ contains
 
                 !Because we know the velocity gradient does not contain rotation, L*t = true strain.
                 target_strain  = deviatoric_strain_to_von_mises(vDe)
+                !Limit target strain to resonable value to compensate for hardening effects in the early iterations.
+                if (target_strain > 0.1_DP) &
+                    target_strain = 0.1_DP
 
                 tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
 
@@ -220,7 +220,7 @@ contains
             output(n_records) = tmp_record
 
             ! Update icv
-            call icv%update(vDe, vSe, info)
+            call icv%update(vDe, incs, info)
             if (stop_flag .or. (info /= VEF_OK)) exit
         enddo
         if (info /= VEF_OK) return
