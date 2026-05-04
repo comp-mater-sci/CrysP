@@ -76,7 +76,8 @@ contains
                   i_step, i_inc, &
                   n_incs
         real(DP):: v_grad_inc(3,3), &      !! Velocity gradient for an increment. Assumed time step of 1s
-                   taylor_factor
+                   taylor_factor, &
+                   dev_stress(5)
 
         !Run the simulation
         info = VEF_ERROR
@@ -89,7 +90,8 @@ contains
             associate(step => this%steps(i_step))
                 if (step%target_strain == 0._DP) then
                     allocate(step%increments(1))
-                    call altay_simulate_strain_mode(step%velocity_gradient, step%increments(1)%stress)
+                    call altay_simulate_strain_mode(tensor_to_deviatoric(step%velocity_gradient), dev_stress)
+                    step%increments(1)%stress = deviatoric_to_tensor(dev_stress)
                 else
                     call altay_deform(step%velocity_gradient, step%target_strain, step%increments)
                     if (this%altay%nfile /=0) &
@@ -116,7 +118,6 @@ contains
         'M']
 
         info = VEF_ERROR
-        acc_von_mises_strain = 0._DP
 
         ! Open output file
         info = this%openOutputFile('.adp',iounit)
