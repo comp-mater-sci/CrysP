@@ -404,7 +404,7 @@ contains
             rotation = matmul(U,VT)
     end subroutine
 
-    !> Take the matrix logartihm of a 3x3 matrix
+    !> Take the matrix logarithm of a 3x3 matrix
     !>
     !> Performs eigenvalue decomposition via LAPACK under the hood.
     function matrix_log(matrix) result(logarithm)

@@ -143,14 +143,14 @@ contains
                         write(iounit, fmt = 710, iostat = ierr) &
                             step, increment, &            ! 2 fields
                             inc%duration, &
-                            inc%strain, &
+                            inc%vm_strain, &
                             tensor_to_unscaled_voigt(inc%stress), &         ! 6 fields: deviatoric stress
-                            total_strain+inc%strain, &
+                            total_strain+inc%vm_strain, &
                             inc%taylor_factor
                         if (ierr /= 0) return
                     end associate
                 enddo
-                total_strain = total_strain + stp%increments(size(stp%increments))%strain
+                total_strain = total_strain + stp%increments(size(stp%increments))%vm_strain
             end associate
         enddo
         info = VEF_OK
