@@ -8,6 +8,7 @@ module dmcASR
     use commonUtils
     use logging
     use file_io
+    use deformation
 
     implicit none
 
@@ -108,13 +109,15 @@ contains
                    stress(5), &
                    residual(5), &
                    taylor_factor, &
-                   xi(2)
+                   xi(2), &
+                   target_strain
 
         ! Quantities in rotated (aka. sample) reference frame
         type(ASROutput):: output
         type(IncrementationControl):: icv
         type(IncrementOutputRecord), allocatable:: buffer(:)
         type(IncrementOutputRecord):: tmp_record
+        type(Increment), allocatable:: incs(:)
 
         !
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
@@ -222,11 +225,12 @@ contains
                         !
                         ! Calculate strain increment for material state evolution
                         vDe = strain_mode * scaling_factor
-                        tmp_record%dotwona = tmp_record%dotwona * scaling_factor !Assuming 1s time steps
+                        target_strain = deviatoric_strain_to_von_mises(vde)
                         tmp_record%P_inc_evol = deviatoric_to_tensor(vDe)
 
                         ! Update material state
-                        call deformation_step(tmp_record%P_inc_evol, tmp_record%S_evol, taylor_factor)
+                        call altay_deform(tmp_record%P_inc_evol, target_strain, incs)
+                        tmp_record%S_evol = incs(size(incs))%stress
 
                         vSe = tensor_to_deviatoric(tmp_record%S_evol)
                     else
@@ -246,7 +250,7 @@ contains
                     output%evolution_output(n_records) = tmp_record
 
                     ! Update icv
-                    call icv%update(vDe, vSe, info)
+                    call icv%update(vDe, incs, info)
                     if (info /= VEF_OK) &
                         call log_error(MOD_NAME, PROC_NAME, ERR, "Unable to update incrementation control variables.")
                     if (stop_flag) &
