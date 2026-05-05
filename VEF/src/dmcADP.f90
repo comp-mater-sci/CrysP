@@ -107,7 +107,7 @@ contains
                   increment, &
                   ierr, &
                   iounit
-        integer, parameter:: ncolumn_labels = 21, column_width = 18
+        integer, parameter:: ncolumn_labels = 20, column_width = 18
         character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
         'step', 'increment', 'duration', 'vm_strain', &
         'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  &
@@ -137,7 +137,7 @@ contains
                             step, increment, &            ! 2 fields
                             inc%duration, &
                             inc%vm_strain, &
-                            step%velocity_gradient
+                            stp%velocity_gradient, &
                             tensor_to_unscaled_voigt(inc%stress), &         ! 6 fields: deviatoric stress
                             inc%taylor_factor
                         if (ierr /= 0) return
@@ -148,6 +148,6 @@ contains
         info = VEF_OK
 
         ! Formats for the output file
-        710 format(1X, 2(I18, 1X), 19(ES18.9E3, 1X))
+        710 format(1X, 2(I18, 1X), 18(ES18.9E3, 1X))
     end function
 end module
