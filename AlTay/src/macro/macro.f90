@@ -19,6 +19,7 @@ module macro
              macro_simulate_stress_mode, &
              macro_simulate_strain_mode, &
              macro_deform, &
+             macro_stress_driven_deformation, &
              clusters
 
 contains
@@ -52,7 +53,6 @@ contains
         real(DP), intent(in):: target_vm_strain
         type(StressIncrement), dimension(:), allocatable, intent(out):: increments
 
-        integer:: i
         real(DP):: strain_rate(5), &
                    cur_vm_strain, &
                    stress(5), &
@@ -64,11 +64,12 @@ contains
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
             call simulate_stress_mode(clusters, target_stress_mode, strain_rate, stress, residual)
-            strain_incs = deform(clusters, deviatoric_to_tensor(strain_rate), target_vm_strain, target_stress_mode)
+            strain_incs = deform(clusters, &
+                                 deviatoric_to_tensor(strain_rate), &
+                                 target_vm_strain - cur_vm_strain, &
+                                 target_stress_mode)
 
-            do i=1,size(strain_incs)
-                cur_vm_strain = cur_vm_strain + strain_incs(i)%vm_strain
-            end do
+            cur_vm_strain = cur_vm_strain + sum(strain_incs%vm_strain)
 
             call inc_factory%add(StressIncrement(strain_rate, &
                                                  residual, &

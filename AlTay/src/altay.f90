@@ -51,6 +51,14 @@ contains
         call macro_deform(velocity_gradient, total_strain, increments)
     end subroutine
 
+    subroutine altay_stress_driven_deformation(target_stress_mode, target_vm_strain, increments)
+        real(DP), dimension(5), intent(in):: target_stress_mode
+        real(DP), intent(in):: target_vm_strain
+        type(StressIncrement), dimension(:), allocatable, intent(out):: increments
+
+        call macro_stress_driven_deformation(target_stress_mode, target_vm_strain, increments)
+    end subroutine
+
     !> Calculate strain mode and stress corresponding to a desired stress mode.
     !>
     !> Uses iterative search to find an accurate match for the strain mode and stress state corresponding to the d  esired stress mode.
