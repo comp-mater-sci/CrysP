@@ -2,13 +2,12 @@
 module dmcASR
     use conversions
     use file_io
-    use dmcIncrementationControl
     use dmcStressDrivenModule
-    use dmcEvolutionOutputRecord
     use commonUtils
     use logging
     use file_io
     use deformation
+    use incrementation
 
     implicit none
 
@@ -18,24 +17,17 @@ module dmcASR
     character(*), parameter:: MOD_NAME = 'ASRModule'
 
     type:: StressDrivenStep
-        real(DP), dimension(6)   :: stress_mode = 0.D0
-        type(IncrementationControlSettings)             :: icv
-        logical                                         :: update_state = .false.
+        real(DP), dimension(5):: target_stress_mode
+        real(DP):: target_vm_strain
+        type(StressIncrement), dimension(:), allocatable:: increments
     end type
 
-
     type, extends(StressDrivenModule):: ASRModule
-        type(StressDrivenStep), allocatable::   steps(:)
-        type(IncrementationControlSettings):: control
+        type(StressDrivenStep), dimension(:), allocatable:: steps
     contains
         procedure:: readConfig => ASRModule_readConfig
         procedure:: run =>        ASRModule_run
         procedure:: outputFile => ASRModule_outputFile
-    end type
-
-    type:: ASROutput
-        integer                 :: step = 0
-        type(IncrementOutputRecord), dimension(:), allocatable   :: evolution_output
     end type
 
 contains
@@ -45,6 +37,7 @@ contains
         integer, intent(in)                        :: cnfunit
 
         integer:: i, n_steps
+        real(DP):: stress_mode_voigt(6)
 
         info = this%StressDrivenModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
@@ -57,20 +50,35 @@ contains
         allocate(this%steps(n_steps))
         do i = 1, n_steps
             associate (step => this%steps(i))
-                if (.not. readValue(cnfunit, step%stress_mode)) return
-                if (.not. readValue(cnfunit, step%update_state)) return
-                if (step%update_state) then
-                    call IncrementationControlSettings_read(step%icv, cnfunit, info, &
-                                                            allowed=[scalingStrainTensor, &
-                                                                     scalingStrainTensorIncrement, &
-                                                                     scalingPlasticWork])
-                    if (info /= VEF_OK) return
-                endif
-                end associate
+                if (.not. readValue(cnfunit, stress_mode_voigt)) return
+                step%target_stress_mode = unscaled_voigt_to_deviatoric(stress_mode_voigt)
+                step%target_stress_mode = step%target_stress_mode / norm2(step%target_stress_mode)
+                if (.not. readValue(cnfunit, step%target_vm_strain)) return
+            end associate
         enddo
         info = VEF_OK
     end function
 
+
+    subroutine asrmodule_run(this,info)
+        class(ASRModule), intent(inout):: this
+        integer, intent(out):: info
+
+        integer:: i
+
+        do i=1, size(this%steps)
+            associate (step => this%steps(i))
+                if (step%target_vm_strain < TOLERANCE) then
+                    allocate(step%increments(1))
+                    call altay_simulate_stress_mode(step%target_stress_mode, )
+                else
+                    call altay_stress_driven_deformation(step%target_stress_mode, step%target_vm_strain, step%increments)
+                end if
+            end associate
+        end do
+
+
+    end subroutine
 
     subroutine ASRModule_run(this, info)
         class(ASRModule), intent(inout)          :: this

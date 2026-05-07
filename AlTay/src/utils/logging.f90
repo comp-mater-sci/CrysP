@@ -7,12 +7,13 @@ module logging
     !Supported error codes
     !Explicitly numbered for easy reference
     enum, bind(C)
-        enumerator:: ERR      = 1, & !< General error
-                     ERR_DIMS = 2, & !< Out of bounds
-                     ERR_VAL  = 3, & !< Unacceptable value
-                     ERR_IO   = 4, & !< Error during an IO operation
-                     ERR_INIT = 5, & !< Procedure call without proper initialization
-                     ERR_TYPE = 6    !< Erroneous type provided.
+        enumerator:: ERR      = 1, & !! General error
+                     ERR_DIMS = 2, & !! Out of bounds
+                     ERR_VAL  = 3, & !! Unacceptable value
+                     ERR_IO   = 4, & !! Error during an IO operation
+                     ERR_INIT = 5, & !! Procedure call without proper initialization
+                     ERR_TYPE = 6, & !! Erroneous type provided.
+                     ERR_ARG  = 7    !! Invalid argument provided by caller.
     end enum
 
     !Print trace message when preprocessor flag TRACE is set
