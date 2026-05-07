@@ -114,7 +114,8 @@ contains
         type(IncrementationControl):: icv
         type(IncrementOutputRecord), allocatable:: buffer(:)
         type(IncrementOutputRecord):: tmp_record
-        type(Increment), allocatable:: incs(:)
+        type(StrainIncrement), allocatable:: incs(:)
+
         !
         RETURN_IF(info /= VEF_OK, call this%StressDrivenEvolutionModule%run(info))
 

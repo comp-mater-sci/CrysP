@@ -13,6 +13,7 @@ module altay
     use parameters
     use meso
     use deformation
+    use incrementation
 
     implicit none
 
@@ -45,7 +46,7 @@ contains
     subroutine altay_deform(velocity_gradient, total_strain, increments)
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(DP), intent(in)::                 total_strain      !! Total von mises equivalent true strain to be reached.
-        type(Increment), dimension(:), allocatable, intent(out):: increments !! List of increments of the deformation.
+        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! List of increments of the deformation.
 
         call macro_deform(velocity_gradient, total_strain, increments)
     end subroutine

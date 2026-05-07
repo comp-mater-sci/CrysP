@@ -5,6 +5,7 @@ module dmcIncrementationControl
     use file_io
     use deformation
     use conversions
+    use incrementation
 
     implicit none
 
@@ -101,7 +102,7 @@ contains
     subroutine IncrementationControl_update(this, vDe, increments, info)
         class(IncrementationControl), intent(inout)      :: this
         real(DP), dimension(5), intent(in):: vDe
-        type(Increment), dimension(:), intent(in):: increments
+        type(StrainIncrement), dimension(:), intent(in):: increments
         integer, intent(out)                             :: info
 
         integer:: i
