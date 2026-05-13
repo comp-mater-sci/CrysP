@@ -6,6 +6,7 @@
 module commonUtils
     use base_defs
     use altay
+    use logging
 
     implicit none
 

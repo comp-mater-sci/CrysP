@@ -40,9 +40,9 @@ contains
 
         integer, parameter:: n_deformation_types = 3
         integer, parameter:: deformation_id = 1, strainmode_id = 2, strain_id = 3
-        integer:: n_steps, ierr, i
-        real(DP):: tmp_strain(6)
+        integer:: n_steps, ierr, i,j
         logical :: default_solver_config
+
 
         ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
         ! read output and AlTay configuration sections
@@ -62,8 +62,13 @@ contains
         allocate(this%steps(n_steps))
 
         do i = 1, n_steps
-            if (.not. readValue(cnfunit, this%steps(i)%velocity_gradient)) return
-            if (.not. readValue(cnfunit, this%steps(i)%target_strain)) return
+            associate (step => this%steps(i))
+                if (.not. readValue(cnfunit, step%velocity_gradient)) return
+                if (math_trace33(step%velocity_gradient) > TOLERANCE) &
+                    call log_error(MOD_NAME, 'adpmodule_readconfig', ERR_VAL, 'Volumetric deformation is not alowed.')
+
+                if (.not. readValue(cnfunit, step%target_strain)) return
+            end associate
         end do
         info = VEF_OK
     end function
@@ -94,7 +99,7 @@ contains
                     call altay_simulate_strain_mode(tensor_to_deviatoric(step%velocity_gradient), dev_stress)
                     step%increments(1)%stress = deviatoric_to_tensor(dev_stress)
                 else
-                    call altay_deform(step%velocity_gradient, step%target_strain, step%increments)
+                    call altay_strain_driven_deformation(step%velocity_gradient, step%target_strain, step%increments)
                     if (this%altay%nfile /=0) &
                         call cur_write_block()
                 end if

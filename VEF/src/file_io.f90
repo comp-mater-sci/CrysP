@@ -44,9 +44,6 @@ module file_io
         module procedure read_scalar, read_array, read_tensor
       end interface
 
-
-
-
 contains
 
     pure function toString(num) result(str)

@@ -67,7 +67,7 @@ contains
         if (target_vm_strain < TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Target von mises equivalent strain must be larger tham 0.')
 
-        call macro_deform(velocity_gradient, total_strain, increments)
+        call macro_deform(velocity_gradient, target_vm_strain, increments)
     end subroutine
 
     subroutine altay_stress_driven_deformation(target_stress_mode, target_vm_strain, increments)
