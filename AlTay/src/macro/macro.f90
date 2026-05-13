@@ -61,6 +61,7 @@ contains
         type(IncrementListBuilder):: inc_factory
 
         cur_vm_strain = 0._DP
+        strain_rate = target_stress_mode
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
             call simulate_stress_mode(clusters, target_stress_mode, strain_rate, stress, residual)
