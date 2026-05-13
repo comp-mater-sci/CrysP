@@ -68,10 +68,10 @@ contains
 
         integer:: i
 
+        allocate(strain_increments(this%size))
         if (.not. same_type_as(strain_increments, this%data(1)%increment)) &
             call log_error(MOD_NAME, 'get_strain', ERR_TYPE, 'List does not contain strain increments.')
 
-        allocate(strain_increments(this%size))
         do i=1,this%size
             strain_increments(i) = transfer(this%data(i)%increment, strain_increments(i))
         end do
@@ -83,10 +83,10 @@ contains
 
         integer:: i
 
+        allocate(stress_increments(this%size))
         if (.not. same_type_as(stress_increments, this%data(1)%increment)) &
             call log_error(MOD_NAME, 'get_stress', ERR_TYPE, 'List does not contain stress increments.')
 
-        allocate(stress_increments(this%size))
         do i=1,this%size
             stress_increments(i) = transfer(this%data(i)%increment, stress_increments(i))
         end do
