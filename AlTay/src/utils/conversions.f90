@@ -124,6 +124,27 @@ module conversions
             real(DP), dimension(3,3):: R  !Rotational component of the deformation gradient in passive convention
         end function
 
+        !> Calculate true strain from a given stretch tensor
+        !>
+        !> Useful when we know the velocity gradient is purely deviatoric because there U = V = F
+        !> When used with the left stretch tensor, it yields the spatial/Eulerian true strain.
+        !> When used with the right stretch tensor, it yields the material/Lagrangian true strain.
+        module function stretch_to_true_strain(stretch) result(strain)
+            real(DP), dimension(3,3), intent(in):: stretch !! Left or right stretch tensor
+            real(DP), dimension(3,3):: strain
+        end function
+
+
+        !> Calculate true strain from a given stretch tensor
+        !>
+        !> Useful when we know the velocity gradient is purely deviatoric because there U = V = F
+        !> When used with the left stretch tensor, it yields the spatial/Eulerian true strain.
+        !> When used with the right stretch tensor, it yields the material/Lagrangian true strain.
+        module function stretch_to_von_mises_true_strain(stretch) result(vm_strain)
+            real(DP), dimension(3,3), intent(in):: stretch
+            real(DP):: vm_strain
+        end function
+
         !> Extract the true (logarithmic) strain from any deformation gradient.
         !>
         !> Uses finite strain kenematics.
@@ -335,11 +356,19 @@ contains
       R = transpose(R*det(R)**(-1.0_DP/3.0_DP))
     end procedure
 
+    module procedure stretch_to_true_strain
+        strain = matrix_log(stretch)
+    end procedure
+
+    module procedure stretch_to_von_mises_true_strain
+        vm_strain = strain_tensor_to_von_mises(stretch_to_true_strain(stretch))
+    end procedure
+
     module procedure deformation_gradient_to_true_strain
         real(DP):: right_stretch(3,3)
 
         call polar_decomposition(deformation_gradient, stretch=right_stretch)
-        true_strain = matrix_log(right_stretch)
+        true_strain = stretch_to_true_strain(right_stretch)
     end procedure
 
     module procedure deformation_gradient_to_von_mises_true_strain

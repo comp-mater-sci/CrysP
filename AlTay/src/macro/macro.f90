@@ -56,11 +56,13 @@ contains
         real(DP):: strain_rate(5), &
                    cur_vm_strain, &
                    stress(5), &
-                   residual(5)
+                   residual(5), &
+                   true_strain(3,3)
         type(StrainIncrement), dimension(:), allocatable:: strain_incs
         type(IncrementListBuilder):: inc_factory
 
         cur_vm_strain = 0._DP
+        true_strain = 0._DP
         strain_rate = target_stress_mode
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
@@ -70,11 +72,11 @@ contains
                                  target_vm_strain - cur_vm_strain, &
                                  target_stress_mode)
 
-            cur_vm_strain = cur_vm_strain + sum(strain_incs%vm_strain)
+            !True strain is additive and because we know strain_rate has no rotation or volumetric part, F = U.
+            true_strain = true_strain + stretch_to_true_strain(strain_incs(size(strain_incs))%deformation_gradient)
+            cur_vm_strain = strain_tensor_to_von_mises(true_strain)
 
-            call inc_factory%add(StressIncrement(strain_rate, &
-                                                 residual, &
-                                                 strain_incs))
+            call inc_factory%add(StressIncrement(strain_rate, residual, strain_incs))
         end do
 
         increments = inc_factory%get_stress_increments()

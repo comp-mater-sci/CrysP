@@ -369,12 +369,12 @@ contains
 
     !> Perform polar decomposition on a 3x3 matrix
     !>
-    !> According to which output arguments are provided, the stretch and/or rotation is returned.
+    !> According to which output arguments are provided, the right stretch and/or rotation is returned.
     !> Performs singular value decomposition via LAPACK under the hood.
     subroutine polar_decomposition(matrix, stretch, rotation)
         real(DP), dimension(3,3), intent(in):: matrix              !! Input matrix. Must be 3x3
         real(DP), dimension(3,3), intent(out), optional:: stretch  !! If provided by caller, contains right stretch tensor.
-        real(DP), dimension(3,3), intent(out), optional:: rotation !! If provided by caller, contains rortation tensro.
+        real(DP), dimension(3,3), intent(out), optional:: rotation !! If provided by caller, contains rotation tensor.
 
         integer:: i, &                !! Iterator
                   info                !! Return code for LAPACK call.

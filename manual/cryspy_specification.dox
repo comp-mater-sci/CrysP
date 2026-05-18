@@ -152,13 +152,9 @@ The imposed stress state is described with reference to this sample reference fr
 These settings are repeated \conffield{n_steps} times in configuration file, in the same order as they are to be applied to the virtual sample.
 -# \confdef{stress_mode, \ref sec_format_options_symmatrix} specifies the imposed stress mode for given step, with reference to the sample (`xyz`) reference frame, and in format specified in \ref symsrtensor_option.
 Note that the hydrostatic part of the imposed stress mode is ignored, as well as its norm.
--# \confdef{update_state, \ref sec_format_fields_logical} is a switch that controls update of material state for given step. When set to
-  - `False` <BR> then \conffield{stress_mode} is merely queried without finite deformation and without associated evolution of state.
-  - `True` <BR> then a finite deformation has to be specified as follows:
-    -# \conffield{incrementation_type} specifies how the deformation increments will be calculated. The only allowed values in this module are:
-		`StrainTensor`, `StrainTensorIncrement` and `PlasticWork`. See \ref incrementation_option for details.
-	-# \conffield{step_magnitude} provides maximal deformation (as specified by \conffield{incrementation_type}) to be reached in the virtual test.
-	-# \conffield{increment_magnitude} sets the magnitude of deformation increments.
+-# \confdef{step_magnitude,real} The Von Mises equivalent true strain to be achieved in this step. If it is 0, the strain mode corres      ponding to this stress state is querried, without updating the material state.
+
+
 
 \par Example
 \includelineno example_asr_config.cfg

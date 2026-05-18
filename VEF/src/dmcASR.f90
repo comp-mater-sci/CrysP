@@ -50,6 +50,7 @@ contains
         do i = 1, n_steps
             associate (step => this%steps(i))
                 if (.not. readValue(cnfunit, step%target_stress_mode)) return
+                step%target_stress_mode = step%target_stress_mode / norm2(step%target_stress_mode)
                 if (.not. readValue(cnfunit, step%target_vm_strain)) return
             end associate
         enddo
@@ -106,7 +107,8 @@ contains
                   tot_incs, &
                   ierr, &
                   iounit
-        real(DP):: stress_scaling_factor
+        real(DP):: stress_scaling_factor, &
+                   true_strain(3,3)
 
         if (this%openOutputFile('.asr',iounit) /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to upen output file')
@@ -118,25 +120,30 @@ contains
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to write ouptut file header.')
 
         ! Write out data output
+        true_strain = 0._DP
         do i=1, size(this%steps)
             tot_incs = 0
             !! Determine by how much to scale the deviatoric stress to obtain the total stress
             stress_scaling_factor = norm2(unscaled_voigt_to_tensor(this%steps(i)%target_stress_mode)) / norm2(unscaled_voigt_to_deviatoric(this%steps(i)%target_stress_mode))
             do j = 1, size(this%steps(i)%increments)
-                do k=1,size(this%steps(i)%increments(j)%strain_increments)
-                    associate (inc => this%steps(i)%increments(j)%strain_increments(k))
-                        tot_incs = tot_incs + 1
-                        write(iounit, fmt = 710, iostat = ierr) &
-                            i, &
-                            tot_incs, & ! 2 fields
-                            inc%vm_strain, &
-                            sqrt(3._DP/2._DP) * norm2(inc%stress), &
-                            deviatoric_to_tensor(this%steps(i)%increments(j)%strain_rate) .dot. inc%stress, &
-                            norm2(this%steps(i)%increments(j)%residual), &
-                            tensor_to_unscaled_voigt(inc%stress) * stress_scaling_factor, &
-                            deviatoric_to_unscaled_voigt(this%steps(i)%increments(j)%strain_rate)
-                    end associate
-                end do
+                associate (stress_inc => this%steps(i)%increments(j))
+                    do k=1,size(stress_inc%strain_increments)
+                        associate (strain_inc => stress_inc%strain_increments(k))
+                            tot_incs = tot_incs + 1
+                            write(iounit, fmt = 710, iostat = ierr) &
+                                i, &
+                                tot_incs, & ! 2 fields
+                                strain_tensor_to_von_mises(true_strain + stretch_to_true_strain(strain_inc%deformation_gradient)), &
+                                sqrt(3._DP/2._DP) * norm2(strain_inc%stress), &
+                                deviatoric_to_tensor(stress_inc%strain_rate) .dot. strain_inc%stress, &
+                                norm2(stress_inc%residual), &
+                                tensor_to_unscaled_voigt(strain_inc%stress) * stress_scaling_factor, &
+                                deviatoric_to_unscaled_voigt(stress_inc%strain_rate)
+                        end associate
+                    end do
+                    !Value of k is guaranteed by the standard
+                    true_strain = true_strain + stretch_to_true_strain(stress_inc%strain_increments(k-1)%deformation_gradient)
+                end associate
             end do
         end do
         ! Formats for output file
