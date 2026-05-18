@@ -95,18 +95,6 @@ def process_file(path):
     filtered = list(filter(lambda e: not e == 0, res))
     return (sum(filtered) / len(filtered), total)
 
-def format_df(df, cols, mode):
-    if mode == 'YLD':
-        df.columns = df.iloc[0]
-        df = df[1:]
-
-    df = df.astype(float).reset_index()
-
-    if cols != []:
-        return df[cols]
-    else:
-        return df
-
 tests_no_hardening = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, ['NONE'])
 tests_hardening = itertools.product(MODES[0:1], ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[1:3])
 tests_bp = itertools.product(MODES[0:1], ALGORITHMS, ['bcc24'], HARDENING_MODELS[3:6])
@@ -134,8 +122,8 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         elif mode == 'QRS':
             cols = ['q-value', 'r-value', 's-value']
 
-        ref = format_df(ref, cols, mode)
-        res = format_df(res, cols, mode)
+        ref = ref.astype(float).reset_index()
+        res = res.astype(float).reset_index()
 
         #Compare results to reference
         sensitivity = float(margin) / 100.0
