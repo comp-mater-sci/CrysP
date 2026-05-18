@@ -2,10 +2,11 @@
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
     use conversions
-    use dmcStressDrivenModule
+    use altay
     use file_io
     use commonUtils
     use logging
+    use dmcbasicmodule
 
     implicit none
 
@@ -20,14 +21,13 @@ module dmcQRS
           real(DP) :: svalue = 0.D0
     end type
 
-    type, extends(StressDrivenModule):: QRSModule
+    type, extends(BasicModule):: QRSModule
         real(DP):: angular_resolution
     contains
         procedure, pass(this)    :: readConfig => QRSModule_readConfig
         procedure, pass(this)    :: run => QRSModule_run
         procedure, pass(this)    :: fileOutput => QRSModule_fileOutput
     end type
-
 
     !> Container for output datapoints of QRS module
     type:: QRSOutputData
@@ -66,7 +66,7 @@ contains
         logical:: use_default_settings
 
         use_default_settings = .false.
-        info = this%StressDrivenModule%readConfig(cnfunit)
+        info = this%BasicModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
         info = VEF_ERROR
 
@@ -101,7 +101,6 @@ contains
                                             smident
         real(DP)                        :: fi2, residual_resume
         integer     :: i, ofunit, npoints
-        logical     :: useVMGuess
         !
         type(QRSOutputData):: results
 
@@ -122,10 +121,11 @@ contains
         sigma_t = 0._DP
         sigma_t(1, 1) = 1._DP
 
+        !Initial guess for strain mode is stress mode
+        strain_mode = tensor_to_deviatoric(sigma_t)
+        strain_mode = strain_mode / norm2(strain_mode)
+
         do i=1,npoints
-            !
-            ! use von Mises guess as a default
-            useVMGuess = .true.
 
             ! Calculate rotation matrix
             ! - due to passive rotation convention
@@ -136,7 +136,8 @@ contains
 
             target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
-            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+
+            call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
 
             SonA = deviatoric_to_tensor(stress)
             SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode

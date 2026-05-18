@@ -1,10 +1,11 @@
 !> Yield locus calculations
 module dmcYld
     use conversions
-    use dmcStressDrivenModule
     use commonUtils
     use logging
     use file_io
+    use altay
+    use dmcBasicModule
 
     implicit none
 
@@ -16,7 +17,7 @@ module dmcYld
 
 
     !> Class responsible for calculations of yield locus sections
-    type, extends(StressDrivenModule):: YldModule
+    type, extends(BasicModule):: YldModule
 
         real(DP):: angular_resolution
 
@@ -70,7 +71,7 @@ contains
     real(DP):: norm
     logical:: normalize, use_default_settings
     !
-        info = this%StressDrivenModule%ReadConfig(cnfunit)
+        info = this%BasicModule%ReadConfig(cnfunit)
         if (info /= VEF_OK) return
         ! Read parameters specific for the dmcYld program
         if (.not. readValue(cnfunit, this%angular_resolution)) &
@@ -135,8 +136,8 @@ contains
             target_stress_mode = unscaled_voigt_to_deviatoric(this%scaling_vector)
             iunilen = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / iunilen
-
-            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+            strain_mode = target_stress_mode
+            call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
             iunilen = iunilen / norm2(stress)
         endif
         !
@@ -154,7 +155,11 @@ contains
             target_stress_norm = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / target_stress_norm
 
-            call this%findsolution(target_stress_mode, strain_mode, stress, residual)
+            !Initial guess for strain mode is stress mode
+            if (i==1) &
+                strain_mode = target_stress_mode
+
+            call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
 
             scal_s_rel = norm2(stress)/target_stress_norm*iunilen
 

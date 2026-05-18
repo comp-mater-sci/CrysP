@@ -2,13 +2,14 @@
 module dmcASR
     use conversions
     use file_io
-    use dmcStressDrivenModule
     use commonUtils
     use logging
     use file_io
     use deformation
     use macro
     use incrementation
+    use altay
+    use dmcBasicModule
 
     implicit none
 
@@ -23,7 +24,7 @@ module dmcASR
         type(StressIncrement), dimension(:), allocatable:: increments
     end type
 
-    type, extends(StressDrivenModule):: ASRModule
+    type, extends(BasicModule):: ASRModule
         type(StressDrivenStep), dimension(:), allocatable:: steps
     contains
         procedure:: readConfig => ASRModule_readConfig
@@ -39,7 +40,7 @@ contains
 
         integer:: i, n_steps
 
-        info = this%StressDrivenModule%readConfig(cnfunit)
+        info = this%BasicModule%readConfig(cnfunit)
         if (info /= VEF_OK) return
 
         info = VEF_ERROR

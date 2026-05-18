@@ -123,8 +123,8 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         elif mode == 'QRS':
             cols = ['q-value', 'r-value', 's-value']
 
-        ref = ref.astype(float).reset_index()
-        res = res.astype(float).reset_index()
+        ref = (ref.astype(float).reset_index())[cols]
+        res = (res.astype(float).reset_index())[cols]
 
         #Compare results to reference
         sensitivity = float(margin) / 100.0

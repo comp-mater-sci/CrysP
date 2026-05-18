@@ -15,8 +15,6 @@ list(APPEND Fortran_FLAGS ${alamDMC_FLAGS})
 add_executable(cryspy
 basicModule.f90
 commonUtils.f90
-stressDrivenModule.f90
-resultTable.f90
 dmcADP.f90
 dmcASR.f90
 dmcQRS.f90
