@@ -50,7 +50,6 @@ contains
         do i = 1, n_steps
             associate (step => this%steps(i))
                 if (.not. readValue(cnfunit, step%target_stress_mode)) return
-                step%target_stress_mode = step%target_stress_mode / norm2(step%target_stress_mode)
                 if (.not. readValue(cnfunit, step%target_vm_strain)) return
             end associate
         enddo
