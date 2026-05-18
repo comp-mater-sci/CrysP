@@ -95,9 +95,13 @@ def process_file(path):
     filtered = list(filter(lambda e: not e == 0, res))
     return (sum(filtered) / len(filtered), total)
 
-def format_df(df, cols):
-    df.columns = df.iloc[0]
-    df = (df[1:]).astype(float)
+def format_df(df, cols, mode):
+    if mode != 'ASR':
+        df.columns = df.iloc[0]
+        df = df[1:]
+
+    df = df.astype(float).reset_index()
+
     if cols != []:
         return df[cols]
     else:
@@ -130,16 +134,18 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         elif mode == 'QRS':
             cols = ['q-value', 'r-value', 's-value']
 
-        ref = format_df(ref, cols)
-        res = format_df(res, cols)
+        ref = format_df(ref, cols, mode)
+        res = format_df(res, cols, mode)
 
         #Compare results to reference
         sensitivity = float(margin) / 100.0
         if mode == 'ADP' or mode == 'ASR':
             #None of the components should vary more from the reference than MARGIN times the max. component
             for index, row in res.iterrows():
-                row_ref = ref.iloc[index-1]
+
+                row_ref = ref.iloc[index]
                 tolerance = max(abs(row_ref)) * sensitivity
+
                 for i in range(len(row)):
                     element = row[i]
                     element_ref = row_ref[i]
@@ -147,7 +153,7 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         else:
             #None of the components should vary more than MARGIN from the reference
             for index, row in res.iterrows():
-                row_ref = ref.iloc[index-1]
+                row_ref = ref.iloc[index]
                 for i in range(len(row)):
                     element = row[i]
                     element_ref = row_ref[i]
