@@ -2,11 +2,12 @@
 module dmcADP
     use base_defs
     use conversions
-    use dmcResultFileOutput
     use dmcBasicModule
     use file_io
     use altay
     use incrementation
+    use logging
+    use altay
 
     implicit none
 
@@ -77,7 +78,7 @@ contains
     subroutine ADPModule_run(this, info)
         class(ADPModule), intent(inout)  :: this
         integer, intent(out)             :: info
-        !
+
         integer:: iounit, &
                   i_step, i_inc, &
                   n_incs
@@ -110,7 +111,7 @@ contains
 
     !> Write out results to the output file
     integer function ADPModule_fileOutput(this) result(info)
-        class(ADPModule), intent(in)                 :: this
+        class(ADPModule), intent(in):: this
 
         integer:: step, &
                   increment, &
@@ -130,12 +131,8 @@ contains
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, 'fileoutput', ERR_IO, 'Could not open output file.')
 
-        ! Write column numbers
-        info = writeColumnNumbers(iounit, size(column_names), [column_width] )
-        if (info /= VEF_OK) return
         ! Write column labels
-        info = writeColumnNames(iounit, column_names, [column_width] )
-        if (info /= VEF_OK) return
+        call write_standard_header(iounit, column_names)
 
         ! Write the data
         do step = 1, size(this%steps)

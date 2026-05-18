@@ -5,7 +5,6 @@ module dmcQRS
     use dmcStressDrivenModule
     use file_io
     use commonUtils
-    use dmcResultFileOutput
     use logging
 
     implicit none
@@ -160,7 +159,6 @@ contains
         close(ofunit)
     end subroutine
 
-
     !> Write out results to the output file
     integer function QRSModule_fileOutput(this, iounit, data_record, header) result(info)
     implicit none
@@ -183,7 +181,6 @@ contains
         endif
         !
         if (present(data_record)) then
-            info = VEF_ERROR
             ! FIXME: flawed assumption, other arrays may have different size
             npoints = 0
             if (allocated(data_record%phis)) &

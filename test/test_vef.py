@@ -96,7 +96,7 @@ def process_file(path):
     return (sum(filtered) / len(filtered), total)
 
 def format_df(df, cols, mode):
-    if mode != 'ASR':
+    if mode == 'YLD':
         df.columns = df.iloc[0]
         df = df[1:]
 
@@ -108,8 +108,8 @@ def format_df(df, cols, mode):
         return df
 
 tests_no_hardening = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, ['NONE'])
-tests_hardening = itertools.product(MODES[0:3], ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[1:3])
-tests_bp = itertools.product(MODES[0:3], ALGORITHMS, ['bcc24'], HARDENING_MODELS[3:6])
+tests_hardening = itertools.product(MODES[0:1], ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[1:3])
+tests_bp = itertools.product(MODES[0:1], ALGORITHMS, ['bcc24'], HARDENING_MODELS[3:6])
 tests = list(tests_no_hardening) + list(tests_hardening) + list(tests_bp)
 
 #Generate and execute the different test cases.

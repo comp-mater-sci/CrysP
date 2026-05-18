@@ -17,13 +17,15 @@ module file_io
              read_boundaries, &
              cur_write_title, &
              cur_write_block, &
-             open_output_files
+             open_output_files, &
+             write_standard_header
 
     character, parameter::    COMMENT_SIGN = '#'
     character(*), parameter:: MOD_NAME = "file_io"
     integer, parameter::      IMP1 = 7
     integer, parameter::      CMAPNAMELEN = 32   !! Maximal length of strings that are used as keys in the map
     integer, parameter::      MAX_LINE_LEN = 512 !! Maximal length of a line
+    integer,parameter ::      FMT_STRING_LENGTH = 128
 
     !> Helper data structure for resolving name-identifier pairs
     !> MB: Maps (= structure arrays constructed from MapItem) are used to look up name and find corresponding ID and vice versa
@@ -307,4 +309,21 @@ contains
         9999 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open file '//trim(fname))
     end subroutine
 
+    !> Write out standard header: two lines: #1: column numbers, #2 column names
+    subroutine write_standard_header(iounit, column_names)
+        integer,intent(in)                    :: iounit        !< Output IO unit
+        character(*),dimension(:), intent(in) :: column_names  ! Names of columns
+
+        character(FMT_STRING_LENGTH) :: fmt_string
+        integer :: i, &
+                   info, &
+                   ncolumns
+
+        ncolumns = size(column_names)
+        ! Format: two leading spaces, followed by columns
+        fmt_string = '(2X,'// tostring(ncolumns) // '(A,1X))'
+        write(iounit,fmt=fmt_string,iostat=info) (column_names(i), i = 1, ncolumns)
+        if (info /= VEF_OK) &
+            call log_error(MOD_NAME, 'write_standard_header', ERR_IO, 'Could not write output file header')
+    end subroutine
 end module
