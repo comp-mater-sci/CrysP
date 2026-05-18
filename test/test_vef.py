@@ -96,14 +96,15 @@ def process_file(path):
     return (sum(filtered) / len(filtered), total)
 
 tests_no_hardening = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, ['NONE'])
-tests_hardening = itertools.product(MODES[0:1], ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[1:3])
-tests_bp = itertools.product(MODES[0:1], ALGORITHMS, ['bcc24'], HARDENING_MODELS[3:6])
+tests_hardening = itertools.product(MODES[0:2], ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[1:4])
+tests_bp = itertools.product(MODES[0:2], ALGORITHMS, ['bcc24'], HARDENING_MODELS[4:7])
 tests = list(tests_no_hardening) + list(tests_hardening) + list(tests_bp)
 
 #Generate and execute the different test cases.
 @pytest.mark.integration
 @pytest.mark.parametrize('mode,algorithm,slip_system,hardening_model', tests)
 def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
+
     generate_output(update, mode, algorithm, slip_system, hardening_model)
 
     if update == 'FALSE' :
