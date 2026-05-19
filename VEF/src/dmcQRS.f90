@@ -137,6 +137,11 @@ contains
             target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
 
+            !If the angle between the increments is small enough the strain mode for the previous increment is a good initial guess.
+            !Otherwise, use von mises guess
+            if (this%angular_resolution > 0.1_DP) &
+                strain_mode = target_stress_mode
+
             call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
 
             SonA = deviatoric_to_tensor(stress)

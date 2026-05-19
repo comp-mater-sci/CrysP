@@ -156,7 +156,8 @@ contains
             target_stress_mode = target_stress_mode / target_stress_norm
 
             !Initial guess for strain mode is stress mode
-            if (i==1) &
+            !If first iteration or anguler resolution is too large, stick to von mises guess
+            if (i==1 .or. this%angular_resolution > 0.1_DP) &
                 strain_mode = target_stress_mode
 
             call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
