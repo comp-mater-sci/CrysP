@@ -92,11 +92,12 @@ module micro
         !>
         !> Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
         !> time since the last update. The slip rates are assumed constant during the time interval.
-        module subroutine micro_deform(grain_, time, slip_rates, imposed_spin_rate)
+        module subroutine micro_deform(grain_, time, slip_rates, imposed_spin_rate, stress)
             type(Grain), intent(inout):: grain_        !! Grain for which to update the CRSS.
             real(DP), intent(in)::       time, &       !! Elapsed time since last update of the CRSS for this grain.
                                          slip_rates(size(grain_%state%crss, 2)) !! Slip rate for each slip system of the grain.
             real(DP), dimension(3,3), intent(in):: imposed_spin_rate    !! Externally imposed spin rate (from velocity gradient).
+            real(DP), dimension(3,3), intent(in):: stress               !! Stress in the global frame
         end subroutine
     end interface
 end module
@@ -230,6 +231,6 @@ contains
 
     !> See interface domentation
     module procedure micro_deform
-        call grain_%deform(imposed_spin_rate, time, slip_rates)
+        call grain_%deform(imposed_spin_rate, time, slip_rates, stress)
     end procedure
 end submodule

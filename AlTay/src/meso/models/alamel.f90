@@ -256,7 +256,8 @@ contains
                                     spin_relax(3), &
                                     deformation_relax(5), &
                                     v_grad_relax(3,3), &
-                                    v_grad_grain(3,3)
+                                    v_grad_grain(3,3), &
+                                    stress_grain(3,3)
         integer::                   i, j, &
                                     n_systems(2), &
                                     n_active_simplex, &
@@ -330,8 +331,9 @@ contains
 
                 v_grad_relax = (deviatoric_to_tensor(deformation_relax) + spin_to_tensor(spin_relax)) .fromframe. grain_%orientation
                 v_grad_grain = velocity_gradient - v_grad_relax
+                stress_grain = deviatoric_to_tensor(stress_cluster(offset_grain+1:offset_grain+5)) .fromframe. grain_%orientation
 
-                call micro_deform(grain_, time, slip_rates_grain, v_grad_grain)
+                call micro_deform(grain_, time, slip_rates_grain, v_grad_grain, stress_grain)
             end associate
         end do
 

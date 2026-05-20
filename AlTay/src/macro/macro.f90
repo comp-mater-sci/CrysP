@@ -78,8 +78,9 @@ contains
 
             def_grad = matmul(strain_incs(size(strain_incs))%deformation_gradient, def_grad)
             next_vm_strain = stretch_to_von_mises_true_strain(def_grad)
-            prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain)/(next_vm_strain - cur_vm_strain))
             cur_vm_strain = next_vm_strain
+            !Add one for current increment and to make sure padding in incrementation is positive
+            prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain)/(next_vm_strain - cur_vm_strain)) + 1
             call incs%add(StressIncrement(strain_rate, residual, strain_incs), prob_rem_incs)
         end do
 

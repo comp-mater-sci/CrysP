@@ -47,37 +47,37 @@ module incrementation
 
 contains
 
-    subroutine add_strain_increment(this, increment, buffer)
+    subroutine add_strain_increment(this, increment, padding)
         class(StrainIncrementFactory), intent(inout):: this
         type(StrainIncrement), intent(in):: increment
-        integer, intent(in):: buffer
+        integer, intent(in):: padding
 
-        type(StrainIncrement), allocatable:: inc_buffer(:)
+        type(StrainIncrement), allocatable:: buffer(:)
 
         if (this%size == 0) then
-            allocate(this%increments(buffer))
+            allocate(this%increments(padding))
         else if (this%size == size(this%increments)) then
-            allocate(inc_buffer(this%size+buffer))
-            inc_buffer(:this%size) = this%increments
-            call move_alloc(inc_buffer, this%increments)
+            allocate(buffer(this%size+padding))
+            buffer(:this%size) = this%increments
+            call move_alloc(buffer, this%increments)
         end if
 
         this%size = this%size + 1
         this%increments(this%size) = increment
     end subroutine
-    subroutine add_stress_increment(this, increment, buffer)
+    subroutine add_stress_increment(this, increment, padding)
         class(StressIncrementFactory), intent(inout):: this
         type(StressIncrement), intent(in):: increment
-        integer, intent(in):: buffer
+        integer, intent(in):: padding
 
-        type(StressIncrement), allocatable:: inc_buffer(:)
+        type(StressIncrement), allocatable:: buffer(:)
 
         if (this%size == 0) then
-            allocate(this%increments(buffer))
+            allocate(this%increments(padding))
         else if (this%size == size(this%increments)) then
-            allocate(inc_buffer(this%size+buffer))
-            inc_buffer(:this%size) = this%increments
-            call move_alloc(inc_buffer, this%increments)
+            allocate(buffer(this%size+padding))
+            buffer(:this%size) = this%increments
+            call move_alloc(buffer, this%increments)
         end if
 
         this%size = this%size + 1

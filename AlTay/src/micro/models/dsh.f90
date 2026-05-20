@@ -24,8 +24,9 @@ module dsh
     public:: CBBNORMAL, &
              ConstitutiveModelDSH
 
-    real(DP), parameter:: MINFRAC = 2.0D-3,   &     !! See PhD thesis Peeters
-                          LOWFRAC = 10.0D-3         !! See PhD thesis Peeters
+    real(DP), parameter:: MINFRAC = 2.0D-5,   &     !! See PhD thesis Peeters. NOTE original was 2.0D-3. Set to 2.0D-5 because the
+                                                     !! original value was problematic for very small time increments
+                          LOWFRAC = 10.0D-5        !! Idem to MINFRAC. Original value was 10.0D-3
     real(DP), dimension(6, 3), parameter:: CBBNORMAL = transpose(real(SLIP_SYSTEMS_BCC_110(:,1, 1:12:2), DP)/sqrt(2._DP)) !! Normal on the
                                                                                                                    !! cell block boundaries. See PhD thesis Peeters.
 !! Different DSH models use the CBB normal vectors to derive the dislocation movement vectors
