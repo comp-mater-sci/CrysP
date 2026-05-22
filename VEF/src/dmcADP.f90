@@ -109,7 +109,7 @@ contains
                   iounit
         integer, parameter:: ncolumn_labels = 20, column_width = 18
         character(len = column_width), dimension(ncolumn_labels):: column_names = [character(len = column_width) :: &
-        'step', 'increment', 'duration', 'vm_strain', &
+        'step', 'increment', 'duration', 'eps_vm', &
         'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  &
         'S_11','S_22','S_33','S_23','S_13','S_12', &
         'M']

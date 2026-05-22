@@ -380,6 +380,9 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 -# \outdef{increment,increment_ADP} The increment sequence number of the current
    deformation step
 
+-# \outdef{duration} The duration of the increment.
+
+-# \outdef{eps_vM} Von Mises strain at the end of the increment.
 
 -# \outdef{L_11} The 11 component of the velocity gradient tensor \f$ \mathbf{L} \f$ imposed
    during the increment, given in the material (123) reference frame.
@@ -400,14 +403,6 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 -# \outdef{S_12,adp_S_12} similar to \ref adp_S_11 "S_11"
 -# \outdef{S_23,adp_S_23} similar to \ref adp_S_11 "S_11"
 -# \outdef{S_13,adp_S_13} similar to \ref adp_S_11 "S_11"
-
--# \outdef{eps_vM_end} Von Mises strain at the end of the increment
-
--# \outdef{D_vM} Von Mises equivalent strain rate
-
--# \outdef{S_vM} Von Mises equivalent stress
-
--# \outdef{dW,adp_dotW} plastic work rate \f$ W = \mathbf{D} : \mathbf{S} \f$
 
 -# \outdef{M} Taylor factor of the last increment in the step.
 
