@@ -155,17 +155,16 @@ contains
             fi2 = fi2 + this%angular_resolution
         enddo
 
-        info = this%fileOutput(ofunit, results, header=.true.)
+        info = this%fileOutput(ofunit, results)
         close(ofunit)
     end subroutine
 
     !> Write out results to the output file
-    integer function QRSModule_fileOutput(this, iounit, data_record, header) result(info)
+    integer function QRSModule_fileOutput(this, iounit, data_record) result(info)
     implicit none
     class(QRSModule), intent(in)                 :: this
     integer, intent(in)                          :: iounit !< Output IO unit
     type(QRSOutputData), intent(in), optional     :: data_record !< Data to be written out
-    logical, intent(in), optional                 :: header !< Header to be written out
     !
     integer:: i, npoints, left, right, stride, ierr
     !
@@ -173,12 +172,9 @@ contains
     character(len = column_width), dimension(ncolumn_labels):: column_names = &
         [ character(len = column_width) ::  &
         'angle','q-value','r-value','s-value','residual' ]
-    !
+
         info = VEF_ERROR
-        if (optionalDefault(header, .false.)) then
-            info = writeStandardHeader(iounit, column_names, [column_width])
-            if (info /= VEF_OK) return
-        endif
+        call write_standard_header(iounit, column_names)
         !
         if (present(data_record)) then
             ! FIXME: flawed assumption, other arrays may have different size

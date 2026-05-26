@@ -80,11 +80,9 @@ contains
         if (abs(norm2(target_stress_mode) - 1._DP) > TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Norm of stress mode must be 1.')
         if (target_vm_strain < TOLERANCE) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Target von mises equivalent strain must be larger tham 0.')
+            call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Target von mises equivalent strain must be strictly positive.')
 
-        call macro_stress_driven_deformation(target_stress_mode, &
-                                             target_vm_strain, &
-                                             increments)
+        call macro_stress_driven_deformation(target_stress_mode, target_vm_strain, increments)
     end subroutine
 
     !> Calculate strain mode and stress corresponding to a desired stress mode.
