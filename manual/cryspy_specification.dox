@@ -364,7 +364,7 @@ sample. Several subsequent deformation _steps_ may be imposed; each step imposes
    file, in the same order as they are to be applied to the virtual sample:
     -# \confdef{Velocity_gradient, \ref sec_format_options_matrix} Velocity gradient tensor.
 
-    -# \confdef{strain_magnitude, \ref sec_format_fields_real} Magnitude of the von-mises equivalent logarihmic strain to be reached in this step.
+    -# \confdef{strain_magnitude, \ref sec_format_fields_real} Magnitude of the von-mises equivalent logarihmic strain to be reached in this step. If it is set to 0, the material response to the imposed deformation mode is calculated without updating the material state.
 
 ---
 
