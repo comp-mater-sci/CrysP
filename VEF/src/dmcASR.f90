@@ -111,7 +111,10 @@ contains
                   ierr, &
                   iounit
         real(DP):: stress_scaling_factor, &
-                   def_grad(3,3)
+                   def_grad(3,3), &
+                   hydro, &
+                   dev, &
+                   stress(6)
 
         if (this%openOutputFile('.asr',iounit) /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to upen output file')
@@ -127,11 +130,17 @@ contains
         do i=1, size(this%steps)
             tot_incs = 0
             !! Determine by how much to scale the deviatoric stress to obtain the total stress
-            stress_scaling_factor = norm2(unscaled_voigt_to_tensor(this%steps(i)%target_stress_mode)) / norm2(unscaled_voigt_to_deviatoric(this%steps(i)%target_stress_mode))
+            dev = norm2(unscaled_voigt_to_deviatoric(this%steps(i)%target_stress_mode))
+            !Little trick: take norm but do not lose the sign of the hydrostatic component
+            hydro = sum(this%steps(i)%target_stress_mode(1:3)) / sqrt(3._DP)
+            stress_scaling_factor = hydro / dev
+
             do j = 1, size(this%steps(i)%increments)
                 associate (stress_inc => this%steps(i)%increments(j))
                     do k=1,size(stress_inc%strain_increments)
                         associate (strain_inc => stress_inc%strain_increments(k))
+                            stress = tensor_to_unscaled_voigt(strain_inc%stress)
+                            stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress) / sqrt(3._DP)
                             tot_incs = tot_incs + 1
                             write(iounit, fmt = 710, iostat = ierr) &
                                 i, &
@@ -140,7 +149,7 @@ contains
                                 sqrt(3._DP/2._DP) * norm2(strain_inc%stress), &
                                 deviatoric_to_tensor(stress_inc%strain_rate) .dot. strain_inc%stress, &
                                 norm2(stress_inc%residual), &
-                                tensor_to_unscaled_voigt(strain_inc%stress) * stress_scaling_factor, &
+                                stress, &
                                 deviatoric_to_unscaled_voigt(stress_inc%strain_rate)
                         end associate
                     end do
