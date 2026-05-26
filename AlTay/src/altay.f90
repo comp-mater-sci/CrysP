@@ -23,7 +23,8 @@ module altay
              finalizeAltay, &
              altay_strain_driven_deformation, &
              altay_stress_driven_deformation, &
-             altay_simulate_stress_mode
+             altay_simulate_stress_mode, &
+             altay_simulate_strain_mode
 
     character(*), parameter:: MOD_NAME = 'altay'
 
