@@ -1,6 +1,6 @@
 include 'mkl_rci.f90'
 
-!> This modurule analyzes a particular stress or strain mode without deforming the material.
+!> This module analyzes a particular stress or strain mode without deforming the material.
 module mode
     use iso_c_binding
     use base_defs
@@ -17,7 +17,7 @@ module mode
     public:: simulate_stress_mode, &
              simulate_strain_mode
 
-    character(*), parameter:: MOD_NAME = "stress_mode"
+    character(*), parameter:: MOD_NAME = "mode"
 
     !> Wrapper type needed to pass a reference to the clusters to C.
     !>
@@ -59,10 +59,6 @@ contains
         real(C_DOUBLE), dimension(5), intent(in):: strain_rate  !! Strain rate for which to calculate the stress state.
         real(C_DOUBLE), dimension(5):: stress                   !! Stress state for the provided strain rate.
 
-        integer:: i
-        real(DP):: total_weight, &
-                   velocity_gradient(3,3), &
-                   homogenized_stress(3,3)
         type(ClustersWrapper), pointer:: wrapper
         class(Cluster), dimension(:), pointer:: clusters
 
