@@ -137,7 +137,7 @@ contains
             iunilen = norm2(target_stress_mode)
             target_stress_mode = target_stress_mode / iunilen
             strain_mode = target_stress_mode
-            call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
+            call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
             iunilen = iunilen / norm2(stress)
         endif
         !
@@ -160,7 +160,7 @@ contains
             if (i==1 .or. this%angular_resolution > 0.1_DP) &
                 strain_mode = target_stress_mode
 
-            call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
+            call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
 
             scal_s_rel = norm2(stress)/target_stress_norm*iunilen
 

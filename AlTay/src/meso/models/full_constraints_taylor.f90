@@ -164,7 +164,7 @@ contains
 
             slip = sum(abs(slip_rates))
 
-            call micro_deform(grain_, time, slip_rates, velocity_gradient, stress)
+            call grain_%deform(velocity_gradient, time, slip_rates, stress)
         end associate
     end subroutine
 end module

@@ -50,16 +50,8 @@ program alamDMC
     if (the_module%ReadConfig(cnfunit) /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR_IO, 'Could not read module config.')
     close(cnfunit)
 
-    ! Initialize the module
-    if (the_module%initialize() /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR, 'Cannot initialize module.')
-
-    ! Run the module
+    call the_module%initialize()
     call the_module%run(info)
-
     write(display_unit, '(A, 1X, A, 1X, A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
     write(display_unit, '(1X, A)') merge('succesfully.','with errors.',info == 0)
-
-    ! Finalize
-    if (the_module%finalize() /= VEF_OK) call log_error(MODULE_NAME, PROCEDURE_NAME, ERR, 'Error finalizing module.')
-
 end program

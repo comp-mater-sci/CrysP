@@ -52,54 +52,15 @@ module meso
         !> We must make this a subroutine to avoid creations of temporaries passed through the stack by IFX, which may lead to a
         !> stack overflow/segfault.
         !> @endnote
-        module subroutine meso_init(model_id, grains, params, clusters)
+        module subroutine meso_init(model_id, grains, params, model, clusters)
             integer, intent(in):: model_id                               !! ID of the model to be initialized. Must exist in the enum defined in this module.
             type(Grain), dimension(:), intent(in):: grains  !! Initialized grains to be distributed among the clusters.
             type(Parameter), dimension(:), intent(in):: params   !! List of parameters with which to initialize the model. Must correspond
                                                                               !! to the parameter list obtained by calling
                                                                               !! meso_get_parameters(model_id) and be properly initialized.
+            class(MesoModel), allocatable, intent(out):: model                !! The initialized mesoscopic model.
             class(Cluster), dimension(:), allocatable, intent(out):: clusters !! Initialized clusters which form the unit of
                                                                               !! simulation at the mesoscopic level.
-        end subroutine
-
-        !> Get the stress state of a cluster when a certain velocity gradient is applied.
-        !>
-        !> The cluster is not deformed.
-        !> The stress state is homogenized over all of the grains of the cluster and presented in the macroscopic frame.
-        module function meso_get_stress(cluster_, velocity_gradient) result(stress)
-            class(Cluster), intent(inout):: cluster_                  !! Cluster for which to calculate the stress state.
-            real(DP), dimension(3, 3), intent(in):: velocity_gradient !! Velocity gradient to probe.
-            real(DP), dimension(3, 3):: stress                        !! Homogenized stress state of the cluster in the macroscopic
-                                                                      !! frame when deforming according to the given velocity gradient.
-        end function
-
-        !> Apply a deformation step to a cluster.
-        !>
-        !> Calculates and outputs the stress state and slip rates of the cluster during the time step.
-        !> All quantities are assumed constant during the time step.
-        !> On return, the cluster state is updated to correspond to the end of the time step.
-        module subroutine meso_apply_deformation_step(cluster_, velocity_gradient, time, stress, slip)
-            class(Cluster), intent(inout):: cluster_        !! Cluster to deform
-            real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient to apply to the cluster
-            real(DP), intent(in):: time                     !! Duration of the deformation step
-            real(DP), dimension(3, 3), intent(out):: stress !! Homogenized stress state of the cluster during the time step in the
-                                                            !! macroscopic frame.
-            real(DP), intent(out):: slip                    !! Total slip which occured in the cluster during the time step
-        end subroutine
-
-        !> Update the model state at the end of a time step.
-        !>
-        !> Useful because the model may contain state that is constant for all cluster at a particular time but needs to update as
-        !> time passes.
-        module subroutine meso_update_model(velocity_gradient, time)
-            real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
-            real(DP), intent(in):: time                              !! Duration of the time step.
-        end subroutine
-
-        !> Finalize the mesoscopic model.
-        !>
-        !>Deallocate any pointers or allocatable data structures at the meso level.
-        module subroutine meso_finalize()
         end subroutine
     end interface
 end module
@@ -114,8 +75,6 @@ submodule(meso) meso_imp
     use alamel
 
     implicit none
-
-    class(MesoModel), allocatable:: model !! Reference to the mesoscopic model used for this simulation
 
 contains
 
@@ -156,26 +115,5 @@ contains
     module procedure meso_init
         model = get_model_instance(model_id)
         call model%init(grains, params, clusters)
-    end procedure
-
-    !> See interface definition in meso module.
-    module procedure meso_get_stress
-        stress = model%get_stress(cluster_, velocity_gradient)
-    end procedure
-
-    !> See interface definition in meso module.
-    module procedure meso_apply_deformation_step
-        call model%apply_step(cluster_, velocity_gradient, time, stress, slip)
-    end procedure
-
-    !> See interface definition in meso module.
-    module procedure meso_update_model
-        call model%update(velocity_gradient, time)
-    end procedure
-
-    !> See interface definition in meso module.
-    module procedure meso_finalize
-        call model%finalize()
-        deallocate(model)
     end procedure
 end submodule

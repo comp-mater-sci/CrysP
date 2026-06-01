@@ -142,7 +142,7 @@ contains
             if (this%angular_resolution > 0.1_DP) &
                 strain_mode = target_stress_mode
 
-            call altay_simulate_stress_mode(target_stress_mode, strain_mode, stress, residual)
+            call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
 
             SonA = deviatoric_to_tensor(stress)
             SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode

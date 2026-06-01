@@ -83,21 +83,10 @@ module micro
         !> For each provided phase descriptor, a constitutive model is initialized. For each of the orientations in each of
         !> the phase descriptors, a grain object is initialized which points to its constitutive model. All of the grains across all
         !> phases are assimilated as output.
-        module subroutine  micro_init(phases_, grains)
-            type(PhaseDescriptor), dimension(:), intent(in):: phases_    !! Phase descriptors for each phase.
+        module subroutine  micro_init(phase_descriptors, phases, grains)
+            type(PhaseDescriptor), dimension(:), intent(in):: phase_descriptors    !! Phase descriptors for each phase.
+            type(Phase), dimension(:), allocatable, target, intent(out):: phases
             type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
-        end subroutine
-
-        !> Update the critical resolved shear stresses (CRSS) of the grain.
-        !>
-        !> Calculates the evolution of the CRSS on each slip system given the slip rate on each slip system and the elapsed
-        !> time since the last update. The slip rates are assumed constant during the time interval.
-        module subroutine micro_deform(grain_, time, slip_rates, imposed_spin_rate, stress)
-            type(Grain), intent(inout):: grain_        !! Grain for which to update the CRSS.
-            real(DP), intent(in)::       time, &       !! Elapsed time since last update of the CRSS for this grain.
-                                         slip_rates(size(grain_%state%crss, 2)) !! Slip rate for each slip system of the grain.
-            real(DP), dimension(3,3), intent(in):: imposed_spin_rate    !! Externally imposed spin rate (from velocity gradient).
-            real(DP), dimension(3,3), intent(in):: stress               !! Stress in the global frame
         end subroutine
     end interface
 end module
@@ -111,8 +100,6 @@ submodule(micro) micro_imp
     implicit none
 
     character(*), parameter:: MOD_NAME = 'micro'             !! Module name. Simplifies logging.
-
-    class(Phase), dimension(:), allocatable, target:: phases !! Reference to the constitutive models.
 
 contains
 
@@ -193,44 +180,33 @@ contains
     !> See interface domentation
     module procedure micro_init
         integer:: i, j, k, &
-                  n_phases, &
                   n_grains
         integer, allocatable:: miller_indices(:,:,:)
         real(DP):: orientation(3)
         class(HardeningState), allocatable:: initial_state
         type(Phase), pointer:: phase_ptr
 
-        n_phases = size(phases_)
-
         !First determine the total number of grains so we  can allocate the return array.
+        allocate(phases(size(phase_descriptors)))
         n_grains = 0
-        do i = 1, n_phases
-            n_grains = n_grains+size(phases_(i)%orientations, 2)
+        do i = 1, size(phases)
+            n_grains = n_grains+size(phase_descriptors(i)%orientations, 2)
         end do
-
-
-        if (.not. allocated(phases)) &
-            allocate(phases(n_phases))
         allocate(grains(n_grains))
 
         j = 1
-        do i = 1, n_phases
+        do i = 1, size(phases)
             phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
-            phase_ptr%model = get_model_instance(phases_(i)%model_id)
-            miller_indices = get_miller_indices(phases_(i)%deformation_mechanism)
-            initial_state = phases(i)%model%init(miller_indices, phases_(i)%parameters)
+            phase_ptr%model = get_model_instance(phase_descriptors(i)%model_id)
+            miller_indices = get_miller_indices(phase_descriptors(i)%deformation_mechanism)
+            initial_state = phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
 
-            do k = 1, size(phases_(i)%orientations, 2)
+            do k = 1, size(phase_descriptors(i)%orientations, 2)
                 !assignment of orientation needed for gfortran
-                orientation = phases_(i)%orientations(:,k)
+                orientation = phase_descriptors(i)%orientations(:,k)
                 call grains(j)%init(orientation, phases(i)%model, initial_state)
                 j = j+1
             end do
         end do
-    end procedure
-
-    !> See interface domentation
-    module procedure micro_deform
-        call grain_%deform(imposed_spin_rate, time, slip_rates, stress)
     end procedure
 end submodule

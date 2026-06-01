@@ -78,11 +78,11 @@ contains
                     associate (inc => step%increments(1))
                         allocate(inc%strain_increments(1))
                         inc%strain_rate = target_dev_stress
-                        call altay_simulate_stress_mode(target_dev_stress, inc%strain_rate, dev_stress, inc%residual)
+                        call altay_simulate_stress_mode(this%material, target_dev_stress, inc%strain_rate, dev_stress, inc%residual)
                         inc%strain_increments(1)%stress = deviatoric_to_tensor(dev_stress)
                     end associate
                 else
-                    call altay_stress_driven_deformation(target_dev_stress, step%target_vm_strain, step%increments)
+                    call altay_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%increments)
                 end if
             end associate
         end do
@@ -115,6 +115,8 @@ contains
                    hydro, &
                    dev, &
                    stress(6)
+
+        call write_texture(this%material%clusters)
 
         if (this%openOutputFile('.asr',iounit) /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to upen output file')

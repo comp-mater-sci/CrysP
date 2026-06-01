@@ -14,9 +14,8 @@ module file_io
              readvalue, &
              readKeyword, &
              read_texture, &
+             write_texture, &
              read_boundaries, &
-             cur_write_title, &
-             cur_write_block, &
              open_output_files, &
              write_standard_header
 
@@ -241,49 +240,16 @@ contains
         boundaries = deg_to_rad(boundaries)
     end function
 
-    !> Write title line of the CUR format.
-    subroutine cur_write_title(iounit, title, info)
-        integer, intent(in)            :: iounit  !< IO unit number
-        character(len=*), intent(in)   :: title !< Title line
-        integer, intent(out)           :: info  !< exit code: 0 on success
+    subroutine write_texture(clusters)
+        class(Cluster), dimension(:), intent(in):: clusters
 
-        write(iounit, fmt='(A)',iostat = info) title
-    end subroutine
+        integer:: i, j
 
-    !Write the current state of all grains to file.
-    subroutine cur_write_block()
-        integer:: n_grains, &
-                  cluster_size, &
-                  i, j, &
-                  info
-        real(DP):: euler_angles(3)
-
-        !Calculate number of grains as number of clusters times number of grains per cluster
-        cluster_size = size(clusters(1)%grains)
-        n_grains = size(clusters) * cluster_size
-
-        !Write general information
-        write (IMP1, 402)
-        write (IMP1, 403) n_grains
-        write (IMP1, 401)
-
-        !Write state of each grain
-        do i = 1, size(clusters)
-            do j = 1, cluster_size
-                euler_angles = rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
-                write(IMP1, 400, iostat = info)&
-                    (i-1)*cluster_size+j, euler_angles(1), euler_angles(2), euler_angles(3)
-                if (info /= 0) exit
+        do i=1,size(clusters)
+            do j=1, size(clusters(i)%grains)
+                write (IMP1, '(3f8.4)'), rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
             end do
         end do
-
-         400 format (I6, 2X, 3f10.5)
-         401 format (8X, 'phi1',6X, 'PHI',7X, 'phi2',6X, '  GAMMA')
-         402 format (/,' Def. Step    ','Number of orientations',27X,          &
-            2X, 'F(1, 1)',4X, 'F(2, 1)',4X, 'F(3, 1)',4X,                           &
-            2X, 'F(1, 2)',4X, 'F(2, 2)',4X, 'F(3, 2)',4X,                           &
-            2X, 'F(1, 3)',4X, 'F(2, 3)',4X, 'F(3, 3)')
-         403 format(5X, i8)
     end subroutine
 
     subroutine open_output_files(prefix, nfile, info)

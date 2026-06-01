@@ -67,7 +67,6 @@ contains
                 if (.not. readValue(cnfunit, step%velocity_gradient)) return
                 if (math_trace33(step%velocity_gradient) > TOLERANCE) &
                     call log_error(MOD_NAME, 'adpmodule_readconfig', ERR_VAL, 'Volumetric deformation is not alowed.')
-
                 if (.not. readValue(cnfunit, step%target_strain)) return
             end associate
         end do
@@ -97,12 +96,10 @@ contains
             associate(step => this%steps(i_step))
                 if (step%target_strain == 0._DP) then
                     allocate(step%increments(1))
-                    call altay_simulate_strain_mode(tensor_to_deviatoric(step%velocity_gradient), dev_stress)
+                    call altay_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress)
                     step%increments(1)%stress = deviatoric_to_tensor(dev_stress)
                 else
-                    call altay_strain_driven_deformation(step%velocity_gradient, step%target_strain, step%increments)
-                    if (this%altay%nfile /=0) &
-                        call cur_write_block()
+                    call altay_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments)
                 end if
             end associate
         enddo
@@ -124,7 +121,7 @@ contains
         'S_11','S_22','S_33','S_23','S_13','S_12', &
         'M']
 
-        info = VEF_ERROR
+        call write_texture(this%material%clusters)
 
         ! Open output file
         info = this%openOutputFile('.adp',iounit)

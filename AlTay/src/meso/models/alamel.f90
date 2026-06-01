@@ -245,25 +245,25 @@ contains
         real(DP), dimension(3,3), intent(out):: stress
         real(DP),                 intent(out):: slip
 
-        real(DP)::                  strain_grain(5), &
-                                    strain_relaxations(5), &
-                                    slip_grain, &
-                                    spin_coeffs_relaxations(3, 2), &
-                                    taylor_coeffs_relaxations(5,2), &
-                                    taylor_coeffs(10, total_systems(cluster_)), &
-                                    stress_cluster(10), &
-                                    imposed_strain_rate(10), &
-                                    spin_relax(3), &
-                                    deformation_relax(5), &
-                                    v_grad_relax(3,3), &
-                                    v_grad_grain(3,3), &
-                                    stress_grain(3,3)
-        integer::                   i, j, &
-                                    n_systems(2), &
-                                    n_active_simplex, &
-                                    offset_grain, &
-                                    offset_systems, &
-                                    offset_relaxations
+        real(DP):: strain_grain(5), &
+                   strain_relaxations(5), &
+                   slip_grain, &
+                   spin_coeffs_relaxations(3, 2), &
+                   taylor_coeffs_relaxations(5,2), &
+                   taylor_coeffs(10, total_systems(cluster_)), &
+                   stress_cluster(10), &
+                   imposed_strain_rate(10), &
+                   spin_relax(3), &
+                   deformation_relax(5), &
+                   v_grad_relax(3,3), &
+                   v_grad_grain(3,3), &
+                   stress_grain(3,3)
+        integer::  i, j, &
+                   n_systems(2), &
+                   n_active_simplex, &
+                   offset_grain, &
+                   offset_systems, &
+                   offset_relaxations
         integer, dimension(:), allocatable:: ind_overstressed_slip_systems
         real(DP), dimension(total_systems(cluster_)):: slip_rates, &
                                                        rss
@@ -333,7 +333,7 @@ contains
                 v_grad_grain = velocity_gradient - v_grad_relax
                 stress_grain = deviatoric_to_tensor(stress_cluster(offset_grain+1:offset_grain+5)) .fromframe. grain_%orientation
 
-                call micro_deform(grain_, time, slip_rates_grain, v_grad_grain, stress_grain)
+                call grain_%deform(v_grad_grain, time, slip_rates_grain, stress_grain)
             end associate
         end do
 

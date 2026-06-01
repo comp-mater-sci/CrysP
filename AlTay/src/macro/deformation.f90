@@ -12,7 +12,8 @@ module deformation
     public:: deform
 contains
 
-    function deform(clusters, velocity_gradient, target_vm_strain, target_stress_mode) result(increments)
+    function deform(model, clusters, velocity_gradient, target_vm_strain, target_stress_mode) result(increments)
+        class(MesoModel), intent(inout):: model
         class(Cluster), dimension(:), intent(inout)::  clusters
         real(DP), dimension(3,3), intent(in)::         velocity_gradient
         real(DP), intent(in)::                         target_vm_strain
@@ -66,16 +67,16 @@ contains
             end if
 
             !Set model state variables to correspond to end of time step so clusters can use this state to update their own state.
-            call meso_update_model(velocity_gradient, t_inc)
+            call model%update(velocity_gradient, t_inc)
             total_weight = 0._DP
             homogenized_stress = 0._DP
             taylor_factor = 0._DP
             max_stress_inc = 0._DP
 
-            !$OMP PARALLEL SHARED(clusters, velocity_gradient, t_inc, max_stress_inc) PRIVATE(j, stress_cluster, slip_cluster, weight_cluster)
+            !$OMP PARALLEL SHARED(model, clusters, velocity_gradient, t_inc, max_stress_inc) PRIVATE(j, stress_cluster, slip_cluster, weight_cluster)
                 !$OMP DO SCHEDULE(GUIDED) REDUCTION(+:total_weight, homogenized_stress, taylor_factor)
                     do i = 1, size(clusters)
-                        call meso_apply_deformation_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
+                        call model%apply_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
                         weight_cluster = clusters(i)%weight
                         total_weight = total_weight+weight_cluster
                         homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
