@@ -14,7 +14,6 @@ module altay
     use parameters
     use meso
     use deformation
-    use incrementation
 
     implicit none
 

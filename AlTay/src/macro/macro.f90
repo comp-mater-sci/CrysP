@@ -4,7 +4,6 @@ module macro
     use mode
     use deformation
     use meso
-    use incrementation
     use conversions
 
     implicit none
@@ -20,7 +19,14 @@ module macro
              macro_simulate_strain_mode, &
              macro_deform, &
              macro_stress_driven_deformation, &
-             clusters
+             clusters, &
+             StressIncrement
+
+    type:: StressIncrement
+        real(DP), dimension(5):: strain_rate
+        real(DP), dimension(5):: residual
+        type(StrainIncrement), dimension(:), allocatable:: strain_increments
+    end type
 
 contains
 
@@ -53,14 +59,20 @@ contains
         real(DP), intent(in):: target_vm_strain
         type(StressIncrement), dimension(:), allocatable, intent(out):: increments
 
+        integer:: n_incs, &
+                  prob_rem_incs
         real(DP):: strain_rate(5), &
                    cur_vm_strain, &
+                   next_vm_strain, &
+                   vm_strain_inc, &
                    stress(5), &
                    residual(5), &
                    true_strain(3,3)
-        type(StrainIncrement), dimension(:), allocatable:: strain_incs
-        type(IncrementListBuilder):: inc_factory
 
+        type(StrainIncrement), allocatable:: strain_incs(:)
+        type(StressIncrement), allocatable:: inc_buffer(:)
+
+        n_incs = 0
         cur_vm_strain = 0._DP
         true_strain = 0._DP
         strain_rate = target_stress_mode
@@ -74,12 +86,30 @@ contains
 
             !True strain is additive and because we know strain_rate has no rotation or volumetric part, F = U.
             true_strain = true_strain + stretch_to_true_strain(strain_incs(size(strain_incs))%deformation_gradient)
-            cur_vm_strain = strain_tensor_to_von_mises(true_strain)
+            next_vm_strain = strain_tensor_to_von_mises(true_strain)
+            vm_strain_inc = next_vm_strain - cur_vm_strain
 
-            call inc_factory%add(StressIncrement(strain_rate, residual, strain_incs))
+            !Resize storage for increments if needed
+            if (n_incs == 0) then
+                !Estimate the number of increments based on the current increment size. Bound to 100 because hardening may seriously
+                !reduce early increment size.
+                prob_rem_incs = min(ceiling(target_vm_strain / vm_strain_inc),100)
+                allocate(increments(prob_rem_incs))
+            else if (n_incs == size(increments)) then
+                !Idem as above
+                prob_rem_incs = min(ceiling((target_vm_strain - cur_vm_strain) / vm_strain_inc), 100)
+                allocate(inc_buffer(size(increments)+prob_rem_incs))
+                inc_buffer(:n_incs) = increments
+                call move_alloc(inc_buffer, increments)
+            end if
+
+
+            n_incs = n_incs + 1
+            cur_vm_strain = next_vm_strain
+            increments(n_incs) = StressIncrement(strain_rate, residual, strain_incs)
         end do
 
-        increments = inc_factory%get_stress_increments()
+        increments = increments(:n_incs)
     end subroutine
 
     subroutine macro_deform(velocity_gradient, total_strain, increments)

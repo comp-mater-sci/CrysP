@@ -7,7 +7,7 @@ set(libaltay "altay")
 list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
 
 add_library(${libaltay} STATIC
-    macro/trust_region.c
+macro/trust_region.c
 utils/base_defs.f90
 utils/math_utils.f90
 utils/conversions.f90
@@ -17,7 +17,6 @@ utils/parameters.f90
 macro/macro.f90
 macro/deformation.f90
 macro/mode.f90
-macro/incrementation.f90
 meso/meso.f90
 meso/meso_model.f90
 meso/taylor_ambiguity.f90

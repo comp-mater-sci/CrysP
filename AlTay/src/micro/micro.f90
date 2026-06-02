@@ -195,6 +195,7 @@ contains
                   n_phases, &
                   n_grains
         integer, allocatable:: miller_indices(:,:,:)
+        real(DP):: orientation(3)
         class(HardeningState), allocatable:: initial_state
         type(Phase), pointer:: phase_ptr
 
@@ -219,7 +220,9 @@ contains
             initial_state = phases(i)%model%init(miller_indices, phases_(i)%parameters)
 
             do k = 1, size(phases_(i)%orientations, 2)
-                call grains(j)%init(phases_(i)%orientations(:,k), phases(i)%model, initial_state)
+                !assignment of orientation needed for gfortran
+                orientation = phases_(i)%orientations(:,k)
+                call grains(j)%init(orientation, phases(i)%model, initial_state)
                 j = j+1
             end do
         end do
