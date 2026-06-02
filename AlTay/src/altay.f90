@@ -66,7 +66,7 @@ contains
         if (abs(math_trace33(velocity_gradient)) > TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Volumetric deformation is not allowed.')
         if (target_vm_strain < TOLERANCE) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Target von mises equivalent strain must be larger tham 0.')
+            call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Target von mises equivalent strain must be larger than 0.')
 
         call macro_deform(velocity_gradient, target_vm_strain, increments)
     end subroutine
