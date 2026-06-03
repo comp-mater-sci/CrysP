@@ -6,7 +6,7 @@ module dmcADP
     use dmcBasicModule
     use file_io
     use altay
-    use deformation
+    use incrementation
 
     implicit none
 

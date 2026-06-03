@@ -4,21 +4,12 @@ module deformation
     use cluster_module
     use omp_lib
     use meso
+    use incrementation
 
     implicit none
 
     private
-    public:: StrainIncrement, &
-             deform
-
-    type:: StrainIncrement
-        real(DP):: duration = 0._DP
-        real(DP), dimension(3,3):: deformation_gradient = UNIT_MATRIX_3X3 !! Technically redundant but saves a lot of computation
-        real(DP):: vm_strain = 0._DP                           !! Von mises true strain. Technically redundant but saves a lot of computation
-        real(DP), dimension(3,3):: stress = 0._DP
-        real(DP):: taylor_factor = 0._DP
-    end type
-
+    public:: deform
 contains
 
     function deform(clusters, velocity_gradient, target_vm_strain, target_stress_mode) result(increments)
@@ -29,7 +20,6 @@ contains
         type(StrainIncrement), dimension(:), allocatable:: increments
 
         integer:: i, &
-                  n_incs, &
                   prob_rem_incs
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
@@ -45,7 +35,7 @@ contains
                    next_def_grad(3,3), &
                    taylor_factor, &
                    stress_mode(5)
-        type(StrainIncrement), allocatable:: inc_buffer(:)
+        type(StrainIncrementFactory):: incs
 
         def_grad = UNIT_MATRIX_3X3
         cur_vm_strain = 0._DP
@@ -55,7 +45,6 @@ contains
         t_inc = ACCURACY / norm2(velocity_gradient)
         def_grad_inc = matrix_exponential(velocity_gradient*t_inc)
 
-        n_incs = 0
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
             !Determine strain at the end of the increment if we keep the current time step
             next_def_grad = matmul(def_grad_inc, def_grad)
@@ -86,27 +75,15 @@ contains
                 !$OMP END DO
             !$OMP END PARALLEL
 
-            !Resize storage for increments if needed
             vm_strain_inc = next_vm_strain - cur_vm_strain
-            if (n_incs == 0) then
-                !Estimate the number of increments based on the current increment size. Bound to 100 because hardening may seriously
-                !reduce early increment size.
-                prob_rem_incs = min(ceiling(target_vm_strain / vm_strain_inc),100)
-                allocate(increments(prob_rem_incs))
-            else if (n_incs == size(increments)) then
-                !Idem as above
-                prob_rem_incs = min(ceiling((target_vm_strain - cur_vm_strain) / vm_strain_inc), 100)
-                allocate(inc_buffer(size(increments)+prob_rem_incs))
-                inc_buffer(:n_incs) = increments
-                call move_alloc(inc_buffer, increments)
-            end if
-
-            n_incs = n_incs + 1
+            !Fix minimum estimated remaining increment size to 0.1% because interval likely grows due to hardening
+            prob_rem_incs = ceiling((target_vm_strain-cur_vm_strain)/max(.001_DP, vm_strain_inc))
             def_grad = next_def_grad
-            cur_vm_strain = next_vm_strain
             homogenized_stress = homogenized_stress / total_weight
             taylor_factor = taylor_factor * t_inc / total_weight / vm_strain_inc
-            increments(n_incs) = StrainIncrement(t_inc, def_grad, cur_vm_strain, homogenized_stress, taylor_factor)
+            cur_vm_strain = next_vm_strain
+
+            call incs%add(StrainIncrement(t_inc, def_grad, cur_vm_strain, homogenized_stress, taylor_factor), prob_rem_incs)
 
             if (present(target_stress_mode)) then
                 stress_mode = tensor_to_deviatoric(homogenized_stress)
@@ -115,6 +92,6 @@ contains
             end if
         end do
 
-        increments = increments(:n_incs)
+        increments = incs%get()
     end function
 end module

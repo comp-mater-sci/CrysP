@@ -8,6 +8,7 @@ module dmcASR
     use file_io
     use deformation
     use macro
+    use incrementation
 
     implicit none
 
