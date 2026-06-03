@@ -67,14 +67,14 @@ contains
                    vm_strain_inc, &
                    stress(5), &
                    residual(5), &
-                   true_strain(3,3)
+                   def_grad(3,3)
 
         type(StrainIncrement), allocatable:: strain_incs(:)
         type(StressIncrement), allocatable:: inc_buffer(:)
 
         n_incs = 0
         cur_vm_strain = 0._DP
-        true_strain = 0._DP
+        def_grad = UNIT_MATRIX_3X3
         strain_rate = target_stress_mode
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
@@ -85,8 +85,8 @@ contains
                                  target_stress_mode)
 
             !True strain is additive and because we know strain_rate has no rotation or volumetric part, F = U.
-            true_strain = true_strain + stretch_to_true_strain(strain_incs(size(strain_incs))%deformation_gradient)
-            next_vm_strain = strain_tensor_to_von_mises(true_strain)
+            def_grad = matmul(strain_incs(size(strain_incs))%deformation_gradient, def_grad)
+            next_vm_strain = stretch_to_von_mises_true_strain(def_grad)
             vm_strain_inc = next_vm_strain - cur_vm_strain
 
             !Resize storage for increments if needed
@@ -102,7 +102,6 @@ contains
                 inc_buffer(:n_incs) = increments
                 call move_alloc(inc_buffer, increments)
             end if
-
 
             n_incs = n_incs + 1
             cur_vm_strain = next_vm_strain

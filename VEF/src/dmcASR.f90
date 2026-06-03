@@ -109,7 +109,7 @@ contains
                   ierr, &
                   iounit
         real(DP):: stress_scaling_factor, &
-                   true_strain(3,3)
+                   def_grad(3,3)
 
         if (this%openOutputFile('.asr',iounit) /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to upen output file')
@@ -121,7 +121,7 @@ contains
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to write ouptut file header.')
 
         ! Write out data output
-        true_strain = 0._DP
+        def_grad = UNIT_MATRIX_3X3
         do i=1, size(this%steps)
             tot_incs = 0
             !! Determine by how much to scale the deviatoric stress to obtain the total stress
@@ -134,7 +134,7 @@ contains
                             write(iounit, fmt = 710, iostat = ierr) &
                                 i, &
                                 tot_incs, & ! 2 fields
-                                strain_tensor_to_von_mises(true_strain + stretch_to_true_strain(strain_inc%deformation_gradient)), &
+                                stretch_to_von_mises_true_strain(matmul(strain_inc%deformation_gradient, def_grad)), &
                                 sqrt(3._DP/2._DP) * norm2(strain_inc%stress), &
                                 deviatoric_to_tensor(stress_inc%strain_rate) .dot. strain_inc%stress, &
                                 norm2(stress_inc%residual), &
@@ -143,7 +143,7 @@ contains
                         end associate
                     end do
                     !Value of k is guaranteed by the standard
-                    true_strain = true_strain + stretch_to_true_strain(stress_inc%strain_increments(k-1)%deformation_gradient)
+                    def_grad = matmul(stress_inc%strain_increments(k-1)%deformation_gradient, def_grad)
                 end associate
             end do
         end do
