@@ -108,13 +108,13 @@ contains
         end do
         call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system)
 
+        !Limit number of iterations because due to degeneracy we may get stuck in a loop
+        !and although the current solution is valid we can not gurantee it is optimal. This was tested to occur approx. 1 in 100 000
+        !simplex calls and therefore has minimal impact on the results of the simulation. Since handling these degeneracies is
+        !very complicated and expensive, best simply ignore them at a tiny cost in accuracy.
         iter = 0
         max_iters = size(taylor_coeffs, 2)**2
-        do while (most_overstressed_system /= 0)
-            !We are stuck in a loop due to degeneracy and although the current solution is valid we can not gurantee it is optimal. This was tested to occur approx. 1 in 100 000
-            !simplex calls and therefore has minimal impact on the results of the simulation. Since handling these degeneracies is
-            !very complicated and expensive, best simply ignore them at a tiny cost in accuracy.
-            if (iter > max_iters) return
+        do while (most_overstressed_system /= 0 .and. iter <= max_iters)
             iter = iter+1
             ! Search which active slip system must be deactivated (removed from basis)
             new_basis_vector = matmul(inverse_basis, taylor_coeffs(:,most_overstressed_system))
@@ -152,16 +152,17 @@ contains
             call find_most_overstressed_system(taylor_coeffs, rss_basis, inverse_basis, crss, bas, stress, rss, most_overstressed_system)
         end do
 
-        if (rank_update) then
+        if (iter > max_iters .or. (.not. rank_update)) then
+            !Solution was found or we are stuck in a loop and can not meanungfully improve the result.
+            slip = 0._DP
+            slip(basis_systems) = slip_basis
+        else
             !If at least 1 of the slip systems or relaxations align well with the imposed strain, the system is ill-conditioned. In
             !this case, rank updates may be inaccurate. Therefore, if rank updates were performed, recalculate the inverse basis
             !entirely and call simplex again.
             inverse_basis = invert(taylor_coeffs(:,basis_systems))
             retries = retries+1
             call simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, retries)
-        else
-            slip = 0._DP
-            slip(basis_systems) = slip_basis
         end if
     end subroutine simplex_solve
 
