@@ -149,21 +149,3 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
                     if not math.isnan(element_ref):
                         assert abs(element_ref * (1 - sensitivity)) <= abs(element) <= abs(element_ref * (1 + sensitivity))
 
-def get_trace_values(path, module, function):
-    vals = []
-    header = "TRACE " + module + ", " + function
-    with open(path) as log_file:
-        for line in log_file:
-            if header in line:
-                vals.append(line.split(':')[1])
-    return np.array(vals,dtype=float)
-
-@pytest.mark.unit
-@pytest.mark.parametrize('module,function,mode,algorithm,slip_system,hardening_model', [(a,b,c,d,e,f) for ((a,b),(c,d,e,f)) in itertools.product(UNITS, tests)])
-def test_unit(mode, algorithm, slip_system, hardening_model, module, function, update):
-    generate_output(update, mode, algorithm, slip_system, hardening_model)
-    if update == 'FALSE':
-        reference = get_trace_values(TEST_REF/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
-        data = get_trace_values(TEST_RUN/f'{mode}_{algorithm}_{slip_system}_{hardening_model}.log', module, function)
-        assert np.allclose(reference,data,rtol=1e-3,atol=1e-8)
-

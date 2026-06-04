@@ -31,9 +31,9 @@ fi
 done
 
 cd AlTay
-cmake -B $BUILD_TYPE/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE
+cmake -B $BUILD_TYPE/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 cmake --build ${BUILD_TYPE}/build --parallel --target install
 
 cd ../VEF
-cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DTRACE=$TRACE -DCMAKE_INSTALL_PREFIX=.
+cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=.
 cmake --build build --parallel --target install
