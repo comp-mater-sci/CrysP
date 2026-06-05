@@ -35,7 +35,8 @@ The following \ref sec_format_options pertain to the multiscale model used for t
 -# \confdef{texture_file, \ref sec_format_fields_string} specifies the (relative) path to the input texture file. Its format is described in the \ref sec_format_files_texture section.
 
 -# \confdef{model_type, \ref sec_format_fields_string} specifies the multi-scale crystal plasticity model to be used in the calculations. The supported models are:
-    - **ALAMEL**: Advanced LAMEL model developed at KU Leuven.
+    - **ALAMEL**: Advanced LAMEL model developed at KU Leuven. If this model is chosen, the following suboption must be provided:
+        - \confdef{microstructure_file,\ref sec_format_fields_string} Relative path to the microstrucure file. Refer to \ref sec_format_files_microstructure for the structure of this file.
     - **FCTaylor**: Traditional full constraints Taylor model.
 
 -# \confdef{slip_system_set, \ref sec_format_fields_string} specifies the slip system set to be used. Valid values are:
@@ -43,12 +44,6 @@ The following \ref sec_format_options pertain to the multiscale model used for t
         - **bcc24**: BCC crystal with 12 slip systems of {110}&lt;111&gt; type, plus 12 slip systems of {112}&lt;111&gt; type.
         - **bcc48**: BCC crystal with 12 bcc slip systems of {110}&lt;111&gt; type, plus 12 slip systems of {112}&lt;111&gt; type, plus 24 slip systems of {123}&lt;111&gt; type.
 
--# \confdef{use_default_microstructure,\ref sec_format_fields_logical} specifies if the default microstructural description should be used. Possible values are:
-
-  - **True**: The simulation assumes an equi-axed microstructure.
-  - **False**: The user must specify the following suboption:
-
-    \confdef{microstructure_file,\ref sec_format_fields_string} specifies the file with microstructure definition. The file must contain a set of inter-grain boundary plane normals. Its format is identical to that of the \ref sec_format_files_texture.
 
 -# \confdef{hardening_model,\ref sec_format_fields_integer} specifies the micro-scale hardening law used for the simulation. The hardening law maps the critical resolved shear stress \f$ \tau_c \f$ of the slip systems one some set of internal state variables. These internal state variables usually require configuration as well, and are specified as a configuration option directly after the hardening law identifier. The supported hardening laws and their corresponding configuration parameters are the following:
 

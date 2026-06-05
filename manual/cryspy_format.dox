@@ -155,12 +155,14 @@ All configuration files have a fixed format. It is read and interpreted by the p
 <HR>
 
 \subsection sec_format_files_texture Texture File
-The texture file describes the texture of the material. It contains the following \ref sec_format_options:
+The texture file describes the texture of the material. It contains the following options:
 
 - n_orientations(\ref sec_format_fields_integer): The number of orientations in the texture file
 - orientation_1(\ref sec_format_options_euler): The first orientation
 - ...
 - orientation_n(\ref sec_format_options_euler): The n-th orientation
+
+For all models currently available in CrysPy Kernel, the texture file should be interpreted in a statistical sense. It does not have to contain an exact description of the true texture, but rather a representative subset thereof. The file should ideally contain 3000-5000 orientations. By replicating orientations, one may represent larger grains.
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}
@@ -170,21 +172,38 @@ The texture file describes the texture of the material. It contains the followin
     12.500    27.500    30.000
 ~~~~~~~~~~~~~
 
+
 \attention Texture files must not contain comments!
 
 <HR>
 
-\subsection sec_format_files_main Main Configuration File
-The main configuration file describes the simulation and ties together all the input data. Its exact structure depends on the module being executed and is described in \ref page_cryspy_specification. All modules nevertheless use the same general format, which is described here.
+\subsection sec_format_files_microstructure Microstructure File
+The microstructure file describes the microstrucure of the material as a list of inter-grain boundary plane normals. Its structure is identical to the \ref sec_format_files_texture.
 
-The configuration file is structured in two consecutive parts, as follows:
+\par Example:
+~~~~~~~~~~~~~{.txt}
+ 3
+     0.000    20.000   145.000
+    67.500    65.000   -65.000
+    12.500    27.500    30.000
+~~~~~~~~~~~~~
+
+Just like the texture file, the microstructure file should be interpreted in a statistical sense. Its size does not need to match the texture file, nor should any specific mapping between microstructure file entries and texture file entries be assumed.
+
+\attention Microstructure files must not contain comments!
+\note A microstructure file is not always required. Refer to \ref sec_spec_generic_models for details.
+
+\note Often it is not possible to experimentally obtain the microstructure of the sample. In that case, it is recommended to generate a set of boundary normals programmatically that corresponds with the average grain morphology.
+
+<HR>
+
+
+\subsection sec_format_files_main Main Configuration File
+The main configuration file describes the simulation and ties together all the input data. It is structured in two consecutive parts, as follows:
 
  -# generic configuration settings, and
  -# settings related to the specific module.
 
-Only the second part varies from one module to another. For instance, let's have a look at the configuration file `example_asr_config.cfg` located in `examples` directory. The file contains:
-\includelineno example_asr_config.cfg
-
-As in the example above, the leading part of the configuration file relates to the generic configuration, while the rest pertains specifically to the ASR module.
+Its exact contents are described in detail in \ref page_cryspy_specification.
 
 */

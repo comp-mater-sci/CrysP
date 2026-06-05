@@ -196,6 +196,7 @@ contains
                 cnf%model_id = MESO_MODEL_FCTAYLOR
             case ('ALAMEL')
                 cnf%model_id = MESO_MODEL_ALAMEL
+                if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Invalid mesoscopic model.')
         end select
@@ -212,12 +213,6 @@ contains
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
         end select
 
-        ! Process advanced microstructure characterization
-        use_default_microstructure = .true.
-        if (.not. readValue(cnfunit, use_default_microstructure)) return
-        if (.not. use_default_microstructure) then
-            if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
-        end if
         ! Process hardening model section
         call readHardeningSection(cnfunit, cnf, info)
         if (info /= VEF_OK) &
