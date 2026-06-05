@@ -1,6 +1,8 @@
-DEFAULT_INCREMENT = 'StrainTensor\n'    \
-                    + '0.25\n'          \
-                    + '0.01'
+MESO_CONFIG = {'FCTaylor': \
+                    'FCTaylor', \
+               'ALAMEL': \
+                    'ALAMEL\n'  \
+                    + 'equiaxed.smt'}
 
 MODE_CONFIG =  {'ADP':                                              \
                     '3\n'                                           \
@@ -65,8 +67,7 @@ def generate_config(mode, algorithm, slip_system, hardening_model):
            + 'True\n'                                   \
            + '2\n'                                      \
            + 'texture.smt\n'                            \
-           + algorithm + '\n'                           \
+           + MESO_CONFIG[algorithm] + '\n'                           \
            + slip_system + '\n'                         \
-           + 'True\n'                                   \
            + HARDENING_CONFIG[hardening_model] + '\n'   \
            + MODE_CONFIG[mode]
