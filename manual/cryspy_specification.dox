@@ -113,9 +113,8 @@ The following \ref sec_format_options pertain to the multiscale model used for t
         #Example multilevel model configuration: ALAMEL simulation of an fcc12 material with voce hardening.
         example_texture.smt        #Path to texture file
         ALAMEL                     #Mesoscale model
+        equiaxed.smt               #Path to microstructure file
         fcc12                      #Slip system family
-        False                      #Use default microstructure?
-        custom_microstructure.smt  #Path to microstructure file
         1                          # Hardening law Id
         12.39 15.0 20.0 0.2 0.1    # Hardening parameter set
 ~~~~~~~~~~~~~
