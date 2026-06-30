@@ -129,10 +129,13 @@ contains
         def_grad = UNIT_MATRIX_3X3
         do i=1, size(this%steps)
             tot_incs = 0
-            !! Determine by how much to scale the deviatoric stress to obtain the total stress
+            !Determine by how much to scale the deviatoric stress to obtain the total stress
+            !Because the actual stress tensor is just the stress mode scaled by the stress norm,
+            !The hydrostatic component is also the hydrostatic component of the stress mode scaled by the stress norm.
+            !The sress norm is in turn the norm of the deviatoric component over the norm of the deviatoric component of the stress mode
+
             dev = norm2(unscaled_voigt_to_deviatoric(this%steps(i)%target_stress_mode))
-            !Little trick: take norm but do not lose the sign of the hydrostatic component
-            hydro = sum(this%steps(i)%target_stress_mode(1:3)) / sqrt(3._DP)
+            hydro = sum(this%steps(i)%target_stress_mode(1:3)) / 3._DP
             stress_scaling_factor = hydro / dev
 
             do j = 1, size(this%steps(i)%increments)
@@ -140,7 +143,7 @@ contains
                     do k=1,size(stress_inc%strain_increments)
                         associate (strain_inc => stress_inc%strain_increments(k))
                             stress = tensor_to_unscaled_voigt(strain_inc%stress)
-                            stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress) / sqrt(3._DP)
+                            stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress)
                             tot_incs = tot_incs + 1
                             write(iounit, fmt = 710, iostat = ierr) &
                                 i, &

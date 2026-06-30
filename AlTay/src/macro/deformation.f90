@@ -73,7 +73,7 @@ contains
             max_stress_inc = 0._DP
 
             !$OMP PARALLEL SHARED(clusters, velocity_gradient, t_inc, max_stress_inc) PRIVATE(j, stress_cluster, slip_cluster, weight_cluster)
-                !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION(+:total_weight, homogenized_stress, taylor_factor)
+                !$OMP DO SCHEDULE(GUIDED) REDUCTION(+:total_weight, homogenized_stress, taylor_factor)
                     do i = 1, size(clusters)
                         call meso_apply_deformation_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
                         weight_cluster = clusters(i)%weight

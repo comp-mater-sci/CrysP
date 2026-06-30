@@ -83,7 +83,7 @@ contains
         total_weight = 0._DP
 
         !$OMP PARALLEL SHARED(clusters, velocity_gradient)
-            !$OMP DO SCHEDULE(DYNAMIC, 1) REDUCTION (+:total_weight, homogenized_stress)
+            !$OMP DO SCHEDULE(GUIDED) REDUCTION (+:total_weight, homogenized_stress)
                 do i = 1, size(clusters)
                     homogenized_stress = homogenized_stress+meso_get_stress(clusters(i), velocity_gradient) * clusters(i)%weight
                     total_weight = total_weight+clusters(i)%weight
