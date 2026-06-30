@@ -78,7 +78,7 @@ contains
                         call meso_apply_deformation_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
                         weight_cluster = clusters(i)%weight
                         total_weight = total_weight+weight_cluster
-                         homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
+                        homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
                         taylor_factor = taylor_factor + slip_cluster * weight_cluster
                         !$OMP CRITICAL
                             do j=1,size(clusters(i)%grains)
