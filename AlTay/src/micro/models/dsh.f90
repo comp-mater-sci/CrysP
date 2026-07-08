@@ -24,7 +24,7 @@ module dsh
     public:: CBBNORMAL, &
              ConstitutiveModelDSH
 
-    real(DP), parameter:: MINFRAC = 2.0D-5,   &     !! See PhD thesis Peeters. NOTE original was 2.0D-3. Set to 2.0D-5 because the
+    real(DP), parameter:: MINFRAC = 2.0D-5,   &     !! See B. Peeters: Multiscale modelling of the induced plastic anisotropy in IF steel during sheet forming (PhD thesis). NOTE original was 2.0D-3. Set to 2.0D-5 because the
                                                      !! original value was problematic for very small time increments
                           LOWFRAC = 10.0D-5        !! Idem to MINFRAC. Original value was 10.0D-3
     real(DP), dimension(6, 3), parameter:: CBBNORMAL = transpose(real(SLIP_SYSTEMS_BCC_110(:,1, 1:12:2), DP)/sqrt(2._DP)) !! Normal on the
