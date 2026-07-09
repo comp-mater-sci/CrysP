@@ -12,23 +12,18 @@ module dmcBasicModule
     implicit none
 
     private
-    public:: BasicModule, &
-             readAlTayConfigSection
+    public:: BasicModule
 
     character(*), parameter:: MOD_NAME = 'basicModule'
 
-
    !> Root-level configuration structure of Altay
    type:: altayConfigData
-        integer                                     :: model_id = MESO_MODEL_ALAMEL
-        character(len = fname_len)                  :: output_prefix = 'alamel'
-        character(len = fname_len)                  :: jobtitle      = 'alamel'
-        character(len = fname_len)                  :: micros_fname  = 'equiaxed.smt'
-        character(len = fname_len)                  :: texture_input_fname = ''
-        integer:: hardening_model_id
+        integer::                      meso_model_id
+        character(len = fname_len)::   microstructure_file_name
+        character(len = fname_len)::   texture_file_name
+        integer::                      hardening_model_id
         type(Parameter), allocatable:: hardening_parameters(:)
-        integer:: deformation_mechanism
-        integer                                   :: nfile = 0
+        integer::                      deformation_mechanism
    end type
 
     !> Class implementing basic subset of operations that are shared by all
@@ -40,7 +35,7 @@ module dmcBasicModule
     !>       in BasicModule) in the OO-acceptable style:
     !>       `this%ParentClassName%method()`
     type:: BasicModule
-          character(fname_len):: output_prefix
+          character(:), allocatable:: output_prefix
           logical:: print_state
           type(altayConfigData):: altay !< Root-level configuration structure of texture and hardening
           type(MaterialState)::   material
@@ -63,23 +58,19 @@ contains
         type(Parameter), pointer:: param_ptr
         type(PhaseDescriptor):: phase_
 
-        meso_model_id = altay_config%model_id
+        meso_model_id = altay_config%meso_model_id
         meso_params = meso_get_parameters(meso_model_id)
         if (meso_params .includes. "Boundaries") then
             param_ptr => meso_params .find. "Boundaries"
-            param_ptr = read_boundaries(altay_config%micros_fname)
+            param_ptr = read_boundaries(altay_config%microstructure_file_name)
         end if
-
-        call open_output_files(altay_config%output_prefix, altay_config%nfile, info)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, 'initialize', ERR_IO, 'Cannot open output files.')
 
         !Even though the back-end logic can handle n phases, the current I/O structure only sopports 1 phase. Therefore, wrap the
         !description of this one phase in a phase descriptor and pass it as a 1-element list to micro_init
         phase_%model_id = altay_config%hardening_model_id
         phase_%deformation_mechanism = altay_config%deformation_mechanism
         phase_%parameters = altay_config%hardening_parameters
-        phase_%orientations = read_texture(trim(altay_config%texture_input_fname))
+        phase_%orientations = read_texture(trim(altay_config%texture_file_name))
 
         call altay_new_material(meso_model_id, meso_params, [phase_], material)
     end subroutine
@@ -87,11 +78,6 @@ contains
 
     subroutine BasicModule_initialize(this)
         class(BasicModule), target, intent(inout):: this
-
-        ! Finish the configuration:
-        this%altay%nfile = merge(1, 0, this%print_state)
-        this%altay%output_prefix = trim(this%output_prefix)
-        this%altay%jobtitle = trim(this%output_prefix)
 
         call init_altay(this%altay, this%material)
     end subroutine
@@ -103,13 +89,157 @@ contains
 
         character(*), parameter:: PROC_NAME = 'readconfig'
 
-        integer:: info
+        character(20):: buffer
 
-        ! Read AlTay configuration lines
-        call readAlTayConfigSection(cnfunit, this%altay, info)  ! read configuration of texture, slip systems, microstructure and hardening
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check libAltay configuration section.')
+        ! Read input texture file name
+        if (.not. readValue(cnfunit, this%altay%texture_file_name)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file name')
+
+        ! Determine crystal plasticity model type
+        read(cnfunit, '(A)') buffer
+        select case (buffer)
+            case ('FCTaylor')
+                this%altay%meso_model_id = MESO_MODEL_FCTAYLOR
+            case ('ALAMEL')
+                this%altay%meso_model_id = MESO_MODEL_ALAMEL
+                if (.not. readValue(cnfunit, this%altay%microstructure_file_name)) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read microstructure file name')
+            case default
+                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
+        end select
+
+        read(cnfunit, '(A)') buffer
+        select case (buffer)
+            case ('fcc12')
+                this%altay%deformation_mechanism = SLIP_SYSTEMS_FCC
+            case ('bcc24')
+                this%altay%deformation_mechanism = SLIP_SYSTEMS_BCC24
+            case ('bcc48')
+                this%altay%deformation_mechanism = SLIP_SYSTEMS_BCC48
+            case default
+                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
+        end select
+
+        ! Process hardening model section
+        call readHardeningSection(cnfunit, this%altay)
     end subroutine
+
+    !> Read configuration of hardening model from configuration file
+    subroutine readHardeningSection(cnfunit, cnf)
+        integer, intent(in)                  :: cnfunit
+        type(AltayConfigData), intent(inout):: cnf
+
+        character(*), parameter:: PROC_NAME = 'readhardeningsection'
+
+        logical:: read_success
+        integer:: hardening_model_id, &
+                  nparunit, &
+                  ioerr, &
+                  i
+        type(Parameter), dimension(:), allocatable, target:: params
+        real(DP):: tmp(16)
+        character(len = max_pathlen)          :: tmp_fname
+        type(Parameter), pointer:: param_ptr
+
+        if (.not. readValue(cnfunit, hardening_model_id)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening model ID')
+        cnf%hardening_model_id = hardening_model_id
+        params = micro_get_parameters(hardening_model_id)
+
+        read_success = .true.
+        select case(hardening_model_id)
+            case(HARDENING_VOCE)
+                if (readValue(cnfunit, tmp(1:5))) then
+                    param_ptr => params .find. 'TIII1'
+                    param_ptr = tmp(1)
+                    param_ptr => params .find. 'TIIIS'
+                    param_ptr = tmp(2)
+                    param_ptr => params .find. 'TIVS'
+                    param_ptr = tmp(3)
+                    param_ptr => params .find. 'THIII1'
+                    param_ptr = tmp(4)
+                    param_ptr => params .find. 'THT'
+                    param_ptr = tmp(5)
+                else
+                    read_success = .false.
+                endif
+            case(HARDENING_SWIFT)
+                if (readValue(cnfunit, tmp(1:3))) then
+                    param_ptr => params .find. 'crss0'
+                    param_ptr = tmp(1)
+                    param_ptr => params .find. 'gamma0'
+                    param_ptr = tmp(2)
+                    param_ptr => params .find. 'n'
+                    param_ptr = tmp(3)
+                else
+                    read_success = .false.
+                endif
+            case(HARDENING_HOCKETT_SHERBY)
+                if (readValue(cnfunit, tmp(1:4))) then
+                    param_ptr => params .find. 'tau_0'
+                    param_ptr = tmp(1)
+                    param_ptr => params .find. 'tau_sat'
+                    param_ptr = tmp(2)
+                    param_ptr => params .find. 'b'
+                    param_ptr = tmp(3)
+                    param_ptr => params .find. 'n'
+                    param_ptr = tmp(4)
+                else
+                    read_success = .false.
+                endif
+            case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
+                if (readValue(cnfunit, tmp_fname)) then
+                    open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
+                    if (ioerr /= VEF_OK) &
+                        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open DSH parameter file')
+
+                    do i = 1, 16
+                        read(nparunit, fmt = '(F12.5)', err = 666, end = 666) tmp(i)
+                    end do
+
+                    param_ptr => params .find. 'b'
+                    param_ptr = tmp(1)
+                    param_ptr => params .find. 'G'
+                    param_ptr = tmp(2)
+                    param_ptr => params .find. 'alfa'
+                    param_ptr = tmp(3)
+                    param_ptr => params .find. 'f'
+                    param_ptr = tmp(4)
+                    param_ptr => params .find. 'tau0'
+                    param_ptr = tmp(5)
+                    param_ptr => params .find. 'I'
+                    param_ptr = tmp(6)
+                    param_ptr => params .find. 'R'
+                    param_ptr = tmp(7)
+                    param_ptr => params .find. 'Iwd'
+                    param_ptr = tmp(8)
+                    param_ptr => params .find. 'Rwd'
+                    param_ptr = tmp(9)
+                    param_ptr => params .find. 'Rncg'
+                    param_ptr = tmp(10)
+                    param_ptr => params .find. 'beta1'
+                    param_ptr = tmp(11)
+                    param_ptr => params .find. 'beta2'
+                    param_ptr = tmp(12)
+                    param_ptr => params .find. 'Iwp'
+                    param_ptr = tmp(13)
+                    param_ptr => params .find. 'Rwp'
+                    param_ptr = tmp(14)
+                    param_ptr => params .find. 'Rrev'
+                    param_ptr = tmp(15)
+                    param_ptr => params .find. 'R2'
+                    param_ptr = tmp(16)
+                else
+                   read_success = .false.
+                end if
+            end select
+
+          if (read_success) then
+              cnf%hardening_parameters = params
+              return
+          end if
+          666 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening parameters')
+      end subroutine
 
     subroutine BasicModule_run(this, info)
     class(BasicModule), intent(inout):: this
@@ -121,12 +251,12 @@ contains
 
     !> Open output file
     integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
-    class(BasicModule), intent(in)           :: this
-    character(len=*), intent(in)             :: ext !< File extension (with leading dot)
-    integer, intent(out)                     :: ofunit !< IO unit of the output
-    character(len=*), intent(in), optional    :: suffix !< Suffix to the file
-    character(len = max_pathlen):: output_path
-    integer:: ierr
+        class(BasicModule), intent(in)           :: this
+        character(len=*), intent(in)             :: ext !< File extension (with leading dot)
+        integer, intent(out)                     :: ofunit !< IO unit of the output
+        character(len=*), intent(in), optional    :: suffix !< Suffix to the file
+        character(len = max_pathlen):: output_path
+        integer:: ierr
 
         if (present(suffix)) then
             output_path = trim(this%output_prefix)// trim(suffix) //trim(ext)
@@ -141,164 +271,5 @@ contains
         info = VEF_OK
     end function
 
-    !> Read configuration of libaltay
-    subroutine readAlTayConfigSection(cnfunit, cnf, info)
-        integer, intent(in)                  :: cnfunit
-        type(altayConfigData), target, intent(inout):: cnf !< Root-level configuration structure of texture, microstructure and hardening
-        integer, intent(out)                 :: info
 
-        character(*), parameter:: PROC_NAME = 'readAltayConfigSection'
-
-        integer                       :: model_id
-        logical                       :: use_default_microstructure
-        integer                       :: i
-        character(20):: buffer
-        type(Parameter), pointer:: param_ptr
-
-        info = ERR_IO
-
-        ! Read input texture file name
-        if (.not. readValue(cnfunit, cnf%texture_input_fname)) return
-
-        ! Determine crystal plasticity model type
-        read(cnfunit, '(A)') buffer
-        select case (buffer)
-            case ('FCTaylor')
-                cnf%model_id = MESO_MODEL_FCTAYLOR
-            case ('ALAMEL')
-                cnf%model_id = MESO_MODEL_ALAMEL
-                if (.not. readValue(cnfunit, cnf%micros_fname)) return  ! read < microstructure>.smt filename
-            case default
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Invalid mesoscopic model.')
-        end select
-
-        read(cnfunit, '(A)') buffer
-        select case (buffer)
-            case ('fcc12')
-                cnf%deformation_mechanism = SLIP_SYSTEMS_FCC
-            case ('bcc24')
-                cnf%deformation_mechanism = SLIP_SYSTEMS_BCC24
-            case ('bcc48')
-                cnf%deformation_mechanism = SLIP_SYSTEMS_BCC48
-            case default
-                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
-        end select
-
-        ! Process hardening model section
-        call readHardeningSection(cnfunit, cnf, info)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot read the hardening law section.')
-    end subroutine
-
-    !> Read configuration of hardening model from configuration file
-    subroutine readHardeningSection(cnfunit, cnf, info)
-        integer, intent(in)                  :: cnfunit
-        type(AltayConfigData), intent(inout):: cnf
-        integer, intent(out)                 :: info
-
-        character(*), parameter:: PROC_NAME = 'readhardeningsection'
-
-        integer:: hardening_model_id, &
-                  nparunit, &
-                  ioerr, &
-                  i
-        type(Parameter), dimension(:), allocatable, target:: params
-        real(DP):: tmp(16)
-        character(len = max_pathlen)          :: tmp_fname
-        type(Parameter), pointer:: param_ptr
-
-        info = VEF_OK
-
-        if (.not. readValue(cnfunit, hardening_model_id)) return
-        cnf%hardening_model_id = hardening_model_id
-        params = micro_get_parameters(hardening_model_id)
-
-        select case(hardening_model_id)
-            case(HARDENING_VOCE)
-                if (readValue(cnfunit, tmp(1:5))) then
-                    param_ptr => params .find. 'TIII1'
-                    param_ptr = tmp(1)
-                    param_ptr => params .find. 'TIIIS'
-                    param_ptr = tmp(2)
-                    param_ptr => params .find. 'TIVS'
-                    param_ptr = tmp(3)
-                    param_ptr => params .find. 'THIII1'
-                    param_ptr = tmp(4)
-                    param_ptr => params .find. 'THT'
-                    param_ptr = tmp(5)
-                    info = VEF_OK
-                endif
-            case(HARDENING_SWIFT)
-                if (readValue(cnfunit, tmp(1:3))) then
-                    param_ptr => params .find. 'crss0'
-                    param_ptr = tmp(1)
-                    param_ptr => params .find. 'gamma0'
-                    param_ptr = tmp(2)
-                    param_ptr => params .find. 'n'
-                    param_ptr = tmp(3)
-                    info = VEF_OK
-                endif
-            case(HARDENING_HOCKETT_SHERBY)
-                if (readValue(cnfunit, tmp(1:4))) then
-                    param_ptr => params .find. 'tau_0'
-                    param_ptr = tmp(1)
-                    param_ptr => params .find. 'tau_sat'
-                    param_ptr = tmp(2)
-                    param_ptr => params .find. 'b'
-                    param_ptr = tmp(3)
-                    param_ptr => params .find. 'n'
-                    param_ptr = tmp(4)
-                    info = VEF_OK
-                endif
-            case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
-                if (.not. readValue(cnfunit, tmp_fname)) return  ! read BP parameter file name
-                open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
-
-                if (ioerr /= 0) then
-                return
-                endif
-
-                do i = 1, 16
-                    read(nparunit, fmt = 100, err = 666, end = 666) tmp(i)
-                end do
-100               format(F12.5)
-
-                param_ptr => params .find. 'b'
-                param_ptr = tmp(1)
-                param_ptr => params .find. 'G'
-                param_ptr = tmp(2)
-                param_ptr => params .find. 'alfa'
-                param_ptr = tmp(3)
-                param_ptr => params .find. 'f'
-                param_ptr = tmp(4)
-                param_ptr => params .find. 'tau0'
-                param_ptr = tmp(5)
-                param_ptr => params .find. 'I'
-                param_ptr = tmp(6)
-                param_ptr => params .find. 'R'
-                param_ptr = tmp(7)
-                param_ptr => params .find. 'Iwd'
-                param_ptr = tmp(8)
-                param_ptr => params .find. 'Rwd'
-                param_ptr = tmp(9)
-                param_ptr => params .find. 'Rncg'
-                param_ptr = tmp(10)
-                param_ptr => params .find. 'beta1'
-                param_ptr = tmp(11)
-                param_ptr => params .find. 'beta2'
-                param_ptr = tmp(12)
-                param_ptr => params .find. 'Iwp'
-                param_ptr = tmp(13)
-                param_ptr => params .find. 'Rwp'
-                param_ptr = tmp(14)
-                param_ptr => params .find. 'Rrev'
-                param_ptr = tmp(15)
-                param_ptr => params .find. 'R2'
-                param_ptr = tmp(16)
-          end select
-
-          cnf%hardening_parameters = params
-
-666       return
-      end subroutine
 end module

@@ -116,7 +116,7 @@ contains
                    dev, &
                    stress(6)
 
-        call write_texture(this%material%clusters)
+        call write_texture(this%output_prefix, this%material%clusters)
 
         if (this%openOutputFile('.asr',iounit) /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to upen output file')

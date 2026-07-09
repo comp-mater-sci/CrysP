@@ -192,6 +192,8 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	</li>
 </ol>
 
+Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_texture.
+
 <HR>
 
 \section module_qrs Uniaxial Anisotropy Module (keyword: QRS)
@@ -376,4 +378,5 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 
 -# \outdef{M} Taylor factor of the last increment in the step.
 
+Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_texture.
 */

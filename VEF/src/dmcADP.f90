@@ -111,7 +111,7 @@ contains
         'S_11','S_22','S_33','S_23','S_13','S_12', &
         'M']
 
-        call write_texture(this%material%clusters)
+        call write_texture(this%output_prefix, this%material%clusters)
 
         ! Open output file
         info = this%openOutputFile('.adp',iounit)
