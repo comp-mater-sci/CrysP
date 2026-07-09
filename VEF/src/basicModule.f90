@@ -89,7 +89,16 @@ contains
 
         character(*), parameter:: PROC_NAME = 'readconfig'
 
+        logical:: read_success
         character(20):: buffer
+        character(FNAME_LEN):: dsh_params_file_name
+        integer:: hardening_model_id, &
+                  dsh_unit, &
+                  ioerr, &
+                  i
+        real(DP):: tmp(16)
+        type(Parameter), dimension(:), allocatable, target:: hardening_params
+        type(Parameter), pointer:: param_ptr
 
         ! Read input texture file name
         if (.not. readValue(cnfunit, this%altay%texture_file_name)) &
@@ -120,114 +129,94 @@ contains
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
         end select
 
-        ! Process hardening model section
-        call readHardeningSection(cnfunit, this%altay)
-    end subroutine
-
-    !> Read configuration of hardening model from configuration file
-    subroutine readHardeningSection(cnfunit, cnf)
-        integer, intent(in)                  :: cnfunit
-        type(AltayConfigData), intent(inout):: cnf
-
-        character(*), parameter:: PROC_NAME = 'readhardeningsection'
-
-        logical:: read_success
-        integer:: hardening_model_id, &
-                  nparunit, &
-                  ioerr, &
-                  i
-        type(Parameter), dimension(:), allocatable, target:: params
-        real(DP):: tmp(16)
-        character(len = max_pathlen)          :: tmp_fname
-        type(Parameter), pointer:: param_ptr
-
+        !Read hardening section
         if (.not. readValue(cnfunit, hardening_model_id)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening model ID')
-        cnf%hardening_model_id = hardening_model_id
-        params = micro_get_parameters(hardening_model_id)
+        this%altay%hardening_model_id = hardening_model_id
+        hardening_params = micro_get_parameters(hardening_model_id)
 
         read_success = .true.
         select case(hardening_model_id)
             case(HARDENING_VOCE)
                 if (readValue(cnfunit, tmp(1:5))) then
-                    param_ptr => params .find. 'TIII1'
+                    param_ptr => hardening_params .find. 'TIII1'
                     param_ptr = tmp(1)
-                    param_ptr => params .find. 'TIIIS'
+                    param_ptr => hardening_params .find. 'TIIIS'
                     param_ptr = tmp(2)
-                    param_ptr => params .find. 'TIVS'
+                    param_ptr => hardening_params .find. 'TIVS'
                     param_ptr = tmp(3)
-                    param_ptr => params .find. 'THIII1'
+                    param_ptr => hardening_params .find. 'THIII1'
                     param_ptr = tmp(4)
-                    param_ptr => params .find. 'THT'
+                    param_ptr => hardening_params .find. 'THT'
                     param_ptr = tmp(5)
                 else
                     read_success = .false.
                 endif
             case(HARDENING_SWIFT)
                 if (readValue(cnfunit, tmp(1:3))) then
-                    param_ptr => params .find. 'crss0'
+                    param_ptr => hardening_params .find. 'crss0'
                     param_ptr = tmp(1)
-                    param_ptr => params .find. 'gamma0'
+                    param_ptr => hardening_params .find. 'gamma0'
                     param_ptr = tmp(2)
-                    param_ptr => params .find. 'n'
+                    param_ptr => hardening_params .find. 'n'
                     param_ptr = tmp(3)
                 else
                     read_success = .false.
                 endif
             case(HARDENING_HOCKETT_SHERBY)
                 if (readValue(cnfunit, tmp(1:4))) then
-                    param_ptr => params .find. 'tau_0'
+                    param_ptr => hardening_params .find. 'tau_0'
                     param_ptr = tmp(1)
-                    param_ptr => params .find. 'tau_sat'
+                    param_ptr => hardening_params .find. 'tau_sat'
                     param_ptr = tmp(2)
-                    param_ptr => params .find. 'b'
+                    param_ptr => hardening_params .find. 'b'
                     param_ptr = tmp(3)
-                    param_ptr => params .find. 'n'
+                    param_ptr => hardening_params .find. 'n'
                     param_ptr = tmp(4)
                 else
                     read_success = .false.
                 endif
             case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
-                if (readValue(cnfunit, tmp_fname)) then
-                    open(newunit = nparunit, file = tmp_fname, status='old', iostat = ioerr)
+                if (readValue(cnfunit, dsh_params_file_name)) then
+                    open(newunit = dsh_unit, file = dsh_params_file_name, status='old', iostat = ioerr)
                     if (ioerr /= VEF_OK) &
                         call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open DSH parameter file')
-
                     do i = 1, 16
-                        read(nparunit, fmt = '(F12.5)', err = 666, end = 666) tmp(i)
+                        read(dsh_unit, fmt = '(F12.5)', err = 666, end = 666) tmp(i)
                     end do
+                    close(dsh_unit)
 
-                    param_ptr => params .find. 'b'
+                    param_ptr => hardening_params .find. 'b'
                     param_ptr = tmp(1)
-                    param_ptr => params .find. 'G'
+                    param_ptr => hardening_params .find. 'G'
                     param_ptr = tmp(2)
-                    param_ptr => params .find. 'alfa'
+                    param_ptr => hardening_params .find. 'alfa'
                     param_ptr = tmp(3)
-                    param_ptr => params .find. 'f'
+                    param_ptr => hardening_params .find. 'f'
                     param_ptr = tmp(4)
-                    param_ptr => params .find. 'tau0'
+                    param_ptr => hardening_params .find. 'tau0'
                     param_ptr = tmp(5)
-                    param_ptr => params .find. 'I'
+                    param_ptr => hardening_params .find. 'I'
                     param_ptr = tmp(6)
-                    param_ptr => params .find. 'R'
+                    param_ptr => hardening_params .find. 'R'
                     param_ptr = tmp(7)
-                    param_ptr => params .find. 'Iwd'
+                    param_ptr => hardening_params .find. 'Iwd'
                     param_ptr = tmp(8)
-                    param_ptr => params .find. 'Rwd'
+                    param_ptr => hardening_params .find. 'Rwd'
                     param_ptr = tmp(9)
-                    param_ptr => params .find. 'Rncg'
+                    param_ptr => hardening_params .find. 'Rncg'
                     param_ptr = tmp(10)
-                    param_ptr => params .find. 'beta1'
+                    param_ptr => hardening_params .find. 'beta1'
                     param_ptr = tmp(11)
-                    param_ptr => params .find. 'beta2'
+                    param_ptr => hardening_params .find. 'beta2'
                     param_ptr = tmp(12)
-                    param_ptr => params .find. 'Iwp'
+                    param_ptr => hardening_params .find. 'Iwp'
                     param_ptr = tmp(13)
-                    param_ptr => params .find. 'Rwp'
+                    param_ptr => hardening_params .find. 'Rwp'
                     param_ptr = tmp(14)
-                    param_ptr => params .find. 'Rrev'
+                    param_ptr => hardening_params .find. 'Rrev'
                     param_ptr = tmp(15)
-                    param_ptr => params .find. 'R2'
+                    param_ptr => hardening_params .find. 'R2'
                     param_ptr = tmp(16)
                 else
                    read_success = .false.
@@ -235,11 +224,11 @@ contains
             end select
 
           if (read_success) then
-              cnf%hardening_parameters = params
+              this%altay%hardening_parameters = hardening_params
               return
           end if
           666 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening parameters')
-      end subroutine
+    end subroutine
 
     subroutine BasicModule_run(this, info)
     class(BasicModule), intent(inout):: this
@@ -270,6 +259,4 @@ contains
 
         info = VEF_OK
     end function
-
-
 end module
