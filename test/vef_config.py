@@ -63,10 +63,7 @@ DSH_CONFIG = '2.48E-10\n'   \
              + '8.70E-9'
 
 def generate_config(mode, algorithm, slip_system, hardening_model):
-    return 'out\n'                                      \
-           + 'True\n'                                   \
-           + '2\n'                                      \
-           + 'texture.smt\n'                            \
+    return 'texture.smt\n'                            \
            + MESO_CONFIG[algorithm] + '\n'                           \
            + slip_system + '\n'                         \
            + HARDENING_CONFIG[hardening_model] + '\n'   \

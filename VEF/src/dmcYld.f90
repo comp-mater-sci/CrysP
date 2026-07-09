@@ -60,49 +60,49 @@ module dmcYld
 contains
 
 
-    integer function YldModule_readConfig(this, cnfunit) result(info)
-    implicit none
-    class(YldModule), intent(inout)            :: this
-    integer, intent(in)                        :: cnfunit
-    !
-    character(*), parameter:: PROC_NAME = 'yldmodule_readconfig'
+    subroutine YldModule_readConfig(this, cnfunit)
+        class(YldModule), intent(inout)            :: this
+        integer, intent(in)                        :: cnfunit
 
-    integer:: i
-    real(DP):: norm
-    logical:: normalize, use_default_settings
-    !
-        info = this%BasicModule%ReadConfig(cnfunit)
-        if (info /= VEF_OK) return
+        character(*), parameter:: PROC_NAME = 'yldmodule_readconfig'
+
+        integer:: i
+        real(DP):: norm
+        logical:: normalize, use_default_settings
+
+        call this%BasicModule%ReadConfig(cnfunit)
+
         ! Read parameters specific for the dmcYld program
         if (.not. readValue(cnfunit, this%angular_resolution)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
         this%angular_resolution = deg_to_rad(this%angular_resolution)
-        if (.not. readValue(cnfunit, use_default_settings)) return
+        if (.not. readValue(cnfunit, use_default_settings)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read default settings flag')
+
         if (.not. use_default_settings) then
-            info = VEF_ERROR
             this%base_vectors = 0.D0
-            if (.not. readValue(cnfunit, normalize)) return
+            if (.not. readValue(cnfunit, normalize)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read normalization flag')
             do i = 1, nbase
-                if (.not. readValue(cnfunit, this%base_vectors(:,i))) return
+                if (.not. readValue(cnfunit, this%base_vectors(:,i))) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read base vector.')
+
                 if (normalize) then
                     norm = norm2(this%base_vectors(:,i))
                     if (norm > 0.D0) this%base_vectors(:,i)  = this%base_vectors(:,i) / norm
                 endif
             enddo
-            !
-            if (.not. readValue(cnfunit, this%normalizeSm)) return
-            if (.not. readValue(cnfunit, this%do_scaling)) return
+
+            if (.not. readValue(cnfunit, this%normalizeSm)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read normalization of stress mode flag.')
+            if (.not. readValue(cnfunit, this%do_scaling)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read scaling flag.')
             if (this%do_scaling) then
-                if (.not. readValue(cnfunit, this%scaling_vector)) return
+                if (.not. readValue(cnfunit, this%scaling_vector)) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read scaling vector.')
             endif
         endif
-        !
-        ! Override the requests for outputs:
-        this%altay%nfile = 0   ! texture
-        this%output%outputRequest = .false.       ! idem.
-        !
-        info = VEF_OK
-    end function
+    end subroutine
 
     subroutine YldModule_run(this, info)
         class(YldModule), intent(inout)            :: this

@@ -34,20 +34,21 @@ module dmcASR
 
 contains
 
-    integer function ASRModule_readConfig(this, cnfunit) result(info)
+    subroutine ASRModule_readConfig(this, cnfunit)
         class(ASRModule), intent(inout)            :: this
         integer, intent(in)                        :: cnfunit
 
+        character(*), parameter:: PROC_NAME = 'asrmodule_readconfig'
+
         integer:: i, n_steps
 
-        info = this%BasicModule%readConfig(cnfunit)
-        if (info /= VEF_OK) return
+        call this%BasicModule%readConfig(cnfunit)
 
-        info = VEF_ERROR
         ! Read parameters specific for the ASRModule
-        if (.not. readValue(cnfunit, n_steps)) return
+        if (.not. readValue(cnfunit, n_steps)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read number of steps')
         if (n_steps <= 0) &
-            call log_error(MOD_NAME, 'readconfig', ERR_VAL, 'Number of steps must at least be 1.')
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of steps must at least be 1.')
         allocate(this%steps(n_steps))
         do i = 1, n_steps
             associate (step => this%steps(i))
@@ -57,8 +58,7 @@ contains
                 if (.not. readValue(cnfunit, step%target_vm_strain)) return
             end associate
         enddo
-        info = VEF_OK
-    end function
+    end subroutine
 
     subroutine asrmodule_run(this,info)
         class(ASRModule), intent(inout):: this

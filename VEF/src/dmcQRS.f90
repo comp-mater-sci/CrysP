@@ -42,7 +42,6 @@ module dmcQRS
 
 contains
 
-
     type(qrsData) pure function calculateQRS(Dt,s) result(qrsvalue)
         real(DP),dimension(3,3),intent(in)      :: Dt
         real(DP),intent(in)                     :: s
@@ -56,8 +55,7 @@ contains
          endif
     end function
 
-
-    integer function QRSModule_readConfig(this, cnfunit) result(info)
+    subroutine QRSModule_readConfig(this, cnfunit)
         class(QRSModule), intent(inout)              :: this
         integer, intent(in)                        :: cnfunit
 
@@ -66,23 +64,14 @@ contains
         logical:: use_default_settings
 
         use_default_settings = .false.
-        info = this%BasicModule%readConfig(cnfunit)
-        if (info /= VEF_OK) return
-        info = VEF_ERROR
+        call this%BasicModule%readConfig(cnfunit)
 
         ! Read parameters specific for the QRS module
         if (.not. readValue(cnfunit, this%angular_resolution)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
 
         this%angular_resolution = deg_to_rad(this%angular_resolution)
-
-        ! Override the requests for outputs:
-        this%altay%nfile = 0   ! texture
-        this%output%outputRequest = .false.       ! idem.
-
-        info = VEF_OK
-    end function
-
+    end subroutine
 
     subroutine QRSModule_run(this, info)
         class(QRSModule), intent(inout)      :: this

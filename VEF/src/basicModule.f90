@@ -12,9 +12,8 @@ module dmcBasicModule
     implicit none
 
     private
-    public:: outputConfig, &
-              BasicModule, &
-              readAlTayConfigSection
+    public:: BasicModule, &
+             readAlTayConfigSection
 
     character(*), parameter:: MOD_NAME = 'basicModule'
 
@@ -32,13 +31,6 @@ module dmcBasicModule
         integer                                   :: nfile = 0
    end type
 
-    type:: outputConfig
-        character(max_pathlen)  :: outputPrefix = '' !< Prefix for the output files.
-        logical                 :: outputRequest = .false.
-        integer                 :: verbosity = 0  !< Level of verbosity sent to the stdout and to the log file (if any)
-        integer                 :: log_unit = 6
-    end type
-
     !> Class implementing basic subset of operations that are shared by all
     !> computational modules.
     !>
@@ -48,7 +40,8 @@ module dmcBasicModule
     !>       in BasicModule) in the OO-acceptable style:
     !>       `this%ParentClassName%method()`
     type:: BasicModule
-          type(outputConfig)::    output
+          character(fname_len):: output_prefix
+          logical:: print_state
           type(altayConfigData):: altay !< Root-level configuration structure of texture and hardening
           type(MaterialState)::   material
     contains
@@ -96,30 +89,27 @@ contains
         class(BasicModule), target, intent(inout):: this
 
         ! Finish the configuration:
-        this%altay%nfile = merge(1, 0, this%output%outputRequest)
-        this%altay%output_prefix = trim(this%output%outputPrefix)
-        this%altay%jobtitle = trim(this%output%outputPrefix)
+        this%altay%nfile = merge(1, 0, this%print_state)
+        this%altay%output_prefix = trim(this%output_prefix)
+        this%altay%jobtitle = trim(this%output_prefix)
 
         call init_altay(this%altay, this%material)
     end subroutine
 
     !> read output and AlTay configuration sections
-    integer function BasicModule_readConfig(this, cnfunit) result(info)
+    subroutine BasicModule_readConfig(this, cnfunit)
         class(BasicModule), intent(inout):: this
-        integer, intent(in)               :: cnfunit !< IO input unit
+        integer, intent(in):: cnfunit
 
         character(*), parameter:: PROC_NAME = 'readconfig'
 
-        ! Read output configuration lines
-        call readOutputConfigSection(cnfunit, this%output, info)  ! top 3 lines after comment header of config file
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check output configuration section.')
+        integer:: info
 
         ! Read AlTay configuration lines
         call readAlTayConfigSection(cnfunit, this%altay, info)  ! read configuration of texture, slip systems, microstructure and hardening
         if (info /= VEF_OK) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Check libAltay configuration section.')
-    end function
+    end subroutine
 
     subroutine BasicModule_run(this, info)
     class(BasicModule), intent(inout):: this
@@ -139,9 +129,9 @@ contains
     integer:: ierr
 
         if (present(suffix)) then
-            output_path = trim(this%output%outputPrefix)// trim(suffix) //trim(ext)
+            output_path = trim(this%output_prefix)// trim(suffix) //trim(ext)
         else
-            output_path = trim(this%output%outputPrefix)// trim(ext)
+            output_path = trim(this%output_prefix)// trim(ext)
         endif
 
         open(newunit = ofunit, file = output_path, status='replace', iostat = ierr)
@@ -150,25 +140,6 @@ contains
 
         info = VEF_OK
     end function
-
-    !> Read output configuration from top 3 lines after comment header in configuration file:
-    !> prefix for output files, incremental output request flag, verbosity level
-    subroutine readOutputConfigSection(cnfunit, cnf, info)
-        integer, intent(in)                  :: cnfunit !< configuration file
-        type(outputConfig), intent(inout)    :: cnf
-        integer, intent(out)                 :: info
-
-        character(*), parameter:: PROC_NAME = 'readoutputconfigsection'
-
-          info = VEF_ERROR
-          if (.not. readValue(cnfunit, cnf%outputPrefix)) &
-              call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read output file prefix')
-          if (.not. readValue(cnfunit, cnf%outputRequest)) &
-              call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read output request flag')
-          if (.not. readValue(cnfunit, cnf%verbosity)) &
-              call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to read verbosity level')
-          info = VEF_OK
-    end subroutine
 
     !> Read configuration of libaltay
     subroutine readAlTayConfigSection(cnfunit, cnf, info)

@@ -35,28 +35,19 @@ module dmcADP
 contains
 
     !> Read configuration from IO unit (type-bound function)
-    integer function ADPModule_readConfig(this, cnfunit) result(info)  ! call with 1 argument (cnfunit) when referenced through object
+    subroutine ADPModule_readConfig(this, cnfunit) ! call with 1 argument (cnfunit) when referenced through object
         class(ADPModule), intent(inout)   :: this !< passed implicitly
         integer, intent(in)              :: cnfunit !< IO input unit; pass explicitly
 
-        integer, parameter:: n_deformation_types = 3
-        integer, parameter:: deformation_id = 1, strainmode_id = 2, strain_id = 3
-        integer:: n_steps, ierr, i,j
-        logical :: default_solver_config
+        integer:: n_steps, i
 
-
-        ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
-        ! read output and AlTay configuration sections
-        info = this%BasicModule%readConfig(cnfunit)
-        ! Read "solver config flag" that belongs to the global section
-        ! as it is done in the stressDrivenModule.
-        info = VEF_ERROR
+        ! Read generic configuration section
+        call this%BasicModule%readConfig(cnfunit)
 
         !Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
 
         if (n_steps < 1) then
-            info = VEF_ERROR
             return
         end if
 
@@ -70,8 +61,7 @@ contains
                 if (.not. readValue(cnfunit, step%target_strain)) return
             end associate
         end do
-        info = VEF_OK
-    end function
+    end subroutine
 
     !> Run the simulation
     subroutine ADPModule_run(this, info)
