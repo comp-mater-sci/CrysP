@@ -69,6 +69,38 @@ module parameters
             logical, intent(in), optional:: lower_inclusive !! Treat lower bound as inclusive.
             logical, intent(in), optional:: upper_inclusive !! Treat upper bound as inclusive.
         end subroutine
+
+    end interface
+
+    !> Set the value of a parameter with a specific name from a parameter list
+    !>
+    !> If no parameter of the provided name is present in the list, the procedure crashes the program.
+    !> If the type of the provided value does not correspond to the parameter type, the procedure crashes the program.
+    interface parameter_set
+        !> Set parameter to integer value
+        module subroutine parameter_set_int(params, name, val)
+            type(Parameter), dimension(:), target, intent(inout):: params !! Parameter list
+            character(*), intent(in):: name                               !! Name of the parameter to set
+            integer, intent(in):: val                                     !! Value to set the parameter to
+        end subroutine
+        !> Analogous to [[parameter_set_int]]
+        module subroutine parameter_set_real(params, name, val)
+            type(Parameter), dimension(:), target, intent(inout):: params
+            character(*), intent(in):: name
+            real(DP), intent(in):: val
+        end subroutine
+        !> Analogous to [[parameter_set_int]]
+        module subroutine parameter_set_string(params, name, val)
+            type(Parameter), dimension(:), target, intent(inout):: params
+            character(*), intent(in):: name
+            character(*), intent(in):: val
+        end subroutine
+        !> Analogous to [[parameter_set_int]]
+        module subroutine parameter_set_angles_list(params, name, val)
+            type(Parameter), dimension(:), target, intent(inout):: params
+            character(*), intent(in):: name
+            real(DP), dimension(:,:), intent(in):: val
+        end subroutine
     end interface
 
     interface assignment(=)
@@ -393,6 +425,32 @@ contains
 
         call log_error(MOD_NAME, 'parameter_find_by_name', ERR_VAL, 'No parameter with name ' // name)
     end procedure parameter_find_by_name
+
+    module procedure parameter_set_int
+        type(Parameter), pointer:: param_ptr
+
+        param_ptr => params .find. name
+        param_ptr = val
+    end procedure
+    module procedure parameter_set_real
+        type(Parameter), pointer:: param_ptr
+
+        param_ptr => params .find. name
+        param_ptr = val
+    end procedure
+    module procedure parameter_set_string
+        type(Parameter), pointer:: param_ptr
+
+        param_ptr => params .find. name
+        param_ptr = val
+    end procedure
+    module procedure parameter_set_angles_list
+        type(Parameter), pointer:: param_ptr
+
+        param_ptr => params .find. name
+        param_ptr = val
+    end procedure
+
 
     !> Get the numerical representation of some value.
     !>
