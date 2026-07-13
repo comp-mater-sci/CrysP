@@ -48,9 +48,8 @@ module dmcBasicModule
 
 contains
 
-    subroutine init_altay(altay_config, material)
-        type(AltayConfigData), intent(in):: altay_config
-        type(MaterialState), target, intent(out):: material
+    subroutine BasicModule_initialize(this)
+        class(BasicModule), target, intent(inout):: this
 
         integer:: meso_model_id, &
                   info
@@ -58,28 +57,21 @@ contains
         type(Parameter), pointer:: param_ptr
         type(PhaseDescriptor):: phase_
 
-        meso_model_id = altay_config%meso_model_id
+        meso_model_id = this%altay%meso_model_id
         meso_params = meso_get_parameters(meso_model_id)
         if (meso_params .includes. "Boundaries") then
             param_ptr => meso_params .find. "Boundaries"
-            param_ptr = read_boundaries(altay_config%microstructure_file_name)
+            param_ptr = read_boundaries(this%altay%microstructure_file_name)
         end if
 
         !Even though the back-end logic can handle n phases, the current I/O structure only sopports 1 phase. Therefore, wrap the
         !description of this one phase in a phase descriptor and pass it as a 1-element list to micro_init
-        phase_%model_id = altay_config%hardening_model_id
-        phase_%deformation_mechanism = altay_config%deformation_mechanism
-        phase_%parameters = altay_config%hardening_parameters
-        phase_%orientations = read_texture(trim(altay_config%texture_file_name))
+        phase_%model_id = this%altay%hardening_model_id
+        phase_%deformation_mechanism = this%altay%deformation_mechanism
+        phase_%parameters = this%altay%hardening_parameters
+        phase_%orientations = read_texture(trim(this%altay%texture_file_name))
 
-        call altay_new_material(meso_model_id, meso_params, [phase_], material)
-    end subroutine
-
-
-    subroutine BasicModule_initialize(this)
-        class(BasicModule), target, intent(inout):: this
-
-        call init_altay(this%altay, this%material)
+        call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
     end subroutine
 
     !> read output and AlTay configuration sections
