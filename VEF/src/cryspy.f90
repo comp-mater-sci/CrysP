@@ -43,7 +43,10 @@ program alamDMC
     end select
 
     !Determine output file name from config file name
-    call split(argv(2), '.', i)
+    i=1
+    do while (argv(2)(i:i) /= '.')
+        i=i+1
+    end do
     the_module%output_prefix = argv(2)(:i-1)
 
     open(newunit = cnfunit, file = trim(argv(2)), status='old', iostat = info)
