@@ -37,6 +37,8 @@ The following \ref sec_format_options pertain to the multiscale model used for t
 -# \confdef{model_type, \ref sec_format_fields_string} specifies the multi-scale crystal plasticity model to be used in the calculations. The supported models are:
     - **ALAMEL**: Advanced LAMEL model developed at KU Leuven. If this model is chosen, the following suboption must be provided:
         - \confdef{microstructure_file,\ref sec_format_fields_string} Relative path to the microstrucure file. Refer to \ref sec_format_files_microstructure for the structure of this file.
+
+      The ALAMEL model will process the \ref sec_format_files_texture and \ref sec_format_files_microstructure sequentially. Each pair of consecutive orientations from the \ref sec_format_files_texture is matched with the topmost boundary normal from the \ref sec_format_files_microstructure that has not yet been used to form a cluster. If the \ref sec_format_files_microstructure does not contain enough boundary normals to process all orientations from the \ref sec_format_files_texture, it is reprocessed sequentially as needed. For example, if the \ref sec_format_files_texture contains 800 orientations, but the \ref sec_format_files_microstructure contains only 250 boundary normals, ALAMEL will construct 250 clusters with the first 500 orientations from the \ref sec_format_files_texture and each of the boundary normals from the \ref sec_format_files_microstructure, and 150 clusters with the last 300 orientations and the first 150 boundary normals, all in sequential order.
     - **FCTaylor**: Traditional full constraints Taylor model.
 
 -# \confdef{slip_system_set, \ref sec_format_fields_string} specifies the slip system set to be used. Valid values are:
