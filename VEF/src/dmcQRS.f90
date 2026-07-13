@@ -24,9 +24,9 @@ module dmcQRS
     type, extends(BasicModule):: QRSModule
         real(DP):: angular_resolution
     contains
-        procedure, pass(this)    :: readConfig => QRSModule_readConfig
-        procedure, pass(this)    :: run => QRSModule_run
-        procedure, pass(this)    :: fileOutput => QRSModule_fileOutput
+        procedure:: initialize => qrs_initialize
+        procedure:: run => QRSModule_run
+        procedure:: fileOutput => QRSModule_fileOutput
     end type
 
     !> Container for output datapoints of QRS module
@@ -55,16 +55,16 @@ contains
          endif
     end function
 
-    subroutine QRSModule_readConfig(this, cnfunit)
-        class(QRSModule), intent(inout)              :: this
-        integer, intent(in)                        :: cnfunit
+    subroutine qrs_initialize(this, cnfunit)
+        class(QRSModule), intent(inout):: this
+        integer, intent(in)::             cnfunit
 
         character(*), parameter:: PROC_NAME = 'QRSModule_readconfig'
 
         logical:: use_default_settings
 
         use_default_settings = .false.
-        call this%BasicModule%readConfig(cnfunit)
+        call this%BasicModule%initialize(cnfunit)
 
         ! Read parameters specific for the QRS module
         if (.not. readValue(cnfunit, this%angular_resolution)) &

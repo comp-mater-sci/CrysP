@@ -46,13 +46,12 @@ program alamDMC
     call split(argv(2), '.', i)
     the_module%output_prefix = argv(2)(:i-1)
 
-    !> Open file fpath in the mode given by status, or call finalize on failure.
     open(newunit = cnfunit, file = trim(argv(2)), status='old', iostat = info)
-    if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Can not open config file')
-    call the_module%ReadConfig(cnfunit)
+    if (info /= VEF_OK) &
+        call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Can not open config file')
+    call the_module%initialize(cnfunit)
     close(cnfunit)
 
-    call the_module%initialize()
     call the_module%run(info)
 
     write(display_unit, '(A, 1X, A, 1X, A)',advance='no') 'Execution of module', trim(moduleName), 'finished'

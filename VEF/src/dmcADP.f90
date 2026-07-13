@@ -20,7 +20,7 @@ module dmcADP
     type, extends(BasicModule):: ADPModule
         type(StrainDrivenStep),dimension(:),allocatable :: steps
     contains  ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
-        procedure, pass(this):: readConfig => ADPModule_readConfig
+        procedure, pass(this):: initialize => adp_initialize
         procedure, pass(this):: run => ADPModule_run
         procedure, pass(this):: fileOutput => ADPModule_fileOutput
     end type
@@ -35,14 +35,13 @@ module dmcADP
 contains
 
     !> Read configuration from IO unit (type-bound function)
-    subroutine ADPModule_readConfig(this, cnfunit) ! call with 1 argument (cnfunit) when referenced through object
+    subroutine adp_initialize(this, cnfunit) ! call with 1 argument (cnfunit) when referenced through object
         class(ADPModule), intent(inout)   :: this !< passed implicitly
         integer, intent(in)              :: cnfunit !< IO input unit; pass explicitly
 
         integer:: n_steps, i
 
-        ! Read generic configuration section
-        call this%BasicModule%readConfig(cnfunit)
+        call this%BasicModule%initialize(cnfunit)
 
         !Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return

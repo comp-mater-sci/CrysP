@@ -27,14 +27,14 @@ module dmcASR
     type, extends(BasicModule):: ASRModule
         type(StressDrivenStep), dimension(:), allocatable:: steps
     contains
-        procedure:: readConfig => ASRModule_readConfig
+        procedure:: initialize => asr_initialize
         procedure:: run =>        ASRModule_run
         procedure:: outputFile => ASRModule_outputFile
     end type
 
 contains
 
-    subroutine ASRModule_readConfig(this, cnfunit)
+    subroutine asr_initialize(this, cnfunit)
         class(ASRModule), intent(inout)            :: this
         integer, intent(in)                        :: cnfunit
 
@@ -42,7 +42,7 @@ contains
 
         integer:: i, n_steps
 
-        call this%BasicModule%readConfig(cnfunit)
+        call this%BasicModule%initialize(cnfunit)
 
         ! Read parameters specific for the ASRModule
         if (.not. readValue(cnfunit, n_steps)) &

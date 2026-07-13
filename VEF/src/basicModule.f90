@@ -16,16 +16,6 @@ module dmcBasicModule
 
     character(*), parameter:: MOD_NAME = 'basicModule'
 
-   !> Root-level configuration structure of Altay
-   type:: altayConfigData
-        integer::                      meso_model_id
-        character(len = fname_len)::   microstructure_file_name
-        character(len = fname_len)::   texture_file_name
-        integer::                      hardening_model_id
-        type(Parameter), allocatable:: hardening_parameters(:)
-        integer::                      deformation_mechanism
-   end type
-
     !> Class implementing basic subset of operations that are shared by all
     !> computational modules.
     !>
@@ -36,134 +26,114 @@ module dmcBasicModule
     !>       `this%ParentClassName%method()`
     type:: BasicModule
           character(:), allocatable:: output_prefix
-          logical:: print_state
-          type(altayConfigData):: altay !< Root-level configuration structure of texture and hardening
           type(MaterialState)::   material
     contains
           procedure:: initialize =>  BasicModule_initialize
-          procedure:: readConfig => BasicModule_readConfig
           procedure:: run => BasicModule_run
           procedure:: openOutputFile => BasicModule_openOutputFile
     end type
 
 contains
 
-    subroutine BasicModule_initialize(this)
-        class(BasicModule), target, intent(inout):: this
-
-        integer:: meso_model_id, &
-                  info
-        type(Parameter), dimension(:), allocatable, target:: meso_params
-        type(Parameter), pointer:: param_ptr
-        type(PhaseDescriptor):: phase_
-
-        meso_model_id = this%altay%meso_model_id
-        meso_params = meso_get_parameters(meso_model_id)
-        if (meso_params .includes. "Boundaries") then
-            param_ptr => meso_params .find. "Boundaries"
-            param_ptr = read_boundaries(this%altay%microstructure_file_name)
-        end if
-
-        !Even though the back-end logic can handle n phases, the current I/O structure only sopports 1 phase. Therefore, wrap the
-        !description of this one phase in a phase descriptor and pass it as a 1-element list to micro_init
-        phase_%model_id = this%altay%hardening_model_id
-        phase_%deformation_mechanism = this%altay%deformation_mechanism
-        phase_%parameters = this%altay%hardening_parameters
-        phase_%orientations = read_texture(trim(this%altay%texture_file_name))
-
-        call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
-    end subroutine
-
     !> read output and AlTay configuration sections
-    subroutine BasicModule_readConfig(this, cnfunit)
+    subroutine BasicModule_initialize(this, cnfunit)
         class(BasicModule), intent(inout):: this
         integer, intent(in):: cnfunit
 
         character(*), parameter:: PROC_NAME = 'readconfig'
 
         logical:: read_success
+        character(FNAME_LEN):: texture_file_name, &
+                               microstructure_file_name
         character(20):: buffer
         character(FNAME_LEN):: dsh_params_file_name
-        integer:: hardening_model_id, &
+        integer:: meso_model_id, &
                   dsh_unit, &
                   ioerr, &
                   i
         real(DP):: tmp(16)
-        type(Parameter), dimension(:), allocatable, target:: hardening_params
+        real(DP), dimension(:), allocatable:: boundaries
+        type(Parameter), dimension(:), allocatable, target:: meso_params
         type(Parameter), pointer:: param_ptr
+        type(PhaseDescriptor), target:: phase_
 
         ! Read input texture file name
-        if (.not. readValue(cnfunit, this%altay%texture_file_name)) &
+        if (.not. readValue(cnfunit, texture_file_name)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file name')
+        phase_%orientations = read_texture(trim(texture_file_name))
 
         ! Determine crystal plasticity model type
         read(cnfunit, '(A)') buffer
         select case (buffer)
             case ('FCTaylor')
-                this%altay%meso_model_id = MESO_MODEL_FCTAYLOR
+                meso_model_id = MESO_MODEL_FCTAYLOR
             case ('ALAMEL')
-                this%altay%meso_model_id = MESO_MODEL_ALAMEL
-                if (.not. readValue(cnfunit, this%altay%microstructure_file_name)) &
+                meso_model_id = MESO_MODEL_ALAMEL
+                if (.not. readValue(cnfunit, microstructure_file_name)) &
                     call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read microstructure file name')
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
         end select
+        meso_params = meso_get_parameters(meso_model_id)
+        if (meso_params .includes. "Boundaries") then
+            param_ptr => meso_params .find. "Boundaries"
+            param_ptr = read_boundaries(microstructure_file_name)
+        end if
 
         read(cnfunit, '(A)') buffer
         select case (buffer)
             case ('fcc12')
-                this%altay%deformation_mechanism = SLIP_SYSTEMS_FCC
+                phase_%deformation_mechanism = SLIP_SYSTEMS_FCC
             case ('bcc24')
-                this%altay%deformation_mechanism = SLIP_SYSTEMS_BCC24
+                phase_%deformation_mechanism = SLIP_SYSTEMS_BCC24
             case ('bcc48')
-                this%altay%deformation_mechanism = SLIP_SYSTEMS_BCC48
+                phase_%deformation_mechanism = SLIP_SYSTEMS_BCC48
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
         end select
 
         !Read hardening section
-        if (.not. readValue(cnfunit, hardening_model_id)) &
+        if (.not. readValue(cnfunit, phase_%model_id)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening model ID')
-        this%altay%hardening_model_id = hardening_model_id
-        hardening_params = micro_get_parameters(hardening_model_id)
+        phase_%parameters = micro_get_parameters(phase_%model_id)
 
         read_success = .true.
-        select case(hardening_model_id)
+        select case(phase_%model_id)
             case(HARDENING_VOCE)
                 if (readValue(cnfunit, tmp(1:5))) then
-                    param_ptr => hardening_params .find. 'TIII1'
+                    param_ptr => phase_%parameters .find. 'TIII1'
                     param_ptr = tmp(1)
-                    param_ptr => hardening_params .find. 'TIIIS'
+                    param_ptr => phase_%parameters .find. 'TIIIS'
                     param_ptr = tmp(2)
-                    param_ptr => hardening_params .find. 'TIVS'
+                    param_ptr => phase_%parameters .find. 'TIVS'
                     param_ptr = tmp(3)
-                    param_ptr => hardening_params .find. 'THIII1'
+                    param_ptr => phase_%parameters .find. 'THIII1'
                     param_ptr = tmp(4)
-                    param_ptr => hardening_params .find. 'THT'
+                    param_ptr => phase_%parameters .find. 'THT'
                     param_ptr = tmp(5)
                 else
                     read_success = .false.
                 endif
             case(HARDENING_SWIFT)
                 if (readValue(cnfunit, tmp(1:3))) then
-                    param_ptr => hardening_params .find. 'crss0'
+                    param_ptr => phase_%parameters .find. 'crss0'
                     param_ptr = tmp(1)
-                    param_ptr => hardening_params .find. 'gamma0'
+                    param_ptr => phase_%parameters .find. 'gamma0'
                     param_ptr = tmp(2)
-                    param_ptr => hardening_params .find. 'n'
+                    param_ptr => phase_%parameters .find. 'n'
                     param_ptr = tmp(3)
                 else
                     read_success = .false.
                 endif
             case(HARDENING_HOCKETT_SHERBY)
                 if (readValue(cnfunit, tmp(1:4))) then
-                    param_ptr => hardening_params .find. 'tau_0'
+                    param_ptr => phase_%parameters .find. 'tau_0'
                     param_ptr = tmp(1)
-                    param_ptr => hardening_params .find. 'tau_sat'
+                    param_ptr => phase_%parameters .find. 'tau_sat'
                     param_ptr = tmp(2)
-                    param_ptr => hardening_params .find. 'b'
+                    param_ptr => phase_%parameters .find. 'b'
                     param_ptr = tmp(3)
-                    param_ptr => hardening_params .find. 'n'
+                    param_ptr => phase_%parameters .find. 'n'
                     param_ptr = tmp(4)
                 else
                     read_success = .false.
@@ -178,37 +148,37 @@ contains
                     end do
                     close(dsh_unit)
 
-                    param_ptr => hardening_params .find. 'b'
+                    param_ptr => phase_%parameters .find. 'b'
                     param_ptr = tmp(1)
-                    param_ptr => hardening_params .find. 'G'
+                    param_ptr => phase_%parameters .find. 'G'
                     param_ptr = tmp(2)
-                    param_ptr => hardening_params .find. 'alfa'
+                    param_ptr => phase_%parameters .find. 'alfa'
                     param_ptr = tmp(3)
-                    param_ptr => hardening_params .find. 'f'
+                    param_ptr => phase_%parameters .find. 'f'
                     param_ptr = tmp(4)
-                    param_ptr => hardening_params .find. 'tau0'
+                    param_ptr => phase_%parameters .find. 'tau0'
                     param_ptr = tmp(5)
-                    param_ptr => hardening_params .find. 'I'
+                    param_ptr => phase_%parameters .find. 'I'
                     param_ptr = tmp(6)
-                    param_ptr => hardening_params .find. 'R'
+                    param_ptr => phase_%parameters .find. 'R'
                     param_ptr = tmp(7)
-                    param_ptr => hardening_params .find. 'Iwd'
+                    param_ptr => phase_%parameters .find. 'Iwd'
                     param_ptr = tmp(8)
-                    param_ptr => hardening_params .find. 'Rwd'
+                    param_ptr => phase_%parameters .find. 'Rwd'
                     param_ptr = tmp(9)
-                    param_ptr => hardening_params .find. 'Rncg'
+                    param_ptr => phase_%parameters .find. 'Rncg'
                     param_ptr = tmp(10)
-                    param_ptr => hardening_params .find. 'beta1'
+                    param_ptr => phase_%parameters .find. 'beta1'
                     param_ptr = tmp(11)
-                    param_ptr => hardening_params .find. 'beta2'
+                    param_ptr => phase_%parameters .find. 'beta2'
                     param_ptr = tmp(12)
-                    param_ptr => hardening_params .find. 'Iwp'
+                    param_ptr => phase_%parameters .find. 'Iwp'
                     param_ptr = tmp(13)
-                    param_ptr => hardening_params .find. 'Rwp'
+                    param_ptr => phase_%parameters .find. 'Rwp'
                     param_ptr = tmp(14)
-                    param_ptr => hardening_params .find. 'Rrev'
+                    param_ptr => phase_%parameters .find. 'Rrev'
                     param_ptr = tmp(15)
-                    param_ptr => hardening_params .find. 'R2'
+                    param_ptr => phase_%parameters .find. 'R2'
                     param_ptr = tmp(16)
                 else
                    read_success = .false.
@@ -216,7 +186,7 @@ contains
             end select
 
           if (read_success) then
-              this%altay%hardening_parameters = hardening_params
+              call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
               return
           end if
           666 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening parameters')

@@ -28,7 +28,7 @@ module dmcYLD
         real(DP), dimension(6):: scaling_vector = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP, 0._DP]
         logical                                   :: normalizeSm = .false.
     contains
-        procedure:: readConfig => YldModule_readConfig
+        procedure:: initialize => yld_initialize
         procedure:: run => YldModule_run
         procedure:: write_results => writeYldResults
     end type
@@ -48,8 +48,8 @@ module dmcYLD
 
 contains
 
-    subroutine YldModule_readConfig(this, cnfunit)
-        class(YldModule), intent(inout)            :: this
+    subroutine yld_initialize(this, cnfunit)
+        class(YLDModule), intent(inout)            :: this
         integer, intent(in)                        :: cnfunit
 
         character(*), parameter:: PROC_NAME = 'yldmodule_readconfig'
@@ -58,7 +58,7 @@ contains
         real(DP):: norm
         logical:: normalize, use_default_settings
 
-        call this%BasicModule%ReadConfig(cnfunit)
+        call this%BasicModule%initialize(cnfunit)
 
         ! Read parameters specific for the dmcYld program
         if (.not. readValue(cnfunit, this%angular_resolution)) &
