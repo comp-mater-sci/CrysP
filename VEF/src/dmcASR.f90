@@ -117,9 +117,7 @@ contains
                    stress(6)
 
         call write_texture(this%output_prefix, this%material%clusters)
-
-        if (this%openOutputFile('.asr',iounit) /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to upen output file')
+        call this%openOutputFile('.asr',iounit)
 
         ! Write out header lines
         column_labels = adjustr(column_labels)
@@ -163,7 +161,8 @@ contains
                 end associate
             end do
         end do
-        ! Formats for output file
         710 format(2(I12), 16(ES12.3E2))
+
+        close(iounit)
     end subroutine
 end module

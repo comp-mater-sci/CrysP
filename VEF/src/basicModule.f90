@@ -239,24 +239,14 @@ contains
     end subroutine
 
     !> Open output file
-    integer function BasicModule_openOutputFile(this, ext, ofunit, suffix) result(info)
+    subroutine BasicModule_openOutputFile(this, ext, ofunit)
         class(BasicModule), intent(in)           :: this
         character(len=*), intent(in)             :: ext !< File extension (with leading dot)
         integer, intent(out)                     :: ofunit !< IO unit of the output
-        character(len=*), intent(in), optional    :: suffix !< Suffix to the file
-        character(len = max_pathlen):: output_path
         integer:: ierr
 
-        if (present(suffix)) then
-            output_path = trim(this%output_prefix)// trim(suffix) //trim(ext)
-        else
-            output_path = trim(this%output_prefix)// trim(ext)
-        endif
-
-        open(newunit = ofunit, file = output_path, status='replace', iostat = ierr)
+        open(newunit = ofunit, file = this%output_prefix // ext, status='replace', iostat = ierr)
         if (ierr /= 0) &
             call log_error(MOD_NAME, 'open_output_file', ERR_IO, 'Could not open output file.')
-
-        info = VEF_OK
-    end function
+    end subroutine
 end module

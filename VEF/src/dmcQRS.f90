@@ -98,8 +98,6 @@ contains
                    stress(5), &
                    residual(5)
 
-        info = this%openOutputFile('.xqrs', ofunit)
-        if (info /= VEF_OK) return
 
         !
         npoints = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
@@ -150,25 +148,27 @@ contains
             fi2 = fi2 + this%angular_resolution
         enddo
 
-        info = this%fileOutput(ofunit, results)
-        close(ofunit)
+        call this%fileOutput(results)
     end subroutine
 
     !> Write out results to the output file
-    integer function QRSModule_fileOutput(this, iounit, data_record) result(info)
-    implicit none
-    class(QRSModule), intent(in)                 :: this
-    integer, intent(in)                          :: iounit !< Output IO unit
-    type(QRSOutputData), intent(in), optional     :: data_record !< Data to be written out
-    !
-    integer:: i, npoints, left, right, stride, ierr
-    !
-    integer, parameter:: ncolumn_labels = 5, column_width = 18
-    character(len = column_width), dimension(ncolumn_labels):: column_names = &
-        [ character(len = column_width) ::  &
-        'angle','q-value','r-value','s-value','residual' ]
+    subroutine QRSModule_fileOutput(this, data_record)
+        class(QRSModule), intent(in)                 :: this
+        type(QRSOutputData), intent(in), optional    :: data_record !< Data to be written out
 
-        info = VEF_ERROR
+        integer:: i, &
+                  npoints, &
+                  left, &
+                  right, &
+                  stride, &
+                  ierr, &
+                  iounit
+
+        integer, parameter:: ncolumn_labels = 5, column_width = 18
+        character(len = column_width), dimension(ncolumn_labels):: column_names = &
+                        [ character(len = column_width):: 'angle','q-value','r-value','s-value','residual' ]
+
+        call this%openOutputFile('.xqrs', iounit)
         call write_standard_header(iounit, column_names)
         !
         if (present(data_record)) then
@@ -183,12 +183,10 @@ contains
                 if (ierr /= 0) return
             enddo
         endif
-        !
-        info = VEF_OK
-        !
-        ! Formats for the output file
         710 format(1X, 8(ES18.9E3, 1X))
-    end function
+
+        close(iounit)
+    end subroutine
 
 
     !> Initialize QRSOutputData to store npoints datapoints

@@ -18,7 +18,7 @@ commonUtils.f90
 dmcADP.f90
 dmcASR.f90
 dmcQRS.f90
-dmcYld.f90
+dmcYLD.f90
 cryspy.f90
 file_io.f90
 )

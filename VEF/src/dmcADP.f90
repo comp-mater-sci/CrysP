@@ -93,11 +93,11 @@ contains
                 end if
             end associate
         enddo
-        info = this%fileOutput()
+        call this%fileOutput()
     end subroutine
 
     !> Write out results to the output file
-    integer function ADPModule_fileOutput(this) result(info)
+    subroutine ADPModule_fileOutput(this)
         class(ADPModule), intent(in):: this
 
         integer:: step, &
@@ -113,12 +113,7 @@ contains
 
         call write_texture(this%output_prefix, this%material%clusters)
 
-        ! Open output file
-        info = this%openOutputFile('.adp',iounit)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, 'fileoutput', ERR_IO, 'Could not open output file.')
-
-        ! Write column labels
+        call this%openOutputFile('.adp',iounit)
         call write_standard_header(iounit, column_names)
 
         ! Write the data
@@ -138,9 +133,8 @@ contains
                 enddo
             end associate
         enddo
-        info = VEF_OK
-
-        ! Formats for the output file
         710 format(1X, 2(I18, 1X), 18(ES18.9E3, 1X))
-    end function
+
+        close(iounit)
+    end subroutine
 end module
