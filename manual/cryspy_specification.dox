@@ -10,13 +10,13 @@ This page provides the full specification of the inputs and outputs required by 
 \section sec_spec_generic Generic configuration
 Each \ref sec_format_files_main starts with a generic configuration section, applicable to all CrysPy Kernel modules, which describes the multiscale model used for the simulation:
 
--# \confdef{texture_file, \ref sec_format_fields_string} specifies the (relative) path to the input texture file. Its format is described in the \ref sec_format_files_texture section.
+-# \confdef{texture_file, \ref sec_format_fields_string} specifies the (relative) path to the input texture file. This file represents the texture of the material as a discrete set of grain orientations. Its format is described in the \ref sec_format_files_orientation section.
 
 -# \confdef{model_type, \ref sec_format_fields_string} specifies the multi-scale crystal plasticity model to be used in the calculations. The supported models are:
     - **ALAMEL**: Advanced LAMEL model developed at KU Leuven. If this model is chosen, the following suboption must be provided:
-        - \confdef{microstructure_file,\ref sec_format_fields_string} Relative path to the microstrucure file. Refer to \ref sec_format_files_microstructure for the structure of this file.
+        - \confdef{microstructure_file,\ref sec_format_fields_string} Relative path to the microstrucure file. It describes the microstructure of the material, as a discrete set of grain boundary normals. It is formatted a an \ref sec_format_files_orientation.
 
-      The ALAMEL model will process the \ref sec_format_files_texture and \ref sec_format_files_microstructure sequentially. Each pair of consecutive orientations from the \ref sec_format_files_texture is matched with the topmost boundary normal from the \ref sec_format_files_microstructure that has not yet been used to form a cluster. If the \ref sec_format_files_microstructure does not contain enough boundary normals to process all orientations from the \ref sec_format_files_texture, it is reprocessed sequentially as needed. For example, if the \ref sec_format_files_texture contains 800 orientations, but the \ref sec_format_files_microstructure contains only 250 boundary normals, ALAMEL will construct 250 clusters with the first 500 orientations from the \ref sec_format_files_texture and each of the boundary normals from the \ref sec_format_files_microstructure, and 150 clusters with the last 300 orientations and the first 150 boundary normals, all in sequential order.
+      The ALAMEL model will process the texture and microstrucure files sequentially. Each pair of consecutive grain orientations is matched with the topmost boundary normal that has not yet been used to form a cluster. If the microstrucure file does not contain enough boundary normals to process all grain orientations, it is reprocessed sequentially as needed. For example, if the texture consists of 800 grain orientations, but the microstructure file contains only 250 boundary normals, ALAMEL will construct 250 clusters with the first 500 grain orientations and each of the boundary normals, and 150 clusters with the last 300 grain orientations and the first 150 boundary normals, all in sequential order. Note that often it is not possible to experimentally obtain the microstructure of the sample. In that case, it is recommended to generate a set of boundary normals programmatically that corresponds with the average grain morphology.
     - **FCTaylor**: Traditional full constraints Taylor model.
 
 -# \confdef{slip_system_set, \ref sec_format_fields_string} specifies the slip system set to be used. Valid values are:
@@ -211,7 +211,7 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	</li>
 </ol>
 
-Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_texture.
+Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_orientation.
 
 <HR>
 
@@ -397,5 +397,5 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 
 -# \outdef{M} Taylor factor of the last increment in the step.
 
-Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_texture.
+Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_orientation.
 */

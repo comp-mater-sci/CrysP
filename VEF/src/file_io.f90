@@ -79,6 +79,25 @@ contains
         string = trim(buffer)
     end function
 
+    !> Count the number of lines in a file
+    integer function get_line_count(file_handle) result(lines)
+        integer, intent(in):: file_handle
+
+        integer:: handle, &
+                  info
+
+        lines = 0
+        do
+            read (file_handle, *, iostat=info)
+            if (is_iostat_end(info)) then
+                rewind (unit=file_handle, iostat=info)
+                call handle_iostat('get_line_count',info)
+                return
+            end if
+            call handle_iostat('get_line_count', info)
+            lines = lines + 1
+        end do
+    end function
 
     !> Generic handler for I/O errors.
     !>
@@ -111,7 +130,7 @@ contains
         !
         integer :: i
         character(len=cMapNameLen)       :: shortname
-    !
+
         resolveName = .false.
         shortname = trim(adjustl(name)) ! Trim and store (make direct comparison)
         do i=1,size(themap) !MB: search for name in map
@@ -126,7 +145,7 @@ contains
 
     logical function skipComment(nunit, buffer)
         integer, intent(in)::         nunit
-        character(512), intent(out):: buffer
+        character(MAX_LINE_LEN), intent(out):: buffer
 
         logical:: next
         integer:: ios, &
@@ -134,20 +153,17 @@ contains
 
         next = .true.
         do while (next)
-            read(nunit, fmt = 500, iostat = ios) buffer
-            if (ios /= 0) then
-                skipComment = .false.
-                next = .false.
-            endif
+            read(nunit, fmt = '(A512)', iostat = ios) buffer
+            call handle_iostat('skipcomment', ios)
+
             if (.not. isComment(trim(adjustl(buffer))) ) then
                 skipComment = .true.
                 next = .false.
-                ! sanitize output by removing '#'
+                !Remove possible trailing comments from the input line
                 hashidx = index(buffer, comment_sign)
                 if (hashidx /= 0) buffer(hashidx:) = ' '
             endif
         enddo
-        500 format(A512)
     contains
 
         logical function isComment(buffer)
@@ -190,7 +206,7 @@ contains
         character(max_line_len)   :: buffer
         integer:: ierr
 
-        if (skipComment(inunit, buffer)) read(buffer, fmt=*,iostat = ierr) val
+        if (skipComment(inunit, buffer)) read(buffer, *,iostat = ierr) val
         call handle_iostat('read_array', ierr, buffer)
     end subroutine
     !> See [[read_scalar]]
@@ -206,7 +222,6 @@ contains
 
     !> Read a keyword value and checks it against the map.
     !>
-    !> \return
     !> If the keyword appears in the map, .true. is returned and the parameter value is set
     !> to the value associated to the keyword. Otherwise .false. is returned and value becomes undefined.
     logical function readKeyword(cnfunit,map,value) result(res)
@@ -234,16 +249,14 @@ contains
         real(DP), dimension(:,:), allocatable:: orientations
         integer::   i,      &   !Iterator
                     info,   &   !IO error code
-                    handle, &   !File handle
-                    n_ors       !Number of orientations
+                    handle      !File handle
 
-        open (newunit=handle, file=file_name, status='old', iostat=info)
+        open (newunit=handle, file=file_name, status='old', access='sequential',iostat=info)
         call handle_iostat('read_boundaries', info)
 
-        call read_value(handle, n_ors)
-        allocate(orientations(3, n_ors))
+        allocate(orientations(3, get_line_count(handle)))
 
-        do i = 1, n_ors
+        do i = 1, size(orientations,2)
             call read_value(handle, orientations(:,i))
         enddo
         close(handle)
