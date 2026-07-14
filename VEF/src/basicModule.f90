@@ -54,7 +54,7 @@ contains
 
         ! Read input texture file name
         call read_value(cnfunit, texture_file_name)
-        phase_%orientations = read_texture(trim(texture_file_name))
+        phase_%orientations = read_orientations(trim(texture_file_name))
 
         ! Determine crystal plasticity model type
         read(cnfunit, '(A)') buffer
@@ -69,7 +69,7 @@ contains
         end select
         meso_params = meso_get_parameters(meso_model_id)
         if (meso_params .includes. "Boundaries") &
-            call parameter_set(meso_params, 'Boundaries', read_boundaries(microstructure_file_name))
+            call parameter_set(meso_params, 'Boundaries', read_orientations(microstructure_file_name))
 
         read(cnfunit, '(A)') buffer
         select case (buffer)

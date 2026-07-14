@@ -14,9 +14,8 @@ module file_io
              resolvename, &
              read_value, &
              readKeyword, &
-             read_texture, &
+             read_orientations, &
              write_texture, &
-             read_boundaries, &
              write_standard_header
 
     character, parameter::    COMMENT_SIGN = '#'
@@ -223,62 +222,33 @@ contains
         res = resolveName(map, buffer, value)
     end function
 
-
-    !Read list of grain orientations from file
-    !@return list of Euler angle triplets (in radians) representing grain orientations
-    function read_texture(fname) result(orientations)
-        character(*), intent(in)::  fname
-
-        integer::   nunit,  &
-                    info,   &
-                    nrec,   &
-                    i
+    !> Read file containing orientations
+    !>
+    !> Handles both texture and microstructure files.
+    !> Crashes the program on formatting or I/O error.
+    !> The first line of the file contains the number of orientations it contains.
+    !> All subsequent lines contain the orientations,
+    !> formatted as a tripled of space-separated Euler angles in Bunge convention, in degrees.
+    function read_orientations(file_name) result(orientations)
+        character(*), intent(in):: file_name
         real(DP), dimension(:,:), allocatable:: orientations
+        integer::   i,      &   !Iterator
+                    info,   &   !IO error code
+                    handle, &   !File handle
+                    n_ors       !Number of orientations
 
-        open(newunit = nunit, file = trim(fname), status='old',form='formatted',iostat = info)
-        call handle_iostat('read_texture (open)',info)
+        open (newunit=handle, file=file_name, status='old', iostat=info)
+        call handle_iostat('read_boundaries', info)
 
-        nrec = 0
-        read (nunit, *, iostat = info) nrec
-        call handle_iostat('read_texture (header)', info, to_string(nrec))
+        call read_value(handle, n_ors)
+        allocate(orientations(3, n_ors))
 
-        if (nrec <= 0) &
-            call log_error(MOD_NAME, 'read_texture', ERR_VAL, 'Nomber of orientations must be greater than 0.')
-
-        allocate(orientations(3, nrec))
-        do i = 1, nrec
-            read(nunit, *, iostat = info) orientations(:,i)
-            call handle_iostat('read_texture (orientations)', info, to_string(orientations(:,i)))
+        do i = 1, n_ors
+            call read_value(handle, orientations(:,i))
         enddo
+        close(handle)
 
         orientations = deg_to_rad(orientations)
-        close(nunit)
-    end function
-
-    !Read grain boundaries from file
-    !@return List of Euler angle triplets (in radians) representing boundary orientations
-    function read_boundaries(file_name) result(boundaries)
-        character(*), intent(in):: file_name
-        real(DP), dimension(:,:), allocatable:: boundaries
-        integer::   i,              &
-                    info,           &
-                    file_handle,    &
-                    n_boundaries
-
-        !Open file
-        open (newunit=file_handle, file=file_name, status='old', iostat=info)
-        call handle_iostat('read_boundaries (open)', info)
-        read (file_handle, *, iostat=info) n_boundaries  ! read number of grain boundaries and file title
-        call handle_iostat('read_boundaries (header)', info, to_string(n_boundaries))
-
-        allocate(boundaries(3, n_boundaries))
-
-        do i = 1, n_boundaries
-            read (file_handle, '(3f10.0)') boundaries(3, i), boundaries(2, i), boundaries(1, i)  !read Euler angles from microstructure file in order: phi2, PHI, phi1
-        enddo
-        close(unit = file_handle)
-
-        boundaries = deg_to_rad(boundaries)
     end function
 
     subroutine write_texture(state_file_prefix, clusters)
