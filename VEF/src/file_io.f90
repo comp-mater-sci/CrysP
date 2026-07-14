@@ -276,7 +276,7 @@ contains
 
         do i=1,size(clusters)
             do j=1, size(clusters(i)%grains)
-                write (state_unit, '(3f8.4)') rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
+                write (state_unit, '(3(G0,:,","))') rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
             end do
         end do
 
