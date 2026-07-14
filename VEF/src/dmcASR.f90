@@ -45,17 +45,16 @@ contains
         call this%BasicModule%initialize(cnfunit)
 
         ! Read parameters specific for the ASRModule
-        if (.not. readValue(cnfunit, n_steps)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read number of steps')
+        call read_value(cnfunit, n_steps)
         if (n_steps <= 0) &
             call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of steps must at least be 1.')
         allocate(this%steps(n_steps))
         do i = 1, n_steps
             associate (step => this%steps(i))
-                if (.not. readValue(cnfunit, step%target_stress_mode)) return
+                call read_value(cnfunit, step%target_stress_mode)
                 !There is no real reason to normalize but we do anyway for concistency
                 step%target_stress_mode = step%target_stress_mode / norm2(step%target_stress_mode)
-                if (.not. readValue(cnfunit, step%target_vm_strain)) return
+                call read_value(cnfunit, step%target_vm_strain)
             end associate
         enddo
     end subroutine

@@ -53,8 +53,7 @@ contains
         type(PhaseDescriptor):: phase_
 
         ! Read input texture file name
-        if (.not. readValue(cnfunit, texture_file_name)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file name')
+        call read_value(cnfunit, texture_file_name)
         phase_%orientations = read_texture(trim(texture_file_name))
 
         ! Determine crystal plasticity model type
@@ -64,8 +63,7 @@ contains
                 meso_model_id = MESO_MODEL_FCTAYLOR
             case ('ALAMEL')
                 meso_model_id = MESO_MODEL_ALAMEL
-                if (.not. readValue(cnfunit, microstructure_file_name)) &
-                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read microstructure file name')
+                call read_value(cnfunit, microstructure_file_name)
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
         end select
@@ -86,16 +84,14 @@ contains
         end select
 
         !Read hardening section
-        if (.not. readValue(cnfunit, phase_%model_id)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening model ID')
+        call read_value(cnfunit, phase_%model_id)
         phase_%parameters = micro_get_parameters(phase_%model_id)
         n_params = size(phase_%parameters)
 
         !Hardening parameters must be provided in the order in which they are defined in the hardening models.
         if (n_params > 0) then
             allocate(tmp(n_params))
-            if (.not. readvalue(cnfunit,tmp(:n_params))) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening parameters')
+            call read_value(cnfunit,tmp)
             do i=1,n_params
                 phase_%parameters(i) = tmp(i)
             end do

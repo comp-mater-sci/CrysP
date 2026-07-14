@@ -61,19 +61,15 @@ contains
         call this%BasicModule%initialize(cnfunit)
 
         ! Read parameters specific for the dmcYld program
-        if (.not. readValue(cnfunit, this%angular_resolution)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
+        call read_value(cnfunit, this%angular_resolution)
         this%angular_resolution = deg_to_rad(this%angular_resolution)
-        if (.not. readValue(cnfunit, use_default_settings)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read default settings flag')
 
+        call read_value(cnfunit, use_default_settings)
         if (.not. use_default_settings) then
             this%base_vectors = 0.D0
-            if (.not. readValue(cnfunit, normalize)) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read normalization flag')
+            call read_value(cnfunit, normalize)
             do i = 1, nbase
-                if (.not. readValue(cnfunit, this%base_vectors(:,i))) &
-                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read base vector.')
+                call read_value(cnfunit, this%base_vectors(:,i))
 
                 if (normalize) then
                     norm = norm2(this%base_vectors(:,i))
@@ -81,14 +77,11 @@ contains
                 endif
             enddo
 
-            if (.not. readValue(cnfunit, this%normalizeSm)) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read normalization of stress mode flag.')
-            if (.not. readValue(cnfunit, this%do_scaling)) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read scaling flag.')
-            if (this%do_scaling) then
-                if (.not. readValue(cnfunit, this%scaling_vector)) &
-                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read scaling vector.')
-            endif
+            call read_value(cnfunit, this%normalizeSm)
+
+            call read_value(cnfunit, this%do_scaling)
+            if (this%do_scaling) &
+                call read_value(cnfunit, this%scaling_vector)
         endif
     end subroutine
 

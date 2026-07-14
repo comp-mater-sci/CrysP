@@ -66,10 +66,7 @@ contains
         use_default_settings = .false.
         call this%BasicModule%initialize(cnfunit)
 
-        ! Read parameters specific for the QRS module
-        if (.not. readValue(cnfunit, this%angular_resolution)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
-
+        call read_value(cnfunit, this%angular_resolution)
         this%angular_resolution = deg_to_rad(this%angular_resolution)
     end subroutine
 

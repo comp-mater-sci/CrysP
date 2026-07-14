@@ -39,12 +39,14 @@ contains
         class(ADPModule), intent(inout)   :: this !< passed implicitly
         integer, intent(in)              :: cnfunit !< IO input unit; pass explicitly
 
+        character(*), parameter:: PROC_NAME = 'adp_initialize'
+
         integer:: n_steps, i
 
         call this%BasicModule%initialize(cnfunit)
 
         !Read the module-specific config
-        if (.not. readValue(cnfunit, n_steps)) return
+        call read_value(cnfunit, n_steps)
 
         if (n_steps < 1) then
             return
@@ -54,10 +56,13 @@ contains
 
         do i = 1, n_steps
             associate (step => this%steps(i))
-                if (.not. readValue(cnfunit, step%velocity_gradient)) return
+                call read_value(cnfunit, step%velocity_gradient)
                 if (math_trace33(step%velocity_gradient) > TOLERANCE) &
-                    call log_error(MOD_NAME, 'adpmodule_readconfig', ERR_VAL, 'Volumetric deformation is not alowed.')
-                if (.not. readValue(cnfunit, step%target_strain)) return
+                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Volumetric deformation is not alowed.')
+
+                call read_value(cnfunit, step%target_strain)
+                if (step%target_strain < 0._DP) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Target strain must not be negative.')
             end associate
         end do
     end subroutine
