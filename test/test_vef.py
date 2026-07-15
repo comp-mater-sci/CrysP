@@ -18,8 +18,6 @@ import pytest
 import pandas as pd
 import numpy as np
 
-#File extension for the output of each execution mode. May be removed when we get rid of the file-based I/O for the simulations.
-EXTENSIONS = {'ADP':'adp','ASR':'asr', 'QRS':'xqrs', 'YLD':'xyld'}
 GENERATED_DATA = []
 TEST_ROOT = Path.cwd()
 TEST_RUN = TEST_ROOT/'run'
@@ -72,7 +70,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
             print(result.stderr.decode())
         assert result.returncode == 0
 
-        shutil.move(TEST_RUN/f'test.{EXTENSIONS[mode]}', out_path)
+        shutil.move(TEST_RUN/'test_out.csv', out_path)
         GENERATED_DATA.append((mode, algorithm, slip_system, hardening_model))
         TEST_REF.mkdir(parents=True, exist_ok=True)
         if 'log' in update: shutil.copy(log_path, TEST_REF)

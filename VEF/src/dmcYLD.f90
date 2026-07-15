@@ -181,10 +181,7 @@ contains
         character(len = column_width), dimension(ncolumns), parameter  :: column_labels = [ character(len = column_width) :: &
             'theta', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
 
-        call this%openOutputFile('.xyld', ounit)
-        write(ounit, fmt = 701, iostat = ierr) (column_labels(i), i = 1, ncolumns)
-        if (ierr /= 0) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to write header')
+        ounit = write_standard_header(this%output_prefix, column_labels)
 
         do i = 1, size(res)
             write(ounit, fmt = 710, iostat = ierr) res(i)

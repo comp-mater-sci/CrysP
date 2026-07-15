@@ -165,9 +165,8 @@ contains
         character(len = column_width), dimension(ncolumn_labels):: column_names = &
                         [ character(len = column_width):: 'angle','q-value','r-value','s-value','residual' ]
 
-        call this%openOutputFile('.xqrs', iounit)
-        call write_standard_header(iounit, column_names)
-        !
+        iounit = write_standard_header(this%output_prefix, column_names)
+
         if (present(data_record)) then
             ! FIXME: flawed assumption, other arrays may have different size
             npoints = 0

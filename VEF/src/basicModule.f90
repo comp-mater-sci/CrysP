@@ -30,7 +30,6 @@ module dmcBasicModule
     contains
           procedure:: initialize =>  BasicModule_initialize
           procedure:: run => BasicModule_run
-          procedure:: openOutputFile => BasicModule_openOutputFile
     end type
 
 contains
@@ -105,17 +104,5 @@ contains
         integer, intent(out)                 :: info
 
         info = VEF_OK
-    end subroutine
-
-    !> Open output file
-    subroutine BasicModule_openOutputFile(this, ext, ofunit)
-        class(BasicModule), intent(in)           :: this
-        character(len=*), intent(in)             :: ext !< File extension (with leading dot)
-        integer, intent(out)                     :: ofunit !< IO unit of the output
-        integer:: ierr
-
-        open(newunit = ofunit, file = this%output_prefix // ext, status='replace', iostat = ierr)
-        if (ierr /= 0) &
-            call log_error(MOD_NAME, 'open_output_file', ERR_IO, 'Could not open output file.')
     end subroutine
 end module

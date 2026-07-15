@@ -15,8 +15,10 @@ module file_io
              read_value, &
              readKeyword, &
              read_orientations, &
-             write_texture, &
-             write_standard_header
+             open_texture_evolution_file, &
+             open_output_file, &
+             write_texture_increment, &
+             write_output_increment
 
     character, parameter::    COMMENT_SIGN = '#'
     character(*), parameter:: MOD_NAME = "file_io"
@@ -69,13 +71,13 @@ contains
         string = trim(buffer)
     end function
     !> See [[to_string_int]]
-    pure function to_string_real_arr(number) result(string)
-        real(DP), dimension(:), intent(in):: number
+    pure function to_string_real_arr(numbers) result(string)
+        real(DP), dimension(:), intent(in):: numbers
         character(:), allocatable:: string
 
         character(FNAME_LEN):: buffer
 
-        write (buffer, '(' // to_string(size(number)) // '(E12.4E3))') number
+        write (buffer, '(' // to_string(size(numbers)) // '(G0))') numbers
         string = trim(buffer)
     end function
 
@@ -264,42 +266,64 @@ contains
         orientations = deg_to_rad(orientations)
     end function
 
-    subroutine write_texture(state_file_prefix, clusters)
-        character(*), intent(in):: state_file_prefix
+    integer function open_result_file(name, header) result(unit)
+        integer, intent(in):: file_handle
+        character(*), dimension(:), intent(in):: header
+
+        integer:: i, &
+                  info, &
+                  n_cols
+
+        n_cols = size(header)
+      `
+        open (newunit = unit, file = name, status='replace', iostat=info)
+        call handle_iostat('open_result_file (open)', info)
+
+        write(unit,fmt='('// to_string(n_cols) // '(A,:,","))',iostat=info) (trim(header(i)), i = 1, n_cols)
+        call handle_iostat('open_result_file (header)', info)
+    end function
+
+    integer function open_texture_evolution_file(prefix) result(handle)
+        character(*), intent(in):: prefix
+
+        character(9), dimension(4), parameter:: HEADER = ['increment','phi1','PHI','phi2']
+
+        handle = open_result_file(prefix // '_texture.csv', HEADER)
+    end function
+
+    subroutine write_texture_increment(file_handle, increment, clusters)
+        integer, intent(in):: file_handle
+        integer, intent(in):: increment
         class(Cluster), dimension(:), intent(in):: clusters
 
         integer:: i, j, &
-                  state_unit, &
                   info
-
-        open (newunit = state_unit, file = state_file_prefix//'.CUR', status='replace',err = 9999, iostat=info)
 
         do i=1,size(clusters)
             do j=1, size(clusters(i)%grains)
-                write (state_unit, '(3(G0,:,","))') rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
+                write (file_handle, '(I0,3(G0,:,","))', iostat=info) (increment, rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation)))
+                call handle_iostat('write_texture', info)
             end do
         end do
-
-        close(state_unit)
-        return
-        9999 call log_error(MOD_NAME, 'write_texture', ERR_IO, 'Cannot open state file.' )
     end subroutine
 
-    !> Write out standard header: two lines: #1: column numbers, #2 column names
-    subroutine write_standard_header(iounit, column_names)
-        integer,intent(in)                    :: iounit        !< Output IO unit
-        character(*),dimension(:), intent(in) :: column_names  ! Names of columns
+    integer function open_output_file(prefix, header) result(handle)
+        character(*), intent(in):: prefix
+        character(*), dimension(:), intent(in):: header
 
-        character(FMT_STRING_LENGTH) :: fmt_string
-        integer :: i, &
-                   info, &
-                   ncolumns
+        handle = open_result_file(prefix // '_out.csv', header)
+    end function
 
-        ncolumns = size(column_names)
-        ! Format: two leading spaces, followed by columns
-        fmt_string = '(2X,'// to_string(ncolumns) // '(A,1X))'
-        write(iounit,fmt=fmt_string,iostat=info) (column_names(i), i = 1, ncolumns)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, 'write_standard_header', ERR_IO, 'Could not write output file header')
+    subroutine write_output_increment(file_handle, data)
+        integer, intent(in):: file_handle
+        real(DP), dimension(:), intent(in):: data
+
+        integer :: info, &
+                   n_cols
+
+        n_cols = size(data)
+
+        write(handle,fmt='('// to_string(n_cols) // '(G0,:,","))',iostat=info) data
+        call handle_iostat('write_ouptut (data)', info)
     end subroutine
 end module

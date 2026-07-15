@@ -17,6 +17,14 @@ module dmcASR
     public:: ASRModule
 
     character(*), parameter:: MOD_NAME = 'ASRModule'
+    !> Reported output quantities for each increment
+    character(10), dimension(16), parameter:: OUTPUT_HEADER = ['epsilon_vM', &
+                                                               'sigma_vM', &
+                                                               'dotW', &
+                                                               'residual', &
+                                                               'sigma_xx','sigma_yy','sigma_zz','sigma_yz','sigma_xz','sigma_xy', &
+                                                               'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy']
+
 
     type:: StressDrivenStep
         real(DP), dimension(6):: target_stress_mode
@@ -63,15 +71,34 @@ contains
         class(ASRModule), intent(inout):: this
         integer, intent(out):: info
 
-        integer:: i
+        integer:: i_step, i_stress, i_strain, &
+                  out_unit, texture_unit, &
+                  n_incs
         real(DP):: dev_stress(5), &
-                   target_dev_stress(5)
+                   target_dev_stress(5), &
+                   def_grad(3,3), &
+                   hydro, &
+                   dev, &
+                   stress_scaling_factor
 
-        do i=1, size(this%steps)
-            associate (step => this%steps(i))
+        out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
+        texture_unit = open_texture_evolution_file(this%output_prefix)
+
+        n_incs = 0
+        def_grad = UNIT_MATRIX_3X3
+        do i_step=1, size(this%steps)
+            associate (step => this%steps(i_step))
+                !Determine by how much to scale the deviatoric stress to obtain the total stress
+                !Because the actual stress tensor is just the stress mode scaled by the stress norm,
+                !The hydrostatic component is also the hydrostatic component of the stress mode scaled by the stress norm.
+                !The sress norm is in turn the norm of the deviatoric component over the norm of the deviatoric component of the stress mode
                 target_dev_stress = unscaled_voigt_to_deviatoric(step%target_stress_mode)
-                target_dev_stress = target_dev_stress / norm2(target_dev_stress)
+                dev = norm2(target_dev_stress)
+                hydro = sum(step%target_stress_mode(1:3)) / 3._DP
+                stress_scaling_factor = hydro / dev
 
+                !Run deformation
+                target_dev_stress = target_dev_stress / norm2(target_dev_stress)
                 if (step%target_vm_strain < TOLERANCE) then
                     allocate(step%increments(1))
                     associate (inc => step%increments(1))
@@ -79,89 +106,41 @@ contains
                         inc%strain_rate = target_dev_stress
                         call altay_simulate_stress_mode(this%material, target_dev_stress, inc%strain_rate, dev_stress, inc%residual)
                         inc%strain_increments(1)%stress = deviatoric_to_tensor(dev_stress)
+                        n_incs = n_incs + 1
                     end associate
                 else
                     call altay_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%increments)
+                    !Write new texture to file
+                    do i_stress = 1, size(step%increments)
+                        n_incs = n_incs + size(step%increments(i_sress)%strain_increments)
+                    end do
+                    call write_texture_increment(texture_unit, n_incs, this%material%clusters)
                 end if
+
+                !Write increments to file
+                do i_stress = 1, size(step%increments)
+                    associate (stress_inc => step%increments(i_stress))
+                        do i_strain=1, size(stress_inc%strain_increments)
+                            associate (strain_inc => stress_inc%strain_increments(i_strain))
+                                stress = tensor_to_unscaled_voigt(strain_inc%stress)
+                                stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress)
+
+                                call write_output_increment(out_unit, [stretch_to_von_mises_true_strain(matmul(strain_inc%deformation_gradient, def_grad)), &
+                                                                       sqrt(3._DP/2._DP) * norm2(strain_inc%stress), &
+                                                                       deviatoric_to_tensor(stress_inc%strain_rate) .dot. strain_inc%stress, &
+                                                                       norm2(stress_inc%residual), &
+                                                                       stress, &
+                                                                       deviatoric_to_unscaled_voigt(stress_inc%strain_rate)])
+                            end associate
+                        end do
+                        !Value of i_strain is guaranteed by the standard
+                        def_grad = matmul(stress_inc%strain_increments(i_strain-1)%deformation_gradient, def_grad)
+                    end associate
+                end do
             end associate
         end do
 
-        call this%outputfile()
-    end subroutine
-
-    !> Output the results
-    !>
-    !> The procedure writes either header, data or both.
-    subroutine ASRModule_outputFile(this)
-        class(ASRModule), intent(in):: this
-
-        character(*), parameter:: PROC_NAME = 'asermodule_openoutputfile'
-        integer, parameter:: ncolumn_labels = 18, column_width = 12
-        character(len = column_width), dimension(ncolumn_labels):: column_labels = &
-                [ character(len = column_width) ::  &
-                    'step','increment', & ! 2 fields
-                    'epsilon_vM', 'sigma_vM', 'dotW', 'residual', & ! 4 fields
-                    'sigma_xx','sigma_yy','sigma_zz','sigma_yz','sigma_xz','sigma_xy', & ! 6 fields
-                    'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy' & ! 6 fields
-                ]
-
-        integer:: i, j, k, &
-                  tot_incs, &
-                  ierr, &
-                  iounit
-        real(DP):: stress_scaling_factor, &
-                   def_grad(3,3), &
-                   hydro, &
-                   dev, &
-                   stress(6)
-
-        call write_texture(this%output_prefix, this%material%clusters)
-        call this%openOutputFile('.asr',iounit)
-
-        ! Write out header lines
-        column_labels = adjustr(column_labels)
-        write(iounit, '(18(A12))', iostat = ierr) (column_labels(i), i = 1, ncolumn_labels)
-        if (ierr /= 0) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to write ouptut file header.')
-
-        ! Write out data output
-        def_grad = UNIT_MATRIX_3X3
-        do i=1, size(this%steps)
-            tot_incs = 0
-            !Determine by how much to scale the deviatoric stress to obtain the total stress
-            !Because the actual stress tensor is just the stress mode scaled by the stress norm,
-            !The hydrostatic component is also the hydrostatic component of the stress mode scaled by the stress norm.
-            !The sress norm is in turn the norm of the deviatoric component over the norm of the deviatoric component of the stress mode
-
-            dev = norm2(unscaled_voigt_to_deviatoric(this%steps(i)%target_stress_mode))
-            hydro = sum(this%steps(i)%target_stress_mode(1:3)) / 3._DP
-            stress_scaling_factor = hydro / dev
-
-            do j = 1, size(this%steps(i)%increments)
-                associate (stress_inc => this%steps(i)%increments(j))
-                    do k=1,size(stress_inc%strain_increments)
-                        associate (strain_inc => stress_inc%strain_increments(k))
-                            stress = tensor_to_unscaled_voigt(strain_inc%stress)
-                            stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress)
-                            tot_incs = tot_incs + 1
-                            write(iounit, fmt = 710, iostat = ierr) &
-                                i, &
-                                tot_incs, & ! 2 fields
-                                stretch_to_von_mises_true_strain(matmul(strain_inc%deformation_gradient, def_grad)), &
-                                sqrt(3._DP/2._DP) * norm2(strain_inc%stress), &
-                                deviatoric_to_tensor(stress_inc%strain_rate) .dot. strain_inc%stress, &
-                                norm2(stress_inc%residual), &
-                                stress, &
-                                deviatoric_to_unscaled_voigt(stress_inc%strain_rate)
-                        end associate
-                    end do
-                    !Value of k is guaranteed by the standard
-                    def_grad = matmul(stress_inc%strain_increments(k-1)%deformation_gradient, def_grad)
-                end associate
-            end do
-        end do
-        710 format(2(I12), 16(ES12.3E2))
-
-        close(iounit)
+        close(out_unit)
+        close(texture_unit)
     end subroutine
 end module
