@@ -29,8 +29,7 @@ module dmcYLD
         logical                                   :: normalizeSm = .false.
     contains
         procedure:: initialize => yld_initialize
-        procedure:: run => YldModule_run
-        procedure:: write_results => writeYldResults
+        procedure:: run => yld_run
     end type
 
     !> Data that describe a single yield locus point
@@ -85,9 +84,8 @@ contains
         endif
     end subroutine
 
-    subroutine YldModule_run(this, info)
+    subroutine YldModule_run(this)
         class(YldModule), intent(inout)            :: this
-        integer, intent(out)                       :: info
 
         real(DP):: theta, &
                     iunilen, &
@@ -151,7 +149,6 @@ contains
                                   [scal_s_rel*cos(theta), scal_s_rel*sin(theta)], &
                                   [0._DP, 0._DP], beta, norm2(deviatoric_to_unscaled_voigt(residual)))
 
-
             theta = theta + this%angular_resolution
         end do
 
@@ -159,15 +156,12 @@ contains
             ! Get the positions of the bracketing points:
             posA = merge(npoints, i-1, i == 1)
             posB = merge(1, i+1, i == npoints)
-            call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, &
-                                   1.D0, yldRes(i)%normal_cart, yldRes(i)%beta)
+            call getNormalVector2D(yldRes(posA)%scal_s_rel_cart, yldRes(posB)%scal_s_rel_cart, 1._DP, yldRes(i)%normal_cart, yldRes(i)%beta)
             yldRes(i)%beta = rad_to_deg(yldRes(i)%beta)
         end do
 
-        call this%write_results(yldRes(:npoints))
-        info = VEF_OK
+        call this%write_results(yldRes)
     end subroutine
-
 
     subroutine writeYldResults(this, res)
         class(YldModule), intent(in):: this
