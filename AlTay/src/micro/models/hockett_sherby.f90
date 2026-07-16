@@ -2,7 +2,6 @@
 
 module hockett_sherby
     use base_defs, only: dp
-    use altayConfig
     use constitutive_model
     use logging
     use parameters

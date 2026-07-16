@@ -68,14 +68,6 @@ module commonUtils
 
 contains
 
-      subroutine outputTexture(info)
-      use altay
-      integer, intent(out)     :: info
-      !
-            call outputCurrentState(info)
-      !
-      end subroutine
-
     !> Test the presence of optional logical value, and return a default if the optional
     !> is not present.
     pure logical function optionalDefault_logical(value, default) result(res)
