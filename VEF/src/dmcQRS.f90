@@ -14,7 +14,7 @@ module dmcQRS
     public:: QRSModule
 
     character(*), parameter:: MOD_NAME = 'dmcQRS'
-    character(8), dimension(5):: OUTPUT_HEADER = ['angle', &
+    character(8), dimension(5):: OUTPUT_HEADER = [character(8):: 'angle', &
                                                   'q-value', &
                                                   'r-value', &
                                                   's-value', &
@@ -28,19 +28,6 @@ module dmcQRS
     end type
 
 contains
-
-    type(qrsData) pure function calculateQRS(Dt,s) result(qrsvalue)
-        real(DP),dimension(3,3),intent(in)      :: Dt
-        real(DP),intent(in)                     :: s
-
-         if ( abs(Dt(3,3)) >= epsilon(0.D0) ) then
-             qrsvalue%rvalue = Dt(2,2) / Dt(3,3)
-             qrsvalue%qvalue = qrsvalue%rvalue / (1.D0 + qrsvalue%rvalue)
-             qrsvalue%svalue = s
-         else
-             qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
-         endif
-    end function
 
     subroutine qrs_initialize(this, cnfunit)
         class(QRSModule), intent(inout):: this
@@ -70,6 +57,7 @@ contains
                    residual(5), &
                    Mrot(3,3), &
                    strain_tensile_frame(3,3), &
+                   stress_tensile_frame(3,3), &
                    sigma(3,3), &
                    sigma_t(3,3), &
                    r_value
@@ -86,7 +74,7 @@ contains
         strain_mode = tensor_to_deviatoric(sigma_t)
         strain_mode = strain_mode / norm2(strain_mode)
 
-        do i=1,npoints
+        do i=1,n_points
             ! Calculate rotation matrix
             ! - due to passive rotation convention
             Mrot = euler_to_tensor([0._DP,0._DP, -fi2])
@@ -104,18 +92,16 @@ contains
 
             call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
 
-            SonA = deviatoric_to_tensor(stress)
-            SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode
-
             !Rotate results such that the stress mode aligns with the virtual tensile test direction.
             strain_tensile_frame = rotate_from(deviatoric_to_tensor(strain_mode), Mrot)
+            stress_tensile_frame = rotate_from(deviatoric_to_tensor(stress), Mrot)
             r_value = strain_tensile_frame(2,2) / strain_tensile_frame(3,3)
 
-            call write_output_increment(out_unit, [fi2, &
+            call write_output_increment(out_unit, [rad_to_deg(fi2), &
                                                    r_value / (1._DP + r_value), &
                                                    r_value, &
                                                    norm2(stress_tensile_frame), &
-                                                   residual])
+                                                   norm2(residual)])
 
             fi2 = fi2 + this%angular_resolution
         enddo

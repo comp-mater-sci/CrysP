@@ -76,22 +76,6 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
         if 'log' in update: shutil.copy(log_path, TEST_REF)
         if 'out' in update: shutil.copy(out_path, TEST_REF)
 
-def process_file(path):
-    df = pd.read_csv(path,delimiter=' +', engine='python')
-    pattern = re.compile(r'^-*0\.[0-9]+E[+\-][0-9]+$')
-    res = []
-    total = 0
-    for index, row in df.iterrows():
-        for num in row:
-            if isinstance(num, str) and pattern.match(num):
-                formatted = num.split('E')
-                exp = int(formatted[1])
-                if exp > -9:
-                    significand = int(formatted[0].replace('-','')[2:4])
-                    total = total + significand * pow(10,exp)
-                    res.append(significand)
-    filtered = list(filter(lambda e: not e == 0, res))
-    return (sum(filtered) / len(filtered), total)
 
 tests_no_hardening = itertools.product(MODES, ALGORITHMS, SLIP_SYSTEMS, ['NONE'])
 tests_hardening = itertools.product(MODES[0:2], ALGORITHMS, SLIP_SYSTEMS, HARDENING_MODELS[1:4])
@@ -107,17 +91,17 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
 
     if update == 'FALSE' :
         filename =  f'{mode}_{algorithm}_{slip_system}_{hardening_model}.out'
-        ref = pd.read_csv(TEST_REF/filename, delimiter=' +', engine='python')
-        res = pd.read_csv(TEST_RUN/filename, delimiter=' +', engine='python')
+        ref = pd.read_csv(TEST_REF/filename, engine='python')
+        res = pd.read_csv(TEST_RUN/filename, engine='python')
         cols = []
 
         #Generate formatted dataframe from selected columns of output files based on mode
         if mode == 'ADP':
             cols = ['S_11','S_22','S_33','S_12','S_23','S_13']
         elif mode == 'ASR':
-            cols = ['A_xx', 'A_yy', 'A_zz', 'A_xy', 'A_yz', 'A_xz']
+            cols = ['A_11', 'A_22', 'A_33', 'A_23', 'A_13', 'A_12']
         elif mode == 'YLD':
-            cols = ['sigma_x', 'sigma_y']
+            cols = ['stress']
         elif mode == 'QRS':
             cols = ['q-value', 'r-value', 's-value']
 

@@ -99,10 +99,7 @@ contains
         call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
     end subroutine
 
-    subroutine BasicModule_run(this, info)
+    subroutine BasicModule_run(this)
         class(BasicModule), intent(inout):: this
-        integer, intent(out)                 :: info
-
-        info = VEF_OK
     end subroutine
 end module

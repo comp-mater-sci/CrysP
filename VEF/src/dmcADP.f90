@@ -16,20 +16,18 @@ module dmcADP
 
     character(*), parameter:: MOD_NAME = 'dmcADP'
     !> Reported output quantities for each increment
-    character(8), dimension(18), parameter:: OUTPUT_HEADER = ['duration', &
+    character(8), dimension(18), parameter:: OUTPUT_HEADER = [character(8):: 'duration', &
                                                               'eps_vm', &
                                                               'L_11','L_21','L_31','L_12','L_22','L_32','L_13','L_23','L_33',  &
                                                               'S_11','S_22','S_33','S_23','S_13','S_12', &
                                                               'M']
 
 
-    !> Arbitrary Strain Mode (extends DeformationDrivenModule by 4 procedures)
     type, extends(BasicModule):: ADPModule
         type(StrainDrivenStep),dimension(:),allocatable :: steps
-    contains  ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
+    contains
         procedure, pass(this):: initialize => adp_initialize
-        procedure, pass(this):: run => ADPModule_run
-        procedure, pass(this):: fileOutput => ADPModule_fileOutput
+        procedure, pass(this):: run        => adp_run
     end type
 
     !> A strain-(rate) driven step
@@ -42,9 +40,9 @@ module dmcADP
 contains
 
     !> Read configuration from IO unit (type-bound function)
-    subroutine adp_initialize(this, cnfunit) ! call with 1 argument (cnfunit) when referenced through object
-        class(ADPModule), intent(inout)   :: this !< passed implicitly
-        integer, intent(in)              :: cnfunit !< IO input unit; pass explicitly
+    subroutine adp_initialize(this, cnfunit)
+        class(ADPModule), intent(inout)   :: this   !! passed implicitly
+        integer, intent(in)              :: cnfunit !! IO input unit; pass explicitly
 
         character(*), parameter:: PROC_NAME = 'adp_initialize'
 
@@ -75,13 +73,13 @@ contains
     end subroutine
 
     !> Run the simulation
-    subroutine ADPModule_run(this)
+    subroutine adp_run(this)
         class(ADPModule), intent(inout)  :: this
 
         integer:: i_step, i_inc, &
                   out_unit, texture_unit, &
                   n_incs
-        real(DP):: v_grad_inc(3,3), &      !! Velocity gradient for an increment. Assumed time step of 1s
+        real(DP):: v_grad_inc(3,3), &
                    taylor_factor, &
                    dev_stress(5), &
                    def_grad(3,3)

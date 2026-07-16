@@ -267,7 +267,7 @@ contains
     end function
 
     integer function open_result_file(name, header) result(unit)
-        integer, intent(in):: file_handle
+        character(*), intent(in):: name
         character(*), dimension(:), intent(in):: header
 
         integer:: i, &
@@ -275,7 +275,7 @@ contains
                   n_cols
 
         n_cols = size(header)
-      `
+
         open (newunit = unit, file = name, status='replace', iostat=info)
         call handle_iostat('open_result_file (open)', info)
 
@@ -286,9 +286,9 @@ contains
     integer function open_texture_evolution_file(prefix) result(handle)
         character(*), intent(in):: prefix
 
-        character(9), dimension(4), parameter:: HEADER = ['increment','phi1','PHI','phi2']
+        character(9), dimension(4), parameter:: HEADER = [character(9):: 'increment','phi1','PHI','phi2']
 
-        handle = open_result_file(prefix // '_texture.csv', HEADER)
+        handle = open_result_file(prefix // '_texture_evolution.csv', HEADER)
     end function
 
     subroutine write_texture_increment(file_handle, increment, clusters)
@@ -301,7 +301,7 @@ contains
 
         do i=1,size(clusters)
             do j=1, size(clusters(i)%grains)
-                write (file_handle, '(I0,3(G0,:,","))', iostat=info) (increment, rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation)))
+                write (file_handle, '(I0,",",3(G0,:,","))', iostat=info) increment, rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
                 call handle_iostat('write_texture', info)
             end do
         end do
@@ -323,7 +323,7 @@ contains
 
         n_cols = size(data)
 
-        write(handle,fmt='('// to_string(n_cols) // '(G0,:,","))',iostat=info) data
+        write(file_handle,fmt='('// to_string(n_cols) // '(G0,:,","))',iostat=info) data
         call handle_iostat('write_ouptut (data)', info)
     end subroutine
 end module

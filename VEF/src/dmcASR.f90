@@ -18,13 +18,12 @@ module dmcASR
 
     character(*), parameter:: MOD_NAME = 'ASRModule'
     !> Reported output quantities for each increment
-    character(10), dimension(16), parameter:: OUTPUT_HEADER = ['epsilon_vM', &
+    character(10), dimension(16), parameter:: OUTPUT_HEADER = [character(10):: 'epsilon_vM', &
                                                                'sigma_vM', &
                                                                'dotW', &
                                                                'residual', &
-                                                               'sigma_xx','sigma_yy','sigma_zz','sigma_yz','sigma_xz','sigma_xy', &
-                                                               'A_xx','A_yy','A_zz','A_yz','A_xz','A_xy']
-
+                                                               'sigma_11','sigma_22','sigma_33','sigma_23','sigma_13','sigma_12', &
+                                                               'A_11','A_22','A_33','A_23','A_13','A_12']
 
     type:: StressDrivenStep
         real(DP), dimension(6):: target_stress_mode
@@ -36,8 +35,7 @@ module dmcASR
         type(StressDrivenStep), dimension(:), allocatable:: steps
     contains
         procedure:: initialize => asr_initialize
-        procedure:: run =>        ASRModule_run
-        procedure:: outputFile => ASRModule_outputFile
+        procedure:: run        => asr_run
     end type
 
 contains
@@ -67,14 +65,14 @@ contains
         enddo
     end subroutine
 
-    subroutine asrmodule_run(this,info)
+    subroutine asr_run(this)
         class(ASRModule), intent(inout):: this
-        integer, intent(out):: info
 
         integer:: i_step, i_stress, i_strain, &
                   out_unit, texture_unit, &
                   n_incs
         real(DP):: dev_stress(5), &
+                   stress(6), &
                    target_dev_stress(5), &
                    def_grad(3,3), &
                    hydro, &
@@ -112,7 +110,7 @@ contains
                     call altay_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%increments)
                     !Write new texture to file
                     do i_stress = 1, size(step%increments)
-                        n_incs = n_incs + size(step%increments(i_sress)%strain_increments)
+                        n_incs = n_incs + size(step%increments(i_stress)%strain_increments)
                     end do
                     call write_texture_increment(texture_unit, n_incs, this%material%clusters)
                 end if
