@@ -1,4 +1,4 @@
-program alamDMC
+program crysp
     use logging
     use dmcBasicModule
     use dmcASR
