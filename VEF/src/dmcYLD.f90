@@ -188,7 +188,6 @@ contains
         character(len = column_width), dimension(ncolumns), parameter  :: column_labels = [ character(len = column_width) :: &
             'theta', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
 
-        ! Open the main output file
         call this%openOutputFile('.xyld', ounit)
         write(ounit, fmt = 701, iostat = ierr) (column_labels(i), i = 1, ncolumns)
         if (ierr /= 0) &
