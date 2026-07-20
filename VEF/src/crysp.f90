@@ -44,10 +44,10 @@ program crysp
 
     !Determine output file name from config file name
     i=1
-    do while (argv(2)(i:i) /= '.')
+    do while (argv(2)(i:i) /= '.' .and. i <= len(argv(2)))
         i=i+1
     end do
-    the_module%output_prefix = argv(2)(:i-1)
+    the_module%output_prefix = trim(argv(2)(:i-1))
 
     open(newunit = cnfunit, file = trim(argv(2)), status='old', iostat = info)
     if (info /= VEF_OK) &
