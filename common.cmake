@@ -1,5 +1,11 @@
-# Generic sets of Fortran compiler and linker flag
+#Common CMAKE configuration for both libCrysP and Crysp-CLI
 
+if(NOT CMAKE_BUILD_TYPE)
+	set (CMAKE_BUILD_TYPE RELEASE CACHE STRING
+      	"Choose the type of build, options are: Debug Release."
+      	FORCE)
+	message(STATUS "Assuming Release configuration")
+endif(NOT CMAKE_BUILD_TYPE)
 
 set(CMAKE_C_FLAGS "-O3 -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl")
 
@@ -17,4 +23,9 @@ set(CMAKE_Fortran_FLAGS_RELEASE -O3)
 
 # Prevent -i_dynamic from being appended to linker flags
 set(CMAKE_SHARED_LIBRARY_LINK_Fortran_FLAGS "")
+
+set(${projectname}_ROOT_DIR "${CMAKE_BINARY_DIR}/..")
+set(CMAKE_INSTALL_PREFIX "${${projectname}_ROOT_DIR}")
+set(${projectname}_CMAKE_DIR "${CMAKE_INSTALL_PREFIX}/cmake")
+
 
