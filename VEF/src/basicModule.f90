@@ -42,19 +42,15 @@ contains
 
         character(*), parameter:: PROC_NAME = 'readconfig'
 
-        logical:: read_success
         character(FNAME_LEN):: texture_file_name, &
-                               microstructure_file_name, &
-                               dsh_params_file_name
+                               microstructure_file_name
         character(20):: buffer
         integer:: meso_model_id, &
-                  dsh_unit, &
-                  ioerr, &
-                  i
-        real(DP):: tmp(16)
-        real(DP), dimension(:), allocatable:: boundaries
-        type(Parameter), dimension(:), allocatable:: meso_params
-        type(PhaseDescriptor), target:: phase_
+                  i, &
+                  n_params
+        real(DP), allocatable:: tmp(:)
+        type(Parameter), allocatable:: meso_params(:)
+        type(PhaseDescriptor):: phase_
 
         ! Read input texture file name
         if (.not. readValue(cnfunit, texture_file_name)) &
@@ -93,74 +89,19 @@ contains
         if (.not. readValue(cnfunit, phase_%model_id)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening model ID')
         phase_%parameters = micro_get_parameters(phase_%model_id)
+        n_params = size(phase_%parameters)
 
-        read_success = .true.
-        associate(params => phase_%parameters)
-            select case(phase_%model_id)
-                case(HARDENING_VOCE)
-                    if (readValue(cnfunit, tmp(1:5))) then
-                        call parameter_set(params, 'TIII1', tmp(1))
-                        call parameter_set(params, 'TIIIS', tmp(2))
-                        call parameter_set(params, 'TIVS', tmp(3))
-                        call parameter_set(params, 'THIII1', tmp(4))
-                        call parameter_set(params, 'THT', tmp(5))
-                    else
-                        read_success = .false.
-                    endif
-                case(HARDENING_SWIFT)
-                    if (readValue(cnfunit, tmp(1:3))) then
-                        call parameter_set(params, 'crss0', tmp(1))
-                        call parameter_set(params, 'gamma0', tmp(2))
-                        call parameter_set(params, 'n', tmp(3))
-                    else
-                        read_success = .false.
-                    endif
-                case(HARDENING_HOCKETT_SHERBY)
-                    if (readValue(cnfunit, tmp(1:4))) then
-                        call parameter_set(params, 'tau_0', tmp(1))
-                        call parameter_set(params, 'tau_sat', tmp(2))
-                        call parameter_set(params, 'b', tmp(3))
-                        call parameter_set(params, 'n', tmp(4))
-                    else
-                        read_success = .false.
-                    endif
-                case(HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP)
-                    if (readValue(cnfunit, dsh_params_file_name)) then
-                        open(newunit = dsh_unit, file = dsh_params_file_name, status='old', iostat = ioerr)
-                        if (ioerr /= VEF_OK) &
-                            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open DSH parameter file')
-                        do i = 1, 16
-                            read(dsh_unit, fmt = '(F12.5)', err = 666, end = 666) tmp(i)
-                        end do
-                        close(dsh_unit)
-
-                        call parameter_set(params, 'b', tmp(1))
-                        call parameter_set(params, 'G', tmp(2))
-                        call parameter_set(params, 'alfa', tmp(3))
-                        call parameter_set(params, 'f', tmp(4))
-                        call parameter_set(params, 'tau0', tmp(5))
-                        call parameter_set(params, 'I', tmp(6))
-                        call parameter_set(params, 'R', tmp(7))
-                        call parameter_set(params, 'Iwd', tmp(8))
-                        call parameter_set(params, 'Rwd', tmp(9))
-                        call parameter_set(params, 'Rncg', tmp(10))
-                        call parameter_set(params, 'beta1', tmp(11))
-                        call parameter_set(params, 'beta2', tmp(12))
-                        call parameter_set(params, 'Iwp', tmp(13))
-                        call parameter_set(params, 'Rwp', tmp(14))
-                        call parameter_set(params, 'Rrev', tmp(15))
-                        call parameter_set(params, 'R2', tmp(16))
-                    else
-                       read_success = .false.
-                    end if
-                end select
-        end associate
-
-        if (read_success) then
-            call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
-            return
+        !Hardening parameters must be provided in the order in which they are defined in the hardening models.
+        if (n_params > 0) then
+            allocate(tmp(n_params))
+            if (.not. readvalue(cnfunit,tmp(:n_params))) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening parameters')
+            do i=1,n_params
+                phase_%parameters(i) = tmp(i)
+            end do
         end if
-        666 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening parameters')
+
+        call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
     end subroutine
 
     subroutine BasicModule_run(this, info)

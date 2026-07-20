@@ -63,7 +63,7 @@ def generate_output(update, mode, algorithm='ALAMEL', slip_system='bcc24', harde
         log_path = str(path) + '.log'
 
         os.chdir(TEST_RUN)
-        result = subprocess.run([TEST_ROOT/'../VEF/bin/cryspy',mode,'test.cfg'],
+        result = subprocess.run([TEST_ROOT/'../VEF/bin/crysp',mode,'test.cfg'],
                                 stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         with open(log_path,'w') as f:
             f.write(result.stdout.decode())

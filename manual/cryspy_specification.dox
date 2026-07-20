@@ -74,12 +74,31 @@ Each \ref sec_format_files_main starts with a generic configuration section, app
         \f$ \gamma \f$ is a state variable that is updated throughout the simulation. The other parameters are independent and must be provided through a configuration suboption of type (\ref sec_format_options_real_array[3]): \f$ \tau_0 \space \gamma_0 \space n \f$.
 		Only positive values of parameters are acceptable (\f$ 0 < \tau_0 \f$, \f$ 0 < \gamma_0 \f$ and \f$ 0 < n \f$).
         <HR>
-      - `11` Dislocation Substructural Hardening (DSH) model, edge variant. This is a physics-based hardening model developed at KU Leuven for specific steels. It is described in _Peeters et al. ActaMat 49: 1607-19_. The parameters for this model (as described in _Peeters et al. ActaMat 49: 1607-19_) are listed in a separate file. The path to this file must be provided as a suboption of type \ref sec_format_fields_string.
+      - `11` Dislocation Substructural Hardening (DSH) model, edge variant. This is a physics-based hardening model developed at KU Leuven for specific steels. It is described in _Peeters et al. ActaMat 49: 1607-19_. The parameters for this model (as described in _Peeters et al. ActaMat 49: 1607-19_) are:
+
+        <div style="margin-left:2em;">
+            - \f$ b \f$
+            - \f$ G \f$
+            - \f$ \alpha \f$
+            - \f$ f \f$
+            - \f$ \tau_0 \f$
+            - \f$ I \f$
+            - \f$ R \f$
+            - \f$ I_{wd} \f$
+            - \f$ R_{wd} \f$
+            - \f$ R_{ncg} \f$
+            - \f$ \beta_1 \f$
+            - \f$ \beta_2 \f$
+            - \f$ I_{wp} \f$
+            - \f$ R_{wp} \f$
+            - \f$ R_{rev} \f$
+            - \f$ R_2 \f$
+        </div>
+        The parameters are independent and must be provided through a configuration suboption of type \ref sec_format_options_real_array[16].
         \attention This hardening model only supports the bcc24 slip system family.
 
         <HR>
-
-      - `12` Dislocation Substructural Hardening (DSH) model, screw variant. This is a physics-based hardening model developed at KU Leuven for specific steels. It is based on the DSH model described in _Peeters et al. ActaMat 49: 1607-19_, but assumes screw dislocations instead of edge dislocations. The parameters for this model are identical to those for the edge variant (as described in _Peeters et al. ActaMat 49: 1607-19_) and are also listed in a separate file. The path to this file must be provided as a suboption of type \ref sec_format_fields_string.
+      - `12` Dislocation Substructural Hardening (DSH) model, screw variant. This is a physics-based hardening model developed at KU Leuven for specific steels. It is based on the DSH model described in _Peeters et al. ActaMat 49: 1607-19_, but assumes screw dislocations instead of edge dislocations. The parameters for this model are identical to those for the edge variant.
         \attention This hardening model only supports the bcc24 slip system family.
 
         <HR>
