@@ -1,5 +1,5 @@
 !> Yield locus calculations
-module dmcYld
+module dmcYLD
     use conversions
     use commonUtils
     use logging
@@ -18,30 +18,19 @@ module dmcYld
 
     !> Class responsible for calculations of yield locus sections
     type, extends(BasicModule):: YldModule
-
         real(DP):: angular_resolution
-
         real(DP), dimension(6, nbase):: base_vectors = real(reshape( &
                                             [1, 0, 0, 0, 0, 0, & ! First base vector
                                              0, 1, 0, 0, 0, 0, & ! second base vector
                                              0, 0, 0, 0, 0, 0], & ! offset vector (zeros)
                                             [6, nbase]), DP)
-
         logical                                   :: do_scaling = .true.
-
         real(DP), dimension(6):: scaling_vector = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP, 0._DP]
-
         logical                                   :: normalizeSm = .false.
-
     contains
-
-        !>@{ \name Interface methods of AbstractModule
-
-        procedure, pass(this)    :: readConfig => YldModule_readConfig
-
-        procedure, pass(this)    :: run => YldModule_run
-        !>@}
-
+        procedure:: initialize => yld_initialize
+        procedure:: run => YldModule_run
+        procedure:: write_results => writeYldResults
     end type
 
     !> Data that describe a single yield locus point
@@ -59,61 +48,63 @@ module dmcYld
 
 contains
 
+    subroutine yld_initialize(this, cnfunit)
+        class(YLDModule), intent(inout)            :: this
+        integer, intent(in)                        :: cnfunit
 
-    integer function YldModule_readConfig(this, cnfunit) result(info)
-    implicit none
-    class(YldModule), intent(inout)            :: this
-    integer, intent(in)                        :: cnfunit
-    !
-    character(*), parameter:: PROC_NAME = 'yldmodule_readconfig'
+        character(*), parameter:: PROC_NAME = 'yldmodule_readconfig'
 
-    integer:: i
-    real(DP):: norm
-    logical:: normalize, use_default_settings
-    !
-        info = this%BasicModule%ReadConfig(cnfunit)
-        if (info /= VEF_OK) return
+        integer:: i
+        real(DP):: norm
+        logical:: normalize, use_default_settings
+
+        call this%BasicModule%initialize(cnfunit)
+
         ! Read parameters specific for the dmcYld program
         if (.not. readValue(cnfunit, this%angular_resolution)) &
             call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
         this%angular_resolution = deg_to_rad(this%angular_resolution)
-        if (.not. readValue(cnfunit, use_default_settings)) return
+        if (.not. readValue(cnfunit, use_default_settings)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read default settings flag')
+
         if (.not. use_default_settings) then
-            info = VEF_ERROR
             this%base_vectors = 0.D0
-            if (.not. readValue(cnfunit, normalize)) return
+            if (.not. readValue(cnfunit, normalize)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read normalization flag')
             do i = 1, nbase
-                if (.not. readValue(cnfunit, this%base_vectors(:,i))) return
+                if (.not. readValue(cnfunit, this%base_vectors(:,i))) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read base vector.')
+
                 if (normalize) then
                     norm = norm2(this%base_vectors(:,i))
                     if (norm > 0.D0) this%base_vectors(:,i)  = this%base_vectors(:,i) / norm
                 endif
             enddo
-            !
-            if (.not. readValue(cnfunit, this%normalizeSm)) return
-            if (.not. readValue(cnfunit, this%do_scaling)) return
+
+            if (.not. readValue(cnfunit, this%normalizeSm)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read normalization of stress mode flag.')
+            if (.not. readValue(cnfunit, this%do_scaling)) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read scaling flag.')
             if (this%do_scaling) then
-                if (.not. readValue(cnfunit, this%scaling_vector)) return
+                if (.not. readValue(cnfunit, this%scaling_vector)) &
+                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read scaling vector.')
             endif
         endif
-        !
-        ! Override the requests for outputs:
-        this%altay%nfile = 0   ! texture
-        this%output%outputRequest = .false.       ! idem.
-        !
-        info = VEF_OK
-    end function
+    end subroutine
 
     subroutine YldModule_run(this, info)
         class(YldModule), intent(inout)            :: this
         integer, intent(out)                       :: info
+
         real(DP):: theta, &
                     iunilen, &
                     scal_s_rel, &
                     sigma_vector(6)
         type(yldResult), dimension(:), allocatable  :: yldRes
-        integer                 :: i, npoints, ofunit
-        integer:: posA, posB
+        integer:: i, &
+                  npoints, &
+                  posA, &
+                  posB
         real(DP), parameter:: beta = 0._DP
 
         real(DP):: target_stress_mode(5), &
@@ -126,9 +117,6 @@ contains
 
         npoints = ceiling(2*PI / this%angular_resolution - TOLERANCE)
 
-        ! Open the main output file
-        info = this%openOutputFile('.xyld', ofunit)
-        if (info /= VEF_OK) return
         !
         ! Fix the configuration: no need for anything except for the stresses.
         iunilen = 1.D0
@@ -183,45 +171,37 @@ contains
             yldRes(i)%beta = rad_to_deg(yldRes(i)%beta)
         end do
 
-        call writeYldResults(ofunit, yldRes(:npoints), info, write_header = .true.)
-        close(ofunit)
+        call this%write_results(yldRes(:npoints))
         info = VEF_OK
     end subroutine
 
 
-    subroutine writeYldResults(ounit, res, info, write_header)
-    implicit none
-    integer, intent(in)                        :: ounit
-    type(yldResult), dimension(:), intent(in)   :: res
-    integer, intent(out)                       :: info
-    logical, intent(in), optional               :: write_header
-    !
-    integer:: i, ierr
-    integer, parameter:: column_width = 18, ncolumns = 11
-    character(len = column_width), dimension(ncolumns), parameter  :: column_labels = [ character(len = column_width) :: &
-        'theta', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
-    !
-        info = VEF_ERROR
-        ! Write the header
-        if (optionalDefault(write_header, .false.)) then
-            write(ounit, fmt = 701, iostat = ierr) (column_labels(i), i = 1, ncolumns)
-            if (ierr /= 0) return
-        endif
+    subroutine writeYldResults(this, res)
+        class(YldModule), intent(in):: this
+        type(yldResult), dimension(:), intent(in):: res
         !
+        character(*), parameter:: PROC_NAME = 'writeYldResults'
+        integer, parameter:: column_width = 18, ncolumns = 11
+        integer:: i, &
+                  ierr, &
+                  ounit
+        character(len = column_width), dimension(ncolumns), parameter  :: column_labels = [ character(len = column_width) :: &
+            'theta', 'sigma', 'sigma_scaled', 'S','dotW', 'sigma_x', 'sigma_y', 'dsigma_x', 'dsigma_y', 'beta', 'residual']
+
+        call this%openOutputFile('.xyld', ounit)
+        write(ounit, fmt = 701, iostat = ierr) (column_labels(i), i = 1, ncolumns)
+        if (ierr /= 0) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to write header')
+
         do i = 1, size(res)
             write(ounit, fmt = 710, iostat = ierr) res(i)
-            if (ierr /= 0) exit
+            if (ierr /= 0) &
+                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to write results.')
         enddo
-        write(ounit, fmt = 720)
-        if (ierr == 0) info = VEF_OK
-        !
-        ! Formats for output file
-        700 format('#',11(A18, 1X))
         701 format(1X, 11(A18, 1X))
-        !710 format(1X, 16(ES18.9E3, 1X))
         710 format(1X, 11(ES18.9E3, 1X))
-        720 format(/)  ! Double empty line
-    !
+
+        close(ounit)
     end subroutine
 
     !> Calculate vector v that is normal to the vector AB (from point A to B).

@@ -20,7 +20,7 @@ module dmcADP
     type, extends(BasicModule):: ADPModule
         type(StrainDrivenStep),dimension(:),allocatable :: steps
     contains  ! type-bound procedures; pass(this) passes object itself, through which procedure referenced, as first argument to procedure
-        procedure, pass(this):: readConfig => ADPModule_readConfig
+        procedure, pass(this):: initialize => adp_initialize
         procedure, pass(this):: run => ADPModule_run
         procedure, pass(this):: fileOutput => ADPModule_fileOutput
     end type
@@ -35,28 +35,18 @@ module dmcADP
 contains
 
     !> Read configuration from IO unit (type-bound function)
-    integer function ADPModule_readConfig(this, cnfunit) result(info)  ! call with 1 argument (cnfunit) when referenced through object
+    subroutine adp_initialize(this, cnfunit) ! call with 1 argument (cnfunit) when referenced through object
         class(ADPModule), intent(inout)   :: this !< passed implicitly
         integer, intent(in)              :: cnfunit !< IO input unit; pass explicitly
 
-        integer, parameter:: n_deformation_types = 3
-        integer, parameter:: deformation_id = 1, strainmode_id = 2, strain_id = 3
-        integer:: n_steps, ierr, i,j
-        logical :: default_solver_config
+        integer:: n_steps, i
 
-
-        ! Read generic configuration section (output settings, AlTay (texture, microstructure, hardening), solver settings
-        ! read output and AlTay configuration sections
-        info = this%BasicModule%readConfig(cnfunit)
-        ! Read "solver config flag" that belongs to the global section
-        ! as it is done in the stressDrivenModule.
-        info = VEF_ERROR
+        call this%BasicModule%initialize(cnfunit)
 
         !Read the module-specific config
         if (.not. readValue(cnfunit, n_steps)) return
 
         if (n_steps < 1) then
-            info = VEF_ERROR
             return
         end if
 
@@ -70,8 +60,7 @@ contains
                 if (.not. readValue(cnfunit, step%target_strain)) return
             end associate
         end do
-        info = VEF_OK
-    end function
+    end subroutine
 
     !> Run the simulation
     subroutine ADPModule_run(this, info)
@@ -103,11 +92,11 @@ contains
                 end if
             end associate
         enddo
-        info = this%fileOutput()
+        call this%fileOutput()
     end subroutine
 
     !> Write out results to the output file
-    integer function ADPModule_fileOutput(this) result(info)
+    subroutine ADPModule_fileOutput(this)
         class(ADPModule), intent(in):: this
 
         integer:: step, &
@@ -121,14 +110,9 @@ contains
         'S_11','S_22','S_33','S_23','S_13','S_12', &
         'M']
 
-        call write_texture(this%material%clusters)
+        call write_texture(this%output_prefix, this%material%clusters)
 
-        ! Open output file
-        info = this%openOutputFile('.adp',iounit)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, 'fileoutput', ERR_IO, 'Could not open output file.')
-
-        ! Write column labels
+        call this%openOutputFile('.adp',iounit)
         call write_standard_header(iounit, column_names)
 
         ! Write the data
@@ -148,9 +132,8 @@ contains
                 enddo
             end associate
         enddo
-        info = VEF_OK
-
-        ! Formats for the output file
         710 format(1X, 2(I18, 1X), 18(ES18.9E3, 1X))
-    end function
+
+        close(iounit)
+    end subroutine
 end module

@@ -24,6 +24,8 @@ MODE_CONFIG =  {'ADP':                                              \
                       '36.0\n'                                      \
                     + 'True'}
 
+DSH_CONFIG = '2.48E-10 8.16E4 0.20 0.20 53.0 2.12E-2 8.89E-10 8.37E-1 2.66E-8 2.27E-9 9.59 1.07 5.45E-2 1.44E-9 4.12E-9 8.70E-9'
+
 HARDENING_CONFIG = {'NONE':                         \
                         '0',                        \
                     'VOCE':                         \
@@ -37,36 +39,17 @@ HARDENING_CONFIG = {'NONE':                         \
                         + '12.39 1.e-3 0.24',       \
                     'DSH_EDGE':                           \
                         '11\n'                      \
-                        + 'DSHparaset.txt',        \
+                        + DSH_CONFIG,        \
                     'DSH_SCREW':                   \
                         '12\n'                      \
-                        + 'DSHparaset.txt',        \
+                        + DSH_CONFIG,        \
                     'DSH_LOOP':                    \
                         '13\n'                      \
-                        + 'DSHparaset.txt'}
+                        + DSH_CONFIG}
 
-DSH_CONFIG = '2.48E-10\n'   \
-             + '8.16E4\n'   \
-             + '0.20\n'     \
-             + '0.20\n'     \
-             + '53.0\n'     \
-             + '2.12E-2\n'  \
-             + '8.89E-10\n' \
-             + '8.37E-1\n'  \
-             + '2.66E-8\n'  \
-             + '2.27E-9\n'  \
-             + '9.59\n'     \
-             + '1.07\n'     \
-             + '5.45E-2\n'  \
-             + '1.44E-9\n'  \
-             + '4.12E-9\n'  \
-             + '8.70E-9'
 
 def generate_config(mode, algorithm, slip_system, hardening_model):
-    return 'out\n'                                      \
-           + 'True\n'                                   \
-           + '2\n'                                      \
-           + 'texture.smt\n'                            \
+    return 'texture.smt\n'                            \
            + MESO_CONFIG[algorithm] + '\n'                           \
            + slip_system + '\n'                         \
            + HARDENING_CONFIG[hardening_model] + '\n'   \

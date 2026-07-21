@@ -27,27 +27,28 @@ module dmcASR
     type, extends(BasicModule):: ASRModule
         type(StressDrivenStep), dimension(:), allocatable:: steps
     contains
-        procedure:: readConfig => ASRModule_readConfig
+        procedure:: initialize => asr_initialize
         procedure:: run =>        ASRModule_run
         procedure:: outputFile => ASRModule_outputFile
     end type
 
 contains
 
-    integer function ASRModule_readConfig(this, cnfunit) result(info)
+    subroutine asr_initialize(this, cnfunit)
         class(ASRModule), intent(inout)            :: this
         integer, intent(in)                        :: cnfunit
 
+        character(*), parameter:: PROC_NAME = 'asrmodule_readconfig'
+
         integer:: i, n_steps
 
-        info = this%BasicModule%readConfig(cnfunit)
-        if (info /= VEF_OK) return
+        call this%BasicModule%initialize(cnfunit)
 
-        info = VEF_ERROR
         ! Read parameters specific for the ASRModule
-        if (.not. readValue(cnfunit, n_steps)) return
+        if (.not. readValue(cnfunit, n_steps)) &
+            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read number of steps')
         if (n_steps <= 0) &
-            call log_error(MOD_NAME, 'readconfig', ERR_VAL, 'Number of steps must at least be 1.')
+            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of steps must at least be 1.')
         allocate(this%steps(n_steps))
         do i = 1, n_steps
             associate (step => this%steps(i))
@@ -57,8 +58,7 @@ contains
                 if (.not. readValue(cnfunit, step%target_vm_strain)) return
             end associate
         enddo
-        info = VEF_OK
-    end function
+    end subroutine
 
     subroutine asrmodule_run(this,info)
         class(ASRModule), intent(inout):: this
@@ -116,10 +116,8 @@ contains
                    dev, &
                    stress(6)
 
-        call write_texture(this%material%clusters)
-
-        if (this%openOutputFile('.asr',iounit) /= VEF_OK) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to upen output file')
+        call write_texture(this%output_prefix, this%material%clusters)
+        call this%openOutputFile('.asr',iounit)
 
         ! Write out header lines
         column_labels = adjustr(column_labels)
@@ -163,7 +161,8 @@ contains
                 end associate
             end do
         end do
-        ! Formats for output file
         710 format(2(I12), 16(ES12.3E2))
+
+        close(iounit)
     end subroutine
 end module

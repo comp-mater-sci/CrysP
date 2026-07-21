@@ -16,12 +16,10 @@ module file_io
              read_texture, &
              write_texture, &
              read_boundaries, &
-             open_output_files, &
              write_standard_header
 
     character, parameter::    COMMENT_SIGN = '#'
     character(*), parameter:: MOD_NAME = "file_io"
-    integer, parameter::      IMP1 = 7
     integer, parameter::      CMAPNAMELEN = 32   !! Maximal length of strings that are used as keys in the map
     integer, parameter::      MAX_LINE_LEN = 512 !! Maximal length of a line
     integer,parameter ::      FMT_STRING_LENGTH = 128
@@ -240,39 +238,25 @@ contains
         boundaries = deg_to_rad(boundaries)
     end function
 
-    subroutine write_texture(clusters)
+    subroutine write_texture(state_file_prefix, clusters)
+        character(*), intent(in):: state_file_prefix
         class(Cluster), dimension(:), intent(in):: clusters
 
-        integer:: i, j
+        integer:: i, j, &
+                  state_unit, &
+                  info
+
+        open (newunit = state_unit, file = state_file_prefix//'.CUR', status='replace',err = 9999, iostat=info)
 
         do i=1,size(clusters)
             do j=1, size(clusters(i)%grains)
-                write (IMP1, '(3f8.4)'), rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
+                write (state_unit, '(3f8.4)'), rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
             end do
         end do
-    end subroutine
 
-    subroutine open_output_files(prefix, nfile, info)
-        character(len=fname_len), intent(in):: prefix
-        integer, intent(in):: nfile
-
-        integer, intent(out)                 :: info     !< exit code (altay_OK on success)
-
-        character(len = fname_len):: fname
-        character(*), parameter:: PROC_NAME = 'openOutputFiles'
-
-        info = VEF_ERROR
-
-        if (nfile /= 0) then
-            fname = trim(prefix)//'.CUR'
-            ! IMP1 = output file with successive "current situations"
-            open (unit = IMP1, file = fname, status='replace',err = 9999)
-        endif
-
-        info = VEF_OK
+        close(state_unit)
         return
-
-        9999 call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Cannot open file '//trim(fname))
+        9999 call log_error(MOD_NAME, 'write_texture', ERR_IO, 'Cannot open state file.' )
     end subroutine
 
     !> Write out standard header: two lines: #1: column numbers, #2 column names
