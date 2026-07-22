@@ -23,14 +23,14 @@ elif [ "$1" = "-t" ]; then
     TRACE="1"
     shift 1
 elif [ "$1" = "--clean" ]; then
-    rm -rf AlTay/release AlTay/debug VEF/build VEF/bin
+    rm -rf libcrysp/release libcrysp/debug VEF/build VEF/bin
     shift 1
 else
     break
 fi
 done
 
-cd AlTay
+cd libcrysp
 cmake -B $BUILD_TYPE/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 cmake --build ${BUILD_TYPE}/build --parallel --target install
 

@@ -8,7 +8,7 @@ include("../common.cmake")
 #
 # Dependencies
 #
-set(altay_DIR "../AlTay/${CMAKE_BUILD_TYPE}")
+set(altay_DIR "../libcrysp/${CMAKE_BUILD_TYPE}")
 find_package(altay REQUIRED)
 include_directories(${altay_INCLUDE_DIR})
 
