@@ -10,6 +10,5 @@ include("../common.cmake")
 #
 set(libcrysp_DIR "../libcrysp/${CMAKE_BUILD_TYPE}")
 find_package(libcrysp REQUIRED)
-include_directories(${libcrysp_INCLUDE_DIR})
 
 add_subdirectory(src)

@@ -4,7 +4,7 @@ module dmcYLD
     use commonUtils
     use logging
     use file_io
-    use altay
+    use libcrysp
     use dmcBasicModule
 
     implicit none

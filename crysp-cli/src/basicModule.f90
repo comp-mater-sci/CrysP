@@ -6,7 +6,7 @@ module dmcBasicModule
     use meso
     use parameters
     use logging
-    use altay
+    use libcrysp
     use file_io
 
     implicit none

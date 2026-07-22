@@ -8,7 +8,7 @@ module dmcASR
     use deformation
     use macro
     use incrementation
-    use altay
+    use libcrysp
     use dmcBasicModule
 
     implicit none

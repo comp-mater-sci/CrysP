@@ -5,7 +5,7 @@
 !> from the actual implementation of the underlying multilevel model.
 module commonUtils
     use base_defs
-    use altay
+    use libcrysp
     use logging
 
     implicit none
