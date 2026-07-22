@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(altay Fortran)
+project(libcrysp
+        VERSION 1.0.0
+        LANGUAGES Fortran C)
 
-# Load typical initialization code. It sets a collection of variables.
 include("../common.cmake")
 
 add_subdirectory(src)

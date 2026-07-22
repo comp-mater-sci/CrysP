@@ -1,14 +1,4 @@
-project(crysp LANGUAGES C Fortran)
-
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
-
-if   (CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
-elseif   (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
-elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
-    set(crysp_FLAGS "-ffree-line-length-0")
-else()
-    message(FATAL_ERROR "Compiler type(CMAKE_Fortran_COMPILER_ID) not recognized")
-endif()
 
 list(APPEND Fortran_FLAGS ${alamDMC_FLAGS})
 
@@ -23,7 +13,7 @@ crysp.f90
 file_io.f90
 )
 
-target_link_libraries(crysp altay)
+target_link_libraries(crysp libcrysp)
 set_target_properties(crysp PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 install(TARGETS crysp RUNTIME DESTINATION bin)

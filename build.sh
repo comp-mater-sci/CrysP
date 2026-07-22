@@ -23,7 +23,7 @@ elif [ "$1" = "-t" ]; then
     TRACE="1"
     shift 1
 elif [ "$1" = "--clean" ]; then
-    rm -rf libcrysp/release libcrysp/debug VEF/build VEF/bin
+    rm -rf libcrysp/release libcrysp/debug crysp-cli/build VEF/bin
     shift 1
 else
     break
@@ -34,6 +34,6 @@ cd libcrysp
 cmake -B $BUILD_TYPE/build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 cmake --build ${BUILD_TYPE}/build --parallel --target install
 
-cd ../VEF
+cd ../crysp-cli
 cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=.
 cmake --build build --parallel --target install

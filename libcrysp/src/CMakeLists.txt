@@ -1,72 +1,68 @@
-project(AlTay LANGUAGES C Fortran)
-
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
-set(libaltay "altay")
+list(APPEND Fortran_FLAGS ${Libcrysp_FLAGS})
 
-list(APPEND Fortran_FLAGS ${LibAlTay_FLAGS})
-
-add_library(${libaltay} STATIC
-macro/trust_region.c
-utils/base_defs.f90
-utils/math_utils.f90
-utils/conversions.f90
-utils/logging.f90
-altay.f90
-utils/parameters.f90
-macro/macro.f90
-macro/deformation.f90
-macro/mode.f90
-macro/incrementation.f90
-meso/meso.f90
-meso/meso_model.f90
-meso/taylor_ambiguity.f90
-meso/simplex.f90
-meso/models/alamel.f90
-meso/models/full_constraints_taylor.f90
-meso/cluster.f90
-meso/relaxation.f90
-micro/grain.f90
-micro/slip_systems.f90
-micro/micro.f90
-micro/constitutive_model.f90
-micro/models/none.f90
-micro/models/swift.f90
-micro/models/voce.f90
-micro/models/hockett_sherby.f90
-micro/models/dsh.f90
-micro/models/dsh_edge.f90
-micro/models/dsh_screw.f90
-micro/models/dsh_loop.f90
+add_library(libcrysp STATIC
+    libcrysp.f90
+    utils/base_defs.f90
+    utils/math_utils.f90
+    utils/conversions.f90
+    utils/logging.f90
+    utils/parameters.f90
+    macro/trust_region.c
+    macro/macro.f90
+    macro/deformation.f90
+    macro/mode.f90
+    macro/incrementation.f90
+    meso/meso.f90
+    meso/meso_model.f90
+    meso/taylor_ambiguity.f90
+    meso/simplex.f90
+    meso/models/alamel.f90
+    meso/models/full_constraints_taylor.f90
+    meso/cluster.f90
+    meso/relaxation.f90
+    micro/grain.f90
+    micro/slip_systems.f90
+    micro/micro.f90
+    micro/constitutive_model.f90
+    micro/models/none.f90
+    micro/models/swift.f90
+    micro/models/voce.f90
+    micro/models/hockett_sherby.f90
+    micro/models/dsh.f90
+    micro/models/dsh_edge.f90
+    micro/models/dsh_screw.f90
+    micro/models/dsh_loop.f90
 )
 
-target_link_libraries(altay)
-set_target_properties(altay PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
+target_link_libraries(libcrysp)
+set_target_properties(libcrysp PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
 
 #
 # Installation of the outputs in the build tree
 #
-set(altay_INCLUDE_DIR "include")
-set(altay_LIBRARY_DIR "lib")
+set(libcrysp_INCLUDE_DIR "include")
+set(libcrysp_LIBRARY_DIR "lib")
 
 # Note: Static libraries are always treated as ARCHIVE targets.
-install(TARGETS ${libaltay}
-  EXPORT "altayTargets"
-  LIBRARY DESTINATION  ${altay_LIBRARY_DIR}
-  ARCHIVE DESTINATION  ${altay_LIBRARY_DIR}
-  INCLUDES DESTINATION ${altay_INCLUDE_DIRS}
+install(TARGETS libcrysp
+  EXPORT "libcryspTargets"
+  LIBRARY DESTINATION  ${libcrysp_LIBRARY_DIR}
+  ARCHIVE DESTINATION  ${librysp_LIBRARY_DIR}
+  INCLUDES DESTINATION ${libcrysp_INCLUDE_DIRS}
 )
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
-install(EXPORT "altayTargets" DESTINATION "cmake")
+install(EXPORT "libcryspTargets" DESTINATION "cmake")
 
 # Generate package
 include(CMakePackageConfigHelpers)
-configure_package_config_file("../altayConfig.cmake.in" "altayConfig.cmake"
+configure_package_config_file("../libcryspConfig.cmake.in" "libcryspConfig.cmake"
         INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}
-	PATH_VARS altay_INCLUDE_DIR altay_LIBRARY_DIR
+	PATH_VARS libcrysp_INCLUDE_DIR libcrysp_LIBRARY_DIR
 	)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/altayConfig.cmake" DESTINATION ".")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libcryspConfig.cmake" DESTINATION ".")
 
 # Export the package
-export(PACKAGE altay)
+export(PACKAGE libcrysp)
