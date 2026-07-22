@@ -6,11 +6,12 @@ project(libcrysp
 
 include("../common.cmake")
 
+
+set(CMAKE_C_FLAGS "-O3 -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_intel_lp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm -ldl")
+
 set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
-list(APPEND Fortran_FLAGS ${Libcrysp_FLAGS})
-
-add_library(libcrysp STATIC
+add_library(crysp STATIC
     src/libcrysp.f90
     src/utils/base_defs.f90
     src/utils/math_utils.f90
@@ -46,31 +47,33 @@ add_library(libcrysp STATIC
 
 include(CMakePackageConfigHelpers)
 
-target_link_libraries(libcrysp)
-
 # This tells CMake exactly where the headers are depending on how it's consumed
-target_include_directories(libcrysp PUBLIC
+target_include_directories(crysp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>  # Used when building locally
     $<INSTALL_INTERFACE:include>                            # Used after running 'make install'
 )
 
-set_target_properties(libcrysp PROPERTIES LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl")
+set_target_properties(crysp PROPERTIES
+    LINK_FLAGS "-L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_sequential -lmkl_core -lpthread -lm -ldl"
+    EXPORT_NAME "libcrysp"
+)
 
 #Group targets into export set
-install(TARGETS libcrysp
-        EXPORT libcryspTargets
-        LIBRARY DESTINATION  lib
+install(TARGETS crysp
+        EXPORT cryspTargets
         ARCHIVE DESTINATION  lib
         INCLUDES DESTINATION include
 )
 
-export(EXPORT libcryspTargets
+export(EXPORT cryspTargets
     FILE "${CMAKE_CURRENT_BINARY_DIR}/libcryspTargets.cmake"
+    NAMESPACE crysp::
 )
 #Automatically generate the Targets file
-install(EXPORT libcryspTargets
-        FILE libcryspTargets.cmake
+install(EXPORT cryspTargets
+        FILE cryspTargets.cmake
         DESTINATION lib/cmake/libcrysp
+        NAMESPACE crysp::
 )
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
@@ -86,6 +89,3 @@ install(FILES
     "${CMAKE_CURRENT_BINARY_DIR}/libcryspConfig.cmake"
     DESTINATION lib/cmake/libcrysp
 )
-
-# Export the package
-export(PACKAGE libcrysp)
