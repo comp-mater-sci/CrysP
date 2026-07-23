@@ -30,5 +30,5 @@ cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 cmake --build build --parallel --target install
 
 cd ../crysp-cli
-cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_INSTALL_PREFIX=.
+cmake -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 cmake --build build --parallel --target install

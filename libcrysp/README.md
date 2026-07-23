@@ -36,3 +36,5 @@ By default, the project is configured to build a highly optimized release config
     cmake -B build -DCMAKE_BUILD_TYPE=[release/debug]
     cmake --build build --parallel --target install
 
+# Contributing
+Refer to the [top-level README file](../README.md).

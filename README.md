@@ -49,7 +49,7 @@ The build script contains several other useful options. These are documented wit
 Upon successful completion of the build script, a static library *libcrysp.a* will be located at *libcrysp/lib* and an executable *crysp* will be located at *crysp-cli/bin*. Refer to the [libCrysP README](/libcrysp/README.md) and [CrysP-CLI README](/crysp-cli/README.md) for details on their usage.
 
 # Contributing
-Community contributions to *CrysP* are highly engcouraged, especially in the form of new constitutive/crystal plasticity models. To contribute new code, fork a new branch from master with your changes and create a merge request when appropriate. It will be reviewed as soon as possible by a project maintainer.
+Community contributions to *CrysP* are highly encouraged, especially in the form of new constitutive/crystal plasticity models. To contribute new code, fork a new branch from master with your changes and create a merge request when you are satisfied with your code. It will be reviewed as soon as possible by a project maintainer.
 
 ## Conventions
 When writing contributions, please keep the following conventions in mind:
@@ -66,6 +66,14 @@ When writing contributions, please keep the following conventions in mind:
 - Constants follow screaming snake case convention.
 - Class names follow Pascal case convention.
 - Each new model should be contained in a singular module, located in the *models* folder of the corresponding abstraction layer.
+
+## Accepted abbreviations
+Below an exhaustive list of acceptable abbreviations for use within procedure, argument, field, constant, interface or class names:
+
+- **crss**: critical resolved shear stress
+- **rss**: resolved shear stress
+- **fcc**: face-centered cubic
+- **bcc**: body-centered cubic
 
 ## Testing
 The [test](/test) directory contains an integration test suite based on *pytest*. It generates a large number of simulations, and compares the results to some reference results. The user must first generate these reference results from the current state of the master branch:
@@ -88,11 +96,3 @@ The integration tests will pass if none of the results in your working branch de
     pytest -m integration --margin=2
 
 Adding or modifying test configurations may be done by altering the *test/vef_config.py* and *test/test_vef.py* files appropriately.
-
-## Accepted abbreviations
-Below an exhaustive list of acceptable abbreviations for use within procedure, argument, field, constant, interface or class names:
-
-- **crss**: critical resolved shear stress
-- **rss**: resolved shear stress
-- **fcc**: face-centered cubic
-- **bcc**: body-centered cubic
