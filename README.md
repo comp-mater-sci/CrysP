@@ -35,7 +35,7 @@ Additionally, the project has the following optional dependencies:
 - Ford: for generating structured documentation files
 - Pytest: testing framework used by the test suite
 
-# Building the software
+# Installation
 The project root directory contains a shell script named *build.sh*. Make sure this script is executable and run it from the project root:
 
     ./build.sh
@@ -47,3 +47,52 @@ This will compile and install both *libCrysP* and *CrysP-CLI*, using the IFX com
 The build script contains several other useful options. These are documented within the script itself.
 
 Upon successful completion of the build script, a static library *libcrysp.a* will be located at *libcrysp/lib* and an executable *crysp* will be located at *crysp-cli/bin*. Refer to the [libCrysP README](/libcrysp/README.md) and [CrysP-CLI README](/crysp-cli/README.md) for details on their usage.
+
+# Contributing
+Community contributions to *CrysP* are highly engcouraged, especially in the form of new constitutive/crystal plasticity models. To contribute new code, fork a new branch from master with your changes and create a merge request when appropriate. It will be reviewed as soon as possible by a project maintainer.
+
+## Conventions
+When writing contributions, please keep the following conventions in mind:
+
+- All procedures are pure. They should not depend on any state outside of their input arguments and should not alter any state outside their scope. They only interact with the outside world through their arguments and return value.
+- All procedures at the *meso* and *micro* level should be thread-safe.
+- Names of procedures, arguments, constants, classes, fields, enumerators, interfaces or modules should have meaningful names and not contain abbreviations, with the exception of the accepted abbreviations listed below.
+- All procedures, arguments, constants, classes, fields, enumerators, interfaces and modules should be documented.
+- Procedure documentation should state all checks on the input parameters that are performed directly withing the procedure as well as how the procedure behaves when any of those checks fail. Any constraints on the input parameters that are not explicitly mentioned are not checked for and may result in undefined behavior. These implicit constraints should however always be obvious (e.g. when a procedure expects a velocity gradient, its norm should not be 0, it should not contain NaNs, etc.).
+- Top-level *libCrysP* routines should perform full input sanitization. All other routines should keep sanitization to a minimum. It is up to the caller to make sure arguments do not contain trivial errors (e.g. NaN values). This provides a healthy balance between correctness and performance.
+- On error condition, all procedures should call *log_error* with meaningful arguments.
+- Local variables may be abbreviated but their meaning should be documented if not obvious.
+- Names of procedures, arguments, local variables, fields and interfaces follow snake case convention.
+- Constants follow screaming snake case convention.
+- Class names follow Pascal case convention.
+- Each new model should be contained in a singular module, located in the *models* folder of the corresponding abstraction layer.
+
+## Testing
+The [test](/test) directory contains an integration test suite based on *pytest*. It generates a large number of simulations, and compares the results to some reference results. The user must first generate these reference results from the current state of the master branch:
+
+    git checkout master
+    git pull
+    ./build.sh
+    cd test
+    pytest -m integration --update=out
+
+The reference results are stored in *test/reference*. Once this is done, you can test your local version as folows:
+
+    git checkout [my_patch]
+    ./build.sh
+    cd test
+    pytest -m integration
+
+The integration tests will pass if none of the results in your working branch deviate by more than 1% from the reference results. The default marging of 1% may be overriden through the *--margin* option. For a 2% margin:
+
+    pytest -m integration --margin=2
+
+Adding or modifying test configurations may be done by altering the *test/vef_config.py* and *test/test_vef.py* files appropriately.
+
+## Accepted abbreviations
+Below an exhaustive list of acceptable abbreviations for use within procedure, argument, field, constant, interface or class names:
+
+- **crss**: critical resolved shear stress
+- **rss**: resolved shear stress
+- **fcc**: face-centered cubic
+- **bcc**: body-centered cubic
