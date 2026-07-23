@@ -11,5 +11,6 @@ Contents
 - \ref page_crysp_usage outlines the CrysP-CLI workflow.
 - \ref page_crysp_format specify the format used for CrysP-CLI inputs and outputs.
 - \ref page_crysp_specification details the configuration settings and outputs for CrysP-CLI simulations.
+- \ref page_crysp_examples lists examples of common CrysP-CLI simulations, with accompanying explanation.
 - \ref page_theory introduces the foundations of the CrysP framework and the ALAMEL crystal plasticity model, which was the original catalyst for developing this framework.
 */

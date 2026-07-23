@@ -843,9 +843,8 @@ INPUT                  = mainpage.dox \
                          crysp_usage.dox \
                          crysp_format.dox \
                          crysp_specification.dox \
-                         examples.dox \
+                         crysp_examples.dox \
                          theory.dox \
-                         illustrations.dox \
                          about.md
 
 # This tag can be used to specify the character encoding of the source files

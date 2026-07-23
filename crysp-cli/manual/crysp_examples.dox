@@ -1,0 +1,68 @@
+/*!
+\page page_crysp_examples Examples
+This page describes a number of common use cases for CrysP. It covers the needed CrysP-CLI configuration and output. One example is provided for each *CrysP-CLI* module.
+
+\section Generating the R-value in the Rolling Direction
+For sheet metals, lankford coefficient or R-value is an intuitive way to characterize the plastic anisotropy of a material. It is classically derived from a uniaxial tensile test, by observing the ratio of the strains in the directions orthogonal to the tensile test direction. For a tensile test in the material rolling direction (RD), this would be the ratio of the strain in the transverse direction (TD) over the strain in the normal direction (ND). For an isotropic material, this ratio should be 1. For many metals, the R-value lies somewhere between 0.2 and 2.
+
+Through the QRS module of CrysP-CLI, we can easily simulate the R-values of the material in various directions, based on only the material texture. If we want to use the ALAMEL model, which is recommended due to its superior accuracy, we must also provide a microstrucure file. For many real sheet metals, the microstructure is approximately equiaxed due to annealing during the sheet production process. Therefore, if no detailed microstructure information is available, the equiaxed microstrucure provided in the examples subdirectory of this manual is often a reasonable approximation. Hardening information is not needed, since no defomation is involved. Because we are only interested in the rolling direction, which we assume aligns with the x-axis of the texture data, applying an angular resolution of 36 degrees is more than sufficient. The configuration file looks as follows:
+
+\includelineno example_qrs_config_full.cfg
+
+After running the simulation, we get the following output:
+
+\includelineno example_qrs_output.csv
+
+We can now trivially derive the R-value in the rolling direction as the 3rd column of the first row of the output file.
+
+\section Yield Locus section in the RD-TD plane
+A more general way to characterize the plastic anisotropy of a material is by means of a yield locus. In the simplest case, we can generate a 2D yield locus section by simulating a large number of coplanar stress modes, simulating the stress magnitude corresponding to these stress modes, and plotting the resulting vectors in 2D. This is exactly what the YLD module of CrysP-CLI is meant for.
+
+The configuration of the YLD module is largely analogous to that of the QRS module, assuming we again wish to use the ALAMEL model and the grains are approximately equiaxed and have an FCC crystal structure. This time however, a smaller angular resolution is desirable to yield an accurate representation of the yield locus section. We must also use the basis vectors, which define the exact section to be generated. Since we are interested in the RD-TD plane, the base vectors should be the material RD and TD. Putting all of this together yields the following configuration file:
+
+\includelineno example_yld_config_full.cfg
+
+Running the simulation yields the following output:
+
+\includelineno example_yld_output_full.csv
+
+From this, we can easily plot the yield locus section. The X-coordinate of the yield point is cos(angle) * stress, and the Y-coordinate is sin(angle) * stress. Additionally, it is possible to add the flow direction of the material to the yield locus section by projecting the strain mode onto the RD-TD plane.
+
+\section Generating data for Yield Locus fitting
+Even though 2D yield locus sections are commonly used, they actually only visualize a tiny fraction of the full 6-dimensional stress space. To fully capture the plastic anisotropy of a material, one should probe the entire 6-dimensional stress space with a sufficiently small angular resolution to reconstruct the convex yield surface. If we would simply extend the logic of the YLD module to 6 dimensions, this would require us to simulate millions of yield points, which would be prohibitively expensive.
+
+Alternatively, we can use CrysP-CLI to generate a large number of arbitrary stress modes and the corresponding stress magnitude. This data can then be used to fit one of the many high-dimensional yield models described in literature. Even though this approach is less accurate than directly generating the yield points in 6D, it is much faster and may still yield excellent results.
+
+The most efficient way to simulate the stress response of the material in a large number of arbitrary directions with CrysP-CLI is somewhat counterintuitively by imposing random strain modes using the ADP module. While the ASR module would allow us to directly impose stress modes, a stress mode can never be directly imposed onto the underlying ALAMEL model. Therefore, for each imposed stress mode, ASR must first iteratively determine the corresponding strain mode, after which it may impose this strain mode to finally get the stress response. Therefore, evaluating an arbitrary stress mode using ASR takes about an order of magnitude longer than evaluating an arbitray strain mode using ADP.
+
+ADP will view each strain mode as a deformation step. To simply evaluate the stress response of the material without applying any deformation to the material, we must set the target strain for each strain mode/deformation step to 0. To generate the needed config file entries, we can use a simple Python script:
+
+\includelineno example_strain_modes.py
+
+The output of this script corresponds exactly to the module-specific configuration of the ADP module. The generic section is again identical to the previous examples, assuming ALAMEL, FCC and equiaxed grains. This yields the following config file:
+
+\includelineno example_adp_config_full.cfg
+
+Running this simulation may take a long time due to the huge number of strain modes to evaluate. Eventually however, the simulation output will contain the stress modes and magnitudes corresponding to each of the imposed strain modes:
+
+\includelineno example_adp_output.csv
+
+Now we have all the data we need to fit a large number of high-dimensional yield models!
+
+\section Simulating a Uniaxial tensile test in the rolling direction
+In this final example, we will use *CrysP-CLI* to simulate a uniaxial tensile test in the material rolling direction. This is done using the ASR module. After all, a uniaxial tensile test in RD simply applies a force in the RD, which translates to a stress in the RD in the material. As such, it imposes a stress mode of 1 0 0 0 0 0 on the sample, and observes the stress magnitude and deformation mode.
+
+The above already implies most of the inputs ASR needs to simulate the tensile test. Again assuming ALAMEL, FCC and equiaxed grains, the only additional input we require is the hardening behavior of the material. This should be derived from separate experiments. For the purposes of this tutorial, assume the hardening behavior has previously been identified. This yields the following configuration file:
+
+\includelineno example_asr_config_full.cfg
+
+This yields the following main output file:
+
+\includelineno example_asr_output.csv
+
+From this output, the evolution of the stress magnitude, R-value, strain mode, etc. can be derived. Moreover, the texture output file which ASR generates besides the main output file represents the material texture at the end of the simulation and provides insight into the texture evolution of the material.
+*/
+
+
+
+
