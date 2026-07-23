@@ -30,7 +30,11 @@ To build *libCrysP* stand-alone, execute the following commands from the *libCry
 
 Upon sucessful completion of the cmake commands, the *libcrysp/lib* directory should contain the *libcrysp.a* archive, which can be statically linked into your project.
 
+By default, the project is configured to build a highly optimized release configuration using the default Fortran compiler of the system. It is possible to switch compilers by setting the *FC* environment variable. To build in debug mode rather than release, add the appropriate CMAKE option:
 
+    export FC="[ifx/gfortran]"
+    cmake -B build -DCMAKE_BUILD_TYPE=[release/debug]
+    cmake --build build --parallel --target install
 
 # Contributing
 Community contributions to *libCrysP* are highly engcouraged, especially in the form of new models. To contribute new code, feel free to create a merge request containing your contributions. It will be reviewed as soon as possible by a project maintainer.
@@ -52,7 +56,8 @@ When writing contributions to *libCrysP*, please keep the following conventions 
 - Class names follow Pascal case convention.
 - Each new model should be contained in a singular module, located in the *models* folder of the corresponding abstraction layer.
 
-Accepted abbreviations:
+## Accepted abbreviations
+Below an exhaustive list of acceptable abbreviations for use within procedure, argument, field, constant, interface or class names:
 
 - **crss**: critical resolved shear stress
 - **rss**: resolved shear stress
