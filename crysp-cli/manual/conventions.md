@@ -1,6 +1,6 @@
 Notation conventions     {#page_conventions}
 ===============================
-This page describes the notation conventions used throughout this manual, and by extension CrysPy as a whole.
+This page describes the notation conventions used throughout this manual, and by extension CrysP-CLI as a whole.
 
 [TOC]
 
@@ -9,7 +9,7 @@ This page describes the notation conventions used throughout this manual, and by
 Reference frame   {#convention_reference_frame}
 ----------------
 
-All directional quantities are expressed in the material reference frame. The user is free to define this frame, and CrysPy adopts it implicitly. In practice, this means that the user must simply ensure that all inputs are expressed in the same reference frame, and be aware that the outputs are expressed relative to the frame used for the input. The frame does not change during a simulation and is fixed in space.
+All directional quantities are expressed in the material reference frame. The user is free to define this frame, and CrysP-CLI adopts it implicitly. In practice, this means that the user must simply ensure that all inputs are expressed in the same reference frame, and be aware that the outputs are expressed relative to the frame used for the input. The frame does not change during a simulation and is fixed in space.
 
 <HR>
 

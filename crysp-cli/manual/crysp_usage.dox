@@ -1,0 +1,30 @@
+/*!
+\page page_crysp_usage Overview
+
+CrysP-CLI is best viewed as a collection of independent modules with distinct but related inputs and outputs, which are all based on the same underlying models and mathematical framework. All of these modules are bundled in a single executable, by default called crysp and located in the VEF/bin directory of the source code repository, when build according to the instructions in the repository README file. All CrysP-CLI simulations are performed by running this crysp program from the command line. The desired module and configuration settings must be provided when invoking crysp, leading to the following form of a CrysP-CLI simulation:
+
+\verbatim
+crysp  module_name  configuration_file
+\endverbatim
+
+CrysP-CLI contains the following modules:
+
+-# \ref module_asr - Arbitrary Stress Response: simulate a deformation subject to a given stress state.
+-# \ref module_qrs - Q-, R- and S-values: characterize the plastic anisotropy of the material in its current state.
+-# \ref module_yld - YieLD locus: generate a 2D yield locus section.
+-# \ref module_ewc - Equi-Work Contour: evaluate the evolution of the yield locus under deformation.
+-# \ref module_adp - Arbitrary Deformation Path: simulate a deformation subject to a given strain mode.
+
+\note The module_name argument required by the crysp program corresponds to the keyword for the module in the listing above.
+
+Inputs and outputs are communicated via files. The mandatory configuration_file option of the crysp command specifies the relative path of the file containing all the configuration options for the simulation. The general formatting rules for this file are listed in \ref page_crysp_format. The required settings, as well as the output format, is specific to each module and is detailed in \ref page_crysp_specification.
+
+For instance, to invoke the Yield Locus Module with configuration specified in the file ./yld_config.cfg, the user may run the command:
+
+\verbatim
+alamDMC  YLD  yld_config.cfg
+\endverbatim
+
+Note that the intent of the modular design of CrysP-CLI is to allow users the freedom to chain together different modules in whichever way they prefer. For example, one may be interested in the evolution of the r-values of a material as the material undergoes a particular strain-driven deformation. This can be simulated by repeatedly calling the ADP and QRS modules consecutively to simulate a series of small deformation steps and assess the r-values for each.
+
+*/

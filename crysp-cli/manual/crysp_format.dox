@@ -1,9 +1,9 @@
 /*!
-\page page_cryspy_format Formatting Rules
+\page page_crysp_format Formatting Rules
 
 [TOC]
 
-Configuration of any CrysPy Kernel simulation is file-based. Each input file consists of a number of comments and configuration options, which themselves consist of one or more option fields. This page first describes how to construct configuration options, after which it outlines the different types of configuration files that may be constructed from these options.
+Configuration of any CrysP-CLI simulation is file-based. Each input file consists of a number of comments and configuration options, which themselves consist of one or more option fields. This page first describes how to construct configuration options, after which it outlines the different types of configuration files that may be constructed from these options.
 
 <HR>
 
@@ -119,31 +119,10 @@ The symmetric matrix \f$ \mathbf{X} \f$ is expressed as:
 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 1.0 # All tensor components are zero, except 33- (or zz-)component.
 ~~~~~~~~~~~~~
 
-\subsection format_options_inc Configuration options for strain incrementation
-
-CrysPy provides several ways to control how the deformation is incremented if strain evolution of the material is analyzed, as follows:
-
--# \confdef{incrementation_type,string} specifies how the strain increments will be calculated. If the option takes the value:
-   - `StrainTensor`: the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
-     \f$ \| \boldsymbol{\epsilon} + \Delta\boldsymbol{\epsilon} \| - \| \boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
-   - `StrainTensorIncrement`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ satisfies 
-     \f$ \| \Delta\boldsymbol{\epsilon} \| \f$  = \conffield{increment_magnitude}.
-   - `StrainTensorComponent`, the strain increment tensor \f$ \Delta\boldsymbol{\epsilon} \f$ is such that 
-     its normal component along the sample x-axis \f$ \Delta \epsilon_{xx} =  \f$  \conffield{increment_magnitude}.
-   - `PlasticWork`, the plastic work per increment \f$ \Delta W =  \f$  \conffield{increment_magnitude}.
-   \note Some values for \conffield{incrementation_type} are only allowed in particular modules of the VEF.
-
--# \confdef{step_magnitude,real} provides maximal deformation (as specified by \conffield{incrementation_type}) 
-   to be reached in a given deformation step. If the module allows simulating only one step (i.e. one stress path)
-   this field also provides total magnitude to be reached.   
--# \confdef{increment_magnitude,real} sets the magnitude of deformation increments. Note that the last increment may have a slightly 
-   different magnitude than specified in order to reach exactly \conffield{step_magnitude}.
-
-
 <HR>
 
 \section sec_format_files Input Files
-CrysPy simulations are formulated by combining the \ref sec_format_options meaningully into a set of input files. Typically, one needs at least a main configuration file and a texture file. This page describes the general layout for each of these files.
+CrysP-CLI simulations are formulated by combining the \ref sec_format_options meaningully into a set of input files. Typically, one needs at least a main configuration file and a texture file. This page describes the general layout for each of these files.
 
 All configuration files have a fixed format. It is read and interpreted by the program according to Fortran formatted input rules, which implies that:
 - the files are processed line by line,
@@ -157,7 +136,7 @@ All configuration files have a fixed format. It is read and interpreted by the p
 \subsection sec_format_files_orientation Orientation File
 Several input files (texture files and microstructure files) represent a sequence of discrete orientations. These files use CSV format (without header). Each row represents a discrete orientation, formatted as a triplet of Euler angles in degrees, in Bunge convention.
 
-For all models currently available in CrysPy Kernel, the orientation files should be interpreted in a statistical sense. They does not have to contain an exact description of the true texture, but rather a representative subset thereof. The file should ideally contain 3000-5000 orientations. By replicating orientations, one may replicate the effect of more dominant orientations.
+For all models currently available in CrysP, the orientation files should be interpreted in a statistical sense. They does not have to contain an exact description of the true texture, but rather a representative subset thereof. The file should ideally contain 3000-5000 orientations. By replicating orientations, one may replicate the effect of more dominant orientations.
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}
@@ -170,7 +149,7 @@ For all models currently available in CrysPy Kernel, the orientation files shoul
 
 
 \subsection sec_format_files_main Main Configuration File
-The main configuration file describes the simulation and ties together all the input data. Its contents are described in detail in \ref page_cryspy_specification.
+The main configuration file describes the simulation and ties together all the input data. Its contents are described in detail in \ref page_crysp_specification.
 
 <HR>
 
@@ -181,7 +160,7 @@ CrysP simulations may generate 2 types of output files. This section describes t
 
 
 \subsection sec_format_out_main Main Output File
-Any simulation generates a primary output file, which reports selected simulation results in CSV format. Its name starts with the name of the main configuration file (without extension), appended with `_out.csv`. Each column represents an individual quantity tracked throughout the simulation, and each row represents a simulation increment. It always contains a header, which provides a descriptive label to the colums. The exact structure differs from module to module. Refer to \ref page_cryspy_specification for details.
+Any simulation generates a primary output file, which reports selected simulation results in CSV format. Its name starts with the name of the main configuration file (without extension), appended with `_out.csv`. Each column represents an individual quantity tracked throughout the simulation, and each row represents a simulation increment. It always contains a header, which provides a descriptive label to the colums. The exact structure differs from module to module. Refer to \ref page_crysp_specification for details.
 
 <HR>
 
@@ -201,7 +180,7 @@ Texture evolution files have a fixed structure and include the following header:
     </li>
 </ol>
 
-Exacly how frequently the texture evolution is reported may differ between modules. Refer to \ref page_cryspy_specification for details.
+Exacly how frequently the texture evolution is reported may differ between modules. Refer to \ref page_crysp_specification for details.
 
 \par Example:
 ~~~~~~~~~~~~~{.txt}

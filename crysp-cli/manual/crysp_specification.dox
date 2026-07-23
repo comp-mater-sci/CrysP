@@ -1,14 +1,14 @@
 /*!
-\page page_cryspy_specification CrysPy Specification
+\page page_crysp_specification CrysP-CLI Specification
 
 [TOC]
 
-This page provides the full specification of the inputs and outputs required by each CrysPy kernel module.
+This page provides the full specification of the inputs and outputs required by each CrysP-CLI module.
 
 <HR>
 
 \section sec_spec_generic Generic configuration
-Each \ref sec_format_files_main starts with a generic configuration section, applicable to all CrysPy Kernel modules, which describes the multiscale model used for the simulation:
+Each \ref sec_format_files_main starts with a generic configuration section, applicable to all CrysP-CLI modules, which describes the multiscale model used for the simulation:
 
 -# \confdef{texture_file, \ref sec_format_fields_string} specifies the (relative) path to the input texture file. This file represents the texture of the material as a discrete set of grain orientations. Its format is described in the \ref sec_format_files_orientation section.
 
@@ -125,7 +125,7 @@ Each \ref sec_format_files_main starts with a generic configuration section, app
 
 Module-Specific configuration
 ==================
-Each CrysPy Kernel module has its own module-specific configuration, which is appended to the configuration file directly after the general configuration options.
+Each CrysP-CLI module has its own module-specific configuration, which is appended to the configuration file directly after the general configuration options.
 Furthermore, each module will generate its own specific output data. All of this module-specific specification is grouped here.
 
 
