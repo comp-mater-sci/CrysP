@@ -1,64 +1,42 @@
-============
-Introduction
-============
+# Introduction
+CrysP is an extensible toolkit for multilevel Crystal Plasticity Modeling. It is developed and maintained by KU Leuven, motivated by the need for and lack of up-to-date comparable frameworks. It is aimed towards academic/expert users who seek a modern, open-source, minimalistic and well-documented framework which automates both strain- and stress-driven crystal plasticity simulations while still providing the user with maximum control over the simulation process. It supports a variety of hardening models, slip systems and crystal plasticity models. It is designed specifically to be highly extensible, allowing users to contribute new models (or other features). Such contributions are highly encouraged.
 
-:Copyright: KU Leuven
+For industrial/non-expert users, KU Leuven offers a (licensed) web-based graphical user interface for CrysP. Please contact the [KU Leuven NUMA research group](https://numa.cs.kuleuven.be/) for more information.
 
-.. contents::
+# Repository Contents
+Crysp consists of 2 major components:
+- **libCrysP**: this library contains the core framework functionality. It defines a concise interface and is designed to be embedded in user applications.
+- **CrysP-CLI**: provides a minimalistic command-line interface to perform common crystal plasticity simulations using *libCrysP*.
 
-Overview of the repository contents
-===================================
+Both components of CrysP can be seen as separate projects and are documented independently. Therefore, this README file is limited to a global overview of CrysP. It provides no details on the interface of *libCrysP* or the usage of *CrysP-CLI*. These are documented in their respective subdirectories. Refer to the [libCrysP README](/libcrysp/README.md) and [crysp-cli README](/crysp-cli/README.md) to get started.
 
-This directory contains top-level projects. Each project has a separate directory where
-its content resides. On this level, the list of projects include:
+Each of these subdirectories contains a README file as well. Refer to these for more details.
 
-`AlTay`_
-  Source code of the AlTay library.
+Additionally, the repository contains a build script for easy installation and a test suite providing integration tests, which compare a wide variety of simulation outputs to a user-provided reference output.
 
-`VEF`_
-  Virtual Experimentation Framework
-
-Documentation guidelines
-========================
-
-There are few general guidelines how to produce, structure and maintain the documentation 
-of the projects.
-
-#. Readme in every high-level directory
-
-#. Readme as reStructuredText
-
-#. Each project in C/C++ or Fortran should be ready for being processed with Doxygen_ 
-
-.. _Doxygen: https://www.stack.nl/~dimitri/doxygen
-.. _reStructuredText: http://docutils.sourceforge.net/rst.html
-.. _reStructuredText webpage: reStructuredText_
-
-Building the software
-=====================
-
-In general, the software can be build either on Linux or Windows platform. All components
-that need compilation are supposed to compile cleanly.
-
-Requirements and dependencies
------------------------------
-
-The machine where the software is built must fulfill a set of requirements with respect
-to the installed software tools:
+# Requirements and dependencies
+At present, the software is only distributed in source form, and must be built by the user. The only currently supported operating system in Linux. Moreover, the following dependencies must be installed before building CrysP:
 
 - CMake
-- Intel oneAPI (Fortran compiler, Intel Math Kernel Library)
-- Doxygen
+- Fortran compiler: IFX or gfortran. IFX is preferred.
+- C compiler: gcc
+- Intel MKL
 
+Additionally, the project has the following optional dependencies:
 
-Build process
--------------
+- Doxygen: for compiling the *CrysP-CLI* manual
+- Ford: for generating structured documentation files
+- Python/pip: for running the test suite
 
-t.b.d. (should become standard CMake)
+# Building the software
+The project root directory contains a shell script named *build.sh*. Make sure this script is executable and run it from the project root:
 
-----------
+    ./build.sh
 
-.. include:: AlTay/readme.rst
+This will compile and install both *libCrysP* and *CrysP-CLI*, using the IFX compiler. If IFX is not installed on your system, you must specify the gfortran compiler explicitly using the '-c' option:
 
-.. include:: VEF/readme.rst
+    ./build.sh -c gfortran
 
+The build script contains several other useful options. These are documented within the script itself.
+
+Upon successful completion of the build script, a static library *libcrysp.a* will be located at *libcrysp/lib* and an executable *crysp* will be located at *crysp-cli/bin*. Refer to the [libCrysP README](/libcrysp/README.md) and [CrysP-CLI README](/crysp-cli/README.md) for details on their usage.
