@@ -30,7 +30,6 @@ module dmcBasicModule
     contains
           procedure:: initialize =>  BasicModule_initialize
           procedure:: run => BasicModule_run
-          procedure:: openOutputFile => BasicModule_openOutputFile
     end type
 
 contains
@@ -53,9 +52,8 @@ contains
         type(PhaseDescriptor):: phase_
 
         ! Read input texture file name
-        if (.not. readValue(cnfunit, texture_file_name)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file name')
-        phase_%orientations = read_texture(trim(texture_file_name))
+        call read_value(cnfunit, texture_file_name)
+        phase_%orientations = read_orientations(trim(texture_file_name))
 
         ! Determine crystal plasticity model type
         read(cnfunit, '(A)') buffer
@@ -64,14 +62,13 @@ contains
                 meso_model_id = MESO_MODEL_FCTAYLOR
             case ('ALAMEL')
                 meso_model_id = MESO_MODEL_ALAMEL
-                if (.not. readValue(cnfunit, microstructure_file_name)) &
-                    call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read microstructure file name')
+                call read_value(cnfunit, microstructure_file_name)
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
         end select
         meso_params = meso_get_parameters(meso_model_id)
         if (meso_params .includes. "Boundaries") &
-            call parameter_set(meso_params, 'Boundaries', read_boundaries(microstructure_file_name))
+            call parameter_set(meso_params, 'Boundaries', read_orientations(microstructure_file_name))
 
         read(cnfunit, '(A)') buffer
         select case (buffer)
@@ -86,16 +83,14 @@ contains
         end select
 
         !Read hardening section
-        if (.not. readValue(cnfunit, phase_%model_id)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening model ID')
+        call read_value(cnfunit, phase_%model_id)
         phase_%parameters = micro_get_parameters(phase_%model_id)
         n_params = size(phase_%parameters)
 
         !Hardening parameters must be provided in the order in which they are defined in the hardening models.
         if (n_params > 0) then
             allocate(tmp(n_params))
-            if (.not. readvalue(cnfunit,tmp(:n_params))) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read hardening parameters')
+            call read_value(cnfunit,tmp)
             do i=1,n_params
                 phase_%parameters(i) = tmp(i)
             end do
@@ -104,22 +99,7 @@ contains
         call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
     end subroutine
 
-    subroutine BasicModule_run(this, info)
+    subroutine BasicModule_run(this)
         class(BasicModule), intent(inout):: this
-        integer, intent(out)                 :: info
-
-        info = VEF_OK
-    end subroutine
-
-    !> Open output file
-    subroutine BasicModule_openOutputFile(this, ext, ofunit)
-        class(BasicModule), intent(in)           :: this
-        character(len=*), intent(in)             :: ext !< File extension (with leading dot)
-        integer, intent(out)                     :: ofunit !< IO unit of the output
-        integer:: ierr
-
-        open(newunit = ofunit, file = this%output_prefix // ext, status='replace', iostat = ierr)
-        if (ierr /= 0) &
-            call log_error(MOD_NAME, 'open_output_file', ERR_IO, 'Could not open output file.')
     end subroutine
 end module

@@ -55,8 +55,7 @@ program crysp
     call the_module%initialize(cnfunit)
     close(cnfunit)
 
-    call the_module%run(info)
+    call the_module%run()
 
     write(display_unit, '(A, 1X, A, 1X, A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
-    write(display_unit, '(1X, A)') merge('succesfully.','with errors.',info == 0)
 end program

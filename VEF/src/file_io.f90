@@ -9,14 +9,16 @@ module file_io
 
     private
     public:: MapItem, &
-             tostring, &
+             to_string, &
+             handle_iostat, &
              resolvename, &
-             readvalue, &
+             read_value, &
              readKeyword, &
-             read_texture, &
-             write_texture, &
-             read_boundaries, &
-             write_standard_header
+             read_orientations, &
+             open_texture_evolution_file, &
+             open_output_file, &
+             write_texture_increment, &
+             write_output_increment
 
     character, parameter::    COMMENT_SIGN = '#'
     character(*), parameter:: MOD_NAME = "file_io"
@@ -32,32 +34,91 @@ module file_io
     end type
 
 
-      !> Read value from iounit and strip comments
-      !> Arguments:
-      !> \param[in] inunit The IO unit (type: integer)
-      !> \param[out] val   The value being retrieved (type: one of the supported types
-      !>                   (integer, logical, string, real(DP)) OR a vector of
-      !>                   elements of supported types)
-      !> \param[in] frmt  The format to be used in the read operation (type: character(len=*), optional)
-      interface readValue
+    !> Read value from iounit and strip comments
+    !>
+    !> Supported types: integer, logical, real(DP), character(*), real(DP)(:), real(DP)(:,:)
+    interface read_value
         module procedure read_scalar, read_array, read_tensor
-      end interface
+    end interface
+
+    !> Convert a numerical value to a string
+    !>
+    !> Suported types: integer, real(DP), real(DP)(:)
+    interface to_string
+        module procedure to_string_int, to_string_real, to_string_real_arr
+    end interface
 
 contains
 
-    pure function toString(num) result(str)
-        class(*), intent(in)    :: num
-        character(12):: str
+    !> Convert an integer to a string
+    pure function to_string_int(number) result(string)
+        integer, intent(in):: number        !! Number to be converted
+        character(:), allocatable:: string  !! Resulting string. Of minimal length to contain the number.
 
-        select type(num)
-            type is (integer)
-                write (str, '(I0)') num
-            type is (real(DP))
-                write (str, '(G10.4)') num
-        end select
+        character(FNAME_LEN):: buffer
 
-        str = trim(str)
+        write (buffer, '(I0)') number
+        string = trim(buffer)
     end function
+    !> See [[to_string_int]]
+    pure function to_string_real(number) result(string)
+        real(DP), intent(in):: number
+        character(:), allocatable:: string
+
+        character(FNAME_LEN):: buffer
+
+        write (buffer, '(E12.4E3)') number
+        string = trim(buffer)
+    end function
+    !> See [[to_string_int]]
+    pure function to_string_real_arr(numbers) result(string)
+        real(DP), dimension(:), intent(in):: numbers
+        character(:), allocatable:: string
+
+        character(FNAME_LEN):: buffer
+
+        write (buffer, '(' // to_string(size(numbers)) // '(G0))') numbers
+        string = trim(buffer)
+    end function
+
+    !> Count the number of lines in a file
+    integer function get_line_count(file_handle) result(lines)
+        integer, intent(in):: file_handle
+
+        integer:: handle, &
+                  info
+
+        lines = 0
+        do
+            read (file_handle, *, iostat=info)
+            if (is_iostat_end(info)) then
+                rewind (unit=file_handle, iostat=info)
+                call handle_iostat('get_line_count',info)
+                return
+            end if
+            call handle_iostat('get_line_count', info)
+            lines = lines + 1
+        end do
+    end function
+
+    !> Generic handler for I/O errors.
+    !>
+    !> To be called by any I/O operation to handle the IOSTAT error code returned by the Fortran intrinsic I/O routines.
+    !> On error, the error code and any value read are reported and the program is terminated.
+    subroutine handle_iostat(caller, code, buffer)
+        character(*), intent(in):: caller !! Name of the calling routine
+        integer, intent(in):: code        !! IOSTAT code returned by Fortran intrinsic I/O procedure.
+        character(*), intent(in), optional:: buffer !! In the case of a read operation, the value that was read.
+
+        character(FNAME_LEN):: msg
+
+        if (code == VEF_OK) return
+
+        msg = 'IO error with code ' // to_string(code) // '. Refer to Fortran IOSTAT documentation.'
+        if (present(buffer)) &
+            msg = msg // ' Read value: ' // trim(buffer)
+        call log_error(MOD_NAME, caller, ERR_IO, msg)
+    end subroutine
 
     !> Resolve symbolic name into an integer identifier.
     !>
@@ -71,7 +132,7 @@ contains
         !
         integer :: i
         character(len=cMapNameLen)       :: shortname
-    !
+
         resolveName = .false.
         shortname = trim(adjustl(name)) ! Trim and store (make direct comparison)
         do i=1,size(themap) !MB: search for name in map
@@ -86,7 +147,7 @@ contains
 
     logical function skipComment(nunit, buffer)
         integer, intent(in)::         nunit
-        character(512), intent(out):: buffer
+        character(MAX_LINE_LEN), intent(out):: buffer
 
         logical:: next
         integer:: ios, &
@@ -94,40 +155,38 @@ contains
 
         next = .true.
         do while (next)
-            read(nunit, fmt = 500, iostat = ios) buffer
-            if (ios /= 0) then
-                skipComment = .false.
-                next = .false.
-            endif
+            read(nunit, fmt = '(A512)', iostat = ios) buffer
+            call handle_iostat('skipcomment', ios)
+
             if (.not. isComment(trim(adjustl(buffer))) ) then
                 skipComment = .true.
                 next = .false.
-                ! sanitize output by removing '#'
+                !Remove possible trailing comments from the input line
                 hashidx = index(buffer, comment_sign)
                 if (hashidx /= 0) buffer(hashidx:) = ' '
             endif
         enddo
-        500 format(A512)
     contains
 
         logical function isComment(buffer)
             character(len=*), intent(in)  :: buffer
 
             isComment = .false.
-            if (len(buffer) > 0) then
-                  if (buffer(1:1) == comment_sign) isComment = .true.
-            endif
+            if (len(buffer) > 0) &
+                isComment = (buffer(1:1) == comment_sign)
         end function
     end function
 
-    logical function read_scalar(inunit, val) result(isOK)
-        integer, intent(in):: inunit
-        class(*), intent(out):: val
+    !>  Read scalar value from config file and skip comments.
+    !>
+    !> Crashes the program on error.
+    subroutine read_scalar(inunit, val)
+        integer, intent(in):: inunit  !! The IO unit
+        class(*), intent(out):: val   !! Variable to be read to.
 
         character(MAX_LINE_LEN)   :: buffer
         integer:: ierr
 
-        isOK = .false.
         if (skipComment(inunit, buffer)) then
             select type(val)
                 type is (integer)
@@ -140,33 +199,31 @@ contains
                     read(buffer, fmt=*,iostat = ierr) val
             end select
         endif
-        if (ierr == 0) isOK = .true.
-    end function
-
-    logical function read_array(inunit, val) result(isOK)
+        call handle_iostat('read_scalar', ierr, buffer)
+    end subroutine
+    !> See [[read_scalar]]
+    subroutine read_array(inunit, val)
         integer, intent(in):: inunit
         real(DP), dimension(:), intent(out):: val
         character(max_line_len)   :: buffer
         integer:: ierr
 
-        isOK = .false.
-        if (skipComment(inunit, buffer)) read(buffer, fmt=*,iostat = ierr) val
-        if (ierr == 0) isOK = .true.
-    end function
-    logical function read_tensor(inunit, val) result(isOK)
+        if (skipComment(inunit, buffer)) read(buffer, *,iostat = ierr) val
+        call handle_iostat('read_array', ierr, buffer)
+    end subroutine
+    !> See [[read_scalar]]
+    subroutine read_tensor(inunit, val)
         integer, intent(in):: inunit
         real(DP), dimension(3,3), intent(out):: val
         character(max_line_len)   :: buffer
         integer:: ierr
 
-        isOK = .false.
         if (skipComment(inunit, buffer)) read(buffer, fmt=*,iostat = ierr) val
-        if (ierr == 0) isOK = .true.
-    end function
+        call handle_iostat('read_tensor', ierr, buffer)
+    end subroutine
 
     !> Read a keyword value and checks it against the map.
     !>
-    !> \return
     !> If the keyword appears in the map, .true. is returned and the parameter value is set
     !> to the value associated to the keyword. Otherwise .false. is returned and value becomes undefined.
     logical function readKeyword(cnfunit,map,value) result(res)
@@ -178,102 +235,95 @@ contains
 
         value = 0
         res = .false.
-        buffer = ''
-        if (.not. readValue(cnfunit, buffer)) return
+        call read_value(cnfunit, buffer)
         res = resolveName(map, buffer, value)
     end function
 
-
-    !Read list of grain orientations from file
-    !@return list of Euler angle triplets (in radians) representing grain orientations
-    function read_texture(fname) result(orientations)
-        character(*), intent(in)::  fname
-
-        integer::   nunit,  &
-                    info,   &
-                    nrec,   &
-                    i
+    !> Read file containing orientations
+    !>
+    !> Handles both texture and microstructure files.
+    !> Crashes the program on formatting or I/O error.
+    !> The first line of the file contains the number of orientations it contains.
+    !> All subsequent lines contain the orientations,
+    !> formatted as a tripled of space-separated Euler angles in Bunge convention, in degrees.
+    function read_orientations(file_name) result(orientations)
+        character(*), intent(in):: file_name
         real(DP), dimension(:,:), allocatable:: orientations
-        character(*), parameter:: PROC_NAME = 'read_texture'
+        integer::   i,      &   !Iterator
+                    info,   &   !IO error code
+                    handle      !File handle
 
-        open(newunit = nunit, file = trim(fname), status='old',form='formatted',iostat = info)
-        if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Unable to open textrure file')
+        open (newunit=handle, file=file_name, status='old', access='sequential',iostat=info)
+        call handle_iostat('read_boundaries', info)
 
-        nrec = 0
-        read (nunit, *, iostat = info) nrec
-        if (info /= VEF_OK) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read texture file header')
-        if (nrec > 0) allocate(orientations(3, nrec))
+        allocate(orientations(3, get_line_count(handle)))
 
-        do i = 1, nrec
-            read(nunit, *, iostat = info) orientations(1, i), orientations(2, i), orientations(3, i)
-            if (info /= 0) call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read orientation')
+        do i = 1, size(orientations,2)
+            call read_value(handle, orientations(:,i))
         enddo
+        close(handle)
 
         orientations = deg_to_rad(orientations)
-
-        close(nunit)
     end function
 
-    !Read grain boundaries from file
-    !@return List of Euler angle triplets (in radians) representing boundary orientations
-    function read_boundaries(file_name) result(boundaries)
-        character(*), intent(in):: file_name
-        real(DP), dimension(:,:), allocatable:: boundaries
-        integer::   i,              &
-                    file_handle,    &
-                    n_boundaries
-        character(len = 40)  :: TitMic !<Microstructure title
+    integer function open_result_file(name, header) result(unit)
+        character(*), intent(in):: name
+        character(*), dimension(:), intent(in):: header
 
-        !Read boundary orientations from file
-        open (newunit = file_handle, file = file_name, status='old')
-        read (file_handle, '(I5, 5x, A)') n_boundaries, TitMic  ! read number of grain boundaries and file title
+        integer:: i, &
+                  info, &
+                  n_cols
 
-        allocate(boundaries(3, n_boundaries))
+        n_cols = size(header)
 
-        do i = 1, n_boundaries
-            read (file_handle, '(3f10.0)') boundaries(3, i), boundaries(2, i), boundaries(1, i)  !read Euler angles from microstructure file in order: phi2, PHI, phi1
-        enddo
-        close(unit = file_handle)
+        open (newunit = unit, file = name, status='replace', iostat=info)
+        call handle_iostat('open_result_file (open)', info)
 
-        boundaries = deg_to_rad(boundaries)
+        write(unit,fmt='('// to_string(n_cols) // '(A,:,","))',iostat=info) (trim(header(i)), i = 1, n_cols)
+        call handle_iostat('open_result_file (header)', info)
     end function
 
-    subroutine write_texture(state_file_prefix, clusters)
-        character(*), intent(in):: state_file_prefix
+    integer function open_texture_evolution_file(prefix) result(handle)
+        character(*), intent(in):: prefix
+
+        character(9), dimension(4), parameter:: HEADER = [character(9):: 'increment','phi1','PHI','phi2']
+
+        handle = open_result_file(prefix // '_texture_evolution.csv', HEADER)
+    end function
+
+    subroutine write_texture_increment(file_handle, increment, clusters)
+        integer, intent(in):: file_handle
+        integer, intent(in):: increment
         class(Cluster), dimension(:), intent(in):: clusters
 
         integer:: i, j, &
-                  state_unit, &
                   info
-
-        open (newunit = state_unit, file = state_file_prefix//'.CUR', status='replace',err = 9999, iostat=info)
 
         do i=1,size(clusters)
             do j=1, size(clusters(i)%grains)
-                write (state_unit, '(3f8.4)'), rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
+                write (file_handle, '(I0,",",3(G0,:,","))', iostat=info) increment, rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
+                call handle_iostat('write_texture', info)
             end do
         end do
-
-        close(state_unit)
-        return
-        9999 call log_error(MOD_NAME, 'write_texture', ERR_IO, 'Cannot open state file.' )
     end subroutine
 
-    !> Write out standard header: two lines: #1: column numbers, #2 column names
-    subroutine write_standard_header(iounit, column_names)
-        integer,intent(in)                    :: iounit        !< Output IO unit
-        character(*),dimension(:), intent(in) :: column_names  ! Names of columns
+    integer function open_output_file(prefix, header) result(handle)
+        character(*), intent(in):: prefix
+        character(*), dimension(:), intent(in):: header
 
-        character(FMT_STRING_LENGTH) :: fmt_string
-        integer :: i, &
-                   info, &
-                   ncolumns
+        handle = open_result_file(prefix // '_out.csv', header)
+    end function
 
-        ncolumns = size(column_names)
-        ! Format: two leading spaces, followed by columns
-        fmt_string = '(2X,'// tostring(ncolumns) // '(A,1X))'
-        write(iounit,fmt=fmt_string,iostat=info) (column_names(i), i = 1, ncolumns)
-        if (info /= VEF_OK) &
-            call log_error(MOD_NAME, 'write_standard_header', ERR_IO, 'Could not write output file header')
+    subroutine write_output_increment(file_handle, data)
+        integer, intent(in):: file_handle
+        real(DP), dimension(:), intent(in):: data
+
+        integer :: info, &
+                   n_cols
+
+        n_cols = size(data)
+
+        write(file_handle,fmt='('// to_string(n_cols) // '(G0,:,","))',iostat=info) data
+        call handle_iostat('write_ouptut (data)', info)
     end subroutine
 end module

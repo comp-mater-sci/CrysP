@@ -10,13 +10,13 @@ This page provides the full specification of the inputs and outputs required by 
 \section sec_spec_generic Generic configuration
 Each \ref sec_format_files_main starts with a generic configuration section, applicable to all CrysPy Kernel modules, which describes the multiscale model used for the simulation:
 
--# \confdef{texture_file, \ref sec_format_fields_string} specifies the (relative) path to the input texture file. Its format is described in the \ref sec_format_files_texture section.
+-# \confdef{texture_file, \ref sec_format_fields_string} specifies the (relative) path to the input texture file. This file represents the texture of the material as a discrete set of grain orientations. Its format is described in the \ref sec_format_files_orientation section.
 
 -# \confdef{model_type, \ref sec_format_fields_string} specifies the multi-scale crystal plasticity model to be used in the calculations. The supported models are:
     - **ALAMEL**: Advanced LAMEL model developed at KU Leuven. If this model is chosen, the following suboption must be provided:
-        - \confdef{microstructure_file,\ref sec_format_fields_string} Relative path to the microstrucure file. Refer to \ref sec_format_files_microstructure for the structure of this file.
+        - \confdef{microstructure_file,\ref sec_format_fields_string} Relative path to the microstrucure file. It describes the microstructure of the material, as a discrete set of grain boundary normals. It is formatted a an \ref sec_format_files_orientation.
 
-      The ALAMEL model will process the \ref sec_format_files_texture and \ref sec_format_files_microstructure sequentially. Each pair of consecutive orientations from the \ref sec_format_files_texture is matched with the topmost boundary normal from the \ref sec_format_files_microstructure that has not yet been used to form a cluster. If the \ref sec_format_files_microstructure does not contain enough boundary normals to process all orientations from the \ref sec_format_files_texture, it is reprocessed sequentially as needed. For example, if the \ref sec_format_files_texture contains 800 orientations, but the \ref sec_format_files_microstructure contains only 250 boundary normals, ALAMEL will construct 250 clusters with the first 500 orientations from the \ref sec_format_files_texture and each of the boundary normals from the \ref sec_format_files_microstructure, and 150 clusters with the last 300 orientations and the first 150 boundary normals, all in sequential order.
+      The ALAMEL model will process the texture and microstrucure files sequentially. Each pair of consecutive grain orientations is matched with the topmost boundary normal that has not yet been used to form a cluster. If the microstrucure file does not contain enough boundary normals to process all grain orientations, it is reprocessed sequentially as needed. For example, if the texture consists of 800 grain orientations, but the microstructure file contains only 250 boundary normals, ALAMEL will construct 250 clusters with the first 500 grain orientations and each of the boundary normals, and 150 clusters with the last 300 grain orientations and the first 150 boundary normals, all in sequential order. Note that often it is not possible to experimentally obtain the microstructure of the sample. In that case, it is recommended to generate a set of boundary normals programmatically that corresponds with the average grain morphology.
     - **FCTaylor**: Traditional full constraints Taylor model.
 
 -# \confdef{slip_system_set, \ref sec_format_fields_string} specifies the slip system set to be used. Valid values are:
@@ -154,15 +154,8 @@ Note that the hydrostatic part of the imposed stress mode is ignored, as well as
 
 \subsection output_asr Module-specific output
 
-The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting of:
+The \ref sec_format_out_main contains the following fields:
 <ol>
-	<li> \outdef{step} The deformation step sequence number
-	</li>
-
-	<li> \outdef{increment, increment_ASR} The increment sequence number of the current
-	deformation step
-	</li>
-
 	<li> \outdef{epsilon_vM, eps_vM_ASR} The von Mises equivalent strain of the current step
 	\f$ \epsilon_{vM,step} \f$
 
@@ -184,34 +177,37 @@ The module-specific outputfile `<output_prefix>.asr` makes column-wise reporting
 	<li> \outdef{residual} The norm of the difference between the stress mode requested by the user and the stress mode obtained by the model.
 	</li>
 
-	<li> \outdef{sigma_xx} The xx-component of the deviatoric stress tensor \f$ \mathbf{S} \f$
+	<li> \outdef{sigma_11} The xx-component of the Cauchy stress tensor \f$ \mathbf{S} \f$
 	</li>
-	<li> \outdef{sigma_yy} Similar to \ref sigma_xx
+	<li> \outdef{sigma_22} Similar to \ref sigma_11
 	</li>
-	<li> \outdef{sigma_zz} Similar to \ref sigma_xx
+	<li> \outdef{sigma_33} Similar to \ref sigma_11
 	</li>
-	<li> \outdef{sigma_xy} Similar to \ref sigma_xx
+	<li> \outdef{sigma_23} Similar to \ref sigma_11
 	</li>
-	<li> \outdef{sigma_yz} Similar to \ref sigma_xx
+	<li> \outdef{sigma_13} Similar to \ref sigma_11
 	</li>
-	<li> \outdef{sigma_xz} Similar to \ref sigma_xx
+	<li> \outdef{sigma_12} Similar to \ref sigma_11
 	</li>
 
-	<li> \outdef{A_xx} The xx-component of the strain mode tensor \f$ \mathbf{A} \f$
+	<li> \outdef{A_11} The xx-component of the strain mode tensor \f$ \mathbf{A} \f$
 	</li>
-	<li> \outdef{A_yy} Similar to \ref A_xx
+	<li> \outdef{A_22} Similar to \ref A_11
 	</li>
-	<li> \outdef{A_zz} Similar to \ref A_xx
+	<li> \outdef{A_33} Similar to \ref A_11
 	</li>
-	<li> \outdef{A_xy} Similar to \ref A_xx
+	<li> \outdef{A_23} Similar to \ref A_11
 	</li>
-	<li> \outdef{A_yz} Similar to \ref A_xx
+	<li> \outdef{A_13} Similar to \ref A_11
 	</li>
-	<li> \outdef{A_xz} Similar to \ref A_xx
+	<li> \outdef{A_12} Similar to \ref A_11
 	</li>
 </ol>
 
-Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_texture.
+\par Example
+\includelineno example_asr_output.csv
+
+Additionally, this module generates a \ref sec_format_out_texture. The texture is reported at the end of each deformation step.
 
 <HR>
 
@@ -235,7 +231,7 @@ Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 
 \subsection output_qrs Module-specific output
 
-The module-specific outputfile `<output_prefix>.xqrs` makes column-wise reporting of:
+The \ref sec_format_out_main contains the following fields:
 <ol>
 	<li> \outdef{angle} The in-plane orientation angle in degrees.
 	</li>
@@ -268,6 +264,9 @@ The module-specific outputfile `<output_prefix>.xqrs` makes column-wise reportin
 	</li>
 </ol>
 
+\par Example
+\includelineno example_qrs_output.csv
+
 <HR>
 
 \section module_yld Yield Locus Module (keyword: YLD)
@@ -278,66 +277,39 @@ There is no evolution of state associated with this module.
 \subsection configuration_yld Module-specific configuration
 
 -# \confdef{angular_resolution, \ref sec_format_fields_real} Angle between sample points, expressed in degrees and measured from the 1st section base vector towards the 2nd section base vector.
--# \confdef{section_default, \ref sec_format_fields_logical} is a flag to request default or non-default section definition and yield locus scaling.
-If \conffield{section_default} equals
-  - `True` <BR> then the yield locus section is defined by \f$\sigma_{11}\f$ (normal stress along RD) along the X-axis, and \f$\sigma_{22}\f$ (normal stress along TD) along the Y-axis. Furthermore, the yield locus will be scaled by the yield stress corresponding to uniaxial tension along the RD.
-  - `False` <BR> then the following suboptions are required:
-    -# \confdef{normalize_base,\ref sec_format_fields_logical}. If `True`, then the base tensors specified by the following configuration 	settings 2.-3.-4. are normalized so their norm is equal to 1.0.
-	-# \confdef{base_sigma_X,\ref sec_format_options_symmatrix} is the base tensor along the X-axis of the yield locus section.
-	-# \confdef{base_sigma_Y,\ref sec_format_options_symmatrix} is the base tensor along the Y-axis of the yield locus section.
-	-# \confdef{base_sigma_offset,\ref sec_format_options_symmatrix} is the base tensor that determines the mode of the stress that coincides with the origin of the yield locus section.
-	-# \confdef{normalize_stress,\ref sec_format_fields_logical}
-	-# \confdef{use_scaling,\ref sec_format_fields_logical}. If it equals
-	  - `False` <BR> then the suboption
-        -# \confdef{scaling_stress_mode,\ref sec_format_options_symmatrix} is the stress mode for which the yield point is used as scaling factor.
+-# \confdef{base_sigma_X,\ref sec_format_options_symmatrix} is the base tensor along the X-axis of the yield locus section.
+-# \confdef{base_sigma_Y,\ref sec_format_options_symmatrix} is the base tensor along the Y-axis of the yield locus section. It must be orthogonal to \conffield{base_sigma_X}.
 
 \par Example
 \includelineno example_yld_config.cfg
 
 \subsection output_yld Module-specific output
 
-The module-specific outputfile `<output_prefix>.xyld` makes column-wise reporting of:
+The \ref sec_format_out_main contains the following fields:
 <ol>
-	<li> \outdef{theta,yldout_theta} The angle \f$ \theta \f$ corresponding to a yield locus
+	<li> \outdef{angle,yldout_theta} The angle \f$ \theta \f$ corresponding to a yield locus
 	point, as requested in \conffield{theta_range}, expressed in degrees.
 	</li>
-
-	<li> \outdef{sigma} The radial coordinate of the yield locus point
+	<li> \outdef{stress} The norm of the Cauchy stress tensor (i.e. the radial coordinate of the yield stress) at the yield locus point.
 	</li>
-
-	<li> \outdef{sigma_scaled} The radial coordinate of the normalized yield locus point
-	</li>
-
-	<li> \outref{S, norm_SonA}
-	</li>
-
-	<li> \outref{dotW}
-	</li>
-
-	<li> \outdef{sigma_x} The 1st Cartesian coordinate of the normalized yield locus point
-	\f$ \sigma_X \f$
-	</li>
-
-	<li> \outdef{sigma_y} The 2nd Cartesian coordinate of the normalized yield locus point
-	\f$ \sigma_Y \f$
-	</li>
-
-	<li> \outdef{dsigma_x} The 1st Cartesian coordinate of the local yield locus normal
-	\f$ A_X \f$
-	</li>
-
-	<li> \outdef{dsigma_y} The 2nd Cartesian coordinate of the local yield locus normal
-	\f$ A_Y \f$
-	</li>
-
-	<li> \outdef{beta} The angle \f$ \beta \f$ from X-axis to the projection of tensor
-	\f$ \mathbf{A} \f$ into section, expressed in degrees.
-	It is given as \f$ \beta= \arctan(\frac{A_Y}{A_X}) \f$.
-	</li>
-
+    <li> \outref{A_11}
+    </li>
+    <li> \outref{A_22}
+    </li>
+    <li> \outref{A_33}
+    </li>
+    <li> \outref{A_23}
+    </li>
+    <li> \outref{A_13}
+    </li>
+    <li> \outref{A_12}
+    </li>
 	<li> \outref{residual}
 	</li>
 </ol>
+
+\par Example
+\includelineno example_yld_output.csv
 
 <HR>
 
@@ -364,13 +336,7 @@ sample. Several subsequent deformation _steps_ may be imposed; each step imposes
 
 \subsection output_adp Module-specific output
 
-The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting of:
--# \outdef{step,step_ADP} The deformation step sequence number
-
-
--# \outdef{increment,increment_ADP} The increment sequence number of the current
-   deformation step
-
+The \ref sec_format_out_main contains the following fields:
 -# \outdef{duration} The duration of the increment.
 
 -# \outdef{eps_vM} Von Mises strain at the end of the increment.
@@ -386,16 +352,17 @@ The module-specific outputfile `<output_prefix>.adp` makes column-wise reporting
 -# \outdef{L_32} similar to \ref L_11
 -# \outdef{L_13} similar to \ref L_11
 
--# \outdef{S_11,adp_S_11} The 11 component of the deviatoric stress, given in the material
-   (123) reference frame. The deviatoric stress \f$ \mathbf{S} \f$ corresponds to the
-   imposed \f$ \mathbf{L} \f$.
+-# \outdef{S_11,adp_S_11} The 11 component of the deviatoric stress.
 -# \outdef{S_22,adp_S_22} similar to \ref adp_S_11 "S_11"
 -# \outdef{S_33,adp_S_33} similar to \ref adp_S_11 "S_11"
 -# \outdef{S_12,adp_S_12} similar to \ref adp_S_11 "S_11"
 -# \outdef{S_23,adp_S_23} similar to \ref adp_S_11 "S_11"
 -# \outdef{S_13,adp_S_13} similar to \ref adp_S_11 "S_11"
 
--# \outdef{M} Taylor factor of the last increment in the step.
+-# \outdef{M} Taylor factor during the increment.
 
-Additionally, the state file `<output_prefix>.CUR` reports the texture at the end of the simulation, formatted as \ref sec_format_files_texture.
+\par Example
+\includelineno example_adp_output.csv
+
+Additionally, this module generates a \ref sec_format_out_texture. The texture is reported at the end of each deformation step.
 */

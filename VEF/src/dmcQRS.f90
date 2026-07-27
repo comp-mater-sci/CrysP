@@ -14,46 +14,20 @@ module dmcQRS
     public:: QRSModule
 
     character(*), parameter:: MOD_NAME = 'dmcQRS'
-
-    type qrsData
-          real(DP) :: qvalue = 0.D0
-          real(DP) :: rvalue = 0.D0
-          real(DP) :: svalue = 0.D0
-    end type
+    character(8), dimension(5):: OUTPUT_HEADER = [character(8):: 'angle', &
+                                                  'q-value', &
+                                                  'r-value', &
+                                                  's-value', &
+                                                  'residual']
 
     type, extends(BasicModule):: QRSModule
         real(DP):: angular_resolution
     contains
         procedure:: initialize => qrs_initialize
-        procedure:: run => QRSModule_run
-        procedure:: fileOutput => QRSModule_fileOutput
+        procedure:: run => qrs_run
     end type
-
-    !> Container for output datapoints of QRS module
-    type:: QRSOutputData
-        real(DP), dimension(:), allocatable   :: residuals, phis
-        type(qrsData), dimension(:), allocatable      :: qrsvalues
-    end type
-
-    !> Constructors of QRSOutputData objects
-    interface QRSOutputData
-        module procedure QRSOutputData_init_size
-    end interface
 
 contains
-
-    type(qrsData) pure function calculateQRS(Dt,s) result(qrsvalue)
-        real(DP),dimension(3,3),intent(in)      :: Dt
-        real(DP),intent(in)                     :: s
-
-         if ( abs(Dt(3,3)) >= epsilon(0.D0) ) then
-             qrsvalue%rvalue = Dt(2,2) / Dt(3,3)
-             qrsvalue%qvalue = qrsvalue%rvalue / (1.D0 + qrsvalue%rvalue)
-             qrsvalue%svalue = s
-         else
-             qrsvalue = qrsData(0.D0, 0.D0, 0.D0)
-         endif
-    end function
 
     subroutine qrs_initialize(this, cnfunit)
         class(QRSModule), intent(inout):: this
@@ -66,45 +40,33 @@ contains
         use_default_settings = .false.
         call this%BasicModule%initialize(cnfunit)
 
-        ! Read parameters specific for the QRS module
-        if (.not. readValue(cnfunit, this%angular_resolution)) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_IO, 'Could not read angular resolution')
-
+        call read_value(cnfunit, this%angular_resolution)
         this%angular_resolution = deg_to_rad(this%angular_resolution)
     end subroutine
 
-    subroutine QRSModule_run(this, info)
+    subroutine qrs_run(this)
         class(QRSModule), intent(inout)      :: this
-        integer, intent(out)                 :: info
 
-        ! Convention: strain rate and stress tensors in
-        ! - "Tensile sample coordinate system" have suffix _t
-        ! - "Material coordinate system" have no suffix.
-        real(DP), dimension(3, 3)         ::  Mrot, &
-                                            D_t, &
-                                            S_t, &
-                                            sigma, &
-                                            sigma_t, &
-                                            sona, &
-                                            dresume_t, &
-                                            smident
-        real(DP)                        :: fi2, residual_resume
-        integer     :: i, ofunit, npoints
-        !
-        type(QRSOutputData):: results
-
-        real(DP):: target_stress_mode(5), &
+        integer:: i, &
+                  out_unit, &
+                  n_points
+        real(DP):: fi2, &
+                   target_stress_mode(5), &
                    strain_mode(5), &
                    stress(5), &
-                   residual(5)
+                   residual(5), &
+                   Mrot(3,3), &
+                   strain_tensile_frame(3,3), &
+                   stress_tensile_frame(3,3), &
+                   sigma(3,3), &
+                   sigma_t(3,3), &
+                   r_value
 
+        out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
 
-        !
-        npoints = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
-        results = QRSOutputData(npoints)
-        !
+        n_points = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
+
         fi2 = 0._DP
-        !
         sigma_t = 0._DP
         sigma_t(1, 1) = 1._DP
 
@@ -112,8 +74,7 @@ contains
         strain_mode = tensor_to_deviatoric(sigma_t)
         strain_mode = strain_mode / norm2(strain_mode)
 
-        do i=1,npoints
-
+        do i=1,n_points
             ! Calculate rotation matrix
             ! - due to passive rotation convention
             Mrot = euler_to_tensor([0._DP,0._DP, -fi2])
@@ -131,75 +92,20 @@ contains
 
             call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
 
-            SonA = deviatoric_to_tensor(stress)
-            SmIdent = deviatoric_to_tensor(stress / norm2(stress))  ! stress mode for found strain mode
+            !Rotate results such that the stress mode aligns with the virtual tensile test direction.
+            strain_tensile_frame = rotate_from(deviatoric_to_tensor(strain_mode), Mrot)
+            stress_tensile_frame = rotate_from(deviatoric_to_tensor(stress), Mrot)
+            r_value = strain_tensile_frame(2,2) / strain_tensile_frame(3,3)
 
-            ! Rotate back to the "tensile test" coordinate system
-            D_t = rotate_from(deviatoric_to_tensor(strain_mode), Mrot)
-            S_t = rotate_from(SonA, Mrot)
-
-            ! Calculate output variables
-            associate(r => results)
-                r%phis(i) = rad_to_deg(fi2)
-                r%qrsvalues(i) = calculateQRS(D_t, norm2(stress))
-                r%residuals(i) = norm2(deviatoric_to_unscaled_voigt(residual))
-            end associate
+            call write_output_increment(out_unit, [rad_to_deg(fi2), &
+                                                   r_value / (1._DP + r_value), &
+                                                   r_value, &
+                                                   norm2(stress_tensile_frame), &
+                                                   norm2(residual)])
 
             fi2 = fi2 + this%angular_resolution
         enddo
 
-        call this%fileOutput(results)
+        close(out_unit)
     end subroutine
-
-    !> Write out results to the output file
-    subroutine QRSModule_fileOutput(this, data_record)
-        class(QRSModule), intent(in)                 :: this
-        type(QRSOutputData), intent(in), optional    :: data_record !< Data to be written out
-
-        integer:: i, &
-                  npoints, &
-                  left, &
-                  right, &
-                  stride, &
-                  ierr, &
-                  iounit
-
-        integer, parameter:: ncolumn_labels = 5, column_width = 18
-        character(len = column_width), dimension(ncolumn_labels):: column_names = &
-                        [ character(len = column_width):: 'angle','q-value','r-value','s-value','residual' ]
-
-        call this%openOutputFile('.xqrs', iounit)
-        call write_standard_header(iounit, column_names)
-        !
-        if (present(data_record)) then
-            ! FIXME: flawed assumption, other arrays may have different size
-            npoints = 0
-            if (allocated(data_record%phis)) &
-                npoints = size(data_record%phis)
-            do i = 1, npoints
-                write(iounit, fmt = 710, iostat = ierr) data_record%phis(i), &
-                                                  data_record%qrsvalues(i), &
-                                                  data_record%residuals(i)
-                if (ierr /= 0) return
-            enddo
-        endif
-        710 format(1X, 8(ES18.9E3, 1X))
-
-        close(iounit)
-    end subroutine
-
-
-    !> Initialize QRSOutputData to store npoints datapoints
-    pure function QRSOutputData_init_size(npoints) result(res)
-    type(QRSOutputData)     :: res
-    integer, intent(in)      :: npoints
-    !
-        ! Make space for the results
-        allocate(res%qrsvalues(npoints))
-        ! Other entities are of the same type, but they can not be treated in a single
-        ! statement if SOURCE is provided...
-        allocate(res%residuals(npoints), source = 0.D0)
-        allocate(res%phis(npoints), source = 0.D0)
-    !
-    end function
 end module
