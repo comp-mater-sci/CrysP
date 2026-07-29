@@ -408,7 +408,7 @@ contains
         !Transform relaxation from boundary frame to crystal frame
         !Composed of rotation from boundary to global frame and then from global to crystal frame.
         do i = 1, 2
-            boundary_to_crystal(:,:,i) = matmul(transpose(alamel_cluster%grains(i)%orientation), new_boundary_frame)
+            boundary_to_crystal(:,:,i) = transformation_matrix(new_boundary_frame, alamel_cluster%grains(i)%orientation)
         end do
 
         !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we

@@ -62,13 +62,10 @@ contains
         rot_inc = matrix_exponential(spin*t)
         this%orientation = matmul(rot_inc, this%orientation)
 
-
         call this%model%deform(this%state, t, slip_rates)
 
-        !Composition of rotation to old crystal frame and rotation from new crystal frame
-        rot_inc = matmul(orientation_old, transpose(this%orientation))
         !Upper bound on stress increment is max relative increment of CRSS multiplied by rotated stress tensor.
-        stress_new = maxval(this%state%crss/crss_old) * (stress .rotate. rot_inc)
+        stress_new = maxval(this%state%crss/crss_old) * (stress .toframe. transformation_matrix(this%orientation, orientation_old))
         this%stress_increment = norm2(stress_new-stress) / norm2(stress)
     end subroutine
 end module

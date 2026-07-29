@@ -34,7 +34,6 @@ module math_utils
         module procedure outer_product
     end interface
 
-
     !> See [[to_basis_3x3]]
     interface operator(.toframe.)
         module procedure to_basis_3x3
@@ -46,6 +45,10 @@ module math_utils
     end interface
 
     !> See [[from_basis_3x3]]
+    !>
+    !> Note that if you interpret a rotation matrix as a linear map in the reference basis instead of a basis transformation, it
+    !> acts as an 'active rotation' in the reference basis. If you interpret it as a basis transformation matrix, it acts as an
+    !> inverse rotation of the basis.
     interface operator(.rotate.)
         module procedure from_basis_3x3
     end interface
@@ -216,10 +219,7 @@ contains
         end if
     end function
 
-    !> Basis transformation on a 3x3 matrix.
-    !>
-    !> Transform a matrix mapping vectors from the reference frame to the reference frame into a matrix mapping vectors in the frame
-    !> defined by the transformation matrix to vectors in the frame defined by the transformation matrix.
+    !> Basis transformation on a 3x3 matrix expressed in the global reference frame.
     pure function to_basis_3x3(matrix, transformation_matrix) result(transformed_matrix)
         real(DP), dimension(3,3), intent(in):: matrix                 !! Matrix mapping vectors in the reference frame
         real(DP), dimension(3,3), intent(in):: transformation_matrix  !! Columns express the transformed basis in the reference frame.
@@ -228,18 +228,26 @@ contains
         transformed_matrix = matmul(matmul(transpose(transformation_matrix),matrix),transformation_matrix)
     end function
 
-    !> Inverse basis transformation on a 3x3 matrix.
-    !>
-    !> Transform a matrix mapping vectors in the frame defined by the transformation matrix to vectors in the frame defined
-    !> by the transformation matrix into a matrix mapping vectors from the reference frame to the reference frame.
-    !> Note that if the transformation matrix is a rotation matrix, this operation can also be seen as an active rotation of a
-    !> matrix already operating in the reference frame.
+    !> Basis transformation on a 3x3 matrix to the global reference frame.
     pure function from_basis_3x3(transformed_matrix, transformation_matrix) result(matrix)
         real(DP), dimension(3,3), intent(in):: transformed_matrix     !! Matrix mapping vectors in the transformed frame
         real(DP), dimension(3,3), intent(in):: transformation_matrix  !! Columns express the transformed basis in the reference frame.
         real(DP), dimension(3,3)::              matrix                !! Matrix mapping vectors in the reference frame.
 
         matrix = matmul(matmul(transformation_matrix,transformed_matrix),transpose(transformation_matrix))
+    end function
+
+    !> Generate a transformation matrix from one basis to another
+    !>
+    !> Useful to transform quantities expressed in a non-reference frame to another non-reference frame.
+    !> More efficient then transforming from the first frame to reference and then from reference to second frame.
+    !> If one of the bases is the reference frame, use toframe or fromframe operators.
+    pure function transformation_matrix(from_basis, to_basis) result(matrix)
+        real(DP), dimension(3,3), intent(in):: from_basis !! Columns express original basis in the reference frame
+        real(DP), dimension(3,3), intent(in):: to_basis   !! Columns express new basis in the reference frame
+        real(DP), dimension(3,3):: matrix                 !! Columns express the new basis in the old basis
+
+        matrix = matmul(transpose(from_basis),to_basis)
     end function
 
     !> Calculate the angle between two vectors.
