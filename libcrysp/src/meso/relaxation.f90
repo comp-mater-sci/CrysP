@@ -47,7 +47,7 @@ contains
         real(DP), dimension(3, 3):: relaxation_crystal_frame
 
         do i = 1, 2
-            relaxation_crystal_frame = rotate_to(real(RELAXATIONS(:,:,this%type), DP), boundary_to_crystal(:,:,i))
+            relaxation_crystal_frame = real(RELAXATIONS(:,:,this%type), DP) .rotate. boundary_to_crystal(:,:,i)
             !Invert direction of relaxations for second grain
             if (i == 2) relaxation_crystal_frame = -relaxation_crystal_frame
             !Rotational component of relaxation

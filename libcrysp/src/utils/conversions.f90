@@ -22,10 +22,12 @@ module conversions
 
         !> Convert an Euler angle triplet to a rotation matrix.
         !>
-        !> Uses finite strain theory.
-        module pure function euler_to_tensor(euler) result(tensor)
+        !> The resulting rotation matrix represents an active rotation.
+        !> Its columns represent the rotated basis vectors in the reference frame.
+        !> It can also be interpreted as a deformation gradient with no stretch.
+        module pure function euler_to_rotation_matrix(euler) result(rotation_matrix)
             real(DP), dimension(3), intent(in):: euler !! Euler angles in radians using passive Bunge convention.
-            real(DP), dimension(3,3):: tensor          !! Pure finite strain rotation matrix.
+            real(DP), dimension(3,3):: rotation_matrix !! Pure finite strain active rotation matrix.
         end function
 
         !> Convert a spin from vector to tensor representation.
@@ -82,11 +84,11 @@ module conversions
         !> Calculate Euler angles from a deformation gradient.
         !>
         !> Follows finite strain convention.
-        !> Performs polar decomposition on the input tensor. Even useful for proper rotation tensors to get rid of roundoff errors
-        !> during the simulation
-        module function tensor_to_euler(tensor) result(euler)
-            real(DP), dimension(3,3), intent(in):: tensor !! Tensor representing a deformation gradient
-            real(DP), dimension(3):: euler                !! Euler angles in passive Bunge convention in radians.
+        !> Performs polar decomposition on the input tensor.
+        !> Even useful for proper rotation tensors to compensate for roundoff errors during the simulation.
+        module function deformation_gradient_to_euler(deformation_gradient) result(euler_angles)
+            real(DP), dimension(3,3), intent(in):: deformation_gradient
+            real(DP), dimension(3):: euler_angles                       !! Euler angles in passive Bunge convention in radians.
         end function
 
         !> Extract the spin from a tensor.
@@ -183,7 +185,7 @@ contains
         rad = deg / 180._DP * PI
     end procedure
 
-    module procedure euler_to_tensor
+    module procedure euler_to_rotation_matrix
         real(DP):: sins(3), &
                    coss(3)
 
@@ -191,15 +193,15 @@ contains
         sins = sin(euler)
         coss = cos(euler)
 
-        tensor(1, 1) = coss(1)*coss(3) - (sins(1)*sins(3)*coss(2))
-        tensor(1, 2) = sins(1)*coss(3) + (coss(1)*sins(3)*coss(2))
-        tensor(1, 3) = sins(3)*sins(2)
-        tensor(2, 1) = -coss(1)*sins(3) - (sins(1)*coss(3)*coss(2))
-        tensor(2, 2) = -sins(1)*sins(3) + (coss(1)*coss(3)*coss(2))
-        tensor(2, 3) = coss(3)*sins(2)
-        tensor(3, 1) = sins(1)*sins(2)
-        tensor(3, 2) = -coss(1)*sins(2)
-        tensor(3, 3) = coss(2)
+        rotation_matrix(1, 1) = coss(1)*coss(3) - (sins(1)*sins(3)*coss(2))
+        rotation_matrix(2, 1) = sins(1)*coss(3) + (coss(1)*sins(3)*coss(2))
+        rotation_matrix(3, 1) = sins(3)*sins(2)
+        rotation_matrix(1, 2) = -coss(1)*sins(3) - (sins(1)*coss(3)*coss(2))
+        rotation_matrix(2, 2) = -sins(1)*sins(3) + (coss(1)*coss(3)*coss(2))
+        rotation_matrix(3, 2) = coss(3)*sins(2)
+        rotation_matrix(1, 3) = sins(1)*sins(2)
+        rotation_matrix(2, 3) = -coss(1)*sins(2)
+        rotation_matrix(3, 3) = coss(2)
     end procedure
 
     module procedure spin_to_tensor
@@ -271,28 +273,28 @@ contains
         von_mises = SQR0P67 * norm2(isochoric)
     end procedure
 
-    module procedure tensor_to_euler
+    module procedure deformation_gradient_to_euler
         real(DP) :: R(3,3)
 
-        R = tensor_to_rotation(tensor)
+        R = tensor_to_rotation(deformation_gradient)
 
         if (R(3,3) + TOLERANCE > 1._DP) then !Phi is very close to being out of bounds
-            euler(1) = atan2(-R(1, 2), R(2, 2))  ! range: [-pi, pi[
-            euler(2) = 0._DP
-            euler(3) = 0._DP
+            euler_angles(1) = atan2(-R(2, 1), R(2, 2))  ! range: [-pi, pi[
+            euler_angles(2) = 0._DP
+            euler_angles(3) = 0._DP
         else if (R(3,3) - TOLERANCE < -1._DP) then !Phi is very close to being out of bounds
-            euler(1) = atan2(R(1, 2), -R(2, 2))  ! range: [-pi, pi[
-            euler(2) = 0._DP
-            euler(3) = 0._DP
+            euler_angles(1) = atan2(R(2, 1), -R(2, 2))  ! range: [-pi, pi[
+            euler_angles(2) = 0._DP
+            euler_angles(3) = 0._DP
         else
-            euler(1) = atan2(R(1, 3), -R(2, 3))  ! range: [-pi, pi[
-            euler(2) = acos(R(3,3))
-            euler(3) = atan2(R(3, 1), R(3, 2))  ! range: [-pi, pi[
+            euler_angles(1) = atan2(R(3, 1), -R(3, 2))  ! range: [-pi, pi[
+            euler_angles(2) = acos(R(3,3))
+            euler_angles(3) = atan2(R(1, 3), R(2, 3))  ! range: [-pi, pi[
         end if
 
         !No need to check angles(2) because acos(-1+TOLERANCE) << (PI - TOLERANCE)
-        if (euler(1) < 0._DP) euler(1) = euler(1)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
-        if (euler(3) < 0._DP) euler(3) = euler(3)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+        if (euler_angles(1) < 0._DP) euler_angles(1) = euler_angles(1)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
+        if (euler_angles(3) < 0._DP) euler_angles(3) = euler_angles(3)+2._DP*PI   ![-pi, pi[ -> [0, 2*pi[
     end procedure
 
     module procedure tensor_to_spin
@@ -353,7 +355,7 @@ contains
         - I_U(1)*I_F(1) * transpose(F) &
         + I_U(1) * transpose(matmul(F,F)) &
         - matmul(F,C)
-      R = transpose(R*det(R)**(-1.0_DP/3.0_DP))
+      R = R*det(R)**(-1.0_DP/3.0_DP)
     end procedure
 
     module procedure stretch_to_true_strain

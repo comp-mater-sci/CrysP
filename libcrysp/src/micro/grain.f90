@@ -28,7 +28,7 @@ contains
         class(ConstitutiveModel), target, intent(in):: model
         class(HardeningState), intent(in):: state
 
-        this%orientation = euler_to_tensor(orientation)
+        this%orientation = euler_to_rotation_matrix(orientation)
         this%model => model
         this%state = state
     end subroutine
@@ -58,16 +58,17 @@ contains
         !This is needed because the stretch in L interacts nonlinearly with the rotation.
         !For small t, this effect is however negligible. This has been tested extensively.
         imposed_spin_rate = (v_grad - transpose(v_grad)) / 2._DP
-        spin = (spin_to_tensor(matmul(this%model%spin_coeffs, slip_rates)) .fromframe. this%orientation) - imposed_spin_rate
+        spin = imposed_spin_rate - (spin_to_tensor(matmul(this%model%spin_coeffs, slip_rates)) .fromframe. this%orientation)
         rot_inc = matrix_exponential(spin*t)
-        this%orientation = matmul(this%orientation, rot_inc) !Opposite order due to passive convention
+        this%orientation = matmul(rot_inc, this%orientation)
+
 
         call this%model%deform(this%state, t, slip_rates)
 
         !Composition of rotation to old crystal frame and rotation from new crystal frame
-        rot_inc = matmul(transpose(this%orientation), orientation_old)
+        rot_inc = matmul(orientation_old, transpose(this%orientation))
         !Upper bound on stress increment is max relative increment of CRSS multiplied by rotated stress tensor.
-        stress_new = maxval(this%state%crss/crss_old) * (stress .toframe. rot_inc)
+        stress_new = maxval(this%state%crss/crss_old) * (stress .rotate. rot_inc)
         this%stress_increment = norm2(stress_new-stress) / norm2(stress)
     end subroutine
 end module
