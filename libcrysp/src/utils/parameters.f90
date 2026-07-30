@@ -321,8 +321,8 @@ contains
         call check_type(param, TYPE_ANGLES_LIST)
 
         if (.not. allocated(val)) &
-            allocate(val(3, parameter_size(param)))
-        val = reshape(transfer(param%value, val), [3, parameter_size(param)])
+            allocate(val(2, parameter_size(param)))
+        val = reshape(transfer(param%value, val), [2, parameter_size(param)])
     end procedure
 
     module procedure set_val_int
@@ -347,7 +347,7 @@ contains
         character(:), allocatable:: buffer
 
         call check_type(param, TYPE_ANGLES_LIST)
-        allocate(character(storage_size(val)/8*3*size(val, 2)):: buffer)
+        allocate(character(storage_size(val)/8*2*size(val, 2)):: buffer)
         param%value = transfer(val, buffer)
     end procedure
 
@@ -396,7 +396,7 @@ contains
         case (TYPE_STRING)
             size = storage_size(param%value)/storage_size('c')
         case (TYPE_ANGLES_LIST)
-            size = storage_size(param%value)/(3*storage_size(0._DP))
+            size = storage_size(param%value)/(2*storage_size(0._DP))
         end select
     end procedure
 

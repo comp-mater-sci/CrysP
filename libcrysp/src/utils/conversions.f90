@@ -20,6 +20,13 @@ module conversions
             real(DP):: rad              !! Angle in radians
         end function
 
+        !> Convvert a unit vector expressed using spherical angles to cartesian coordinates.
+        module pure function spherical_to_cartesian(spherical) result(cartesian)
+            real(DP), dimension(2), intent(in):: spherical !! Standard spherical angles: polar angle w.r.t. the z+ axis and azimuth
+                                                           !! with respect to x+ axis in radians.
+            real(DP), dimension(3):: cartesian !! Unit vector in cartesian coordinates
+        end function
+
         !> Convert an Euler angle triplet to a rotation matrix.
         !>
         !> The resulting rotation matrix represents an active rotation.
@@ -184,6 +191,13 @@ contains
     module procedure deg_to_rad
         rad = deg / 180._DP * PI
     end procedure
+
+    module procedure spherical_to_cartesian
+        cartesian(1) = sin(spherical(1))*cos(spherical(2))
+        cartesian(2) = sin(spherical(1))*sin(spherical(2))
+        cartesian(3) = cos(spherical(1))
+    end procedure
+
 
     module procedure euler_to_rotation_matrix
         real(DP):: sins(3), &

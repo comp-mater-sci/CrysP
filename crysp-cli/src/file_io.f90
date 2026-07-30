@@ -15,6 +15,7 @@ module file_io
              read_value, &
              readKeyword, &
              read_orientations, &
+             read_microstructure, &
              open_texture_evolution_file, &
              open_output_file, &
              write_texture_increment, &
@@ -241,11 +242,8 @@ contains
 
     !> Read file containing orientations
     !>
-    !> Handles both texture and microstructure files.
     !> Crashes the program on formatting or I/O error.
-    !> The first line of the file contains the number of orientations it contains.
-    !> All subsequent lines contain the orientations,
-    !> formatted as a tripled of space-separated Euler angles in Bunge convention, in degrees.
+    !> formatted as a csv containing triplets of Euler angles in Bunge convention, in degrees.
     function read_orientations(file_name) result(orientations)
         character(*), intent(in):: file_name
         real(DP), dimension(:,:), allocatable:: orientations
@@ -257,6 +255,30 @@ contains
         call handle_iostat('read_boundaries', info)
 
         allocate(orientations(3, get_line_count(handle)))
+
+        do i = 1, size(orientations,2)
+            call read_value(handle, orientations(:,i))
+        enddo
+        close(handle)
+
+        orientations = deg_to_rad(orientations)
+    end function
+
+    !> Read file containing microstructure
+    !>
+    !> Crashes the program on formatting or I/O error.
+    !> formatted as a csv containing spherical coordinates, in degrees.
+    function read_microstructure(file_name) result(orientations)
+        character(*), intent(in):: file_name
+        real(DP), dimension(:,:), allocatable:: orientations
+        integer::   i,      &   !Iterator
+                    info,   &   !IO error code
+                    handle      !File handle
+
+        open (newunit=handle, file=file_name, status='old', access='sequential',iostat=info)
+        call handle_iostat('read_boundaries', info)
+
+        allocate(orientations(2, get_line_count(handle)))
 
         do i = 1, size(orientations,2)
             call read_value(handle, orientations(:,i))
