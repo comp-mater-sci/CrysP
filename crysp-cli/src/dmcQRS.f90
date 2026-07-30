@@ -2,7 +2,7 @@
 !> directly from texture data, presented in form of SMT, CUR or CUB files.
 module dmcQRS
     use conversions
-    use altay
+    use libcrysp
     use file_io
     use commonUtils
     use logging

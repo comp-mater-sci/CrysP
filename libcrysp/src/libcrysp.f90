@@ -2,7 +2,7 @@
 !>
 !> Provides inerface to callers and formats data to be used in underlying modules.
 !> Only module in AlTay where all procedures are guaranteed to sanitize their input.
-module altay
+module libcrysp
     use iso_c_binding
     use base_defs
     use conversions

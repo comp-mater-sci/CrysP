@@ -1,16 +1,16 @@
-About the ThroughScale VEF    {#page_about}
+About CrysP    {#page_about}
 ==========================
 
 [//]: # ($Rev$)
 
-The ThroughScale Virtual Experimentation Framework (VEF) has been developed by a research
+The CrysP framework has been developed by a research
 team of [KU Leuven](http://www.kuleuven.be). The developments were primarily
 supported by the [Knowledge Platform M2Form](https://set.kuleuven.be/m2form).
 
 Contributors
 ------------
-- dr. eng. Stijn Schildermans: Implement modernization and refactoring of VEF into CrysPy
-- prof. dr. eng. Martin Diehl: supervise modernization and refactoring of VEF into CrysPy
+- dr. eng. Stijn Schildermans: Implement modernization and refactoring of VEF into CrysP
+- prof. Dr.-Ing. Martin Diehl: supervise modernization and refactoring of VEF into CrysP
 - dr. eng. Jerzy Gawad:  main author and architect of the VEF
 - dr. eng. Philip Eyckens: contributor to the crystal
   plasticity library and the user manual

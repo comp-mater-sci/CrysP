@@ -4,10 +4,10 @@ module dmcADP
     use conversions
     use dmcBasicModule
     use file_io
-    use altay
+    use libcrysp
     use incrementation
     use logging
-    use altay
+    use libcrysp
 
     implicit none
 
