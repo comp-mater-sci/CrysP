@@ -10,7 +10,7 @@ supported by the [Knowledge Platform M2Form](https://set.kuleuven.be/m2form).
 Contributors
 ------------
 - dr. eng. Stijn Schildermans: Implement modernization and refactoring of VEF into CrysP
-- prof. dr. eng. Martin Diehl: supervise modernization and refactoring of VEF into CrysP
+- prof. Dr.-Ing. Martin Diehl: supervise modernization and refactoring of VEF into CrysP
 - dr. eng. Jerzy Gawad:  main author and architect of the VEF
 - dr. eng. Philip Eyckens: contributor to the crystal
   plasticity library and the user manual

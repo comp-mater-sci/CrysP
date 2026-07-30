@@ -5,7 +5,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if (CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
-    set(CMAKE_Fortran_FLAGS "-cpp -Warn all -stand f18 -qopenmp")
+    set(CMAKE_Fortran_FLAGS "-cpp -Warn all -stand f23 -qopenmp")
     set(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -check all,noarg_temp_created,nouninit -ftrapuv -debug all -debug-parameters all -traceback -fpe0")
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_Fortran_FLAGS "-cpp -I$ENV{MKLROOT}/include -ffree-line-length-none -Wall -Wno-unused-label -ffpe-summary=all -Wunused-parameter -Wconversion-extra -Wimplicit-procedure -fopenmp")
