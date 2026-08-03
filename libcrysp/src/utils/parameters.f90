@@ -51,7 +51,7 @@ module parameters
         !> - **TYPE_REAL**: 1
         !> - **TYPE_STRING**: The number of characters in the string
         !> - **TYPE_ANGLES_LIST**: The number of directions stored in the list
-        module integer function parameter_size(param) result(size)
+        module integer function parameter_size(param) result(s)
             type(Parameter):: param     !! Input parameter
         end function
 
@@ -327,24 +327,20 @@ contains
 
     module procedure set_val_int
         call check_type(param, TYPE_INTEGER)
-        allocate(param%value(storage_size(val)/8))
         param%value = transfer(val, param%value)
     end procedure
     module procedure set_val_real
         call check_type(param, TYPE_REAL)
-        allocate(param%value(storage_size(val)/8))
         param%value = transfer(val, param%value)
     end procedure
     module procedure set_val_string
 
         call check_type(param, TYPE_STRING)
-        allocate(param%value(storage_size(val)/8))
         param%value = transfer(val, param%value)
     end procedure
     module procedure set_val_angles_list
         call check_type(param, TYPE_ANGLES_LIST)
-        allocate(param%value(storage_size(val)/8*2*size(val, 2)))
-        param%value = transfer(val, param%value)
+        param%value = transfer(val, param%value,size=storage_size(val)/8*size(val))
     end procedure
 
     module procedure parameter_init
@@ -386,13 +382,13 @@ contains
     module procedure parameter_size
         select case(param%type)
         case (TYPE_INTEGER)
-            size = 1
+            s = 1
         case (TYPE_REAL)
-            size = 1
+            s = 1
         case (TYPE_STRING)
-            size = storage_size(param%value)/storage_size('c')
+            s = storage_size(param%value)/storage_size('c')
         case (TYPE_ANGLES_LIST)
-            size = storage_size(param%value)/(2*storage_size(0._DP))
+            s = size(param%value)/(2*storage_size(0._DP)/8)
         end select
     end procedure
 
