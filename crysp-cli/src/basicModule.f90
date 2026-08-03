@@ -96,7 +96,7 @@ contains
             end do
         end if
 
-        call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
+        call crysp_new_material(meso_model_id, meso_params, [phase_], this%material)
     end subroutine
 
     subroutine BasicModule_run(this)

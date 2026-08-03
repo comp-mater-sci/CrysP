@@ -16,7 +16,7 @@ module parameters
         enumerator:: TYPE_INTEGER       !! Integer
         enumerator:: TYPE_REAL          !! Real(DP)
         enumerator:: TYPE_STRING        !! Character(:)
-        enumerator:: TYPE_ANGLES_LIST   !! Real(DP), dimension(3,:)
+        enumerator:: TYPE_ANGLES_LIST   !! Real(DP), dimension(2,:)
     end enum
 
     !> Generic container for configuration settings that can be passed between program units in an opaque way.
@@ -24,11 +24,11 @@ module parameters
     !> Fields can only be modified through dedicated procedures.
     !> Parameters are type-safe in the sense that the type of their content must correspond to the declared type of the paramater.
     !> This is enforced for all procedurures acting on Parameters.
-    type Parameter
+    type:: Parameter
         private
-        character(:), allocatable:: name  !! Name of the parameter
+        character(32):: name  !! Name of the parameter
         integer:: type                    !! Type of the parameter. Must exist in enum list at the top of this module.
-        character(:), allocatable:: value !! Buffer for the data carried by this parameter.
+        integer(BYTE), dimension(:), allocatable:: value !! Buffer for the data carried by this parameter.
     end type Parameter
 
     interface
@@ -50,7 +50,7 @@ module parameters
         !> - **TYPE_INTEGER**: 1
         !> - **TYPE_REAL**: 1
         !> - **TYPE_STRING**: The number of characters in the string
-        !> - **TYPE_ANGLES_LIST**: The number of Euler angle triplets stored in the list
+        !> - **TYPE_ANGLES_LIST**: The number of directions stored in the list
         module integer function parameter_size(param) result(size)
             type(Parameter):: param     !! Input parameter
         end function
@@ -315,7 +315,7 @@ contains
     end procedure
     module procedure get_val_string
         call check_type(param, TYPE_STRING)
-        val = param%value
+        val = transfer(param%value, val)
     end procedure
     module procedure get_val_angles_list
         call check_type(param, TYPE_ANGLES_LIST)
@@ -326,29 +326,25 @@ contains
     end procedure
 
     module procedure set_val_int
-        character(:), allocatable:: buffer
-
         call check_type(param, TYPE_INTEGER)
-        allocate(character(storage_size(val)/8):: buffer)
-        param%value = transfer(val, buffer)
+        allocate(param%value(storage_size(val)/8))
+        param%value = transfer(val, param%value)
     end procedure
     module procedure set_val_real
-        character(:), allocatable:: buffer
-
         call check_type(param, TYPE_REAL)
-        allocate(character(storage_size(val)/8):: buffer)
-        param%value = transfer(val, buffer)
+        allocate(param%value(storage_size(val)/8))
+        param%value = transfer(val, param%value)
     end procedure
     module procedure set_val_string
+
         call check_type(param, TYPE_STRING)
-        param%value = val
+        allocate(param%value(storage_size(val)/8))
+        param%value = transfer(val, param%value)
     end procedure
     module procedure set_val_angles_list
-        character(:), allocatable:: buffer
-
         call check_type(param, TYPE_ANGLES_LIST)
-        allocate(character(storage_size(val)/8*2*size(val, 2)):: buffer)
-        param%value = transfer(val, buffer)
+        allocate(param%value(storage_size(val)/8*2*size(val, 2)))
+        param%value = transfer(val, param%value)
     end procedure
 
     module procedure parameter_init
@@ -495,16 +491,16 @@ contains
         select type (arg)
             type is (integer)
                 call check_type(param, TYPE_INTEGER)
-                eq = param%value == transfer(arg, param%value)
+                eq = arg == transfer(param%value, arg)
             type is (real(DP))
                 call check_type(param, TYPE_REAL)
-                eq = param%value == transfer(arg, param%value)
+                eq = arg == transfer(param%value, arg)
             type is (character(*))
                 call check_type(param, TYPE_STRING)
-                eq = param%value == transfer(arg, param%value)
+                eq = arg == transfer(param%value, arg)
             type is (Parameter)
                 call check_type(param, arg%type)
-                eq = param%value == arg%value
+                eq = all(param%value == arg%value)
             class default
                 call log_error(ERR_TYPE)
         end select

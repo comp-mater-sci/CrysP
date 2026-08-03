@@ -1,12 +1,14 @@
 !> This module contains the most basic definitions used by almost any other module in the project.
 module base_defs
     use, intrinsic:: iso_fortran_env, only: output_unit
+    use iso_c_binding
 
     implicit none
 
     public
 
     integer, parameter:: DP = selected_real_kind(15, 307)  !! Kind for reals corresponding to the classic notion of a double precision floating point number of 8 bytes.
+    integer, parameter:: BYTE = c_int8_t                   !! Guaranteed by the standard to be 1 byte. Useful for generating bytestrings.
     integer, parameter:: MAX_PATHLEN = 2048                !! Maximum file path length.
     integer, parameter:: FNAME_LEN = 512                   !< Length of filenames
     integer, parameter:: DISPLAY_UNIT = output_unit        !! Identifier for stdout. Used in write statements.
