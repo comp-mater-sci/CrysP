@@ -28,9 +28,10 @@ contains
     !> Initializes all data structures associated to a meterial state and assembles them into a MaterialState object.
     !> An initialized MaterialState object is needed for all other calls to AlTay
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
-    subroutine crysp_new_material(meso_model_id, meso_params, phase_descriptors, material)
+    subroutine crysp_new_material(meso_model_id, meso_params, phase_descriptors, material) bind(C)
         integer, intent(in):: meso_model_id
-        type(Parameter), dimension(:), intent(in):: meso_params
+        character(C_CHAR), dimension(:), intent(in):: meso_params !! JSON array containing parameter values. Order and types must
+                                                                  !! correspond to meso_get_parameters(meso_model_id)
         type(PhaseDescriptor), dimension(:), intent(in):: phase_descriptors
         type(MaterialState), target, intent(out):: material
 

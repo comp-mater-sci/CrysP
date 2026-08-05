@@ -97,6 +97,14 @@ contains
         end if
 
         call crysp_new_material(meso_model_id, meso_params, [phase_], this%material)
+
+        !Parameters use C pointers as backend and must be freed explicitly
+        do i=1, size(meso_params)
+            call parameter_destroy(meso_params(i))
+        end do
+        do i=1, size(phase_%parameters)
+            call parameter_destroy(phase_%parameters(i))
+        end do
     end subroutine
 
     subroutine BasicModule_run(this)
