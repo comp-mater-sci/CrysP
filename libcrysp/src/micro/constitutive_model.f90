@@ -30,41 +30,40 @@ module constitutive_model
         real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
         integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
     contains
-        procedure(cm_get_parameters), deferred, nopass::      get_parameters        !! Get the parameters for this model
-        procedure(cm_validate_parameters), deferred, nopass:: validate_parameters   !! Validate user-provided value for parameters
+        !procedure(cm_get_parameters), deferred, nopass::      get_parameters        !! Get the parameters for this model
+        !procedure(cm_validate_parameters), deferred, nopass:: validate_parameters   !! Validate user-provided value for parameters
         procedure(cm_init), deferred::                        init                  !! Initialize the model
         procedure(cm_deform), deferred::                      deform                !! Update the hardening state under a given deformation.
         procedure:: base_init                                                       !! Basic initializtion common to all constitutive models.
     end type
 
     abstract interface
-        !> Get the parameters associated with the hardening model.
-        function cm_get_parameters() result(params)
-            import Parameter
+     !   !> Get the parameters associated with the hardening model.
+     !   function cm_get_parameters() result(params)
+     !       import Parameter
 
-            type(Parameter), dimension(:), allocatable:: params
-        end function
+     !       type(Parameter), dimension(:), allocatable:: params
+     !   end function
 
-        !> Validate a parameter set for the current hardening model.
-        !>
-        !> Check if the parameter values provided by the caller lie within acceptable bounds. Crashes the program if not.
-        subroutine cm_validate_parameters(params)
-            import Parameter
+     !   !> Validate a parameter set for the current hardening model.
+     !   !>
+     !   !> Check if the parameter values provided by the caller lie within acceptable bounds. Crashes the program if not.
+     !   subroutine cm_validate_parameters(params)
+     !       import Parameter
 
-            type(Parameter), dimension(:), target, intent(in):: params !! The parameter list with user-provided values.
-        end subroutine
+     !       type(Parameter), dimension(:), target, intent(in):: params !! The parameter list with user-provided values.
+     !   end subroutine
 
         !> Initialize the hardening model and the model-specific state data of the grains using this model.
         !>
         !> If the parameters do not meet the constraints provided below, this routine crashes the program.
         function cm_init(this, miller_indices, params) result(initial_state)
             import ConstitutiveModel, &
-                   Parameter, &
                    HardeningState
 
             class(ConstitutiveModel), intent(inout)::     this      !! Instance of the hardening model to be initialized
             integer, dimension(:,:,:), intent(in):: miller_indices  !! Miller indices of the deformation mechanism to be used.
-            type(Parameter), dimension(:), target, intent(in):: params !! List of parameters to initialize the model with.
+            character(*), target, intent(in):: params !! List of parameters to initialize the model with.
                                                                        !! Assumed to pass this%validate_parameters(params)
             class(HardeningState), allocatable:: initial_state
         end function

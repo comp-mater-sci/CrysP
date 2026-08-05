@@ -53,57 +53,62 @@ contains
         end select
     end function
 
-    !> See [[ConstitutiveModel:get_parameters]]
-    function voce_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
-                                                            !! - **TIIIS**: Saturation flow stress for the first stage.
-                                                            !! - **TIVS**: Saturation flow stress for the second stage.
-                                                            !! - **THIII1**: Initial hardening rate.
-                                                            !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
-
-
-        params = [parameter_init('TIII1',  TYPE_REAL), &
-                  parameter_init('TIIIS',  TYPE_REAL), &
-                  parameter_init('TIVS',   TYPE_REAL), &
-                  parameter_init('THIII1', TYPE_REAL), &
-                  parameter_init('THT',    TYPE_REAL)]
-    end function
-
-    !> See [[ConstitutiveModel:validate_parameters]]
-    subroutine voce_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params !! - 0 < TIII1 < TIIIS < TIVS
-                                                                   !! - 0 < THT < THIII1
-        type(Parameter), pointer:: buffer                          !Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
-
-        buffer => params .find. 'TIIIS'
-        call parameter_check_bounds(params .find. 'TIII1', 0._DP, buffer, .false., .false.)
-        buffer => params .find. 'TIVS'
-        call parameter_check_bounds(params .find. 'TIIIS', upper = buffer)
-        buffer => params .find. 'THIII1'
-        call parameter_check_bounds(params .find. 'THT', 0._DP, buffer, .false., .false.)
-    end subroutine
+!    !> See [[ConstitutiveModel:get_parameters]]
+!    function voce_get_parameters() result(params)
+!        type(Parameter), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
+!                                                            !! - **TIIIS**: Saturation flow stress for the first stage.
+!                                                            !! - **TIVS**: Saturation flow stress for the second stage.
+!                                                            !! - **THIII1**: Initial hardening rate.
+!                                                            !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
+!
+!
+!        params = [parameter_init('TIII1',  TYPE_REAL), &
+!                  parameter_init('TIIIS',  TYPE_REAL), &
+!                  parameter_init('TIVS',   TYPE_REAL), &
+!                  parameter_init('THIII1', TYPE_REAL), &
+!                  parameter_init('THT',    TYPE_REAL)]
+!    end function
+!
+!    !> See [[ConstitutiveModel:validate_parameters]]
+!    subroutine voce_validate_parameters(params)
+!        type(Parameter), dimension(:), target, intent(in):: params !! - 0 < TIII1 < TIIIS < TIVS
+!                                                                   !! - 0 < THT < THIII1
+!        type(Parameter), pointer:: buffer                          !Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
+!
+!        buffer => params .find. 'TIIIS'
+!        call parameter_check_bounds(params .find. 'TIII1', 0._DP, buffer, .false., .false.)
+!        buffer => params .find. 'TIVS'
+!        call parameter_check_bounds(params .find. 'TIIIS', upper = buffer)
+!        buffer => params .find. 'THIII1'
+!        call parameter_check_bounds(params .find. 'THT', 0._DP, buffer, .false., .false.)
+!    end subroutine
 
     !> See [[ConstitutiveModel:init]]
     function voce_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), target, intent(in):: params(:)
+        character(*), target, intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         !Local variables
         real(DP):: THT, &
                    ETA, &
-                   TAUT
+                   TAUT, &
+                   THIII1
+        type(JSONParser):: parser
 
         allocate(VoceState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        this%stage_1%T1 = params .find. 'TIII1'
-        this%stage_1%TS = params .find. 'TIIIS'
-        this%stage_2%TS = params .find. 'TIVS'
-        THT             = params .find. 'THT'
+        !Parse the hardening parameters
+        parser = params
+        this%stage_1%T1 = parser
+        this%stage_1%TS = parser
+        this%stage_2%TS = parser
+        THIII1          = parser
+        THT             = parser
 
-        this%stage_1%TH = (params .find. 'THIII1') / (1.D0-this%stage_1%T1/this%stage_1%TS)
+        this%stage_1%TH = THIII1 / (1.D0-this%stage_1%T1/this%stage_1%TS)
         ETA = THT/this%stage_1%TH
         this%transition_slip = -this%stage_1%TS*log(ETA*this%stage_1%TS / (this%stage_1%TS-this%stage_1%T1)) / this%stage_1%TH
         TAUT = this%stage_1%TS - (this%stage_1%TS-this%stage_1%T1) * exp(-this%stage_1%TH*this%transition_slip/this%stage_1%TS)

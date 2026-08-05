@@ -17,7 +17,7 @@ module meso_model
     !> Concrete mesoscopic models must extend this base type.
     type, abstract:: MesoModel
     contains
-        procedure, nopass::                          get_parameters      => meso_model_get_parameters       !! Get the parameters needed to initialize the model.
+!        procedure, nopass::                          get_parameters      => meso_model_get_parameters       !! Get the parameters needed to initialize the model.
         procedure(meso_model_init), deferred::       init                                                   !! Initialize the model.
         procedure(meso_model_get_stress), deferred:: get_stress                                             !! Get the stress state of a cluster under a certain strain condition.
         procedure(meso_model_apply_step), deferred:: apply_step                                             !! Apply a single deformation step to a single cluster.
@@ -35,14 +35,13 @@ module meso_model
         !> @endnote
         subroutine meso_model_init(this, grains, params, clusters)
             import MesoModel
-            import Parameter
             import Cluster
             import DP
             import Grain
 
             class(MesoModel), intent(inout):: this                              !! Model instance
             type(Grain), dimension(:), intent(in):: grains                      !! List of initialized grains to be arranged into clusters.
-            type(Parameter), dimension(:), intent(in):: params                  !! List of parameters to initialize the model.
+            character(*), intent(in):: params                  !! List of parameters to initialize the model.
             class(Cluster), dimension(:), allocatable, intent(out):: clusters   !! List of initialized clusters.
         end subroutine
 
@@ -82,14 +81,14 @@ module meso_model
 
 contains
 
-    !> Get the parameters for the mesoscopic model.
-    !>
-    !> The default implementation returns an empty list.
-    function meso_model_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params !! List of parameters.
-
-        allocate(params(0))
-    end function
+!    !> Get the parameters for the mesoscopic model.
+!    !>
+!    !> The default implementation returns an empty list.
+!    function meso_model_get_parameters() result(params)
+!        type(Parameter), dimension(:), allocatable:: params !! List of parameters.
+!
+!        allocate(params(0))
+!    end function
 
     !> Update the mesoscopic model.
     !>

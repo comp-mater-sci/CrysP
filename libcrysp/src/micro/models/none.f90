@@ -23,17 +23,17 @@ module none
 
 contains
 
-    !> @Brief See hardening_model_get_parameters
-    function none_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params
+    !!> @Brief See hardening_model_get_parameters
+    !function none_get_parameters() result(params)
+    !    type(Parameter), dimension(:), allocatable:: params
 
-        allocate(params(0))
-    end function
+    !    allocate(params(0))
+    !end function
 
-    !> @Brief See hardening_model_validate_parameters
-    subroutine none_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params
-    end subroutine
+    !!> @Brief See hardening_model_validate_parameters
+    !subroutine none_validate_parameters(params)
+    !    type(Parameter), dimension(:), target, intent(in):: params
+    !end subroutine
 
     !> @Brief See hardening_model_init
     !> @Details All slip systems get a CRSS of 1 in both directions to make all slip systems equally hard. Note that this

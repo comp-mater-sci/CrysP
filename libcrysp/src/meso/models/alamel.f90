@@ -14,6 +14,7 @@ module alamel
     use micro
     use simplex
     use meso_model
+    use serialization
 
     implicit none
 
@@ -76,7 +77,7 @@ contains
     subroutine alamel_init(this, grains, params, clusters)
         class(AlamelModel), intent(inout):: this
         type(Grain), dimension(:), intent(in):: grains
-        type(Parameter), dimension(:), intent(in):: params
+        character(*), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         integer:: i, j, k, &
@@ -84,9 +85,10 @@ contains
                   n_systems_first_grain
         real(DP), dimension(:,:), allocatable:: boundaries
 
+        type(JSONParser):: parser
 
-        allocate(boundaries(2, parameter_size(params(1))))
-        boundaries = params(1)
+        parser = params
+        boundaries = parser
 
         this%deformation_gradient = UNIT_MATRIX_3X3
 

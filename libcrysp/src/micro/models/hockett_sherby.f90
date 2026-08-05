@@ -4,8 +4,9 @@ module hockett_sherby
     use base_defs, only: dp
     use constitutive_model
     use logging
-    use parameters
+    use serialization
     use grain_module
+    use iso_c_binding
 
     implicit none
 
@@ -48,44 +49,47 @@ contains
         end select
     end function
 
-    !> See [[ConstitutiveModel:get_parameters]]
-        function hs_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
-                                                        !! - **tau_sat**: Final critical resolved shear stress
-                                                        !! - **b**: Hardening exponent
-                                                        !! - **n**: Hardening exponent on slip
-
-        params = [parameter_init('tau_0', TYPE_REAL),             &
-                  parameter_init('tau_sat', TYPE_REAL),            &
-                  parameter_init('b', TYPE_REAL),            &
-                  parameter_init('n', TYPE_REAL)]
-    end function
-
-    !> See [[ConstitutiveModel:validate_parameters]]
-    subroutine hs_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params
-
-        type(Parameter), pointer:: buffer
-
-        call parameter_check_bounds(params .find. 'tau_0', lower = TOLERANCE, lower_inclusive=.true.)
-        buffer => params .find. 'tau_0'
-        call parameter_check_bounds(params .find. 'tau_sat',  buffer, lower_inclusive=.false.)
-    end subroutine
+!    !> See [[ConstitutiveModel:get_parameters]]
+!        function hs_get_parameters() result(params)
+!        type(Parameter), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
+!                                                        !! - **tau_sat**: Final critical resolved shear stress
+!                                                        !! - **b**: Hardening exponent
+!                                                        !! - **n**: Hardening exponent on slip
+!
+!        params = [parameter_init('tau_0', TYPE_REAL),             &
+!                  parameter_init('tau_sat', TYPE_REAL),            &
+!                  parameter_init('b', TYPE_REAL),            &
+!                  parameter_init('n', TYPE_REAL)]
+!    end function
+!
+!    !> See [[ConstitutiveModel:validate_parameters]]
+!    subroutine hs_validate_parameters(params)
+!        type(Parameter), dimension(:), target, intent(in):: params
+!
+!        type(Parameter), pointer:: buffer
+!
+!        call parameter_check_bounds(params .find. 'tau_0', lower = TOLERANCE, lower_inclusive=.true.)
+!        buffer => params .find. 'tau_0'
+!        call parameter_check_bounds(params .find. 'tau_sat',  buffer, lower_inclusive=.false.)
+!    end subroutine
 
     !> See [[ConstitutiveModel:init]]
     function hs_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelHockettSherby),   intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        character(*), target, intent(in):: params
         class(HardeningState), allocatable:: initial_state
+
+        type(JSONParser):: parser
 
         allocate(HockettSherbyState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        this%tau_0 = params .find. 'tau_0'
-        this%tau_sat = params .find. 'tau_sat'
-        this%b = params .find. 'b'
-        this%n = params .find. 'n'
+        parser = params
+        this%tau_0 = parser
+        this%tau_sat = parser
+        this%b = parser
+        this%n = parser
 
         initial_state%crss = this%tau_0
     end function

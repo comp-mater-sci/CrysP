@@ -18,6 +18,7 @@ add_library(crysp STATIC
     src/utils/conversions.f90
     src/utils/logging.f90
     src/utils/serialization.f90
+    src/utils/parameters.f90
     src/macro/trust_region.c
     src/macro/macro.f90
     src/macro/deformation.f90

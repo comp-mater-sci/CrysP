@@ -12,7 +12,6 @@ module swift
     private
     public:: ConstitutiveModelSwift
 
-
     !> Grain-specific hardening state data needed by the SWIFT hardening law.
     type, extends(HardeningState):: SwiftState
         real(DP):: total_slip = 0._DP           !! Sum of all the slip on all the slip systems of the grain.
@@ -48,45 +47,50 @@ contains
         end select
     end function
 
-    !> See [[ConstitutiveModel:get_parameters]]
-        function swift_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:)    !! - **crss0**: Initial critical resoved shear stress
-                                                        !! - **gamma0**: Initial sum of slip across all slip systems
-                                                        !! - **n**: Hardening exponent
-
-        params = [parameter_init('crss0', TYPE_REAL),             &
-                  parameter_init('gamma0', TYPE_REAL),            &
-                  parameter_init('n', TYPE_REAL)]
-    end function swift_get_parameters
-
-    !> See [[ConstitutiveModel:validate_parameters]]
-    subroutine swift_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params !! - gamma0 > 0
-                                                                   !! - n > 0
-                                                                   !! - crss0 > 0
-
-
-        call parameter_check_bounds(params .find. 'gamma0', lower = 0._DP, lower_inclusive=.false.)
-        call parameter_check_bounds(params .find. 'n',      lower = 0._DP, lower_inclusive=.false.)
-        call parameter_check_bounds(params .find. 'crss0',  lower = 0._DP, lower_inclusive=.false.)
-    end subroutine swift_validate_parameters
+!    !> See [[ConstitutiveModel:get_parameters]]
+!        function swift_get_parameters() result(params)
+!        type(Parameter), allocatable    :: params(:)    !! - **crss0**: Initial critical resoved shear stress
+!                                                        !! - **gamma0**: Initial sum of slip across all slip systems
+!                                                        !! - **n**: Hardening exponent
+!
+!        params = [parameter_init('crss0', TYPE_REAL),             &
+!                  parameter_init('gamma0', TYPE_REAL),            &
+!                  parameter_init('n', TYPE_REAL)]
+!    end function swift_get_parameters
+!
+!    !> See [[ConstitutiveModel:validate_parameters]]
+!    subroutine swift_validate_parameters(params)
+!        type(Parameter), dimension(:), target, intent(in):: params !! - gamma0 > 0
+!                                                                   !! - n > 0
+!                                                                   !! - crss0 > 0
+!
+!
+!        call parameter_check_bounds(params .find. 'gamma0', lower = 0._DP, lower_inclusive=.false.)
+!        call parameter_check_bounds(params .find. 'n',      lower = 0._DP, lower_inclusive=.false.)
+!        call parameter_check_bounds(params .find. 'crss0',  lower = 0._DP, lower_inclusive=.false.)
+!    end subroutine swift_validate_parameters
 
     !> See [[ConstitutiveModel:init]]
     function swift_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelSwift),   intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        character(*), target, intent(in):: params
         class(HardeningState), allocatable:: initial_state
+
+        real(DP):: crss0
+        type(JSONParser):: parser
 
         allocate(SwiftState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        this%gamma0 = params .find. 'gamma0'
-        this%n = params .find. 'n'
-        this%k = (params .find. 'crss0') / (this%gamma0**this%n)
+        parser = params
+        this%gamma0 = parser
+        this%n = parser
+        crss0 = parser
+        this%k = crss0 / (this%gamma0**this%n)
 
-        initial_state%crss = this%k*this%gamma0**this%n
-    end function
+        initial_state%crss = crss0
+   end function
 
     !> See [[ConstitutiveModel:deform]]
     subroutine swift_deform(this, state, time, slip_rates)
