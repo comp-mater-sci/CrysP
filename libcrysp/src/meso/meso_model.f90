@@ -41,7 +41,7 @@ module meso_model
 
             class(MesoModel), intent(inout):: this                              !! Model instance
             type(Grain), dimension(:), intent(in):: grains                      !! List of initialized grains to be arranged into clusters.
-            character(*), intent(in):: params                  !! List of parameters to initialize the model.
+            character(*), target, intent(in):: params                  !! List of parameters to initialize the model.
             class(Cluster), dimension(:), allocatable, intent(out):: clusters   !! List of initialized clusters.
         end subroutine
 
@@ -87,7 +87,7 @@ contains
     function meso_model_get_parameters() result(params)
         type(Parameter), dimension(:), allocatable:: params !! List of parameters.
 
-        params = []
+        allocate(params(0))
     end function
 
     !> Update the mesoscopic model.

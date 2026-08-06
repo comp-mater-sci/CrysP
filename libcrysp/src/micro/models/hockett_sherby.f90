@@ -4,6 +4,7 @@ module hockett_sherby
     use base_defs, only: dp
     use constitutive_model
     use logging
+    use parameters
     use serialization
     use grain_module
 
@@ -84,11 +85,11 @@ contains
         allocate(HockettSherbyState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        parser = params
-        this%tau_0 = parser
-        this%tau_sat = parser
-        this%b = parser
-        this%n = parser
+        call parser%init(params)
+        this%tau_0 =   parser%parse_real()
+        this%tau_sat = parser%parse_real()
+        this%b =       parser%parse_real()
+        this%n =       parser%parse_real()
 
         initial_state%crss = this%tau_0
     end function

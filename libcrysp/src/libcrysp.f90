@@ -30,7 +30,7 @@ contains
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
     subroutine crysp_new_material(meso_model_id, meso_params, phase_descriptors, material)
         integer, intent(in):: meso_model_id
-        character(C_CHAR), dimension(:), intent(in):: meso_params
+        character(*), intent(in):: meso_params
         type(PhaseDescriptor), dimension(:), intent(in):: phase_descriptors
         type(MaterialState), target, intent(out):: material
 

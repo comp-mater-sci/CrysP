@@ -54,7 +54,7 @@ module micro
         integer:: model_id                                      !! ID of the hardening model used by this phase. Must exist in the
                                                                 !! enum above.
         integer:: deformation_mechanism                         !! Deformation mechanism for all grains of this phase.
-        character, dimension(:), allocatable:: parameters
+        character(:), allocatable:: parameters
         real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
     end type
 

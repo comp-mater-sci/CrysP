@@ -84,10 +84,10 @@ contains
         allocate(SwiftState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        parser = params
-        this%gamma0 = parser
-        this%n = parser
-        crss0 = parser
+        call parser%init(params)
+        crss0       = parser%parse_real()
+        this%gamma0 = parser%parse_real()
+        this%n      = parser%parse_real()
         this%k = crss0 / (this%gamma0**this%n)
 
         initial_state%crss = crss0

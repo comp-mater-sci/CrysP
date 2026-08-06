@@ -16,7 +16,7 @@ module none
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
         procedure, nopass:: get_parameters      => none_get_parameters
-        procedure, nopass:: validate_parameters => none_validate_parameters
+!        procedure, nopass:: validate_parameters => none_validate_parameters
         procedure:: init                        => none_init
         procedure:: deform                      => none_deform
     end type
@@ -41,7 +41,7 @@ contains
     function none_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelNone), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        character(*), target, intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         allocate(HardeningStateNone:: initial_state)

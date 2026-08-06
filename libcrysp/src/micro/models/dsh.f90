@@ -195,30 +195,23 @@ contains
         allocate(DSHState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        parser = params
-        this%b     =  parser
-        this%b     = this%b * 1.e6_DP ![m] -> [um]
-        this%G     =  parser
-        this%alfa  =  parser
-        this%f     =  parser
-        this%tau0  =  parser
-        this%I     =  parser
-        this%R     = parser
-        this%R     = this%R * 1.e6_dp ![m] -> [um]
-        this%Iwd   = parser
-        this%Rwd   = parser
-        this%Rwd   = this%Rwd * 1.e6_dp ![m] -> [um]
-        this%Rncg  = parser
-        this%Rcng  = this%rcng * 1.e6_dp ![m] -> [um]
-        this%beta1 = parser
-        this%beta2 = parser
-        this%Iwp   = parser
-        this%Rwp   = parser
-        this%rwp   = this%rwp * 1.e6_dp ![m] -> [um]
-        this%Rrev  = parser
-        this%rrev  = this%rrev * 1.e6_dp ![m] -> [um]
-        this%R2    = parser
-        this%r2    = this%r2 * 1.e6_dp ![m] -> [um]
+        call parser%init(params)
+        this%b     =  parser%parse_real() * 1.e6_DP ![m] -> [um]
+        this%G     =  parser%parse_real()
+        this%alfa  =  parser%parse_real()
+        this%f     =  parser%parse_real()
+        this%tau0  =  parser%parse_real()
+        this%I     =  parser%parse_real()
+        this%R     = parser%parse_real() * 1.e6_dp ![m] -> [um]
+        this%Iwd   = parser%parse_real()
+        this%Rwd   = parser%parse_real() * 1.e6_dp ![m] -> [um]
+        this%Rncg  = parser%parse_real() * 1.e6_dp ![m] -> [um]
+        this%beta1 = parser%parse_real()
+        this%beta2 = parser%parse_real()
+        this%Iwp   = parser%parse_real()
+        this%Rwp   = parser%parse_real() * 1.e6_dp ![m] -> [um]
+        this%Rrev  = parser%parse_real() * 1.e6_dp ![m] -> [um]
+        this%R2    = parser%parse_real() * 1.e6_dp ![m] -> [um]
 
         !Calculate dependent hardening parameters
         this%RHOwdMIN = MINFRAC* (this%Iwd)**2 / (this%Rwd)**2  ! Minfrac*rho_wd_sat

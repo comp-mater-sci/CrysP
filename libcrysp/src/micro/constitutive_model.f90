@@ -38,12 +38,12 @@ module constitutive_model
     end type
 
     abstract interface
-     !   !> Get the parameters associated with the hardening model.
-     !   function cm_get_parameters() result(params)
-     !       import Parameter
+        !> Get the parameters associated with the hardening model.
+        function cm_get_parameters() result(params)
+            import Parameter
 
-     !       type(Parameter), dimension(:), allocatable:: params
-     !   end function
+            type(Parameter), dimension(:), allocatable:: params
+        end function
 
      !   !> Validate a parameter set for the current hardening model.
      !   !>

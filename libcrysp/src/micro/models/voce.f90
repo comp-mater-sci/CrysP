@@ -100,12 +100,12 @@ contains
         call this%base_init(miller_indices, initial_state)
 
         !Parse the hardening parameters
-        parser = params
-        this%stage_1%T1 = parser
-        this%stage_1%TS = parser
-        this%stage_2%TS = parser
-        THIII1          = parser
-        THT             = parser
+        call parser%init(params)
+        this%stage_1%T1 = parser%parse_real()
+        this%stage_1%TS = parser%parse_real()
+        this%stage_2%TS = parser%parse_real()
+        THIII1          = parser%parse_real()
+        THT             = parser%parse_real()
 
         this%stage_1%TH = THIII1 / (1.D0-this%stage_1%T1/this%stage_1%TS)
         ETA = THT/this%stage_1%TH

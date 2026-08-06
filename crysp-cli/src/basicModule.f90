@@ -63,7 +63,7 @@ contains
             case ('ALAMEL')
                 meso_model_id = MESO_MODEL_ALAMEL
                 call read_value(cnfunit, microstructure_file_name)
-                call json_list_add(meso_params, to_json(read_microstructure(microstructure_file_name))
+                call json_list_add(meso_params, to_json(read_microstructure(microstructure_file_name)))
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
         end select
@@ -82,15 +82,14 @@ contains
 
         !Read hardening section
         call read_value(cnfunit, phase_%model_id)
-        phase_%parameters = micro_get_parameters(phase_%model_id)
-        n_params = size(phase_%parameters)
+        n_params = size(micro_get_parameters(phase_%model_id))
 
         !Hardening parameters must be provided in the order in which they are defined in the hardening models.
         if (n_params > 0) then
             allocate(tmp(n_params))
             call read_value(cnfunit,tmp)
             do i=1,n_params
-                json_list_add(phase_%parameters, to_json(tmp(i)))
+                call json_list_add(phase_%parameters, to_json(tmp(i)))
             end do
         end if
 

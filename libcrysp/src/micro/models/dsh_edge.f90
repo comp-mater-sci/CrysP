@@ -24,7 +24,7 @@ contains
     function dsh_edge_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelDSHEdge), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        character(*), target, intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         initial_state = this%init_common(miller_indices, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))

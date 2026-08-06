@@ -15,6 +15,7 @@ module alamel
     use simplex
     use meso_model
     use serialization
+    use iso_c_binding
 
     implicit none
 
@@ -76,7 +77,7 @@ contains
     subroutine alamel_init(this, grains, params, clusters)
         class(AlamelModel), intent(inout):: this
         type(Grain), dimension(:), intent(in):: grains
-        character(*), intent(in):: params
+        character(*), target, intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         integer:: i, j, k, &
@@ -86,8 +87,11 @@ contains
 
         type(JSONParser):: parser
 
-        parser = params
-        boundaries = parser
+
+        call parser%init(params)
+        print *, params, parser%json
+
+        boundaries = parser%parse_angles_list()
 
         this%deformation_gradient = UNIT_MATRIX_3X3
 

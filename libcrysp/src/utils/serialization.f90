@@ -22,48 +22,44 @@ module serialization
     end enum
 
     type:: JSONParser
-        private
         character(:), pointer:: json
         integer:: index
     contains
         procedure:: init => parser_init
         procedure:: next => parser_next
+        procedure:: parse_int
+        procedure:: parse_real
+        procedure:: parse_angles_list
     end type
 
     interface to_json
         module procedure int_to_json, real_to_json, angles_list_to_json
     end interface
 
-    interface assignment(=)
-        module procedure parser_init, parse_int, parse_real, parse_angles_list
-    end interface
-
 contains
 
-    subroutine parse_int(data, parser)
-        integer, intent(out):: data
-        type(JSONParser), intent(inout):: parser
+    function parse_int(this) result(data)
+        class(JSONParser), intent(inout):: this
+        integer:: data
 
-        data = json_to_int(parser%next())
-    end subroutine
+        data = json_to_int(this%next())
+    end function
+    function parse_real(this) result(data)
+        class(JSONParser), intent(inout):: this
+        real(DP):: data
 
-    subroutine parse_real(data, parser)
-        real(DP), intent(out):: data
-        type(JSONParser), intent(inout):: parser
+        data = json_to_real(this%next())
+    end function
+    function parse_angles_list(this) result(data)
+        class(JSONParser), intent(inout):: this
+        real(DP), dimension(:,:), allocatable:: data
 
-        data = json_to_real(parser%next())
-    end subroutine
-
-    subroutine parse_angles_list(data, parser)
-        real(DP), dimension(:,:), allocatable, intent(out):: data
-        type(JSONParser), intent(inout):: parser
-
-        data = json_to_angles_list(parser%next())
-    end subroutine
+        data = json_to_angles_list(this%next())
+    end function
 
     subroutine parser_init(this, json)
         class(JSONParser), intent(out):: this
-        character(:), target, intent(in):: json
+        character(*), target, intent(in):: json
 
         this%json => json
         this%index = 2

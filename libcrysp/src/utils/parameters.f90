@@ -10,7 +10,6 @@ module parameters
     !>
     !> Fields can only be modified through dedicated procedures.
     type, bind(C):: Parameter
-        private
         character(kind=C_CHAR), dimension(32):: name                    !! Name of the parameter
         integer(C_INT):: type                                           !! Type of the parameter. Must exist in enum list in serialization.
         character(kind=C_CHAR), dimension(1024):: description = ""      !! Description of the parameter
