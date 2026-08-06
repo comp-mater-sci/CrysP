@@ -30,7 +30,7 @@ module voce
         type(Stage)::  stage_2                 !! Hardening behavior after the total slip surpasses the transition slip.
     contains
         procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: validate_parameters => voce_validate_parameters     !! Inherited from [[ConstitutiveModel]]
+        !procedure, nopass:: validate_parameters => voce_validate_parameters     !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
     end type
@@ -53,21 +53,20 @@ contains
         end select
     end function
 
-!    !> See [[ConstitutiveModel:get_parameters]]
-!    function voce_get_parameters() result(params)
-!        type(Parameter), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
-!                                                            !! - **TIIIS**: Saturation flow stress for the first stage.
-!                                                            !! - **TIVS**: Saturation flow stress for the second stage.
-!                                                            !! - **THIII1**: Initial hardening rate.
-!                                                            !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
-!
-!
-!        params = [parameter_init('TIII1',  TYPE_REAL), &
-!                  parameter_init('TIIIS',  TYPE_REAL), &
-!                  parameter_init('TIVS',   TYPE_REAL), &
-!                  parameter_init('THIII1', TYPE_REAL), &
-!                  parameter_init('THT',    TYPE_REAL)]
-!    end function
+    !> See [[ConstitutiveModel:get_parameters]]
+    function voce_get_parameters() result(params)
+        type(Parameter), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
+                                                            !! - **TIIIS**: Saturation flow stress for the first stage.
+                                                            !! - **TIVS**: Saturation flow stress for the second stage.
+                                                            !! - **THIII1**: Initial hardening rate.
+                                                            !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
+
+        params = [Parameter('TIII1',  TYPE_REAL), &
+                  Parameter('TIIIS',  TYPE_REAL), &
+                  Parameter('TIVS',   TYPE_REAL), &
+                  Parameter('THIII1', TYPE_REAL), &
+                  Parameter('THT',    TYPE_REAL)]
+    end function
 !
 !    !> See [[ConstitutiveModel:validate_parameters]]
 !    subroutine voce_validate_parameters(params)

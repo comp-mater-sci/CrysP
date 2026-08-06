@@ -23,12 +23,12 @@ module none
 
 contains
 
-    !!> @Brief See hardening_model_get_parameters
-    !function none_get_parameters() result(params)
-    !    type(Parameter), dimension(:), allocatable:: params
+    !!> See [[hardening_model_get_parameters]]
+    function none_get_parameters() result(params)
+        type(Parameter), dimension(:), allocatable:: params
 
-    !    allocate(params(0))
-    !end function
+        allocate(params(0))
+    end function
 
     !!> @Brief See hardening_model_validate_parameters
     !subroutine none_validate_parameters(params)

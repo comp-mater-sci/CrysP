@@ -6,7 +6,6 @@ module hockett_sherby
     use logging
     use serialization
     use grain_module
-    use iso_c_binding
 
     implicit none
 
@@ -26,7 +25,7 @@ module hockett_sherby
         real(DP):: n        !! Hardening exponent on slip
     contains
         procedure, nopass:: get_parameters      => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: validate_parameters => hs_validate_parameters !! Inherited from [[ConstitutiveModel]]
+!        procedure, nopass:: validate_parameters => hs_validate_parameters !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => hs_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => hs_deform              !! Inherited from [[ConstitutiveModel]]
     end type
@@ -49,19 +48,19 @@ contains
         end select
     end function
 
-!    !> See [[ConstitutiveModel:get_parameters]]
-!        function hs_get_parameters() result(params)
-!        type(Parameter), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
-!                                                        !! - **tau_sat**: Final critical resolved shear stress
-!                                                        !! - **b**: Hardening exponent
-!                                                        !! - **n**: Hardening exponent on slip
-!
-!        params = [parameter_init('tau_0', TYPE_REAL),             &
-!                  parameter_init('tau_sat', TYPE_REAL),            &
-!                  parameter_init('b', TYPE_REAL),            &
-!                  parameter_init('n', TYPE_REAL)]
-!    end function
-!
+    !> See [[ConstitutiveModel:get_parameters]]
+    function hs_get_parameters() result(params)
+        type(Parameter), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
+                                                        !! - **tau_sat**: Final critical resolved shear stress
+                                                        !! - **b**: Hardening exponent
+                                                        !! - **n**: Hardening exponent on slip
+
+        params = [Parameter('tau_0', TYPE_REAL),   &
+                  Parameter('tau_sat', TYPE_REAL), &
+                  Parameter('b', TYPE_REAL),       &
+                  Parameter('n', TYPE_REAL)]
+    end function
+
 !    !> See [[ConstitutiveModel:validate_parameters]]
 !    subroutine hs_validate_parameters(params)
 !        type(Parameter), dimension(:), target, intent(in):: params

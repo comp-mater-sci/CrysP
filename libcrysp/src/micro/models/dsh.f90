@@ -76,7 +76,7 @@ module dsh
     contains
         procedure, nopass:: get_parameters => dsh_get_parameters  !! Inherited from ConstitutiveModel
 
-        procedure, nopass:: validate_parameters => dsh_validate_parameters !! Inherited from ConstitutiveModel
+!        procedure, nopass:: validate_parameters => dsh_validate_parameters !! Inherited from ConstitutiveModel
                 procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
 
         procedure:: init_common, &
@@ -101,43 +101,43 @@ contains
         end select
     end function
 
-!    !> See [[ConstitutiveModel:get_parameters]]
-!    function dsh_get_parameters() result(params)
-!        type(Parameter), allocatable    :: params(:) !! - **b**:     Magnitude of burgers vector [m]
-!                                                     !! - **G**:     Shear modulus [MPa]
-!                                                     !! - **alfa**:  Dislocation interaction parameter
-!                                                     !! - **f**:     Volume fraction of Cell Block Boundaries
-!                                                     !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
-!                                                     !! - **I**:     Immobilization coefficient of Cell Boundaries
-!                                                     !! - **R**:     Recovery coefficient of cell boundaries [m]
-!                                                     !! - **Iwd**:   Immobilization coefficient of CBBs
-!                                                     !! - **Rwd**:   Recovery coefficient of CBBs [m]
-!                                                     !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
-!                                                     !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
-!                                                     !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
-!                                                     !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
-!                                                     !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
-!                                                     !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
-!                                                     !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
-!
-!        params = [parameter_init('b',     TYPE_REAL), &
-!                  parameter_init('G',     TYPE_REAL), &
-!                  parameter_init('alfa',  TYPE_REAL), &
-!                  parameter_init('f',     TYPE_REAL), &
-!                  parameter_init('tau0',  TYPE_REAL), &
-!                  parameter_init('I',     TYPE_REAL), &
-!                  parameter_init('R',     TYPE_REAL), &
-!                  parameter_init('Iwd',   TYPE_REAL), &
-!                  parameter_init('Rwd',   TYPE_REAL), &
-!                  parameter_init('Rncg',  TYPE_REAL), &
-!                  parameter_init('beta1', TYPE_REAL), &
-!                  parameter_init('beta2', TYPE_REAL), &
-!                  parameter_init('Iwp',   TYPE_REAL), &
-!                  parameter_init('Rwp',   TYPE_REAL), &
-!                  parameter_init('Rrev',  TYPE_REAL), &
-!                  parameter_init('R2',    TYPE_REAL)]
-!    end function dsh_get_parameters
-!
+    !> See [[ConstitutiveModel:get_parameters]]
+    function dsh_get_parameters() result(params)
+        type(Parameter), allocatable:: params(:) !! - **b**:     Magnitude of burgers vector [m]
+                                                 !! - **G**:     Shear modulus [MPa]
+                                                 !! - **alfa**:  Dislocation interaction parameter
+                                                 !! - **f**:     Volume fraction of Cell Block Boundaries
+                                                 !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
+                                                 !! - **I**:     Immobilization coefficient of Cell Boundaries
+                                                 !! - **R**:     Recovery coefficient of cell boundaries [m]
+                                                 !! - **Iwd**:   Immobilization coefficient of CBBs
+                                                 !! - **Rwd**:   Recovery coefficient of CBBs [m]
+                                                 !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
+                                                 !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
+                                                 !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
+                                                 !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
+                                                 !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
+                                                 !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
+                                                 !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
+
+        params = [Parameter('b',     TYPE_REAL), &
+                  Parameter('G',     TYPE_REAL), &
+                  Parameter('alfa',  TYPE_REAL), &
+                  Parameter('f',     TYPE_REAL), &
+                  Parameter('tau0',  TYPE_REAL), &
+                  Parameter('I',     TYPE_REAL), &
+                  Parameter('R',     TYPE_REAL), &
+                  Parameter('Iwd',   TYPE_REAL), &
+                  Parameter('Rwd',   TYPE_REAL), &
+                  Parameter('Rncg',  TYPE_REAL), &
+                  Parameter('beta1', TYPE_REAL), &
+                  Parameter('beta2', TYPE_REAL), &
+                  Parameter('Iwp',   TYPE_REAL), &
+                  Parameter('Rwp',   TYPE_REAL), &
+                  Parameter('Rrev',  TYPE_REAL), &
+                  Parameter('R2',    TYPE_REAL)]
+    end function dsh_get_parameters
+
 !    !> See cm_validate_parameters
 !    subroutine dsh_validate_parameters(params)
 !        type(Parameter), dimension(:), target, intent(in):: params !! - **b**:     ]0.;1.E-8]

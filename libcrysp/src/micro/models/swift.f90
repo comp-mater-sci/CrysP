@@ -6,6 +6,7 @@ module swift
     use logging
     use parameters
     use grain_module
+    use serialization
 
     implicit none
 
@@ -24,7 +25,7 @@ module swift
         real(DP):: n      !! Exponent
     contains
         procedure, nopass:: get_parameters      => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: validate_parameters => swift_validate_parameters !! Inherited from [[ConstitutiveModel]]
+!        procedure, nopass:: validate_parameters => swift_validate_parameters !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => swift_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => swift_deform              !! Inherited from [[ConstitutiveModel]]
     end type
@@ -47,17 +48,17 @@ contains
         end select
     end function
 
-!    !> See [[ConstitutiveModel:get_parameters]]
-!        function swift_get_parameters() result(params)
-!        type(Parameter), allocatable    :: params(:)    !! - **crss0**: Initial critical resoved shear stress
-!                                                        !! - **gamma0**: Initial sum of slip across all slip systems
-!                                                        !! - **n**: Hardening exponent
-!
-!        params = [parameter_init('crss0', TYPE_REAL),             &
-!                  parameter_init('gamma0', TYPE_REAL),            &
-!                  parameter_init('n', TYPE_REAL)]
-!    end function swift_get_parameters
-!
+    !> See [[ConstitutiveModel:get_parameters]]
+    function swift_get_parameters() result(params)
+        type(Parameter), allocatable:: params(:)    !! - **crss0**: Initial critical resoved shear stress
+                                                    !! - **gamma0**: Initial sum of slip across all slip systems
+                                                    !! - **n**: Hardening exponent
+
+        params = [Parameter('crss0', TYPE_REAL),  &
+                  Parameter('gamma0', TYPE_REAL), &
+                  Parameter('n', TYPE_REAL)]
+    end function swift_get_parameters
+
 !    !> See [[ConstitutiveModel:validate_parameters]]
 !    subroutine swift_validate_parameters(params)
 !        type(Parameter), dimension(:), target, intent(in):: params !! - gamma0 > 0

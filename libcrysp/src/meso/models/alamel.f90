@@ -69,8 +69,7 @@ contains
         type(Parameter), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
                                                             !! denoting the orientation of the grain boundary plane normals.
 
-        allocate(params(1))
-        params(1) = parameter_init("Boundaries", TYPE_ANGLES_LIST)
+        params = [Parameter("Boundaries", TYPE_ANGLES_LIST)]
     end function
 
     !> See [[MesoModel:init]]

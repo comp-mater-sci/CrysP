@@ -54,19 +54,19 @@ module micro
         integer:: model_id                                      !! ID of the hardening model used by this phase. Must exist in the
                                                                 !! enum above.
         integer:: deformation_mechanism                         !! Deformation mechanism for all grains of this phase.
-        character(C_CHAR), dimension(:), allocatable:: parameters
+        character, dimension(:), allocatable:: parameters
         real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
     end type
 
     interface
-      !  !> Returns the parameter list for a particular hardening model.
-      !  !>
-      !  !> The parameters are used to initialize the hardening model.
-      !  !> ID must exist in the enum above. If not, the procedure crashes the program.
-      !  module function micro_get_parameters(model_id) result(params)
-      !      integer, intent(in)::          model_id  !! ID of the hardening model. Must exist in the list above.
-      !      type(Parameter), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
-      !  end function
+        !> Returns the parameter list for a particular hardening model.
+        !>
+        !> The parameters are used to initialize the hardening model.
+        !> ID must exist in the enum above. If not, the procedure crashes the program.
+        module function micro_get_parameters(model_id) result(params)
+            integer, intent(in)::          model_id  !! ID of the hardening model. Must exist in the list above.
+            type(Parameter), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
+        end function
 
       !  !> Check if a list of initialized parameters is valid for a given hardening model.
       !  !>
@@ -168,13 +168,13 @@ contains
         params = dummy_instance%get_parameters()
     end procedure
 
-    !> See interface domentation
-    module procedure micro_validate_parameters
-        class(ConstitutiveModel), allocatable:: dummy_instance
-
-        dummy_instance = get_model_instance(model_id)
-        call dummy_instance%validate_parameters(params)
-    end procedure
+!    !> See interface domentation
+!    module procedure micro_validate_parameters
+!        class(ConstitutiveModel), allocatable:: dummy_instance
+!
+!        dummy_instance = get_model_instance(model_id)
+!        call dummy_instance%validate_parameters(params)
+!    end procedure
 
     !> See interface domentation
     module procedure micro_init

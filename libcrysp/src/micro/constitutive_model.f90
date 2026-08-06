@@ -30,7 +30,7 @@ module constitutive_model
         real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
         integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
     contains
-        !procedure(cm_get_parameters), deferred, nopass::      get_parameters        !! Get the parameters for this model
+        procedure(cm_get_parameters), deferred, nopass::      get_parameters        !! Get the parameters for this model
         !procedure(cm_validate_parameters), deferred, nopass:: validate_parameters   !! Validate user-provided value for parameters
         procedure(cm_init), deferred::                        init                  !! Initialize the model
         procedure(cm_deform), deferred::                      deform                !! Update the hardening state under a given deformation.

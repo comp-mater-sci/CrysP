@@ -48,7 +48,7 @@ contains
                   i, &
                   n_params
         real(DP), allocatable:: tmp(:)
-        type(Parameter), allocatable:: meso_params(:)
+        character(:), allocatable:: meso_params
         type(PhaseDescriptor):: phase_
 
         ! Read input texture file name
@@ -63,12 +63,10 @@ contains
             case ('ALAMEL')
                 meso_model_id = MESO_MODEL_ALAMEL
                 call read_value(cnfunit, microstructure_file_name)
+                call json_list_add(meso_params, to_json(read_microstructure(microstructure_file_name))
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
         end select
-        meso_params = meso_get_parameters(meso_model_id)
-        if (meso_params .includes. "Boundaries") &
-            call parameter_set(meso_params, 'Boundaries', read_microstructure(microstructure_file_name))
 
         read(cnfunit, '(A)') buffer
         select case (buffer)
@@ -92,19 +90,11 @@ contains
             allocate(tmp(n_params))
             call read_value(cnfunit,tmp)
             do i=1,n_params
-                phase_%parameters(i) = tmp(i)
+                json_list_add(phase_%parameters, to_json(tmp(i)))
             end do
         end if
 
         call crysp_new_material(meso_model_id, meso_params, [phase_], this%material)
-
-        !Parameters use C pointers as backend and must be freed explicitly
-        do i=1, size(meso_params)
-            call parameter_destroy(meso_params(i))
-        end do
-        do i=1, size(phase_%parameters)
-            call parameter_destroy(phase_%parameters(i))
-        end do
     end subroutine
 
     subroutine BasicModule_run(this)
