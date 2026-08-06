@@ -25,7 +25,6 @@ module swift
         real(DP):: n      !! Exponent
     contains
         procedure, nopass:: get_parameters      => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
-!        procedure, nopass:: validate_parameters => swift_validate_parameters !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => swift_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => swift_deform              !! Inherited from [[ConstitutiveModel]]
     end type
@@ -54,22 +53,10 @@ contains
                                                     !! - **gamma0**: Initial sum of slip across all slip systems
                                                     !! - **n**: Hardening exponent
 
-        params = [Parameter('crss0', TYPE_REAL),  &
-                  Parameter('gamma0', TYPE_REAL), &
-                  Parameter('n', TYPE_REAL)]
+        params = [Parameter('crss0', TYPE_REAL, lower_bound = "0"),  &
+                  Parameter('gamma0', TYPE_REAL, lower_bound = "0"), &
+                  Parameter('n', TYPE_REAL, lower_bound = "0")]
     end function swift_get_parameters
-
-!    !> See [[ConstitutiveModel:validate_parameters]]
-!    subroutine swift_validate_parameters(params)
-!        type(Parameter), dimension(:), target, intent(in):: params !! - gamma0 > 0
-!                                                                   !! - n > 0
-!                                                                   !! - crss0 > 0
-!
-!
-!        call parameter_check_bounds(params .find. 'gamma0', lower = 0._DP, lower_inclusive=.false.)
-!        call parameter_check_bounds(params .find. 'n',      lower = 0._DP, lower_inclusive=.false.)
-!        call parameter_check_bounds(params .find. 'crss0',  lower = 0._DP, lower_inclusive=.false.)
-!    end subroutine swift_validate_parameters
 
     !> See [[ConstitutiveModel:init]]
     function swift_init(this, miller_indices, params) result(initial_state)

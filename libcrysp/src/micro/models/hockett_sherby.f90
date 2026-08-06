@@ -26,7 +26,6 @@ module hockett_sherby
         real(DP):: n        !! Hardening exponent on slip
     contains
         procedure, nopass:: get_parameters      => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
-!        procedure, nopass:: validate_parameters => hs_validate_parameters !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => hs_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => hs_deform              !! Inherited from [[ConstitutiveModel]]
     end type
@@ -56,22 +55,11 @@ contains
                                                         !! - **b**: Hardening exponent
                                                         !! - **n**: Hardening exponent on slip
 
-        params = [Parameter('tau_0', TYPE_REAL),   &
-                  Parameter('tau_sat', TYPE_REAL), &
+        params = [Parameter('tau_0', TYPE_REAL, lower_bound="0"),   &
+                  Parameter('tau_sat', TYPE_REAL, lower_bound="tau_0", lower_bound_inclusive=.true.), &
                   Parameter('b', TYPE_REAL),       &
                   Parameter('n', TYPE_REAL)]
     end function
-
-!    !> See [[ConstitutiveModel:validate_parameters]]
-!    subroutine hs_validate_parameters(params)
-!        type(Parameter), dimension(:), target, intent(in):: params
-!
-!        type(Parameter), pointer:: buffer
-!
-!        call parameter_check_bounds(params .find. 'tau_0', lower = TOLERANCE, lower_inclusive=.true.)
-!        buffer => params .find. 'tau_0'
-!        call parameter_check_bounds(params .find. 'tau_sat',  buffer, lower_inclusive=.false.)
-!    end subroutine
 
     !> See [[ConstitutiveModel:init]]
     function hs_init(this, miller_indices, params) result(initial_state)

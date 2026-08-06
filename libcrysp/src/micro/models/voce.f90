@@ -30,7 +30,6 @@ module voce
         type(Stage)::  stage_2                 !! Hardening behavior after the total slip surpasses the transition slip.
     contains
         procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from [[ConstitutiveModel]]
-        !procedure, nopass:: validate_parameters => voce_validate_parameters     !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
     end type
@@ -61,26 +60,12 @@ contains
                                                             !! - **THIII1**: Initial hardening rate.
                                                             !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
 
-        params = [Parameter('TIII1',  TYPE_REAL), &
-                  Parameter('TIIIS',  TYPE_REAL), &
-                  Parameter('TIVS',   TYPE_REAL), &
+        params = [Parameter('TIII1',  TYPE_REAL, lower_bound="0", upper_bound="TIIIS"), &
+                  Parameter('TIIIS',  TYPE_REAL, upper_bound="TIVS", upper_bound_inclusive=.true.), &
+                  Parameter('TIVS',   TYPE_REAL, lower_bound="TIIIS", lower_bound_inclusive=.true.), &
                   Parameter('THIII1', TYPE_REAL), &
-                  Parameter('THT',    TYPE_REAL)]
+                  Parameter('THT',    TYPE_REAL, lower_bound="0", upper_bound="THIII1")]
     end function
-!
-!    !> See [[ConstitutiveModel:validate_parameters]]
-!    subroutine voce_validate_parameters(params)
-!        type(Parameter), dimension(:), target, intent(in):: params !! - 0 < TIII1 < TIIIS < TIVS
-!                                                                   !! - 0 < THT < THIII1
-!        type(Parameter), pointer:: buffer                          !Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
-!
-!        buffer => params .find. 'TIIIS'
-!        call parameter_check_bounds(params .find. 'TIII1', 0._DP, buffer, .false., .false.)
-!        buffer => params .find. 'TIVS'
-!        call parameter_check_bounds(params .find. 'TIIIS', upper = buffer)
-!        buffer => params .find. 'THIII1'
-!        call parameter_check_bounds(params .find. 'THT', 0._DP, buffer, .false., .false.)
-!    end subroutine
 
     !> See [[ConstitutiveModel:init]]
     function voce_init(this, miller_indices, params) result(initial_state)

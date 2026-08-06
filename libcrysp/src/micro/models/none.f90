@@ -16,7 +16,6 @@ module none
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
         procedure, nopass:: get_parameters      => none_get_parameters
-!        procedure, nopass:: validate_parameters => none_validate_parameters
         procedure:: init                        => none_init
         procedure:: deform                      => none_deform
     end type
@@ -29,11 +28,6 @@ contains
 
         allocate(params(0))
     end function
-
-    !!> @Brief See hardening_model_validate_parameters
-    !subroutine none_validate_parameters(params)
-    !    type(Parameter), dimension(:), target, intent(in):: params
-    !end subroutine
 
     !> @Brief See hardening_model_init
     !> @Details All slip systems get a CRSS of 1 in both directions to make all slip systems equally hard. Note that this

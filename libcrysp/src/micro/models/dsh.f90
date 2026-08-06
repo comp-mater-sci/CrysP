@@ -120,63 +120,23 @@ contains
                                                  !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
                                                  !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
 
-        params = [Parameter('b',     TYPE_REAL), &
-                  Parameter('G',     TYPE_REAL), &
-                  Parameter('alfa',  TYPE_REAL), &
-                  Parameter('f',     TYPE_REAL), &
-                  Parameter('tau0',  TYPE_REAL), &
-                  Parameter('I',     TYPE_REAL), &
-                  Parameter('R',     TYPE_REAL), &
-                  Parameter('Iwd',   TYPE_REAL), &
-                  Parameter('Rwd',   TYPE_REAL), &
-                  Parameter('Rncg',  TYPE_REAL), &
-                  Parameter('beta1', TYPE_REAL), &
-                  Parameter('beta2', TYPE_REAL), &
-                  Parameter('Iwp',   TYPE_REAL), &
-                  Parameter('Rwp',   TYPE_REAL), &
-                  Parameter('Rrev',  TYPE_REAL), &
-                  Parameter('R2',    TYPE_REAL)]
+        params = [Parameter('b',     TYPE_REAL, lower_bound="0", upper_bound="1.E-8"), &
+                  Parameter('G',     TYPE_REAL, lower_bound="1.E4", upper_bound="5.E5"), &
+                  Parameter('alfa',  TYPE_REAL, lower_bound="0", upper_bound="5"), &
+                  Parameter('f',     TYPE_REAL, lower_bound="0", upper_bound="1"), &
+                  Parameter('tau0',  TYPE_REAL, lower_bound="0", upper_bound="1.E4"), &
+                  Parameter('I',     TYPE_REAL, lower_bound="0", upper_bound="10"), &
+                  Parameter('R',     TYPE_REAL, lower_bound="0", upper_bound="10"), &
+                  Parameter('Iwd',   TYPE_REAL, lower_bound="0", upper_bound="10"), &
+                  Parameter('Rwd',   TYPE_REAL, lower_bound="0", upper_bound="1.E-6"), &
+                  Parameter('Rncg',  TYPE_REAL, lower_bound="0", upper_bound="1.E-6"), &
+                  Parameter('beta1', TYPE_REAL, lower_bound="0", upper_bound="1.E-6"), &
+                  Parameter('beta2', TYPE_REAL, lower_bound="0", upper_bound="1.E-6"), &
+                  Parameter('Iwp',   TYPE_REAL, lower_bound="0", upper_bound="1.E-6"), &
+                  Parameter('Rwp',   TYPE_REAL, lower_bound="0", upper_bound="1.E-6"), &
+                  Parameter('Rrev',  TYPE_REAL, lower_bound="0", upper_bound="100"), &
+                  Parameter('R2',    TYPE_REAL, lower_bound="0", upper_bound="100")]
     end function dsh_get_parameters
-
-!    !> See cm_validate_parameters
-!    subroutine dsh_validate_parameters(params)
-!        type(Parameter), dimension(:), target, intent(in):: params !! - **b**:     ]0.;1.E-8]
-!                                                                   !! - **G**:     [1.E4; 5.E5]
-!                                                                   !! - **alfa**:  ]0.;5.]
-!                                                                   !! - **f**:     ]0.;1.]
-!                                                                   !! - **tau0**:  [0.;1.E4]
-!                                                                   !! - **I**:     [0.;1.E1]
-!                                                                   !! - **R**:     ]0.;1.E-6]
-!                                                                   !! - **Iwd**:   [0.;1.E1]
-!                                                                   !! - **Rwd**:   ]0.;1.E-6]
-!                                                                   !! - **Rncg**:  ]0.;1.E-6]
-!                                                                   !! - **beta1**: [0.;1.E2]
-!                                                                   !! - **beta2**: [0.;1.E2]
-!                                                                   !! - **Iwp**:   [0.;1.E1]
-!                                                                   !! - **Rwp**:   ]0.;1.E-6]
-!                                                                   !! - **Rrev**:  ]0.;1.E-6]
-!                                                                   !! - **R2**:    ]0.;1.E-6]
-!
-!        if ((params .find. 'n_slip_systems') /= 24)  &
-!            call log_error('DSH', 'validate_parameters', ERR_VAL, 'DSH only supports BCC24 slip systems.')
-!
-!        call parameter_check_bounds(params .find. 'b',     0._dp,   1.e-8_dp)
-!        call parameter_check_bounds(params .find. 'G',     1.e4_dp, 5.e5_dp)
-!        call parameter_check_bounds(params .find. 'alfa',  0._dp,   5._dp)
-!        call parameter_check_bounds(params .find. 'f',     0._dp,   1.0_dp)
-!        call parameter_check_bounds(params .find. 'tau0',  0._dp,   1.e4_dp)
-!        call parameter_check_bounds(params .find. 'I',     0._dp,   10._dp)
-!        call parameter_check_bounds(params .find. 'Iwd',   0._dp,   10._dp)
-!        call parameter_check_bounds(params .find. 'Iwp',   0._dp,   10._dp)
-!        call parameter_check_bounds(params .find. 'R',     0._dp,   1.e-6_dp)
-!        call parameter_check_bounds(params .find. 'Rwd',   0._dp,   1.e-6_dp)
-!        call parameter_check_bounds(params .find. 'Rncg',  0._dp,   1.e-6_dp)
-!        call parameter_check_bounds(params .find. 'Rwp',   0._dp,   1.e-6_dp)
-!        call parameter_check_bounds(params .find. 'Rrev',  0._dp,   1.e-6_dp)
-!        call parameter_check_bounds(params .find. 'R2',    0._dp,   1.e-6_dp)
-!        call parameter_check_bounds(params .find. 'beta1', 0._dp,   100._dp)
-!        call parameter_check_bounds(params .find. 'beta2', 0._dp,   100._dp)
-!    end subroutine
 
     !> Main model initialization procedure common to all variants of the DSH model family.
     !>

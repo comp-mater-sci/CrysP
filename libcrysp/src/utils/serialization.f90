@@ -103,8 +103,6 @@ contains
         this%index = i_end + 2
     end function
 
-
-
     function int_to_json(data) result(json)
         integer, intent(in):: data
         character(:), allocatable:: json
