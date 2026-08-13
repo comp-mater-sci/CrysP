@@ -6,7 +6,6 @@ module swift
     use logging
     use parameters
     use grain_module
-    use serialization
 
     implicit none
 
@@ -24,12 +23,20 @@ module swift
         real(DP):: gamma0 !! Initial sum of slip across all slip systems
         real(DP):: n      !! Exponent
     contains
-        procedure, nopass:: get_parameters      => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                        => swift_init                !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                      => swift_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_parameters => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
+
+    function swift_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(3), source=TYPE_REAL)
+    end function
+
 
     !> Convert a generic HardeningState to a pointer to a SwiftState object
     !>
@@ -49,32 +56,30 @@ contains
 
     !> See [[ConstitutiveModel:get_parameters]]
     function swift_get_parameters() result(params)
-        type(Parameter), allocatable:: params(:)    !! - **crss0**: Initial critical resoved shear stress
+        type(ParameterDescriptor), allocatable:: params(:)    !! - **crss0**: Initial critical resoved shear stress
                                                     !! - **gamma0**: Initial sum of slip across all slip systems
                                                     !! - **n**: Hardening exponent
 
-        params = [Parameter('crss0', TYPE_REAL, lower_bound = "0"),  &
-                  Parameter('gamma0', TYPE_REAL, lower_bound = "0"), &
-                  Parameter('n', TYPE_REAL, lower_bound = "0")]
+        params = [ParameterDescriptor('crss0', TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
+                  ParameterDescriptor('gamma0', TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)), &
+                  ParameterDescriptor('n', TYPE_REAL, lower_bound = serialize(0._C_DOUBLE))]
     end function swift_get_parameters
 
     !> See [[ConstitutiveModel:init]]
     function swift_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelSwift),   intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        character(*), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         real(DP):: crss0
-        type(JSONParser):: parser
 
         allocate(SwiftState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        call parser%init(params)
-        crss0       = parser%parse_real()
-        this%gamma0 = parser%parse_real()
-        this%n      = parser%parse_real()
+        crss0       = params(1)
+        this%gamma0 = params(2)
+        this%n      = params(3)
         this%k = crss0 / (this%gamma0**this%n)
 
         initial_state%crss = crss0

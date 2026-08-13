@@ -38,10 +38,11 @@ module meso_model
             import Cluster
             import DP
             import Grain
+            import Parameter
 
             class(MesoModel), intent(inout):: this                              !! Model instance
             type(Grain), dimension(:), intent(in):: grains                      !! List of initialized grains to be arranged into clusters.
-            character(*), target, intent(in):: params                  !! List of parameters to initialize the model.
+            type(Parameter), dimension(:), intent(in):: params
             class(Cluster), dimension(:), allocatable, intent(out):: clusters   !! List of initialized clusters.
         end subroutine
 
@@ -85,7 +86,7 @@ contains
     !>
     !> The default implementation returns an empty list.
     function meso_model_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params !! List of parameters.
+        type(ParameterDescriptor), dimension(:), allocatable:: params !! List of parameters.
 
         allocate(params(0))
     end function

@@ -5,7 +5,6 @@ module hockett_sherby
     use constitutive_model
     use logging
     use parameters
-    use serialization
     use grain_module
 
     implicit none
@@ -25,12 +24,19 @@ module hockett_sherby
         real(DP):: b        !! Hardening exponent
         real(DP):: n        !! Hardening exponent on slip
     contains
-        procedure, nopass:: get_parameters      => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                        => hs_init                !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                      => hs_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_parameters => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                   => hs_init                !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                 => hs_deform              !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
+
+    function hs_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(4), source=TYPE_REAL)
+    end function
 
     !> Convert a generic HardeningState to a pointer to a HockettSherbyState object
     !>
@@ -50,34 +56,31 @@ contains
 
     !> See [[ConstitutiveModel:get_parameters]]
     function hs_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
+        type(ParameterDescriptor), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
                                                         !! - **tau_sat**: Final critical resolved shear stress
                                                         !! - **b**: Hardening exponent
                                                         !! - **n**: Hardening exponent on slip
 
-        params = [Parameter('tau_0', TYPE_REAL, lower_bound="0"),   &
-                  Parameter('tau_sat', TYPE_REAL, lower_bound="tau_0", lower_bound_inclusive=.true.), &
-                  Parameter('b', TYPE_REAL),       &
-                  Parameter('n', TYPE_REAL)]
+        params = [ParameterDescriptor('tau_0', TYPE_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
+                  ParameterDescriptor('tau_sat', TYPE_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
+                  ParameterDescriptor('b', TYPE_REAL),       &
+                  ParameterDescriptor('n', TYPE_REAL)]
     end function
 
     !> See [[ConstitutiveModel:init]]
     function hs_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelHockettSherby),   intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        character(*), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
-
-        type(JSONParser):: parser
 
         allocate(HockettSherbyState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        call parser%init(params)
-        this%tau_0 =   parser%parse_real()
-        this%tau_sat = parser%parse_real()
-        this%b =       parser%parse_real()
-        this%n =       parser%parse_real()
+        this%tau_0 =   params(1)
+        this%tau_sat = params(2)
+        this%b =       params(3)
+        this%n =       params(4)
 
         initial_state%crss = this%tau_0
     end function

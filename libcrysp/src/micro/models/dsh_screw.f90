@@ -22,7 +22,7 @@ contains
     function dsh_screw_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelDSHScrew), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        character(*), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         integer:: i

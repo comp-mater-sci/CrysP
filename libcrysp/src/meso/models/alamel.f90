@@ -14,7 +14,6 @@ module alamel
     use micro
     use simplex
     use meso_model
-    use serialization
     use iso_c_binding
 
     implicit none
@@ -67,17 +66,18 @@ contains
 
     !> See [[MesoModel:get_parameters]]
     function alamel_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
+        type(ParameterDescriptor), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
+
                                                             !! denoting the orientation of the grain boundary plane normals.
 
-        params = [Parameter("Boundaries", TYPE_ANGLES_LIST)]
+        params = [ParameterDescriptor(to_c_string("Boundaries",32), TYPE_ANGLES_LIST)]
     end function
 
     !> See [[MesoModel:init]]
     subroutine alamel_init(this, grains, params, clusters)
         class(AlamelModel), intent(inout):: this
         type(Grain), dimension(:), intent(in):: grains
-        character(*), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         integer:: i, j, k, &
@@ -85,13 +85,7 @@ contains
                   n_systems_first_grain
         real(DP), dimension(:,:), allocatable:: boundaries
 
-        type(JSONParser):: parser
-
-
-        call parser%init(params)
-        print *, params, parser%json
-
-        boundaries = parser%parse_angles_list()
+        boundaries = params(1)
 
         this%deformation_gradient = UNIT_MATRIX_3X3
 

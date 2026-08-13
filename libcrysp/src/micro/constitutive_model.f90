@@ -30,6 +30,7 @@ module constitutive_model
         real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
         integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
     contains
+        procedure(cm_get_signature), deferred, nopass::      get_signature
         procedure(cm_get_parameters), deferred, nopass::      get_parameters        !! Get the parameters for this model
         procedure(cm_init), deferred::                        init                  !! Initialize the model
         procedure(cm_deform), deferred::                      deform                !! Update the hardening state under a given deformation.
@@ -37,11 +38,15 @@ module constitutive_model
     end type
 
     abstract interface
+        function cm_get_signature() result(signature)
+            integer, dimension(:), allocatable:: signature
+        end function
+
         !> Get the parameters associated with the hardening model.
         function cm_get_parameters() result(params)
-            import Parameter
+            import ParameterDescriptor
 
-            type(Parameter), dimension(:), allocatable:: params
+            type(ParameterDescriptor), dimension(:), allocatable:: params
         end function
 
         !> Initialize the hardening model and the model-specific state data of the grains using this model.
@@ -49,11 +54,12 @@ module constitutive_model
         !> If the parameters do not meet the constraints provided below, this routine crashes the program.
         function cm_init(this, miller_indices, params) result(initial_state)
             import ConstitutiveModel, &
-                   HardeningState
+                   HardeningState, &
+                   Parameter
 
             class(ConstitutiveModel), intent(inout)::     this      !! Instance of the hardening model to be initialized
             integer, dimension(:,:,:), intent(in):: miller_indices  !! Miller indices of the deformation mechanism to be used.
-            character(*), target, intent(in):: params !! List of parameters to initialize the model with.
+            type(Parameter), dimension(:), intent(in):: params !! List of parameters to initialize the model with.
                                                                        !! Assumed to pass this%validate_parameters(params)
             class(HardeningState), allocatable:: initial_state
         end function

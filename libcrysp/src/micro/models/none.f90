@@ -15,6 +15,7 @@ module none
     !> @Brief Hardening model representing no hardening.
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
+        procedure, nopass:: get_signature => none_get_signature
         procedure, nopass:: get_parameters      => none_get_parameters
         procedure:: init                        => none_init
         procedure:: deform                      => none_deform
@@ -22,9 +23,15 @@ module none
 
 contains
 
+    function none_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(0))
+    end function
+
     !!> See [[hardening_model_get_parameters]]
     function none_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params
+        type(ParameterDescriptor), dimension(:), allocatable:: params
 
         allocate(params(0))
     end function
@@ -35,7 +42,7 @@ contains
     function none_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelNone), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        character(*), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         allocate(HardeningStateNone:: initial_state)

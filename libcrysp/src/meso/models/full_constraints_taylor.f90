@@ -62,7 +62,7 @@ contains
     subroutine full_constraints_taylor_init(this, grains, params, clusters)
         class(TaylorModel), intent(inout):: this
         type(Grain), dimension(:), intent(in):: grains
-        character(*), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
         real(DP), dimension(5, size(grains(1)%model%taylor_coeffs, 2)):: taylor_coeffs

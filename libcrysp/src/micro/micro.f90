@@ -54,18 +54,24 @@ module micro
         integer:: model_id                                      !! ID of the hardening model used by this phase. Must exist in the
                                                                 !! enum above.
         integer:: deformation_mechanism                         !! Deformation mechanism for all grains of this phase.
-        character(:), allocatable:: parameters
+        type(Parameter), dimension(:), allocatable:: parameters
         real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
     end type
 
     interface
+
+        module function micro_get_signature(model_id) result(signature)
+            integer, intent(in):: model_id
+            integer, dimension(:), allocatable:: signature
+        end function
+
         !> Returns the parameter list for a particular hardening model.
         !>
         !> The parameters are used to initialize the hardening model.
         !> ID must exist in the enum above. If not, the procedure crashes the program.
         module function micro_get_parameters(model_id) result(params)
             integer, intent(in)::          model_id  !! ID of the hardening model. Must exist in the list above.
-            type(Parameter), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
+            type(ParameterDescriptor), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
         end function
 
         !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
@@ -150,6 +156,13 @@ contains
                 call log_error(MOD_NAME, 'get_miller_indices', ERR_VAL, 'Invalid slip system set')
         end select
     end function
+
+    module procedure micro_get_signature
+        class(ConstitutiveModel), allocatable:: dummy_instance
+
+        dummy_instance = get_model_instance(model_id)
+        signature = dummy_instance%get_signature()
+    end procedure
 
     !> See interface documentation
     module procedure micro_get_parameters

@@ -29,12 +29,19 @@ module voce
         type(Stage)::  stage_1                 !! Initial hardening behavior.
         type(Stage)::  stage_2                 !! Hardening behavior after the total slip surpasses the transition slip.
     contains
+        procedure, nopass:: get_signature => voce_get_signature
         procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
+
+    function voce_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(5), source=TYPE_REAL)
+    end function
 
     !> Convert a generic HardeningState to a pointer to a VoceState object
     !>
@@ -54,24 +61,24 @@ contains
 
     !> See [[ConstitutiveModel:get_parameters]]
     function voce_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
+        type(ParameterDescriptor), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
                                                             !! - **TIIIS**: Saturation flow stress for the first stage.
                                                             !! - **TIVS**: Saturation flow stress for the second stage.
                                                             !! - **THIII1**: Initial hardening rate.
                                                             !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
 
-        params = [Parameter('TIII1',  TYPE_REAL, lower_bound="0", upper_bound="TIIIS"), &
-                  Parameter('TIIIS',  TYPE_REAL, upper_bound="TIVS", upper_bound_inclusive=.true.), &
-                  Parameter('TIVS',   TYPE_REAL, lower_bound="TIIIS", lower_bound_inclusive=.true.), &
-                  Parameter('THIII1', TYPE_REAL), &
-                  Parameter('THT',    TYPE_REAL, lower_bound="0", upper_bound="THIII1")]
+        params = [ParameterDescriptor(to_c_string('TIII1',32),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
+                  ParameterDescriptor(to_c_string('TIIIS',32),  TYPE_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('TIVS',32),   TYPE_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('THIII1',32), TYPE_REAL), &
+                  ParameterDescriptor(to_c_string('THT',32),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
 
     !> See [[ConstitutiveModel:init]]
     function voce_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        character(*), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         !Local variables
@@ -79,18 +86,16 @@ contains
                    ETA, &
                    TAUT, &
                    THIII1
-        type(JSONParser):: parser
 
         allocate(VoceState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
         !Parse the hardening parameters
-        call parser%init(params)
-        this%stage_1%T1 = parser%parse_real()
-        this%stage_1%TS = parser%parse_real()
-        this%stage_2%TS = parser%parse_real()
-        THIII1          = parser%parse_real()
-        THT             = parser%parse_real()
+        this%stage_1%T1 = params(1)
+        this%stage_1%TS = params(2)
+        this%stage_2%TS = params(3)
+        THIII1          = params(4)
+        THT             = params(5)
 
         this%stage_1%TH = THIII1 / (1.D0-this%stage_1%T1/this%stage_1%TS)
         ETA = THT/this%stage_1%TH
