@@ -5,6 +5,7 @@ module voce
     use constitutive_model
     use logging
     use parameters
+    use conversions
 
     implicit none
 

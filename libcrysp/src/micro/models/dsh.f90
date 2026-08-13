@@ -17,6 +17,7 @@ module dsh
     use parameters
     use logging
     use slip_systems
+    use conversions
 
     implicit none
 

@@ -2,13 +2,22 @@ module parameters
     use iso_c_binding
     use base_defs
     use logging
-    use conversions
 
     implicit none
 
-    public
+    private
+    public:: TYPE_INTEGER, &
+             TYPE_REAL, &
+             TYPE_STRING, &
+             TYPE_ANGLES_LIST, &
+             Parameter, &
+             ParameterDescriptor, &
+             assignment(=), &
+             serialize, &
+             typeof
 
-    character(*), parameter, private:: MOD_NAME = 'parameters'
+
+    character(*), parameter:: MOD_NAME = 'parameters'
 
     !> Supported types for serialization.
     !>
