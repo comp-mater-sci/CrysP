@@ -75,7 +75,6 @@ contains
     !> See [[MesoModel:get_parameters]]
     pure function alamel_get_parameters() result(params)
         type(ParameterDescriptor), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
-
                                                             !! denoting the orientation of the grain boundary plane normals.
 
         params = [ParameterDescriptor(to_c_string("Boundaries",NAME_LEN), TYPE_ANGLES_LIST)]
@@ -140,7 +139,7 @@ contains
 
     !> Get the number of slip systems of each grain in the cluster.
     !>
-    !> Returns an array with the following structure: [number of systems for first grain, number of systems for second grain].
+   / !> Returns an array with the following structure: [number of systems for first grain, number of systems for second grain].
     pure function get_n_systems(cluster_) result(n_systems)
         class(Cluster), intent(in):: cluster_
         integer, dimension(2):: n_systems
