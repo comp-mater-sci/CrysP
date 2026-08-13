@@ -134,17 +134,17 @@ module parameters
         !> The parameter must be of TYPE_INTEGER. If not, the routine crashes the program.
         module subroutine set_val_int(param, val)
             type(Parameter), intent(inout):: param !! TYPE_INTEGER parameter to assign a value to
-            integer:: val                          !! The input value
+            integer, intent(in):: val                          !! The input value
         end subroutine
         !> Analogous to [[set_val_int]]
         module subroutine set_val_real(param, val)
             type(Parameter), intent(inout):: param
-            real(DP):: val
+            real(DP), intent(in):: val
         end subroutine
         !> Analogous to [[set_val_int]]
         module subroutine set_val_string(param, val)
             type(Parameter), intent(inout):: param
-            character(*):: val
+            character(*), intent(in):: val
         end subroutine
         !> Analogous to [[set_val_int]]
         module subroutine set_val_angles_list(param, val)
