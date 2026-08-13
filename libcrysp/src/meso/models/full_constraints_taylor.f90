@@ -12,7 +12,7 @@ module full_constraints_taylor
     use micro
     use simplex
     use parameters
-    use meso_model
+    use crystal_plasticity_model
 
     implicit none
 
@@ -30,14 +30,42 @@ module full_constraints_taylor
     end type
 
     !> Model for full constraints Taylor simulations.
-    type, extends(MesoModel):: TaylorModel
+    type, extends(CrystalPlasticityModel):: TaylorModel
     contains
-        procedure:: init       => full_constraints_taylor_init       !! Inherited from [[MesoModel]]
-        procedure:: get_stress => full_constraints_taylor_get_stress !! Inherited from [[MesoModel]]
-        procedure:: apply_step => full_constraints_taylor_deform     !! Inherited from [[MesoModel]]
+        procedure, nopass:: get_name => fctaylor_get_name
+        procedure, nopass:: get_description => fctaylor_get_description
+        procedure, nopass:: get_signature => fctaylor_get_signature
+        procedure, nopass:: get_parameters => fctaylor_get_parameters
+        procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
+        procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
+        procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
     end type
 
 contains
+
+    pure function fctaylor_get_name() result(name)
+        character(:), allocatable:: name
+
+        name = "Full-Constraints Taylor"
+    end function
+
+    pure function fctaylor_get_description() result(description)
+        character(:), allocatable:: description
+
+        description = "Each grain is forced to deform exactly like the material as a whole."
+    end function
+
+    pure function fctaylor_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(0))
+    end function
+
+    pure function fctaylor_get_parameters() result(params)
+         type(ParameterDescriptor), dimension(:), allocatable:: params
+
+         allocate(params(0))
+    end function
 
     !> Convert the type of a provided generic cluster to TaylorCluster
     !>
@@ -59,7 +87,7 @@ contains
     end function
 
     !> See [[MesoModel:Init]]
-    subroutine full_constraints_taylor_init(this, grains, params, clusters)
+    subroutine fctaylor_init(this, grains, params, clusters)
         class(TaylorModel), intent(inout):: this
         type(Grain), dimension(:), intent(in):: grains
         type(Parameter), dimension(:), intent(in):: params
@@ -84,7 +112,7 @@ contains
     end subroutine
 
     !> See [[MesoModel:get_stress]]
-    function full_constraints_taylor_get_stress(this, cluster_, v_grad) result(stress)
+    function fctaylor_get_stress(this, cluster_, v_grad) result(stress)
         class(TaylorModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
         real(DP), dimension(3, 3), intent(in):: v_grad
@@ -94,9 +122,6 @@ contains
                                                                      rss
         real(DP), dimension(5):: stress_cluster
         type(TaylorCluster), pointer:: cluster_ptr
-
-
-
 
         cluster_ptr => to_taylor_cluster(cluster_)
 
@@ -114,7 +139,7 @@ contains
     end function
 
     !> See [[MesoModel:apply_step]]
-    subroutine full_constraints_taylor_deform(this, cluster_, velocity_gradient, time, stress, slip)
+    subroutine fctaylor_deform(this, cluster_, velocity_gradient, time, stress, slip)
         class(TaylorModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
         real(DP), dimension(3,3), intent(in):: velocity_gradient

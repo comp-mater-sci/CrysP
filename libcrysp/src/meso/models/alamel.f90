@@ -13,7 +13,8 @@ module alamel
     use taylor_ambiguity
     use micro
     use simplex
-    use meso_model
+    use crystal_plasticity_model
+    use parameters
     use iso_c_binding
 
     implicit none
@@ -34,9 +35,12 @@ module alamel
     end type
 
     !> Implementation of the ALAMEL model
-    type, extends(MesoModel):: AlamelModel
+    type, extends(CrystalPlasticityModel):: AlamelModel
         real(DP), dimension(3, 3):: deformation_gradient                    !! Description of the current grain shape (at the beginning of the current time step). Considered identical for all grains.
     contains
+        procedure, nopass:: get_name       => alamel_get_name
+        procedure, nopass:: get_description => alamel_get_description
+        procedure, nopass:: get_signature  => alamel_get_signature
         procedure, nopass:: get_parameters => alamel_get_parameters         !! Inherited from [[MesoModel]]
         procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
@@ -45,6 +49,37 @@ module alamel
     end type
 
 contains
+
+    pure function alamel_get_name() result(name)
+        character(:), allocatable:: name
+
+        name = "ALAMEL"
+    end function
+
+    pure function alamel_get_description() result(description)
+        character(:), allocatable:: description
+
+        description = "Applies the global velocity gradient to clusters of 2 grains. 2 of the shear components " // &
+                      "along their boundary plane are relaxed such that the grains may deform independently, " // &
+                      "but the cluster as a whole still follows the imposed deformation. " // &
+                      "This implements partial stress equilibrium at the grain boundaries. " // &
+                      "The boundary orientation evolution is tracked during deformation."
+    end function
+
+    pure function alamel_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        signature = [TYPE_ANGLES_LIST]
+    end function
+
+    !> See [[MesoModel:get_parameters]]
+    pure function alamel_get_parameters() result(params)
+        type(ParameterDescriptor), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
+                                                                      !! denoting the orientation of the grain boundary plane normals.
+
+        params = [ParameterDescriptor(to_c_string("Boundaries",32), TYPE_ANGLES_LIST)]
+    end function
+
 
     !> Convert the type of a provided generic cluster to AlamelCluster
     !>

@@ -13,7 +13,7 @@ module meso
     use base_defs
     use parameters
     use cluster_module
-    use meso_model
+    use crystal_plasticity_model
     use grain_module
 
     implicit none
@@ -58,7 +58,7 @@ module meso
             type(Parameter), dimension(:), intent(in):: params   !! List of parameters with which to initialize the model. Must correspond
                                                                               !! to the parameter list obtained by calling
                                                                               !! meso_get_parameters(model_id) and be properly initialized.
-            class(MesoModel), allocatable, intent(out):: model                !! The initialized mesoscopic model.
+            class(CrystalPlasticityModel), allocatable, intent(out):: model                !! The initialized mesoscopic model.
             class(Cluster), dimension(:), allocatable, intent(out):: clusters !! Initialized clusters which form the unit of
                                                                               !! simulation at the mesoscopic level.
         end subroutine
@@ -70,7 +70,7 @@ end module
 !> Links the different model IDs to specific mesoscopic models and keeps a reference to the particular model currently in use.
 submodule(meso) meso_imp
     use logging
-    use meso_model
+    use crystal_plasticity_model
     use full_constraints_taylor
     use alamel
 
@@ -90,7 +90,7 @@ contains
     !> Avoids duplication of the hard-coded link between model IDs and their types.
     function get_model_instance(id) result(m)
         integer, intent(in):: id            !! Numerical ID of the model. Must be contained in MESO_MODELS enum.
-        class(MesoModel), allocatable:: m   !! The model instance
+        class(CrystalPlasticityModel), allocatable:: m   !! The model instance
 
         select case (id)
             case (MESO_MODEL_FCTaylor)
@@ -104,7 +104,7 @@ contains
 
     !> See interface definition in meso module.
     module procedure meso_get_parameters
-        class(MesoModel), allocatable:: m
+        class(CrystalPlasticityModel), allocatable:: m
 
         !We must get an instance of the model if we want to exploit polymorphism in Fortran.
         m = get_model_instance(model_id)

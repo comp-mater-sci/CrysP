@@ -3,7 +3,7 @@ module constitutive_model
     use math_utils
     use conversions
     use parameters
-    use model
+    use mod_model
 
     implicit none
 

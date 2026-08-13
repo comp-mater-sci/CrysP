@@ -1,4 +1,4 @@
-module model
+module mod_model
     use parameters
 
     implicit none
@@ -8,9 +8,8 @@ module model
     contains
         procedure(model_get_name), nopass, deferred:: get_name
         procedure(model_get_description), nopass, deferred:: get_description
-        procedure(model_get_parameter_signature), nopass, deferred:: get_parameter_signature
-        procedure(model_get_parameter_description), nopass, deferred:: get_parameter_description
-        procedure(model_init):: init
+        procedure(model_get_parameter_signature), nopass, deferred:: get_signature
+        procedure(model_get_parameter_description), nopass, deferred:: get_parameters
     end type
 
     abstract interface
@@ -24,8 +23,9 @@ module model
             integer, dimension(:), allocatable:: signature
         end function
         pure function model_get_parameter_description() result(descriptors)
+            import ParameterDescriptor
+
             type(ParameterDescriptor), dimension(:), allocatable:: descriptors
         end function
-        pure subroutine model_init(this,)
     end interface
 end module

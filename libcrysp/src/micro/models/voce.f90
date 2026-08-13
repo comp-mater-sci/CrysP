@@ -6,6 +6,7 @@ module voce
     use logging
     use parameters
     use conversions
+    use mod_model
 
     implicit none
 
@@ -30,6 +31,8 @@ module voce
         type(Stage)::  stage_1                 !! Initial hardening behavior.
         type(Stage)::  stage_2                 !! Hardening behavior after the total slip surpasses the transition slip.
     contains
+        procedure, nopass:: get_name    => voce_get_name
+        procedure, nopass:: get_description => voce_get_description
         procedure, nopass:: get_signature => voce_get_signature
         procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
@@ -38,7 +41,19 @@ module voce
 
 contains
 
-    function voce_get_signature() result(signature)
+    pure function voce_get_name() result(name)
+        character(:), allocatable:: name
+
+        name = "VOCE"
+    end function
+
+    pure function voce_get_description() result(description)
+        character(:), allocatable:: description
+
+        description = "2-stage VOCE hardening law. Can also be used as 1-stage VOCE by setting the saturation stress of stage 1 equal to the initial stress of stage 1."
+    end function
+
+    pure function voce_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
         allocate(signature(5), source=TYPE_REAL)
@@ -61,7 +76,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    function voce_get_parameters() result(params)
+    pure function voce_get_parameters() result(params)
         type(ParameterDescriptor), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
                                                             !! - **TIIIS**: Saturation flow stress for the first stage.
                                                             !! - **TIVS**: Saturation flow stress for the second stage.

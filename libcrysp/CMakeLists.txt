@@ -25,7 +25,7 @@ add_library(crysp STATIC
     src/macro/mode.f90
     src/macro/incrementation.f90
     src/meso/meso.f90
-    src/meso/meso_model.f90
+    src/meso/crystal_plasticity_model.f90
     src/meso/taylor_ambiguity.f90
     src/meso/simplex.f90
     src/meso/models/alamel.f90

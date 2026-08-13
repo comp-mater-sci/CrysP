@@ -125,7 +125,7 @@ contains
     end function
 
     !> Initialize a parameter based on a Value object of any type.
-    function to_parameter(data) result(param)
+    pure function to_parameter(data) result(param)
         class(Value), intent(in):: data
         type(Parameter):: param
 
@@ -136,25 +136,25 @@ contains
         param%handle = c_loc(val)
     end function
 
-    subroutine int_to_parameter(param, data) bind(C)
+    pure subroutine int_to_parameter(param, data) bind(C)
         type(Parameter), intent(out):: param
         integer(C_INT), intent(in):: data
 
         param = to_parameter(IntValue(data))
     end subroutine
-    subroutine real_to_parameter(param, data) bind(C)
+    pure subroutine real_to_parameter(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), intent(in):: data
 
         param = to_parameter(RealValue(data))
     end subroutine
-    subroutine string_to_parameter(param, data) bind(C)
+    pure subroutine string_to_parameter(param, data) bind(C)
         type(Parameter), intent(out):: param
         character(kind=C_CHAR,len=*), intent(in):: data
 
         param = to_parameter(StringValue(data))
     end subroutine
-    subroutine angles_list_to_parameter(param, data) bind(C)
+    pure subroutine angles_list_to_parameter(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), dimension(:,:), intent(in):: data
 
@@ -235,19 +235,19 @@ contains
         deallocate(val)
     end subroutine
 
-    function serialize_int(data) result(param) bind(C)
+    pure function serialize_int(data) result(param) bind(C)
         integer(C_INT), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
-    function serialize_real(data) result(param) bind(C)
+    pure function serialize_real(data) result(param) bind(C)
         real(C_DOUBLE), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
-    function serialize_string(data) result(param) bind(C)
+    pure function serialize_string(data) result(param) bind(C)
         character(kind=C_CHAR,len=*), intent(in):: data
         type(Parameter):: param
 

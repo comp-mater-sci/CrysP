@@ -20,6 +20,7 @@ module macro
     use deformation
     use mode
     use conversions
+    use crystal_plasticity_model
 
     implicit none
     public
@@ -29,7 +30,7 @@ module macro
     !> All state associated to a material
     type:: MaterialState
         type(Phase), dimension(:), allocatable:: phases      !! State associated to all grains of a particular phase
-        class(MesoModel), allocatable:: meso_model           !! Global state of the meso model
+        class(CrystalPlasticityModel), allocatable:: meso_model           !! Global state of the meso model
         class(Cluster), dimension(:), allocatable:: clusters !! State associated to individual clusters. Contains state of each grain.
     end type
 
