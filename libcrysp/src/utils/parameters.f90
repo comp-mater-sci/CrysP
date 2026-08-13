@@ -99,7 +99,7 @@ contains
         type(Parameter), intent(in):: param
         integer(C_INT):: t
 
-        class(ParameterValue), pointer:: val
+        type(ParameterValue), pointer:: val
 
         call c_f_pointer(param%handle, val)
 
