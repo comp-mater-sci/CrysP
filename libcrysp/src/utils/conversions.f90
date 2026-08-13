@@ -8,6 +8,14 @@ module conversions
 
 
     interface
+
+        !> Transform a fortran string to a fixed-length C string
+        module pure function to_c_string(fortran_string, length) result(c_string)
+            character(*), intent(in):: fortran_string
+            integer, intent(in):: length
+            character(C_CHAR), dimension(length):: c_string
+        end function
+
         !> Convert an angle in radians to an angle in degrees.
         module pure elemental function rad_to_deg(rad) result(deg)
             real(DP), intent(in):: rad  !! Angle in radians
@@ -198,6 +206,14 @@ contains
         cartesian(3) = cos(spherical(1))
     end procedure
 
+    module procedure to_c_string
+        integer:: i
+
+        do i=1,len(fortran_string)
+            c_string(i) = char(iachar(fortran_string(i:i)),kind=C_CHAR)
+        end do
+        c_string(i) = C_NULL_CHAR
+    end procedure
 
     module procedure euler_to_rotation_matrix
         real(DP):: sins(3), &
