@@ -3,6 +3,7 @@ module constitutive_model
     use math_utils
     use conversions
     use parameters
+    use model
 
     implicit none
 
@@ -25,7 +26,7 @@ module constitutive_model
     !> Base constitutive model
     !>
     !> Each concrete constitutive model must extend this model and implement its deferred procedures.
-    type, abstract:: ConstitutiveModel
+    type, extends(Model), abstract:: ConstitutiveModel
         real(DP), dimension(:,:), allocatable:: taylor_coeffs  !! Taylor coefficients of the slip systems. I.e. the 5D vector representation of the symmetric component of the Schmidt matrix.
         real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
         integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
