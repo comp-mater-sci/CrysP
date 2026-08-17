@@ -11,8 +11,9 @@ module full_constraints_taylor
     use taylor_ambiguity
     use micro
     use simplex
-    use parameters
     use crysp_meso_model
+    use crysp_serialization
+    use crysp_input
 
     implicit none
 
@@ -35,7 +36,7 @@ module full_constraints_taylor
         procedure, nopass:: get_name => fctaylor_get_name
         procedure, nopass:: get_description => fctaylor_get_description
         procedure, nopass:: get_signature => fctaylor_get_signature
-        procedure, nopass:: get_parameters => fctaylor_get_parameters
+        procedure, nopass:: get_input => fctaylor_get_input
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
         procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
@@ -61,10 +62,10 @@ contains
         allocate(signature(0))
     end function
 
-    pure function fctaylor_get_parameters() result(params)
-         type(ParameterDescriptor), dimension(:), allocatable:: params
+    pure function fctaylor_get_input() result(inputs)
+         type(Input), dimension(:), allocatable:: inputs
 
-         allocate(params(0))
+         allocate(inputs(0))
     end function
 
     !> Convert the type of a provided generic cluster to TaylorCluster

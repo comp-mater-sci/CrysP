@@ -10,7 +10,8 @@
 
 module micro
     use base_defs
-    use parameters
+    use crysp_serialization
+    use crysp_input
     use logging
     use constitutive_model
     use grain_module
@@ -69,9 +70,9 @@ module micro
         !>
         !> The parameters are used to initialize the hardening model.
         !> ID must exist in the enum above. If not, the procedure crashes the program.
-        module function micro_get_parameters(model_id) result(params)
-            integer, intent(in)::          model_id  !! ID of the hardening model. Must exist in the list above.
-            type(ParameterDescriptor), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
+        module function micro_get_input(model_id) result(inputs)
+            integer, intent(in)::                model_id  !! ID of the hardening model. Must exist in the list above.
+            type(Input), allocatable:: inputs(:) !! List of parameters for the hardening model corresponding to the provided ID.
         end function
 
         !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
@@ -144,7 +145,6 @@ contains
         integer, intent(in):: deformation_mechanism             !! ID of the deformation mechanism. Must exist in the enum above.
         integer, dimension(:,:,:), allocatable:: miller_indices !! Miller indices for the deformation ordered as
                                                                 !! [slip plane normal, slip direction] for each slip system
-
         select case(deformation_mechanism)
             case (SLIP_SYSTEMS_FCC)
                 miller_indices = FCC12
@@ -165,11 +165,11 @@ contains
     end procedure
 
     !> See interface documentation
-    module procedure micro_get_parameters
+    module procedure micro_get_input
         class(ConstitutiveModel), allocatable:: dummy_instance
 
         dummy_instance = get_model_instance(model_id)
-        params = dummy_instance%get_parameters()
+        inputs = dummy_instance%get_input()
     end procedure
 
     !> See interface documentation

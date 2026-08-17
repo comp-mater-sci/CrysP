@@ -14,10 +14,11 @@ module dsh
     use base_defs
     use math_utils
     use constitutive_model
-    use parameters
     use logging
     use slip_systems
     use conversions
+    use crysp_serialization
+    use crysp_input
 
     implicit none
 
@@ -75,11 +76,8 @@ module dsh
         real(DP), dimension(24, 6):: alfa_G_b_eff = 0._DP
     contains
         procedure, nopass:: get_signature => dsh_get_signature  !! Inherited from ConstitutiveModel
-        procedure, nopass:: get_parameters => dsh_get_parameters  !! Inherited from ConstitutiveModel
-
-!        procedure, nopass:: validate_parameters => dsh_validate_parameters !! Inherited from ConstitutiveModel
-                procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
-
+        procedure, nopass:: get_input => dsh_get_input  !! Inherited from ConstitutiveModel
+        procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
         procedure:: init_common, &
                     update_crss
     end type
@@ -90,8 +88,47 @@ contains
     pure function dsh_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
-        allocate(signature(16), source=TYPE_REAL)
+        allocate(signature(16), source=INPUT_REAL)
     end function
+
+
+    !> See [[ConstitutiveModel:get_parameters]]
+    pure function dsh_get_input() result(inputs)
+        type(Input), dimension(:), allocatable:: inputs !! - **b**:     Magnitude of burgers vector [m]
+                                                        !! - **G**:     Shear modulus [MPa]
+                                                        !! - **alfa**:  Dislocation interaction parameter
+                                                        !! - **f**:     Volume fraction of Cell Block Boundaries
+                                                        !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
+                                                        !! - **I**:     Immobilization coefficient of Cell Boundaries
+                                                        !! - **R**:     Recovery coefficient of cell boundaries [m]
+                                                        !! - **Iwd**:   Immobilization coefficient of CBBs
+                                                        !! - **Rwd**:   Recovery coefficient of CBBs [m]
+                                                        !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
+                                                        !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
+                                                        !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
+                                                        !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
+                                                        !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
+                                                        !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
+                                                        !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
+
+        inputs = [Input(to_c_string('b',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
+                  Input(to_c_string('G',NAME_LEN),     INPUT_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
+                  Input(to_c_string('alfa',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
+                  Input(to_c_string('f',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
+                  Input(to_c_string('tau0',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
+                  Input(to_c_string('I',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  Input(to_c_string('R',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  Input(to_c_string('Iwd',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  Input(to_c_string('Rwd',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input(to_c_string('Rncg',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input(to_c_string('beta1',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input(to_c_string('beta2',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input(to_c_string('Iwp',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input(to_c_string('Rwp',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input(to_c_string('Rrev',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
+                  Input(to_c_string('R2',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
+    end function
+
 
     !> Convert a generic HardeningState to a pointer to a DSHState object
     !>
@@ -108,43 +145,6 @@ contains
                 call log_error(ERR_TYPE)
         end select
     end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    pure function dsh_get_parameters() result(params)
-        type(ParameterDescriptor), allocatable:: params(:) !! - **b**:     Magnitude of burgers vector [m]
-                                                 !! - **G**:     Shear modulus [MPa]
-                                                 !! - **alfa**:  Dislocation interaction parameter
-                                                 !! - **f**:     Volume fraction of Cell Block Boundaries
-                                                 !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
-                                                 !! - **I**:     Immobilization coefficient of Cell Boundaries
-                                                 !! - **R**:     Recovery coefficient of cell boundaries [m]
-                                                 !! - **Iwd**:   Immobilization coefficient of CBBs
-                                                 !! - **Rwd**:   Recovery coefficient of CBBs [m]
-                                                 !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
-                                                 !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
-                                                 !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
-                                                 !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
-                                                 !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
-                                                 !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
-                                                 !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
-
-        params = [ParameterDescriptor(to_c_string('b',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('G',NAME_LEN),     TYPE_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('alfa',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('f',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('tau0',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('I',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('R',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Iwd',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rwd',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rncg',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('beta1',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('beta2',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Iwp',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rwp',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rrev',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('R2',NAME_LEN),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
-    end function dsh_get_parameters
 
     !> Main model initialization procedure common to all variants of the DSH model family.
     !>

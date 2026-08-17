@@ -1,5 +1,6 @@
 module mod_model
-    use parameters
+    use crysp_serialization
+    use crysp_input
 
     implicit none
 
@@ -8,8 +9,8 @@ module mod_model
     contains
         procedure(model_get_name), nopass, deferred:: get_name
         procedure(model_get_description), nopass, deferred:: get_description
-        procedure(model_get_parameter_signature), nopass, deferred:: get_signature
-        procedure(model_get_parameter_description), nopass, deferred:: get_parameters
+        procedure(model_get_signature), nopass, deferred:: get_signature
+        procedure(model_get_input), nopass, deferred:: get_input
     end type
 
     abstract interface
@@ -19,13 +20,13 @@ module mod_model
         pure function model_get_description() result(description)
             character(:), allocatable:: description
         end function
-        pure function model_get_parameter_signature() result(signature)
+        pure function model_get_signature() result(signature)
             integer, dimension(:), allocatable:: signature
         end function
-        pure function model_get_parameter_description() result(descriptors)
-            import ParameterDescriptor
+        pure function model_get_input() result(inputs)
+            import Input
 
-            type(ParameterDescriptor), dimension(:), allocatable:: descriptors
+            type(Input), dimension(:), allocatable:: inputs
         end function
     end interface
 end module

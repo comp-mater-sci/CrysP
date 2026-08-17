@@ -14,8 +14,8 @@ module alamel
     use micro
     use simplex
     use crysp_meso_model
-    use parameters
-    use iso_c_binding
+    use crysp_serialization
+    use crysp_input
 
     implicit none
 
@@ -41,7 +41,7 @@ module alamel
         procedure, nopass:: get_name       => alamel_get_name
         procedure, nopass:: get_description => alamel_get_description
         procedure, nopass:: get_signature  => alamel_get_signature
-        procedure, nopass:: get_parameters => alamel_get_parameters         !! Inherited from [[MesoModel]]
+        procedure, nopass:: get_input => alamel_get_input         !! Inherited from [[MesoModel]]
         procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
@@ -69,15 +69,15 @@ contains
     pure function alamel_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
-        signature = [TYPE_ANGLES_LIST]
+        signature = [INPUT_ANGLES_LIST]
     end function
 
     !> See [[MesoModel:get_parameters]]
-    pure function alamel_get_parameters() result(params)
-        type(ParameterDescriptor), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
+    pure function alamel_get_input() result(inputs)
+        type(Input), dimension(:), allocatable:: inputs !! - **Boundaries**: List of Euler angles in Bunge convention
                                                             !! denoting the orientation of the grain boundary plane normals.
 
-        params = [ParameterDescriptor(to_c_string("Boundaries",NAME_LEN), TYPE_ANGLES_LIST)]
+        inputs = [Input(to_c_string("Boundaries",NAME_LEN), TYPE_ANGLES_LIST)]
     end function
 
     !> Convert the type of a provided generic cluster to AlamelCluster
@@ -139,7 +139,7 @@ contains
 
     !> Get the number of slip systems of each grain in the cluster.
     !>
-   / !> Returns an array with the following structure: [number of systems for first grain, number of systems for second grain].
+    !> Returns an array with the following structure: [number of systems for first grain, number of systems for second grain].
     pure function get_n_systems(cluster_) result(n_systems)
         class(Cluster), intent(in):: cluster_
         integer, dimension(2):: n_systems

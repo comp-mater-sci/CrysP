@@ -1,10 +1,10 @@
 module dsh_loop
     use base_defs
     use math_utils
-    use parameters
     use dsh
     use slip_systems
     use constitutive_model
+    use crysp_serialization
 
     implicit none
 

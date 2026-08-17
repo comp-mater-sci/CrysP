@@ -1,11 +1,11 @@
 module dsh_edge
     use base_defs
     use math_utils
-    use parameters
     use dsh
     use slip_systems
     use grain_module
     use constitutive_model
+    use crysp_serialization
 
     implicit none
     private

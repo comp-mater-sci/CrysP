@@ -4,7 +4,8 @@ module voce
     use base_defs, only: dp
     use constitutive_model
     use logging
-    use parameters
+    use crysp_serialization
+    use crysp_input
     use conversions
     use mod_model
 
@@ -34,7 +35,7 @@ module voce
         procedure, nopass:: get_name    => voce_get_name
         procedure, nopass:: get_description => voce_get_description
         procedure, nopass:: get_signature => voce_get_signature
-        procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_input      => voce_get_input          !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
     end type
@@ -56,7 +57,22 @@ contains
     pure function voce_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
-        allocate(signature(5), source=TYPE_REAL)
+        allocate(signature(5), source=INPUT_REAL)
+    end function
+
+    !> See [[ConstitutiveModel:get_parameters]]
+    pure function voce_get_input() result(inputs)
+        type(Input), dimension(:), allocatable:: inputs !! - **TIII1**: Initial flow stress.
+                                                        !! - **TIIIS**: Saturation flow stress for the first stage.
+                                                        !! - **TIVS**: Saturation flow stress for the second stage.
+                                                        !! - **THIII1**: Initial hardening rate.
+                                                        !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
+
+        inputs = [Input(to_c_string('TIII1',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
+                  Input(to_c_string('TIIIS',NAME_LEN),  INPUT_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
+                  Input(to_c_string('TIVS',NAME_LEN),   INPUT_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
+                  Input(to_c_string('THIII1',NAME_LEN), INPUT_REAL), &
+                  Input(to_c_string('THT',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
 
     !> Convert a generic HardeningState to a pointer to a VoceState object
@@ -73,21 +89,6 @@ contains
             class default
                 call log_error(ERR_TYPE)
         end select
-    end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    pure function voce_get_parameters() result(params)
-        type(ParameterDescriptor), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
-                                                            !! - **TIIIS**: Saturation flow stress for the first stage.
-                                                            !! - **TIVS**: Saturation flow stress for the second stage.
-                                                            !! - **THIII1**: Initial hardening rate.
-                                                            !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
-
-        params = [ParameterDescriptor(to_c_string('TIII1',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
-                  ParameterDescriptor(to_c_string('TIIIS',NAME_LEN),  TYPE_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
-                  ParameterDescriptor(to_c_string('TIVS',NAME_LEN),   TYPE_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
-                  ParameterDescriptor(to_c_string('THIII1',NAME_LEN), TYPE_REAL), &
-                  ParameterDescriptor(to_c_string('THT',NAME_LEN),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
 
     !> See [[ConstitutiveModel:init]]
