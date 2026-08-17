@@ -8,8 +8,10 @@ module constitutive_model
     implicit none
 
     private
-    public:: ConstitutiveModel, &
+    public:: Phase, &
              HardeningState
+
+
 
     !> Hardening state object specific to each grain.
     !>
@@ -34,6 +36,8 @@ module constitutive_model
         procedure(cm_init), deferred::                        init                  !! Initialize the model
         procedure(cm_deform), deferred::                      deform                !! Update the hardening state under a given deformation.
         procedure:: base_init                                                       !! Basic initializtion common to all constitutive models.
+        procedure:: serialize => cm_serialize
+        procedure:: deserialize => cm_deserialize
     end type
 
     abstract interface
@@ -99,4 +103,25 @@ contains
         end do
         this%basis = basis_indices(this%taylor_coeffs)
     end subroutine
+
+    pure function serialize(this) result(params)
+        class(ConstitutiveModel), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = params .add. [serialize(this%tayor_coeffs), &
+                               serialize(this%spin_coeffs), &
+                               serialize(this%basis)]
+    end function
+
+    function deserialize(this, params) result(remaining_params)
+        class(ConstitutiveModel), intent(inout):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: remaining_params
+
+        this%taylor_coeffs = params(1)
+        this%spin_coeffs = remaining_params(2)
+        this%basis = remaining_params(3)
+
+        remaining_params = remaining_params .pop. 3
+    end function
 end module

@@ -28,10 +28,12 @@ module hockett_sherby
     contains
         procedure, nopass:: get_name => hs_get_name
         procedure, nopass:: get_description => hs_get_description
-        procedure, nopass:: get_signature  => hs_get_signature    !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_input => hs_get_input             !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                   => hs_init             !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                 => hs_deform           !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                   => hs_init                !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                 => hs_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure:: serialize => hs_serialize
+        procedure:: deserialize => hs_deserialize
     end type
 
 contains
@@ -114,4 +116,29 @@ contains
 
         state_ptr%crss = this%tau_sat - (this%tau_sat - this%tau_0) * exp(-this%b*state_ptr%total_slip**this%n)
     end subroutine
+
+    pure function serialize(this) result(params)
+        class(ConstitutiveModelHockettSherby), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = this%ConstitutiveModel%serialize()
+        params = params .add. [this%tau_0, &
+                               this%tau_sat, &
+                               this%b, &
+                               this%n]
+    end function
+
+    function deserialize(this, params) result(params_)
+        class(ConstitutiveModelHockettSherby), intent(inout):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        params_ = this%ConstitutiveModel%deserialize(params)
+        this%tau_0 = params_(1)
+        this%tau_sat = params_(2)
+        this%b = params_(3)
+        this%n = params_(4)
+
+        params_ = params_ .pop. 4
+    end function
 end module hockett_sherby

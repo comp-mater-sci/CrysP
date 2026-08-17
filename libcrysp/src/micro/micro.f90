@@ -46,6 +46,8 @@ module micro
     !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
     !and Fortran semantics require lists to be of homogeneous type.
     type:: Phase
+        integer:: id
+        integer:: model_id
         class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
     end type
 
@@ -85,6 +87,16 @@ module micro
             type(Phase), dimension(:), allocatable, target, intent(out):: phases
             type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
         end subroutine
+
+        module function micro_serialize(phases) result(params)
+            type(Phase), dimension(:), intent(in):: phases
+            type(Parameter), dimension(:), allocatable:: params
+        end function
+
+        module function deserialize(params) result(phases)
+            type(Parameter), dimension(:), intent(in):: params
+            type(Phase), dimension(:), allocatable:: phases
+        end function
     end interface
 end module
 
@@ -134,6 +146,8 @@ contains
             case default
                 call log_error(MOD_NAME, 'get_model_instance', ERR_VAL, 'Invalid hardening model ID')
         end select
+
+        instance%id = model_id
     end function
 
     !> Get the list of miller indices associated to ta given deformation mechanism.
@@ -192,6 +206,7 @@ contains
         j = 1
         do i = 1, size(phases)
             phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
+            phase_ptr%id = i
             phase_ptr%model = get_model_instance(phase_descriptors(i)%model_id)
             miller_indices = get_miller_indices(phase_descriptors(i)%deformation_mechanism)
             initial_state = phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
@@ -204,4 +219,38 @@ contains
             end do
         end do
     end procedure
+
+    module procedure micro_serialize
+        integer:: i
+
+        params = [serialize(size(phases))]
+        do i=1,size(phases)
+            params = params .add. serialize(phases(i)%id)
+            params = params .add. serialize(phases(i)%model_id)
+            params = params .add. phases(i)%model%serialize()
+        end do
+    end procedure
+
+    module procedure micro_deserialize
+        type(Parameter), dimension(:), allocatable:: remaining_params
+
+        integer:: i, n_phases
+
+        n_phases = params(1)
+        remaining_params = params .pop. 1
+        allocate(phases(n_phases))
+
+        do i=1, n_phases
+            phases(i)%id = remaining_params(1)
+            phases(i)%model_id = remaining_params(2)
+            remaining_params = remaining_params .pop. 2
+            phases(i)%model = get_model_instance(phases(i)%model_id)
+            remaining_params = phases(i)%model%deserialize(remaining_params)
+        end do
+
+
+
+
+    end procedure
+
 end submodule

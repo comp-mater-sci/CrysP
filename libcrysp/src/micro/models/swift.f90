@@ -25,15 +25,39 @@ module swift
         real(DP):: gamma0 !! Initial sum of slip across all slip systems
         real(DP):: n      !! Exponent
     contains
-        procedure, nopass:: get_name        => swift_get_name        !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_description => swift_get_description !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_signature   => swift_get_signature   !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_name       => swift_get_name
+        procedure, nopass:: get_description => swift_get_description
+        procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_input       => swift_get_input       !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                    => swift_init            !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                  => swift_deform          !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure:: serialize => swift_serialize
+        procedure:: deserialize => swift_deserialize
     end type
 
 contains
+
+    pure function serialize(this) result(params)
+        class(ConstitutiveModelSwift), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = this%ConstitutiveModel%serialize()
+        params = params .add. [serialize(this%k), &
+                               serialize(this%gamma0), &
+                               serialize(this%n)]
+    end function
+
+    function deserialize(this, params) result(params_)
+        class(ConstitutiveModelSwift), intent(inout):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        params_ = this%ConstitutiveModel%deserialize(params)
+        this%k = params_(1)
+        this%gamma0 = params_(2)
+        this%n = params_(3)
+        params_ = params_ .pop. 3
+    end function
 
     pure function swift_get_name() result(name)
         character(:), allocatable:: name

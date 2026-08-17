@@ -11,7 +11,7 @@ module grain_module
     !>Texture-related state variables for single grain
     type:: Grain
         real(DP), dimension(3, 3):: orientation
-        class(ConstitutiveModel), pointer:: model
+        type(Phase), pointer:: phase
         class(HardeningState), allocatable:: state
         real(DP):: stress_increment
     contains
