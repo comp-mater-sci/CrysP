@@ -6,10 +6,16 @@ module crysp_input
 
     public
 
-    !> Possible types of input. Maps to exactly one serialization type
+    !> Possible types of user input.
+    !>
+    !> Input types describe the kind of data expected, i.e. how a UI should go about collecting the data.
+    !> Each input type has a particular type signature in terms of Parameter types (see [[crysp_serializaton]]).
+    !> This signature is added as a comment after each input type.
+    !> A model providing an input parameter of a certain input type expects the UI to return a value corresponding to the linked
+    !> parameter type. Note that for non-scalar parameter types, the shape of the parameter type is specified as well.
     enum, bind(C)
-        enumerator:: INPUT_REAL         !! real(C_DOUBLE)
-        enumerator:: INPUT_ANGLES_LIST  !! real(C_DOUBLE)(2,*)
+        enumerator:: INPUT_REAL         !! TYPE_REAL
+        enumerator:: INPUT_ANGLES_LIST  !! TYPE_REAL_MATRIX(2,*)
     end enum
 
     !> Descriptor of an input field requested from the user.
