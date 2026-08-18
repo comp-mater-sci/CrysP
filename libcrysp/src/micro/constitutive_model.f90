@@ -11,7 +11,17 @@ module constitutive_model
     public:: Phase, &
              HardeningState
 
-
+    !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
+    !and Fortran semantics require lists to be of homogeneous type.
+    type, extends(State):: Phase
+        integer:: id
+        integer:: model_id
+        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
+    contains
+        procedure:: init => phase_init
+        procedure:: serialize => phase_serialize
+        procedure:: deserialize => phase_deserialize
+    end type
 
     !> Hardening state object specific to each grain.
     !>

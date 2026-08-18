@@ -63,6 +63,11 @@ module meso
             class(Cluster), dimension(:), allocatable, intent(out):: clusters !! Initialized clusters which form the unit of
                                                                               !! simulation at the mesoscopic level.
         end subroutine
+
+        module function meso_get_model_instance(id) result(model)
+            integer, intent(in):: id
+            class(CrystalPlasticityModel), allocatable:: model
+        end function
     end interface
 end module
 
@@ -89,10 +94,7 @@ contains
     !> Returns an instance of a mesoscopic model with the provided ID.
     !>
     !> Avoids duplication of the hard-coded link between model IDs and their types.
-    function get_model_instance(id) result(m)
-        integer, intent(in):: id            !! Numerical ID of the model. Must be contained in MESO_MODELS enum.
-        class(MesoModel), allocatable:: m   !! The model instance
-
+    procedure meso_get_model_instance
         select case (id)
             case (MESO_MODEL_FCTaylor)
                 allocate(TaylorModel:: m)
@@ -101,20 +103,20 @@ contains
             case default
                 call log_error("Meso", "get_model_instance", ERR_VAL, "Invalid model ID")
         end select
-    end function
+    end procedure
 
     !> See interface definition in meso module.
     module procedure meso_get_input
         class(MesoModel), allocatable:: m
 
         !We must get an instance of the model if we want to exploit polymorphism in Fortran.
-        m = get_model_instance(model_id)
+        m = meso_get_model_instance(model_id)
         inputs = m%get_input()
     end procedure
 
     !> See interface definition in meso module.
     module procedure meso_init
-        model = get_model_instance(model_id)
+        model = meso_get_model_instance(model_id)
         call model%init(grains, params, clusters)
     end procedure
 end submodule

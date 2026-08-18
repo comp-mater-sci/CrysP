@@ -43,14 +43,6 @@ module micro
         enumerator:: SLIP_SYSTEMS_BCC48 !! Body-Centered Cubic including the 123-planes.
     end enum
 
-    !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
-    !and Fortran semantics require lists to be of homogeneous type.
-    type:: Phase
-        integer:: id
-        integer:: model_id
-        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
-    end type
-
     !> High-level description of a phase. Used for passing phase information to and from higher-level program units. Necessary
     !> because much of the phase description may vary in size between phases so using regular arrays is inconvenient/inefficient/unsafe.
     type:: PhaseDescriptor

@@ -15,7 +15,8 @@ module crysp_serialization
              Parameter, &
              assignment(=), &
              serialize, &
-             typeof
+             typeof, &
+             State
 
     character(*), parameter:: MOD_NAME = 'serialization'
 
@@ -30,6 +31,24 @@ module crysp_serialization
         enumerator:: TYPE_REAL_MATRIX   !! Real(C_DOUBLE), dimension(:,:)
         enumerator:: TYPE_STRING        !! Character(C_CHAR,:)
     end enum
+
+    type, abstract:: State
+    contains
+        procedure(state_serialize), deferred:: serialize
+        procedure(state_deserialize), deferred:: deserialize
+    end type
+
+    abstract interface
+        pure function state_serialize(this) result(params)
+            class(State), intent(in):: this
+            type(Parameter), dimension(:), allocatable:: params
+        end function
+        function state_deserialize(this, params) result(remaining_params)
+            class(State), intent(out):: this
+            type(Parameter), dimension(:), intent(in):: params
+            type(Parameter), dimension(:), allocatable:: remaining_params
+        end function
+    end interface
 
     !> Wrapper type for storing parameter values.
     !>
