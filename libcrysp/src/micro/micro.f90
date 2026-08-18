@@ -225,8 +225,8 @@ contains
 
         params = [serialize(size(phases))]
         do i=1,size(phases)
-            params = params .add. serialize(phases(i)%id)
-            params = params .add. serialize(phases(i)%model_id)
+            params = params .add. [serialize(phases(i)%id), &
+                                   serialize(phases(i)%model_id)]
             params = params .add. phases(i)%model%serialize()
         end do
     end procedure
@@ -247,9 +247,6 @@ contains
             phases(i)%model = get_model_instance(phases(i)%model_id)
             remaining_params = phases(i)%model%deserialize(remaining_params)
         end do
-
-
-
 
     end procedure
 

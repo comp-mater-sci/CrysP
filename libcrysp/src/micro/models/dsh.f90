@@ -78,19 +78,19 @@ module dsh
         procedure, nopass:: get_signature => dsh_get_signature  !! Inherited from ConstitutiveModel
         procedure, nopass:: get_input => dsh_get_input  !! Inherited from ConstitutiveModel
         procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
+        procedure:: serialize  => dsh_serialize
+        procedure:: deserialize => dsh_deserialize
         procedure:: init_common, &
                     update_crss
     end type
 
 contains
 
-
     pure function dsh_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
         allocate(signature(16), source=INPUT_REAL)
     end function
-
 
     !> See [[ConstitutiveModel:get_parameters]]
     pure function dsh_get_input() result(inputs)
@@ -386,4 +386,65 @@ contains
             end do
         end do
     end subroutine
+
+    pure function dsh_serialize(this) result(params)
+        class(ConstitutiveModelDSH), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = this%ConstitutiveModel%serialize()
+        params .add. [serialize(this%b), &
+                      serialize(this%g), &
+                      serialize(this%alfa), &
+                      serialize(this%f), &
+                      serialize(this%tau0), &
+                      serialize(this%i), &
+                      serialize(this%r), &
+                      serialize(this%iwd), &
+                      serialize(this%rwd), &
+                      serialize(this%rncg), &
+                      serialize(this%beta1), &
+                      serialize(this%beta2), &
+                      serialize(this%iwp), &
+                      serialize(this%rwp), &
+                      serialize(this%rrev), &
+                      serialize(this%r2), &
+                      serialize(this%rhowpsat), &
+                      serialize(this%rhowdmin), &
+                      serialize(this%rhowpmin), &
+                      serialize(this%rhowplow), &
+                      serialize(this%effslashb), &
+                      serialize(this%alfa_g_b_eff)]
+    end function
+
+    function dsh_deserialize(this, params) result(params_)
+        class(ConstitutiveModelDSH), intent(inout):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        params_ = this%ConstitutiveModel%deserialize(params)
+        this%b = params(1)
+        this%g = params(2)
+        this%alfa = params(3)
+        this%f = params(4)
+        this%tau0 = params(5)
+        this%i = params(6)
+        this%r = params(7)
+        this%iwd = params(8)
+        this%rwd = params(9)
+        this%rncg = params(10)
+        this%beta1 = params(11)
+        this%beta2 = params(12)
+        this%iwp = params(13)
+        this%rwp = params(14)
+        this%rrev = params(15)
+        this%r2 = params(16)
+        this%rhowpsat = params(17)
+        this%rhowdmin = params(18)
+        this%rhowpmin = params(19)
+        this%rhowplow = params(20)
+        this%effslashb = params(21)
+        this%alfa_g_b_eff = params(22)
+
+        params_ = params_ .pop. 22
+    end function
 end module

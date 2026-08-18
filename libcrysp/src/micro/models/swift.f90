@@ -37,27 +37,6 @@ module swift
 
 contains
 
-    pure function serialize(this) result(params)
-        class(ConstitutiveModelSwift), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
-
-        params = this%ConstitutiveModel%serialize()
-        params = params .add. [serialize(this%k), &
-                               serialize(this%gamma0), &
-                               serialize(this%n)]
-    end function
-
-    function deserialize(this, params) result(params_)
-        class(ConstitutiveModelSwift), intent(inout):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
-
-        params_ = this%ConstitutiveModel%deserialize(params)
-        this%k = params_(1)
-        this%gamma0 = params_(2)
-        this%n = params_(3)
-        params_ = params_ .pop. 3
-    end function
 
     pure function swift_get_name() result(name)
         character(:), allocatable:: name
@@ -138,4 +117,26 @@ contains
 
         state_ptr%crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)
     end subroutine
+
+    pure function serialize(this) result(params)
+        class(ConstitutiveModelSwift), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = this%ConstitutiveModel%serialize()
+        params = params .add. [serialize(this%k), &
+                               serialize(this%gamma0), &
+                               serialize(this%n)]
+    end function
+
+    function deserialize(this, params) result(params_)
+        class(ConstitutiveModelSwift), intent(inout):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        params_ = this%ConstitutiveModel%deserialize(params)
+        this%k = params_(1)
+        this%gamma0 = params_(2)
+        this%n = params_(3)
+        params_ = params_ .pop. 3
+    end function
 end module swift
