@@ -6,7 +6,7 @@ module full_constraints_taylor
     use base_defs
     use math_utils
     use conversions
-    use cluster_module
+    use crysp_cluster
     use logging
     use taylor_ambiguity
     use micro
@@ -25,18 +25,20 @@ module full_constraints_taylor
     !> Cluster-specific state needed for full constraints Taylor simulations.
     !>
     !> A Taylor cluster only holds 1 grain.
-    type, extends(Cluster):: TaylorCluster
+    type, extends(ClusterState):: TaylorClusterState
         integer, dimension(5):: ind_basis_systems
         real(DP), dimension(5, 5):: inverse_basis
+    contains
+        procedure:: serialize => taylor_cluster_serialize
+        procedure:: deserialize => taylor_cluster_deserialize
     end type
+
 
     !> Model for full constraints Taylor simulations.
     type, extends(MesoModel):: TaylorModel
     contains
         procedure, nopass:: get_name => fctaylor_get_name
         procedure, nopass:: get_description => fctaylor_get_description
-        procedure, nopass:: get_signature => fctaylor_get_signature
-        procedure, nopass:: get_input => fctaylor_get_input
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
         procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
@@ -54,18 +56,6 @@ contains
         character(:), allocatable:: description
 
         description = "Each grain is forced to deform exactly like the material as a whole."
-    end function
-
-    pure function fctaylor_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        allocate(signature(0))
-    end function
-
-    pure function fctaylor_get_input() result(inputs)
-         type(Input), dimension(:), allocatable:: inputs
-
-         allocate(inputs(0))
     end function
 
     !> Convert the type of a provided generic cluster to TaylorCluster
@@ -193,4 +183,24 @@ contains
             call grain_%deform(velocity_gradient, time, slip_rates, stress)
         end associate
     end subroutine
+
+    pure function taylor_cluster_serialize(this) result(params)
+        class(TaylorClusterState), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = this%ClusterState%serialize()
+        params = params .add. [serialize(this%ind_basis_systems), &
+                               serialize(this%inverse_basis)]
+    end function
+
+    function taylor_cluster_deserialize(this, params) result(params_)
+        class(TaylorClusterState), intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        params_ = this%ClusterState%deserialize(params)
+        this%ind_basis_systems = params_(1)
+        this%inverse_basis = params_(2)
+        params_ = params_ .pop. 2
+    end function
 end module

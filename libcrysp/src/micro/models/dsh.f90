@@ -42,14 +42,16 @@ module dsh
                    RHOwd_ini = 0._DP
     end type
 
-
-    type, extends(HardeningState):: DSHState    !! Grain-bound state. See PhD thesis Peeters for the meaning of the fields.
-          real(DP)                   :: RHOcb = 0._DP
-          type(CBBtype), dimension(6):: CBB
-          integer, dimension(2)      :: ActiveCBB = 0
+    type, extends(GrainState):: DSHState    !! Grain-bound state. See PhD thesis Peeters for the meaning of the fields.
+        real(DP)                   :: RHOcb = 0._DP
+        type(CBBtype), dimension(6):: CBB
+        integer, dimension(2)      :: ActiveCBB = 0
+    contains
+        procedure:: serialize => dsh_state_serialize
+        procedure:: deserialize => dsh_state_deserialize
     end type
 
-   type, extends(ConstitutiveModel), abstract:: ConstitutiveModelDSH !! Model state common to all DSH models.
+    type, extends(ConstitutiveModel), abstract:: ConstitutiveModelDSH !! Model state common to all DSH models.
                                                                      !! Each DSH model variant extends this base model.
                                                                      !! See PhD thesis Peeters for the meaning of the fields.
         real(DP):: b            !! Magnitude of Burgers vector
@@ -446,5 +448,51 @@ contains
         this%alfa_g_b_eff = params(22)
 
         params_ = params_ .pop. 22
+    end function
+
+    pure function dsh_state_serialize(this) result(params)
+        class(DSHState), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        integer:: i
+
+        params = this%GrainState%serialize()
+        params = params .add. this%rhocb
+        do i=1,6
+            associate (cbb => this%cbb(i))
+                params = params .add. [serialize(cbb%rhowd), &
+                                       serialize(cbb%rhowp), &
+                                       serialize(cbb%rhowdhom), &
+                                       serialize(cbb%accgamma_new), &
+                                       serialize(cbb%rhowd_ini)]
+            end associate
+        end do
+        params = params .add. this%activecbb
+    end function
+
+    function dsh_state_deserialize(this, params) result(params_)
+        class(DSHState), intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        integer:: i, &
+                  offset
+
+        params_ = this%GrainState%deserialize(params)
+        this%rhocb = params_(1)
+        do i=1,6
+            offset = 1 + (i-1)*5
+            associate (cbb => this%cbb(i))
+                cbb%rhowd = params_(offset+1)
+                cbb%rhowp = params_(offset+2)
+                cbb%rhowdhom = params_(offset+3)
+                cbb%accgamma_new = params_(offset+4)
+                cbb%rhowd_ini = params_(offset+5)
+            end associate
+        end do
+        offset = offset+6
+        this%activecbb = params_(offset)
+
+        params_ = params_ .pop. offset
     end function
 end module

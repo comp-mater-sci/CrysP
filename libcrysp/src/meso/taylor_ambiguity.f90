@@ -16,7 +16,7 @@ module taylor_ambiguity
     use base_defs
     use math_utils
     use logging
-    use grain_module
+    use crysp_grain
 
     implicit none
 

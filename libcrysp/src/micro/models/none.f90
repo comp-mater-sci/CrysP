@@ -1,7 +1,7 @@
 module none
     use base_defs
     use constitutive_model
-    use grain_module
+    use crysp_grain
     use crysp_serialization
     use crysp_input
     use mod_model
@@ -11,16 +11,11 @@ module none
     private
     public:: ConstitutiveModelNone
 
-    type, extends(HardeningState):: HardeningStateNone
-    end type
-
     !> @Brief Hardening model representing no hardening.
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
         procedure, nopass:: get_name        => none_get_name
         procedure, nopass:: get_description => none_get_description
-        procedure, nopass:: get_signature   => none_get_signature
-        procedure, nopass:: get_input       => none_get_input
         procedure:: init                    => none_init
         procedure:: deform                  => none_deform
     end type
@@ -39,19 +34,6 @@ contains
         description = "Critical resolved shear stress on all slip systems is kept constant at 1."
     end function
 
-    pure function none_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        allocate(signature(0))
-    end function
-
-    !!> See [[hardening_model_get_parameters]]
-    pure function none_get_input() result(inputs)
-        type(Input), dimension(:), allocatable:: inputs
-
-        allocate(inputs(0))
-    end function
-
     !> @Brief See hardening_model_init
     !> @Details All slip systems get a CRSS of 1 in both directions to make all slip systems equally hard. Note that this
     !! yields an unrealistic value for the amount of plastic work and that this trick only works if all phases have no hardening.
@@ -61,7 +43,7 @@ contains
         type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
-        allocate(HardeningStateNone:: initial_state)
+        allocate(GrainState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
         initial_state%crss = 1._DP

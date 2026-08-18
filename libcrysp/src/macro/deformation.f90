@@ -1,7 +1,7 @@
 module deformation
     use base_defs
     use conversions
-    use cluster_module
+    use crysp_cluster
     use omp_lib
     use meso
     use incrementation

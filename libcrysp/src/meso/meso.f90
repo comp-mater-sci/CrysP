@@ -11,9 +11,9 @@
 
 module meso
     use base_defs
-    use cluster_module
+    use crysp_cluster
     use crysp_meso_model
-    use grain_module
+    use crysp_grain
     use crysp_serialization
     use crysp_input
 

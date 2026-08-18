@@ -37,6 +37,7 @@ add_library(crysp STATIC
     src/micro/slip_systems.f90
     src/micro/micro.f90
     src/micro/constitutive_model.f90
+    src/micro/models/isotropic_state.f90
     src/micro/models/none.f90
     src/micro/models/swift.f90
     src/micro/models/voce.f90

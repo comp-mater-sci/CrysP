@@ -8,8 +8,10 @@ module mod_model
     contains
         procedure(model_get_name), nopass, deferred:: get_name
         procedure(model_get_description), nopass, deferred:: get_description
-        procedure(model_get_signature), nopass, deferred:: get_signature
-        procedure(model_get_input), nopass, deferred:: get_input
+        procedure:: get_signature => model_get_signatur
+        procedure:: get_input => model_get_input
+        procedure:: serialize => model_serialize
+        procedure:: deserialize => model_deserialize
     end type
 
     abstract interface
@@ -19,13 +21,32 @@ module mod_model
         pure function model_get_description() result(description)
             character(:), allocatable:: description
         end function
-        pure function model_get_signature() result(signature)
-            integer, dimension(:), allocatable:: signature
-        end function
-        pure function model_get_input() result(inputs)
-            import Input
-
-            type(Input), dimension(:), allocatable:: inputs
-        end function
     end interface
+contains
+    pure function model_serialize(this) result(params)
+        class(Model), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(0))
+    end function
+
+    function model_deserialize(this, params) result(params_)
+        class(Model), intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        params_ = params
+    end function
+
+    pure function model_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(0))
+    end function
+
+    pure function model_get_input() result(inputs)
+        type(Input), dimension(:), allocatable:: inputs
+
+        allocate(inputs(0))
+    end function
 end module

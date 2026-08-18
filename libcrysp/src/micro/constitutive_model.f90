@@ -23,15 +23,7 @@ module constitutive_model
         procedure:: deserialize => phase_deserialize
     end type
 
-    !> Hardening state object specific to each grain.
-    !>
-    !> Concrete constitutive models are to extend this type to include fields for whatever grain-specific state they want to track.
-    !> @note
-    !> It may seem much nicer to simply create subtypes of [[Grain]] with additional fields for hardening state in the concrete constitutive models
-    !> but this leads to problems at the meso level because a Cluster must keep a list of Grains that belong to it
-    !> and Fortran does not allow lists of heterogeneous type.
-    !> @endnote
-    type, abstract:: HardeningState
+        type, abstract:: HardeningState
         real(DP), dimension(:,:), allocatable:: crss  !! Critical resolved shear stress in the positive and negative direction for each slip system.
     end type
 
@@ -92,7 +84,7 @@ contains
     subroutine base_init(this, miller_indices, initial_state)
         class(ConstitutiveModel), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices              !! Miller indices of all the slip systems.
-        class(HardeningState), allocatable, intent(inout):: initial_state   !! Initial hardening state for all grains using this constitutive model.
+        class(GrainState), allocatable, intent(inout):: initial_state   !! Initial hardening state for all grains using this constitutive model.
 
         integer:: i, &
                   n_systems

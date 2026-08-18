@@ -6,9 +6,9 @@
 module alamel
     use base_defs
     use conversions
-    use grain_module
+    use crysp_grain
     use relaxation_module
-    use cluster_module
+    use crysp_cluster
     use logging
     use taylor_ambiguity
     use micro
@@ -25,13 +25,16 @@ module alamel
     character(*), parameter:: MOD_NAME = 'alamel'   !! Module name for easy logging.
 
     !> Cluster used by the ALAMEL model.
-    type, extends(Cluster):: AlamelCluster
+    type, extends(ClusterState):: AlamelClusterState
         integer, dimension(10):: ind_basis_systems                  !! Indices of the currently active slip systems
         real(DP), dimension(3):: initial_boundary_normal            !! Inital direction of the normal to the boundary plane.
         real(DP), dimension(10, 10):: inverse_basis = 0._DP         !! Inverse of the matrix formed by selecting the active slip
                                                                     !! systems. Buffering this quantity greatly improves the performance.
         type(Relaxation), dimension(2):: relaxations                !! ALAMEL clusters contain 2 relaxations which act as slip
                                                                     !! systems with 0 critical resolved shear stress.
+    contains
+        procedure:: serialize => alamel_cluster_serialize
+        procedure:: deserialize => alamel_cluster_deserialize
     end type
 
     !> Implementation of the ALAMEL model
@@ -46,6 +49,8 @@ module alamel
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
         procedure:: update                 => alamel_update                 !! Inherited from [[MesoModel]]
+        procedure:: serialize => alamel_serialize
+        procedure:: deserialize => alamel_deserialize
     end type
 
 contains
@@ -470,4 +475,52 @@ contains
             end if
         end do
     end subroutine
+
+    pure function alamel_serialize(this) result(params)
+        class(AlamelModel), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = [serialize(this%deformation_gradient)]
+    end function
+
+    function alamel_deserialize(this, params) result(params_)
+        class(AlamelModel), intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        this%deformation_gradient = params(1)
+        params_ = params .pop. 1
+    end function
+
+    pure function alamel_cluster_serialize(this) result(params)
+        class(AlamelClusterState), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        integer:: i
+
+        params = this%ClusterState%serialize()
+        params .add. [serialize(this%ind_basis_systems), &
+                      serialize(this%initial_boundary_normal), &
+                      serialize(this%inverse_basis)]
+        do i=1,2
+            params = params .add. this%relaxations(i)%serialize()
+        end do
+    end function
+
+    function alamel_cluster_deserialize(this, params) result(params_)
+        class(AlamelClusterState), intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        integer:: i
+
+        params_ = this%ClusterState%deserialize(params)
+        this%ind_basis_systems = params_(1)
+        this%initial_boundary_normal = params_(2)
+        this%inverse_basis = params_(3)
+
+        do i=1,2
+            params_ = this%relaxations(i)%deserialize(params_)
+        end do
+    end function
 end module

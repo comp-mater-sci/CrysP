@@ -13,7 +13,7 @@
 module macro
     use base_defs
     use math_utils
-    use cluster_module
+    use crysp_cluster
     use meso
     use micro
     use incrementation
@@ -26,13 +26,6 @@ module macro
     public
 
     character(*), parameter, private:: MOD_NAME = 'macro'
-
-    !> All state associated to a material
-    type:: MaterialState
-        type(Phase), dimension(:), allocatable:: phases      !! State associated to all grains of a particular phase
-        class(MesoModel), allocatable:: meso_model           !! Global state of the meso model
-        class(Cluster), dimension(:), allocatable:: clusters !! State associated to individual clusters. Contains state of each grain.
-    end type
 
 contains
 

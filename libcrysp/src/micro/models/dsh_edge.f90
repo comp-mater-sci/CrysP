@@ -3,7 +3,7 @@ module dsh_edge
     use math_utils
     use dsh
     use slip_systems
-    use grain_module
+    use crysp_grain
     use constitutive_model
     use crysp_serialization
 

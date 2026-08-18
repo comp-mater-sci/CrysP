@@ -8,16 +8,12 @@ module voce
     use crysp_input
     use conversions
     use mod_model
+    use crysp_isotropic_state
 
     implicit none
 
     private
     public:: ConstitutiveModelVoce
-
-    !> Grain-specific hardening state data needed by the Voce hardening law.
-    type, extends(HardeningState):: VoceState
-        real(DP):: total_slip = 0._DP !! Sum of all the slip on all the slip systems of the grain.
-    end type
 
     !> Type wrapping parameters associated to a particular stage of the Voce hardening law.
     type:: Stage
@@ -77,28 +73,12 @@ contains
                   Input(to_c_string('THT',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
 
-    !> Convert a generic HardeningState to a pointer to a VoceState object
-    !>
-    !> Closest Fortran comes to type casting
-    !> If the provided state is not of type voce_state, the program crashes.
-    function to_voce_state(state) result(voce_state_ptr)
-        class(HardeningState), target, intent(in):: state   !! HardeningState to be converted. Must have dynamic type VoceState.
-        type(VoceState), pointer:: voce_state_ptr           !! Pointer of type VoceState to the HardeningState
-
-        select type (state)
-            type is (VoceState)
-                voce_state_ptr => state
-            class default
-                call log_error(ERR_TYPE)
-        end select
-    end function
-
     !> See [[ConstitutiveModel:init]]
     function voce_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
+        class(GrainState), allocatable:: initial_state
 
         !Local variables
         real(DP):: THT, &
@@ -106,7 +86,7 @@ contains
                    TAUT, &
                    THIII1
 
-        allocate(VoceState:: initial_state)
+        allocate(IsotropicState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
         !Parse the hardening parameters
@@ -129,14 +109,14 @@ contains
     !> See [[ConstitutiveModel:deform]]
     subroutine voce_deform(this, state, time, slip_rates)
         class(ConstitutiveModelVoce),                      intent(inout):: this
-        class(HardeningState), target,                  intent(inout):: state
+        class(GrainState), target,                  intent(inout):: state
         real(DP),                                       intent(in)::    time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in)::    slip_rates
 
         type(Stage):: current_stage          !Current stage in the Voce hardening process
-        type(VoceState), pointer:: state_ptr !Pointer to hardening_state of type VoceState for easy access to model-specific fields
+        type(IsotropicState), pointer:: state_ptr !Pointer to hardening_state of type VoceState for easy access to model-specific fields
 
-        state_ptr => to_voce_state(state)
+        state_ptr => to_isotropic_state(state)
 
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
 

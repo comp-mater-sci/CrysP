@@ -4,20 +4,15 @@ module swift
     use base_defs
     use constitutive_model
     use logging
-    use grain_module
     use crysp_serialization
     use crysp_input
     use conversions
+    use crysp_isotropic_state
 
     implicit none
 
     private
     public:: ConstitutiveModelSwift
-
-    !> Grain-specific hardening state data needed by the SWIFT hardening law.
-    type, extends(HardeningState):: SwiftState
-        real(DP):: total_slip = 0._DP           !! Sum of all the slip on all the slip systems of the grain.
-    end type
 
     !> Classic isotropic SWIFT hardening model.
     type, extends(ConstitutiveModel):: ConstitutiveModelSwift
@@ -67,32 +62,16 @@ contains
                   Input(to_c_string('n',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
     end function
 
-    !> Convert a generic HardeningState to a pointer to a SwiftState object
-    !>
-    !> Closest Fortran comes to type casting
-    !> If the provided state is not of type swift_state, the program crashes.
-    function to_swift_state(state) result(swift_state_ptr)
-        class(HardeningState), target, intent(in):: state   !! HardeningState to be converted. Must be of type SwiftState
-        type(SwiftState), pointer:: swift_state_ptr         !! Pointer of type SwiftState to the HardeningState
-
-        select type (state)
-            type is (SwiftState)
-                swift_state_ptr => state
-            class default
-                call log_error(ERR_TYPE)
-        end select
-    end function
-
     !> See [[ConstitutiveModel:init]]
     function swift_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelSwift),   intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
+        class(GrainState), allocatable:: initial_state
 
         real(DP):: crss0
 
-        allocate(SwiftState:: initial_state)
+        allocate(IsotropicState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
         crss0       = params(1)
@@ -106,13 +85,13 @@ contains
     !> See [[ConstitutiveModel:deform]]
     subroutine swift_deform(this, state, time, slip_rates)
         class(ConstitutiveModelSwift), intent(inout)::               this
-        class(HardeningState), target, intent(inout)::               state
+        class(GrainState), target, intent(inout)::               state
         real(DP), intent(in)::                                       time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 
-        type(SwiftState), pointer:: state_ptr
+        type(IsotropicState), pointer:: state_ptr
 
-        state_ptr => to_swift_state(state)
+        state_ptr => to_isotropic_state(state)
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
 
         state_ptr%crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)

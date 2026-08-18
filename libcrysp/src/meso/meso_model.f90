@@ -3,7 +3,7 @@
 module crysp_meso_model
     use base_defs
     use conversions
-    use cluster_module
+    use crysp_cluster
     use mod_model
 
     implicit none

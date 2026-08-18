@@ -14,7 +14,7 @@ module micro
     use crysp_input
     use logging
     use constitutive_model
-    use grain_module
+    use crysp_grain
 
     implicit none
 
@@ -80,15 +80,11 @@ module micro
             type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
         end subroutine
 
-        module function micro_serialize(phases) result(params)
-            type(Phase), dimension(:), intent(in):: phases
-            type(Parameter), dimension(:), allocatable:: params
+        module function micro_get_model(id) result(model)
+            integer, intent(in):: id
+            class(ConstitutiveModel), allocatable:: model
         end function
 
-        module function deserialize(params) result(phases)
-            type(Parameter), dimension(:), intent(in):: params
-            type(Phase), dimension(:), allocatable:: phases
-        end function
     end interface
 end module
 
@@ -108,7 +104,7 @@ contains
     !>
     !> Workaround to be able to call type-bound overriden procedures.
     !> If an invalid model ID is provided, this routine crashes the program.
-    function get_model_instance(model_id) result(instance)
+    module procedure micro_get_model
         use none
         use swift
         use hockett_sherby
@@ -117,24 +113,21 @@ contains
         use dsh_screw
         use dsh_loop
 
-        integer, intent(in):: model_id                           !! ID of the hardening model. Must be contained in the enum above.
-        class(ConstitutiveModel), allocatable, target:: instance !! Uninitialized instance of the requested hardening model.
-
-        select case(model_id)
+        select case(id)
             case(HARDENING_NONE)
-                allocate(ConstitutiveModelNone:: instance)
+                allocate(ConstitutiveModelNone:: model)
             case(HARDENING_VOCE)
-                allocate(ConstitutiveModelVoce:: instance)
+                allocate(ConstitutiveModelVoce:: model)
             case(HARDENING_HOCKETT_SHERBY)
-                allocate(ConstitutiveModelHockettSherby:: instance)
+                allocate(ConstitutiveModelHockettSherby:: model)
             case(HARDENING_SWIFT)
-                allocate(ConstitutiveModelSwift:: instance)
+                allocate(ConstitutiveModelSwift:: model)
             case(HARDENING_DSH_EDGE)
-                allocate(ConstitutiveModelDSHEdge:: instance)
+                allocate(ConstitutiveModelDSHEdge:: model)
             case(HARDENING_DSH_SCREW)
-                allocate(ConstitutiveModelDSHScrew:: instance)
+                allocate(ConstitutiveModelDSHScrew:: model)
             case(HARDENING_DSH_LOOP)
-                allocate(ConstitutiveModelDSHLoop:: instance)
+                allocate(ConstitutiveModelDSHLoop:: model)
             case default
                 call log_error(MOD_NAME, 'get_model_instance', ERR_VAL, 'Invalid hardening model ID')
         end select

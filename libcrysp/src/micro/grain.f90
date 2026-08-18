@@ -1,4 +1,4 @@
-module grain_module
+module crysp_grain
     use conversions
     use logging
     use constitutive_model
@@ -6,14 +6,30 @@ module grain_module
     implicit none
 
     private
-    public  ::  Grain
+    public:: Grain, &
+             GrainState
+
+    !> Hardening state object specific to each grain.
+    !>
+    !> Concrete constitutive models are to extend this type to include fields for whatever grain-specific state they want to track.
+    !> @note
+    !> It may seem much nicer to simply create subtypes of [[Grain]] with additional fields for hardening state in the concrete constitutive models
+    !> but this leads to problems at the meso level because a Cluster must keep a list of Grains that belong to it
+    !> and Fortran does not allow lists of heterogeneous type.
+    !> @endnote
+    type, extends(State):: GrainState
+        real(DP), dimension(3, 3):: orientation
+        real(DP), dimension(:,:), allocatable:: crss
+        real(DP):: stress_increment
+    contains
+        serialize => grain_serialize
+        deserialize => grain_deserialize
+    end type
 
     !>Texture-related state variables for single grain
     type:: Grain
-        real(DP), dimension(3, 3):: orientation
         type(Phase), pointer:: phase
-        class(HardeningState), allocatable:: state
-        real(DP):: stress_increment
+        class(GrainState), allocatable:: state
     contains
         procedure:: init   => grain_init
         procedure:: deform => grain_deform
@@ -47,7 +63,6 @@ contains
                    crss_old(2, size(this%state%crss,2)), &
                    stress_new(3,3)
 
-
         crss_old = this%state%crss
         orientation_old = this%orientation
 
@@ -68,4 +83,24 @@ contains
         stress_new = maxval(this%state%crss/crss_old) * (stress .toframe. transformation_matrix(this%orientation, orientation_old))
         this%stress_increment = norm2(stress_new-stress) / norm2(stress)
     end subroutine
+
+    pure function grain_serialize(this) result(params)
+        class(GrainState), intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        params = [serialize(this%orientation), &
+                  serialize(this%crss), &
+                  serialize(this%stress_increment)]
+    end function
+
+    function grain_deserialize(this, params) result(params_)
+        class(GrainState), intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), allocatable:: params_
+
+        this%orientation = params(1)
+        this%crss = params(2)
+        this%stress_increment = params(3)
+        params_ = params .pop. 3
+    end function
 end module
