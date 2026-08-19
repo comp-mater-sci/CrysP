@@ -150,7 +150,7 @@ Note that the hydrostatic part of the imposed stress mode is ignored, as well as
 
 
 \par Example
-\includelineno example_asr_config.cfg
+\includelineno example_asr.cfg
 
 \subsection output_asr Module-specific output
 
@@ -205,7 +205,7 @@ The \ref sec_format_out_main contains the following fields:
 </ol>
 
 \par Example
-\includelineno example_asr_output.csv
+\includelineno example_asr_out.csv
 
 Additionally, this module generates a \ref sec_format_out_texture. The texture is reported at the end of each deformation step.
 
@@ -227,7 +227,7 @@ Consequently, the sample `z`-axis is aligned with the material `3`-direction.
 -# \confdef{angular_resolution, \ref sec_format_fields_real} defines the angle in degrees between consecutive sampling directions in the xy-plane.
 
 \par Example
-\includelineno example_qrs_config.cfg
+\includelineno example_qrs.cfg
 
 \subsection output_qrs Module-specific output
 
@@ -265,7 +265,7 @@ The \ref sec_format_out_main contains the following fields:
 </ol>
 
 \par Example
-\includelineno example_qrs_output.csv
+\includelineno example_qrs_out.csv
 
 <HR>
 
@@ -281,7 +281,7 @@ There is no evolution of state associated with this module.
 -# \confdef{base_sigma_Y,\ref sec_format_options_symmatrix} is the base tensor along the Y-axis of the yield locus section. It must be orthogonal to \conffield{base_sigma_X}.
 
 \par Example
-\includelineno example_yld_config.cfg
+\includelineno example_yld.cfg
 
 \subsection output_yld Module-specific output
 
@@ -309,7 +309,7 @@ The \ref sec_format_out_main contains the following fields:
 </ol>
 
 \par Example
-\includelineno example_yld_output.csv
+\includelineno example_yld_out.csv
 
 <HR>
 
@@ -332,7 +332,7 @@ sample. Several subsequent deformation _steps_ may be imposed; each step imposes
 ---
 
 \par Example
-\includelineno example_adp_config.cfg
+\includelineno example_adp.cfg
 
 \subsection output_adp Module-specific output
 
@@ -362,7 +362,7 @@ The \ref sec_format_out_main contains the following fields:
 -# \outdef{M} Taylor factor during the increment.
 
 \par Example
-\includelineno example_adp_output.csv
+\includelineno example_adp_out.csv
 
 Additionally, this module generates a \ref sec_format_out_texture. The texture is reported at the end of each deformation step.
 */

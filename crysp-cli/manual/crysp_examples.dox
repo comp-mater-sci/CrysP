@@ -7,11 +7,11 @@ For sheet metals, lankford coefficient or R-value is an intuitive way to charact
 
 Through the QRS module of CrysP-CLI, we can easily simulate the R-values of the material in various directions, based on only the material texture. If we want to use the ALAMEL model, which is recommended due to its superior accuracy, we must also provide a microstrucure file. For many real sheet metals, the microstructure is approximately equiaxed due to annealing during the sheet production process. Therefore, if no detailed microstructure information is available, the equiaxed microstrucure provided in the examples subdirectory of this manual is often a reasonable approximation. Hardening information is not needed, since no defomation is involved. Because we are only interested in the rolling direction, which we assume aligns with the x-axis of the texture data, applying an angular resolution of 36 degrees is more than sufficient. The configuration file looks as follows:
 
-\includelineno example_qrs_full_config.cfg
+\includelineno example_qrs_full.cfg
 
 Running the simulation generates an output file in the same directory as the config file, named according to the conventions outlined in \ref page_crysp_format. It has the following content:
 
-\includelineno example_qrs_output.csv
+\includelineno example_qrs_out.csv
 
 We can now trivially derive the R-value in the rolling direction as the 3rd column of the first row of the output file.
 
@@ -20,11 +20,11 @@ A more general way to characterize the plastic anisotropy of a material is by me
 
 The configuration of the YLD module is largely analogous to that of the QRS module, assuming we again wish to use the ALAMEL model and the grains are approximately equiaxed and have an FCC crystal structure. This time however, a smaller angular resolution is desirable to yield an accurate representation of the yield locus section. We must also use the basis vectors, which define the exact section to be generated. Since we are interested in the RD-TD plane, the base vectors should be the material RD and TD. Putting all of this together yields the following configuration file:
 
-\includelineno example_yld_full_config.cfg
+\includelineno example_yld_full.cfg
 
 Running the simulation yields the following output:
 
-\includelineno example_yld_full_output.csv
+\includelineno example_yld_full_out.csv
 
 From this, we can easily plot the yield locus section. The X-coordinate of the yield point is cos(angle) * stress, and the Y-coordinate is sin(angle) * stress. Additionally, it is possible to add the flow direction of the material to the yield locus section by projecting the strain mode onto the RD-TD plane.
 
@@ -41,11 +41,11 @@ ADP will view each strain mode as a deformation step. To simply evaluate the str
 
 The output of this script corresponds exactly to the module-specific configuration of the ADP module. The generic section is again identical to the previous examples, assuming ALAMEL, FCC and equiaxed grains. This yields the following config file:
 
-\includelineno example_adp_full_config.cfg
+\includelineno example_adp_full.cfg
 
 Running this simulation may take a long time due to the huge number of strain modes to evaluate. Eventually however, the simulation output will contain the stress modes and magnitudes corresponding to each of the imposed strain modes:
 
-\includelineno example_adp_output.csv
+\includelineno example_adp_out.csv
 
 Now we have all the data we need to fit a large number of high-dimensional yield models!
 
@@ -54,11 +54,11 @@ In this final example, we will use *CrysP-CLI* to simulate a uniaxial tensile te
 
 The above already implies most of the inputs ASR needs to simulate the tensile test. Again assuming ALAMEL, FCC and equiaxed grains, the only additional input we require is the hardening behavior of the material. This should be derived from separate experiments. For the purposes of this tutorial, assume the hardening behavior has previously been identified. This yields the following configuration file:
 
-\includelineno example_asr_full_config.cfg
+\includelineno example_asr_full.cfg
 
 This yields the following main output file:
 
-\includelineno example_asr_output.csv
+\includelineno example_asr_out.csv
 
 From this output, the evolution of the stress magnitude, R-value, strain mode, etc. can be derived. Moreover, the texture output file which ASR generates besides the main output file represents the material texture at the end of the simulation and provides insight into the texture evolution of the material.
 */
