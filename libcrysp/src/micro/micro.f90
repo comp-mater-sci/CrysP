@@ -131,9 +131,7 @@ contains
             case default
                 call log_error(MOD_NAME, 'get_model_instance', ERR_VAL, 'Invalid hardening model ID')
         end select
-
-        instance%id = model_id
-    end function
+    end procedure
 
     !> Get the list of miller indices associated to ta given deformation mechanism.
     !>
@@ -204,35 +202,4 @@ contains
             end do
         end do
     end procedure
-
-    module procedure micro_serialize
-        integer:: i
-
-        params = [serialize(size(phases))]
-        do i=1,size(phases)
-            params = params .add. [serialize(phases(i)%id), &
-                                   serialize(phases(i)%model_id)]
-            params = params .add. phases(i)%model%serialize()
-        end do
-    end procedure
-
-    module procedure micro_deserialize
-        type(Parameter), dimension(:), allocatable:: remaining_params
-
-        integer:: i, n_phases
-
-        n_phases = params(1)
-        remaining_params = params .pop. 1
-        allocate(phases(n_phases))
-
-        do i=1, n_phases
-            phases(i)%id = remaining_params(1)
-            phases(i)%model_id = remaining_params(2)
-            remaining_params = remaining_params .pop. 2
-            phases(i)%model = get_model_instance(phases(i)%model_id)
-            remaining_params = phases(i)%model%deserialize(remaining_params)
-        end do
-
-    end procedure
-
 end submodule
