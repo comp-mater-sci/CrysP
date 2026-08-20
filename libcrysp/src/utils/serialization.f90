@@ -16,7 +16,8 @@ module crysp_serialization
              assignment(=), &
              serialize, &
              typeof, &
-             State
+             State, &
+             operator(.pop.)
 
     character(*), parameter:: MOD_NAME = 'serialization'
 
@@ -32,6 +33,13 @@ module crysp_serialization
         enumerator:: TYPE_STRING        !! Character(C_CHAR,:)
     end enum
 
+    !> Opaque C-compatible wrapper for parameters.
+    !>
+    !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
+    type, bind(C):: Parameter
+        type(C_PTR):: handle = C_NULL_PTR
+    end type
+
     type, abstract:: State
     contains
         procedure(state_serialize), deferred:: serialize
@@ -40,11 +48,17 @@ module crysp_serialization
 
     abstract interface
         pure function state_serialize(this) result(params)
-            class(State), intent(in):: this
+            import State
+            import Parameter
+
+            class(State), target, intent(in):: this
             type(Parameter), dimension(:), allocatable:: params
         end function
         function state_deserialize(this, params) result(remaining_params)
-            class(State), intent(out):: this
+            import State
+            import Parameter
+
+            class(State), target, intent(out):: this
             type(Parameter), dimension(:), intent(in):: params
             type(Parameter), dimension(:), allocatable:: remaining_params
         end function
@@ -69,7 +83,12 @@ module crysp_serialization
     type, extends(Value):: RealValue
         real(C_DOUBLE):: buffer
     end type
-    !> Wrapper for Real matrices. Corresponds to TYPE_REAL_MATRIX.
+    !> Wrapper for real arrays. Corresponds to TYPE_REAL_ARRAY.
+    type, extends(Value):: RealArrayValue
+        real(C_DOUBLE), dimension(:), allocatable:: buffer
+    end type
+
+    !> Wrapper real matrices. Corresponds to TYPE_REAL_MATRIX
     type, extends(Value):: RealMatrixValue
         real(C_DOUBLE), dimension(:,:), allocatable:: buffer
     end type
@@ -87,18 +106,12 @@ module crysp_serialization
         class(Value), allocatable:: value
     end type
 
-    !> Opaque C-compatible wrapper for parameters.
-    !>
-    !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
-    type, bind(C):: Parameter
-        type(C_PTR):: handle = C_NULL_PTR
-    end type
 
     !> From within fortran, creating and destroying parameters is done using intrinsic assignment to/from the types described in the
     !> enum at the top of this module.
     interface assignment(=)
-        module procedure int_to_parameter, int_array_to_parameter, real_to_parameter, real_matrix_to_parameter, string_to_parameter, &
-                         parameter_to_int, parameter_to_int_array, parameter_to_real, parameter_to_real_matrix, parameter_to_string
+        module procedure int_to_param, int_array_to_param, real_to_param, real_array_to_param, real_matrix_to_param, string_to_param, &
+                         param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, param_to_string
     end interface
 
     interface operator(.add.)
@@ -114,7 +127,7 @@ module crysp_serialization
     !> Useful for creating anonymous Parameter instances not bound to a local variable.
     !> No serialize_real_matrix due to IFX compiler bug as of 2026.1.1.19
     interface serialize
-        module procedure serialize_int, serialize_int_array, serialize_real, serialize_string
+        module procedure serialize_int, serialize_int_array, serialize_real, serialize_real_array, serialize_real_matrix, serialize_string
     end interface
 
 contains
@@ -137,6 +150,8 @@ contains
                 t = TYPE_INT_ARRAY
             type is (RealValue)
                 t = TYPE_REAL
+            type is (RealArrayValue)
+                t = TYPE_REAL_ARRAY
             type is (RealMatrixValue)
                 t = TYPE_REAL_MATRIX
             type is (StringValue)
@@ -156,28 +171,39 @@ contains
         param%handle = c_loc(val)
     end function
 
-    pure subroutine int_to_parameter(param, data) bind(C)
+    pure subroutine int_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         integer(C_INT), intent(in):: data
 
         param = to_parameter(IntValue(data))
     end subroutine
-    pure subroutine int_array_to_parameter(param, data) bind(C)
+    pure subroutine int_array_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         integer(C_INT), dimension(:), intent(in):: data
 
         type(IntArrayValue):: val
 
+        !Manually copy over data due to bug in IFX as of 2026.1.1.19
         val%buffer = data
         param = to_parameter(val)
     end subroutine
-    pure subroutine real_to_parameter(param, data) bind(C)
+    pure subroutine real_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), intent(in):: data
 
         param = to_parameter(RealValue(data))
     end subroutine
-    pure subroutine real_matrix_to_parameter(param, data) bind(C)
+    pure subroutine real_array_to_param(param, data) bind(C)
+        type(Parameter), intent(out):: param
+        real(C_DOUBLE), dimension(:), intent(in):: data
+
+        type(RealArrayValue):: val
+
+        !Manually copy over data due to bug in IFX as of 2026.1.1.19
+        val%buffer = data
+        param = to_parameter(val)
+    end subroutine
+    pure subroutine real_matrix_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), dimension(:,:), intent(in):: data
 
@@ -185,18 +211,17 @@ contains
 
         !Manually copy over data due to bug in IFX as of 2026.1.1.19
         val%buffer = data
-
         param = to_parameter(val)
     end subroutine
 
-    pure subroutine string_to_parameter(param, data) bind(C)
+    pure subroutine string_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         character(kind=C_CHAR,len=*), intent(in):: data
 
         param = to_parameter(StringValue(data))
     end subroutine
 
-    subroutine parameter_to_int(data, param) bind(C)
+    subroutine param_to_int(data, param) bind(C)
         integer(C_INT), intent(out):: data
         type(Parameter), intent(in):: param
 
@@ -213,7 +238,7 @@ contains
 
         deallocate(val)
     end subroutine
-    subroutine parameter_to_int_array(data, param) bind(C)
+    subroutine param_to_int_array(data, param) bind(C)
         integer(C_INT), dimension(:), intent(out):: data
         type(Parameter), intent(in):: param
 
@@ -230,8 +255,7 @@ contains
 
         deallocate(val)
     end subroutine
-
-    subroutine parameter_to_real(data, param) bind(C)
+    subroutine param_to_real(data, param) bind(C)
         real(C_DOUBLE), intent(out):: data
         type(Parameter), intent(in):: param
 
@@ -248,7 +272,24 @@ contains
 
         deallocate(val)
     end subroutine
-    subroutine parameter_to_real_matrix(data, param) bind(C)
+    subroutine param_to_real_array(data, param) bind(C)
+        real(C_DOUBLE), dimension(:), intent(out):: data
+        type(Parameter), intent(in):: param
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (RealArrayValue)
+                data = value%buffer
+            class default
+                call log_error(MOD_NAME, 'parameter_to_real_array', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+    subroutine param_to_real_matrix(data, param) bind(C)
         real(C_DOUBLE), dimension(:,:), allocatable, intent(out):: data
         type(Parameter), intent(in):: param
 
@@ -265,8 +306,7 @@ contains
 
         deallocate(val)
     end subroutine
-
-    subroutine parameter_to_string(data, param) bind(C)
+    subroutine param_to_string(data, param) bind(C)
         character(kind=C_CHAR,len=:), allocatable, intent(out):: data
         type(Parameter), intent(in):: param
 
@@ -307,7 +347,16 @@ contains
 
         param = data
     end function
+    !!Longer notation due to bug in IFX as of 2026.1.1.19
+    pure function serialize_real_array(data) result(param) bind(C)
+        real(C_DOUBLE), dimension(:), intent(in):: data
+        type(Parameter):: param
 
+        type(RealArrayValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
     pure function serialize_real_matrix(data) result(param) bind(C)
         real(C_DOUBLE), dimension(:,:), intent(in):: data

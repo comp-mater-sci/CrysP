@@ -42,7 +42,7 @@ contains
         class(ConstitutiveModelDSHEdge), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
+        class(GrainState), allocatable:: initial_state
 
         initial_state = this%init_common(miller_indices, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
     end function

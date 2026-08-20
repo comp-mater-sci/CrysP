@@ -41,7 +41,7 @@ contains
         class(ConstitutiveModelNone), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
+        class(GrainState), allocatable:: initial_state
 
         allocate(GrainState:: initial_state)
         call this%base_init(miller_indices, initial_state)
@@ -52,7 +52,7 @@ contains
     !> @Brief See hardening_model_deform
     subroutine none_deform(this, state, time, slip_rates)
         class(ConstitutiveModelNone), intent(inout):: this
-        class(HardeningState), target, intent(inout)      :: state
+        class(GrainState), target, intent(inout)      :: state
         real(DP), intent(in)                    :: time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
     end subroutine

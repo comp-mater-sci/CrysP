@@ -39,6 +39,7 @@ module full_constraints_taylor
     contains
         procedure, nopass:: get_name => fctaylor_get_name
         procedure, nopass:: get_description => fctaylor_get_description
+        procedure, nopass:: get_cluster_state => fctaylor_get_state
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
         procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
@@ -56,6 +57,12 @@ contains
         character(:), allocatable:: description
 
         description = "Each grain is forced to deform exactly like the material as a whole."
+    end function
+
+    pure function fctaylor_get_state() result(state)
+        class(ClusterState), allocatable:: state
+
+        allocate(TaylorClusterState:: state)
     end function
 
     !> Convert the type of a provided generic cluster to TaylorCluster

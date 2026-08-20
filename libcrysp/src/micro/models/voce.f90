@@ -31,6 +31,7 @@ module voce
         procedure, nopass:: get_description => voce_get_description
         procedure, nopass:: get_signature => voce_get_signature
         procedure, nopass:: get_input      => voce_get_input          !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_grain_state => voce_get_state
         procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
         procedure:: serialize => voce_serialize
@@ -71,6 +72,12 @@ contains
                   Input(to_c_string('TIVS',NAME_LEN),   INPUT_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
                   Input(to_c_string('THIII1',NAME_LEN), INPUT_REAL), &
                   Input(to_c_string('THT',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
+    end function
+
+    pure function voce_get_state() result(state)
+        class(GrainState), allocatable:: state
+
+        allocate(IsotropicState:: state)
     end function
 
     !> See [[ConstitutiveModel:init]]

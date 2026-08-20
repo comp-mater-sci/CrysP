@@ -2,6 +2,7 @@ module relaxation_module
     use base_defs
     use math_utils
     use conversions
+    use crysp_serialization
 
     implicit none
     private
@@ -60,7 +61,7 @@ contains
     end subroutine
 
     pure function relaxation_serialize(this) result(params)
-        class(Relaxation), intent(in):: this
+        class(Relaxation), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
         params = [serialize(this%type), &
@@ -69,7 +70,7 @@ contains
     end function
 
     function relaxation_deserialize(this, params) result(params_)
-        class(Relaxation), intent(out):: this
+        class(Relaxation), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
         type(Parameter), dimension(:), allocatable:: params_
 

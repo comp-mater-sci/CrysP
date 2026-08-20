@@ -1,4 +1,4 @@
-module mod_model
+module crysp_model
     use crysp_serialization
     use crysp_input
 
@@ -8,8 +8,8 @@ module mod_model
     contains
         procedure(model_get_name), nopass, deferred:: get_name
         procedure(model_get_description), nopass, deferred:: get_description
-        procedure:: get_signature => model_get_signatur
-        procedure:: get_input => model_get_input
+        procedure, nopass:: get_signature => model_get_signature
+        procedure, nopass:: get_input => model_get_input
         procedure:: serialize => model_serialize
         procedure:: deserialize => model_deserialize
     end type
@@ -24,14 +24,14 @@ module mod_model
     end interface
 contains
     pure function model_serialize(this) result(params)
-        class(Model), intent(in):: this
+        class(Model), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
         allocate(params(0))
     end function
 
     function model_deserialize(this, params) result(params_)
-        class(Model), intent(out):: this
+        class(Model), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
         type(Parameter), dimension(:), allocatable:: params_
 

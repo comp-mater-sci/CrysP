@@ -39,7 +39,7 @@ contains
         class(ConstitutiveModelDSHLoop), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
+        class(GrainState), allocatable:: initial_state
 
         integer:: s, i
         real(DP):: normdir(24, 3), &

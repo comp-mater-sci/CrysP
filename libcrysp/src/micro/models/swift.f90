@@ -24,6 +24,7 @@ module swift
         procedure, nopass:: get_description => swift_get_description
         procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_input       => swift_get_input       !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_grain_state => swift_get_state
         procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
         procedure:: serialize => swift_serialize
@@ -60,6 +61,12 @@ contains
         inputs = [Input(to_c_string('crss0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
                   Input(to_c_string('gamma0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)), &
                   Input(to_c_string('n',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
+    end function
+
+    pure function swift_get_state() result(state)
+        class(GrainState), allocatable:: state
+
+        allocate(IsotropicState:: state)
     end function
 
     !> See [[ConstitutiveModel:init]]

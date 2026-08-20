@@ -3,29 +3,13 @@ module constitutive_model
     use math_utils
     use conversions
     use crysp_serialization
-    use mod_model
+    use crysp_model
+    use crysp_grain
 
     implicit none
 
     private
-    public:: Phase, &
-             HardeningState
-
-    !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
-    !and Fortran semantics require lists to be of homogeneous type.
-    type, extends(State):: Phase
-        integer:: id
-        integer:: model_id
-        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
-    contains
-        procedure:: init => phase_init
-        procedure:: serialize => phase_serialize
-        procedure:: deserialize => phase_deserialize
-    end type
-
-        type, abstract:: HardeningState
-        real(DP), dimension(:,:), allocatable:: crss  !! Critical resolved shear stress in the positive and negative direction for each slip system.
-    end type
+    public:: Phase
 
     !> Base constitutive model
     !>
@@ -37,7 +21,7 @@ module constitutive_model
     contains
         procedure(cm_init), deferred::                        init                  !! Initialize the model
         procedure(cm_deform), deferred::                      deform                !! Update the hardening state under a given deformation.
-        procedure:: base_init                                                       !! Basic initializtion common to all constitutive models.
+        procedure:: init => cm_init
         procedure:: serialize => cm_serialize
         procedure:: deserialize => cm_deserialize
     end type
@@ -48,14 +32,14 @@ module constitutive_model
         !> If the parameters do not meet the constraints provided below, this routine crashes the program.
         function cm_init(this, miller_indices, params) result(initial_state)
             import ConstitutiveModel, &
-                   HardeningState, &
+                   GrainState, &
                    Parameter
 
             class(ConstitutiveModel), intent(inout)::     this      !! Instance of the hardening model to be initialized
             integer, dimension(:,:,:), intent(in):: miller_indices  !! Miller indices of the deformation mechanism to be used.
             type(Parameter), dimension(:), intent(in):: params !! List of parameters to initialize the model with.
                                                                        !! Assumed to pass this%validate_parameters(params)
-            class(HardeningState), allocatable:: initial_state
+            class(GrainState), allocatable:: initial_state
         end function
 
         !> Update the critical resolved shear stresses (CRSS) of a grain.
@@ -64,11 +48,11 @@ module constitutive_model
         !> interval provided by the caller. May update internal grain state accordingly.
         subroutine cm_deform(this, state, time, slip_rates)
             import ConstitutiveModel, &
-                   HardeningState, &
+                   GrainState, &
                    DP
 
             class(ConstitutiveModel), intent(inout):: this
-            class(HardeningState), target, intent(inout):: state   !! Hardening state to update.
+            class(GrainState), target, intent(inout):: state   !! Hardening state to update.
             real(DP), intent(in)                :: time            !! Elapsed time since the last update of the hardening state of this grain.
             real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates  !! Slip rates on each of the slip systems of the grain in the time
                                                                                        !! interval since the last CRSS update for this grain. Size must equal
@@ -81,11 +65,9 @@ contains
     !> Basic iniitialization common to all constitutive models.
     !>
     !> Initializes taylor and spin coefficients and allocates memory for the CRSS.
-    subroutine base_init(this, miller_indices, initial_state)
+    subroutine base_init(this, miller_indices)
         class(ConstitutiveModel), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices              !! Miller indices of all the slip systems.
-        class(GrainState), allocatable, intent(inout):: initial_state   !! Initial hardening state for all grains using this constitutive model.
-
         integer:: i, &
                   n_systems
         real(DP):: normalized(3, 2), &
@@ -95,7 +77,6 @@ contains
 
         allocate(this%taylor_coeffs(5, n_systems))
         allocate(this%spin_coeffs(3, n_systems))
-        allocate(initial_state%crss(2, n_systems))
 
         do i = 1, n_systems
             normalized = normalize(miller_indices(:,:,i))
@@ -106,8 +87,14 @@ contains
         this%basis = basis_indices(this%taylor_coeffs)
     end subroutine
 
+    pure function phase_get_grain_state() result(state)
+        class(GrainState), allocatable:: state
+
+        allocate(GrainState::state)
+    end function
+
     pure function serialize(this) result(params)
-        class(ConstitutiveModel), intent(in):: this
+        class(ConstitutiveModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
         params = params .add. [serialize(this%tayor_coeffs), &
@@ -116,7 +103,7 @@ contains
     end function
 
     function deserialize(this, params) result(remaining_params)
-        class(ConstitutiveModel), intent(inout):: this
+        class(ConstitutiveModel), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
         type(Parameter), dimension(:), allocatable:: remaining_params
 

@@ -23,7 +23,7 @@ contains
     !> Closest Fortran comes to type casting
     !> If the provided state is not of type swift_state, the program crashes.
     function to_isotropic_state(state) result(isotropic_state_ptr)
-        class(HardeningState), target, intent(in):: state   !! GrainState to be converted.
+        class(GrainState), target, intent(in):: state   !! GrainState to be converted.
         type(IsotropicState), pointer:: isotropic_state_ptr !! Pointer of type IsotropicState to the GrainState
 
         select type (state)

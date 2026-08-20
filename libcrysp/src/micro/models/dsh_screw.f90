@@ -40,7 +40,7 @@ contains
         class(ConstitutiveModelDSHScrew), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
+        class(GrainState), allocatable:: initial_state
 
         integer:: i
         real(DP):: screwdir(24, 3)

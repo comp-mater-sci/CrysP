@@ -79,6 +79,7 @@ module dsh
     contains
         procedure, nopass:: get_signature => dsh_get_signature  !! Inherited from ConstitutiveModel
         procedure, nopass:: get_input => dsh_get_input  !! Inherited from ConstitutiveModel
+        procedure, nopass:: get_grain_state => dsh_get_state
         procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
         procedure:: serialize  => dsh_serialize
         procedure:: deserialize => dsh_deserialize
@@ -131,14 +132,19 @@ contains
                   Input(to_c_string('R2',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
     end function
 
+    pure function dsh_get_state() result(state)
+        class(GrainState), allocatable:: state
 
-    !> Convert a generic HardeningState to a pointer to a DSHState object
+        allocate(DSHState:: state)
+    end function
+
+    !> Convert a generic GrainState to a pointer to a DSHState object
     !>
     !> Closest Fortran comes to type casting
     !> If the provided state is not of type dsh_state, the program crashes.
     function to_dsh_state(state) result(dsh_state_ptr)
-        class(HardeningState), target, intent(in):: state   !! HardeningState to be converted. Must have dynamic type DSHState.
-        type(DSHState), pointer:: dsh_state_ptr             !! Pointer of type DSHState to the HardeningState
+        class(GrainState), target, intent(in):: state   !! GrainState to be converted. Must have dynamic type DSHState.
+        type(DSHState), pointer:: dsh_state_ptr             !! Pointer of type DSHState to the GrainState
 
         select type (state)
             type is (DSHState)
@@ -158,7 +164,7 @@ contains
         type(Parameter), dimension(:), intent(in):: params
         real(DP), dimension(24, 6), intent(in):: eff               !! 'Wall-effectivity' matrix == cosines of the angle between
                                                                    !! dislocation movement vectors and the cell block boundary normals.
-        class(HardeningState), allocatable:: initial_state         !! Initial state of each grain using a DSH model.
+        class(GrainState), allocatable:: initial_state         !! Initial state of each grain using a DSH model.
 
         allocate(DSHState:: initial_state)
         call this%base_init(miller_indices, initial_state)
@@ -215,7 +221,7 @@ contains
     !> See cm_deform
     subroutine dsh_deform(this, state, time, slip_rates)
         class(ConstitutiveModelDSH), intent(inout)                  :: this
-        class(HardeningState), target, intent(inout)                :: state
+        class(GrainState), target, intent(inout)                :: state
         real(DP), intent(in)                                        :: time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 

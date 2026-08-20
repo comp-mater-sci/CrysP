@@ -45,6 +45,7 @@ module alamel
         procedure, nopass:: get_description => alamel_get_description
         procedure, nopass:: get_signature  => alamel_get_signature
         procedure, nopass:: get_input => alamel_get_input         !! Inherited from [[MesoModel]]
+        procedure, nopass:: get_cluster_state => alamel_get_state
         procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
@@ -83,6 +84,12 @@ contains
                                                             !! denoting the orientation of the grain boundary plane normals.
 
         inputs = [Input(to_c_string("Boundaries",NAME_LEN), INPUT_ANGLES_LIST)]
+    end function
+
+    pure function alamel_get_state() result(state)
+        class(ClusterState), allocatable:: state
+
+        allocate(AlamelClusterState):: state
     end function
 
     !> Convert the type of a provided generic cluster to AlamelCluster

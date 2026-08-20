@@ -36,6 +36,13 @@ module micro
         enumerator:: HARDENING_DSH_LOOP         = 13 !! Variant of DSH hardening using loop dislocations.
     end enum
 
+    !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
+    !and Fortran semantics require lists to be of homogeneous type.
+    type:: Phase
+        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
+    end type
+
+
     !> Supported deformation mechanisms (i.e. slip system sets).
     enum, bind(C)
         enumerator:: SLIP_SYSTEMS_FCC   !! Face-Centered Cubic.
@@ -84,6 +91,10 @@ module micro
             integer, intent(in):: id
             class(ConstitutiveModel), allocatable:: model
         end function
+        module pure function micro_get_model_id(model) result(id)
+            class(ConstitutiveModel), intent(in):: model
+            integer:: id
+        end function
 
     end interface
 end module
@@ -93,6 +104,13 @@ end module
 !> Links the different deformation mechanism and hardening model IDs to specific constitutive models and keeps a reference to the
 !> models currently in use.
 submodule(micro) micro_imp
+    use none
+    use swift
+    use hockett_sherby
+    use voce
+    use dsh_edge
+    use dsh_screw
+    use dsh_loop
 
     implicit none
 
@@ -100,36 +118,46 @@ submodule(micro) micro_imp
 
 contains
 
-    !> Brief Retrieve an unitialized instance of a given hardening model.
+    !> Retrieve an unitialized instance of a given hardening model.
     !>
     !> Workaround to be able to call type-bound overriden procedures.
     !> If an invalid model ID is provided, this routine crashes the program.
     module procedure micro_get_model
-        use none
-        use swift
-        use hockett_sherby
-        use voce
-        use dsh_edge
-        use dsh_screw
-        use dsh_loop
-
         select case(id)
-            case(HARDENING_NONE)
+            case (HARDENING_NONE)
                 allocate(ConstitutiveModelNone:: model)
-            case(HARDENING_VOCE)
+            case (HARDENING_VOCE)
                 allocate(ConstitutiveModelVoce:: model)
-            case(HARDENING_HOCKETT_SHERBY)
+            case (HARDENING_HOCKETT_SHERBY)
                 allocate(ConstitutiveModelHockettSherby:: model)
-            case(HARDENING_SWIFT)
+            case (HARDENING_SWIFT)
                 allocate(ConstitutiveModelSwift:: model)
-            case(HARDENING_DSH_EDGE)
+            case (HARDENING_DSH_EDGE)
                 allocate(ConstitutiveModelDSHEdge:: model)
-            case(HARDENING_DSH_SCREW)
+            case (HARDENING_DSH_SCREW)
                 allocate(ConstitutiveModelDSHScrew:: model)
-            case(HARDENING_DSH_LOOP)
+            case (HARDENING_DSH_LOOP)
                 allocate(ConstitutiveModelDSHLoop:: model)
             case default
-                call log_error(MOD_NAME, 'get_model_instance', ERR_VAL, 'Invalid hardening model ID')
+                call log_error(MOD_NAME, 'get_model', ERR_TYPE, 'Invalid hardening model ID')
+        end select
+    end procedure
+    module procedure micro_get_model_id
+        select type(model)
+            type is (ConstitutiveModelNone)
+                id = HARDENING_NONE
+            type is (ConstitutiveModelVoce)
+                id = HARDENING_VOCE
+            type is (ConstitutiveModelHockettSherby)
+                id = HARDENING_HOCKETT_SHERBY
+            type is (ConstitutiveModelSwift)
+                id = HARDENING_SWIFT
+            type is (ConstitutiveModelDSHEdge)
+                id = HARDENING_DSH_EDGE
+            type is (ConstitutiveModelDSHScrew)
+                id = HARDENING_DSH_SCREW
+            type is (ConstitutiveModelDSHLoop)
+                id = HARDENING_DSH_LOOP
         end select
     end procedure
 
@@ -175,7 +203,7 @@ contains
                   n_grains
         integer, allocatable:: miller_indices(:,:,:)
         real(DP):: orientation(3)
-        class(HardeningState), allocatable:: initial_state
+        class(GrainState), allocatable:: initial_state
         type(Phase), pointer:: phase_ptr
 
         !First determine the total number of grains so we  can allocate the return array.

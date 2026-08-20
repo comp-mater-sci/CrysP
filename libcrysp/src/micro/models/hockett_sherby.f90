@@ -26,6 +26,7 @@ module hockett_sherby
         procedure, nopass:: get_description => hs_get_description
         procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_input => hs_get_input             !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_grain_state => hs_get_state
         procedure:: init                   => hs_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                 => hs_deform              !! Inherited from [[ConstitutiveModel]]
         procedure:: serialize => hs_serialize
@@ -62,6 +63,12 @@ contains
                   Input(to_c_string('tau_sat',NAME_LEN), INPUT_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
                   Input(to_c_string('b',NAME_LEN), INPUT_REAL),       &
                   Input(to_c_string('n',NAME_LEN), INPUT_REAL)]
+    end function
+
+    pure function hs_get_state() result(state)
+        class(GrainState), allocatable:: state
+
+        allocate(IsotropicState:: state)
     end function
 
     !> See [[ConstitutiveModel:init]]

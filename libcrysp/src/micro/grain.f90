@@ -28,7 +28,7 @@ module crysp_grain
 
     !>Texture-related state variables for single grain
     type:: Grain
-        type(Phase), pointer:: phase
+        type(ConstitutiveModel), pointer:: phase
         class(GrainState), allocatable:: state
     contains
         procedure:: init   => grain_init
@@ -38,15 +38,15 @@ module crysp_grain
 contains
 
     !Initialize grain.
-    subroutine grain_init(this, orientation, model, state)
+    subroutine grain_init(this, orientation, model)
         class(Grain), intent(out):: this
         real(DP), dimension(:), intent(in):: orientation
         class(ConstitutiveModel), target, intent(in):: model
-        class(HardeningState), intent(in):: state
+        class(GrainState), intent(in):: state
 
         this%orientation = euler_to_rotation_matrix(orientation)
         this%model => model
-        this%state = state
+        this%state = model%get_state()
     end subroutine
 
     subroutine grain_deform(this, v_grad, t, slip_rates, stress)
