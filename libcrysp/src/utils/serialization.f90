@@ -33,11 +33,11 @@ module crysp_serialization
         enumerator:: TYPE_STRING        !! Character(C_CHAR,:)
     end enum
 
-    !> Opaque C-compatible wrapper for parameters.
-    !>
-    !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
-    type, bind(C):: Parameter
-        type(C_PTR):: handle = C_NULL_PTR
+    type:: ReferenceRegistry
+        type(c_ptr), dimension(:), allocatable:: references
+    contains
+        procedure:: store => registry_store
+        procedure:: fetch => registry_fetch
     end type
 
     type, abstract:: State
@@ -105,6 +105,14 @@ module crysp_serialization
     type:: ParameterValue
         class(Value), allocatable:: value
     end type
+
+    !> Opaque C-compatible wrapper for parameters.
+    !>
+    !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
+    type, bind(C):: Parameter
+        type(C_PTR):: handle = C_NULL_PTR
+    end type
+
 
 
     !> From within fortran, creating and destroying parameters is done using intrinsic assignment to/from the types described in the
@@ -401,5 +409,24 @@ contains
             call log_error(MOD_NAME, 'pop', ERR_DIMS, 'Parameter list too small!')
 
         popped = params(n+1:)
+    end function
+
+    subroutine registry_store(this, ptr)
+        class(ReferenceRegistry), intent(inout):: this
+        type(c_ptr), intent(in):: ptr
+
+        if (.not. allocated(this%references)) then
+            allocate(this%references(1))
+    end subroutine
+
+
+    end subroutine
+
+    function registry_fetch(this, id) result(ptr)
+        class(ReferenceRegistry), intent(in):: this
+        integer, intent(in):: id
+        type(c_ptr):: ptr
+
+        ptr = this%references(id)
     end function
 end module
