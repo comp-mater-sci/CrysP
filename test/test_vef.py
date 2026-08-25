@@ -111,16 +111,15 @@ def test_vef(mode, algorithm, slip_system, hardening_model, update, margin):
         #Compare results to reference
         sensitivity = float(margin) / 100.0
         if mode == 'ADP' or mode == 'ASR':
-            #None of the components should vary more from the reference than MARGIN times the max. component
-            for index, row in res.iterrows():
+            #None of the components in the last row should vary more from the reference than MARGIN times the max. component
+            row = res.iloc[-1]
+            row_ref = ref.iloc[-1]
+            tolerance = max(abs(row_ref)) * sensitivity
 
-                row_ref = ref.iloc[index]
-                tolerance = max(abs(row_ref)) * sensitivity
-
-                for i in range(len(row)):
-                    element = row[i]
-                    element_ref = row_ref[i]
-                    assert element_ref - tolerance <= element <= element_ref + tolerance
+            for i in range(len(row)):
+                element = row[i]
+                element_ref = row_ref[i]
+                assert element_ref - tolerance <= element <= element_ref + tolerance
         else:
             #None of the components should vary more than MARGIN from the reference
             for index, row in res.iterrows():

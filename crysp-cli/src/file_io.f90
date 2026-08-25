@@ -301,7 +301,7 @@ contains
 
         do i=1,size(clusters)
             do j=1, size(clusters(i)%grains)
-                write (file_handle, '(I0,",",3(G0,:,","))', iostat=info) increment, rad_to_deg(tensor_to_euler(clusters(i)%grains(j)%orientation))
+                write (file_handle, '(I0,",",3(G0,:,","))', iostat=info) increment, rad_to_deg(deformation_gradient_to_euler(clusters(i)%grains(j)%orientation))
                 call handle_iostat('write_texture', info)
             end do
         end do

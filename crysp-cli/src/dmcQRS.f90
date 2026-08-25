@@ -55,9 +55,9 @@ contains
                    strain_mode(5), &
                    stress(5), &
                    residual(5), &
-                   Mrot(3,3), &
-                   strain_tensile_frame(3,3), &
-                   stress_tensile_frame(3,3), &
+                   test_frame(3,3), &
+                   strain_test_frame(3,3), &
+                   stress_test_frame(3,3), &
                    sigma(3,3), &
                    sigma_t(3,3), &
                    r_value
@@ -75,12 +75,10 @@ contains
         strain_mode = strain_mode / norm2(strain_mode)
 
         do i=1,n_points
-            ! Calculate rotation matrix
-            ! - due to passive rotation convention
-            Mrot = euler_to_tensor([0._DP,0._DP, -fi2])
+            test_frame = euler_to_rotation_matrix([0._DP,0._DP, fi2])
 
             ! Rotate from "tensile" to material coordinate system
-            sigma = rotate_to(sigma_t, Mrot)
+            sigma = sigma_t .fromframe. test_frame
 
             target_stress_mode = tensor_to_deviatoric(sigma)
             target_stress_mode = target_stress_mode / norm2(target_stress_mode)
@@ -93,14 +91,14 @@ contains
             call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
 
             !Rotate results such that the stress mode aligns with the virtual tensile test direction.
-            strain_tensile_frame = rotate_from(deviatoric_to_tensor(strain_mode), Mrot)
-            stress_tensile_frame = rotate_from(deviatoric_to_tensor(stress), Mrot)
-            r_value = strain_tensile_frame(2,2) / strain_tensile_frame(3,3)
+            strain_test_frame = deviatoric_to_tensor(strain_mode) .toframe. test_frame
+            stress_test_frame = deviatoric_to_tensor(stress)      .toframe. test_frame
+            r_value = strain_test_frame(2,2) / strain_test_frame(3,3)
 
             call write_output_increment(out_unit, [rad_to_deg(fi2), &
                                                    r_value / (1._DP + r_value), &
                                                    r_value, &
-                                                   norm2(stress_tensile_frame), &
+                                                   norm2(stress_test_frame), &
                                                    norm2(residual)])
 
             fi2 = fi2 + this%angular_resolution

@@ -98,7 +98,7 @@ contains
             j = 1
             do i = 1, size(clusters)
                 clusters(i)%grains = grains(2*(i-1)+1:2*i)
-                clusters(i)%initial_boundary_orientation = transpose(euler_to_tensor(boundaries(:,j)))
+                clusters(i)%initial_boundary_orientation = euler_to_rotation_matrix(boundaries(:,j))
                 n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
                 do k = 1, 2
                     ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
@@ -408,7 +408,7 @@ contains
         !Transform relaxation from boundary frame to crystal frame
         !Composed of rotation from boundary to global frame and then from global to crystal frame.
         do i = 1, 2
-            boundary_to_crystal(:,:,i) = matmul(alamel_cluster%grains(i)%orientation, new_boundary_frame)
+            boundary_to_crystal(:,:,i) = transformation_matrix(new_boundary_frame, alamel_cluster%grains(i)%orientation)
         end do
 
         !For ALAMEL we may assume that the relaxations are part of the basis and they change with every time step. Therefore we
