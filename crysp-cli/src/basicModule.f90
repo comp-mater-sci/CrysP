@@ -68,7 +68,7 @@ contains
         end select
         meso_params = meso_get_parameters(meso_model_id)
         if (meso_params .includes. "Boundaries") &
-            call parameter_set(meso_params, 'Boundaries', read_orientations(microstructure_file_name))
+            call parameter_set(meso_params, 'Boundaries', read_microstructure(microstructure_file_name))
 
         read(cnfunit, '(A)') buffer
         select case (buffer)

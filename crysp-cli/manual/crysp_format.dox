@@ -134,7 +134,9 @@ All configuration files have a fixed format. It is read and interpreted by the p
 <HR>
 
 \subsection sec_format_files_orientation Orientation File
-Several input files (texture files and microstructure files) represent a sequence of discrete orientations. These files use CSV format (without header). Each row represents a discrete orientation, formatted as a triplet of Euler angles in degrees, in Bunge convention.
+An 'orientation' describes a coordinate system tied to some entity with respect to the global reference system (i.e. the material frame). An orientation file provides a sequence of such coordinate systems. It uses CSV format (without header). Each row represents a discrete orientation, formatted as a triplet of Euler angles in degrees, in Bunge convention.
+
+Each simulation requires at least one orientation file: a texture file. This file describes the crystal frame of each grain.
 
 For all models currently available in CrysP, the orientation files should be interpreted in a statistical sense. They does not have to contain an exact description of the true texture, but rather a representative subset thereof. The file should ideally contain 3000-5000 orientations. By replicating orientations, one may replicate the effect of more dominant orientations.
 
@@ -147,6 +149,22 @@ For all models currently available in CrysP, the orientation files should be int
 
 <HR>
 
+\subsection sec_format_files_direction Direction File
+Some inputs can be described as directions (i.e. points on the unit sphere) in the reference frame. If a simulation requires many such directions, it may require the user to provide a direction file. Such a file is formatted as a CSV file without header, with each line representing a discrete direction. The individual directions are described by means of spherical coordinates. Because directions have no magnitude, the radial coordinate is however omitted. This yields the following fields (in order):
+- The polar angle with respect to the positive z-axis, in degrees.
+- The azimuth angle with respect to the positive x-axis, in degrees.
+
+Like the orientation file, direction files should be interpreted in a statistical sense. More dominant directions may be simulated by replicating them.
+
+
+\par Example:
+~~~~~~~~~~~~~{.txt}
+0.000,20.000
+67.500,65.000
+12.500,27.500
+~~~~~~~~~~~~~
+
+<HR>
 
 \subsection sec_format_files_main Main Configuration File
 The main configuration file describes the simulation and ties together all the input data. Its contents are described in detail in \ref page_crysp_specification.

@@ -25,7 +25,7 @@ module alamel
     !> Cluster used by the ALAMEL model.
     type, extends(Cluster):: AlamelCluster
         integer, dimension(10):: ind_basis_systems                  !! Indices of the currently active slip systems
-        real(DP), dimension(3, 3):: initial_boundary_orientation    !! Rotation matrix representing the initial boundary orientation
+        real(DP), dimension(3):: initial_boundary_normal            !! Inital direction of the normal to the boundary plane.
         real(DP), dimension(10, 10):: inverse_basis = 0._DP         !! Inverse of the matrix formed by selecting the active slip
                                                                     !! systems. Buffering this quantity greatly improves the performance.
         type(Relaxation), dimension(2):: relaxations                !! ALAMEL clusters contain 2 relaxations which act as slip
@@ -85,7 +85,7 @@ contains
         real(DP), dimension(:,:), allocatable:: boundaries
 
 
-        allocate(boundaries(3, parameter_size(params(1))))
+        allocate(boundaries(2, parameter_size(params(1))))
         boundaries = params(1)
 
         this%deformation_gradient = UNIT_MATRIX_3X3
@@ -98,7 +98,7 @@ contains
             j = 1
             do i = 1, size(clusters)
                 clusters(i)%grains = grains(2*(i-1)+1:2*i)
-                clusters(i)%initial_boundary_orientation = euler_to_rotation_matrix(boundaries(:,j))
+                clusters(i)%initial_boundary_normal = spherical_to_cartesian(boundaries(:,j))
                 n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
                 do k = 1, 2
                     ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
@@ -342,6 +342,20 @@ contains
         cluster_ptr%weight = cluster_weight(cluster_ptr, this%deformation_gradient)
     end subroutine
 
+
+    !> Get the direction of a surface normal after application of a deformation gradient.
+    !>
+    !> Based on Nanson's formula.
+    !> Input and output are NOT normalized.
+    !> Deformation is assumed isochoric so det(F) == 1
+    function deform_normal_direction(normal, deformation_gradient) result(new_normal)
+        real(DP), dimension(3), intent(in):: normal                 !! Surface normal in the reference configuration
+        real(DP), dimension(3,3), intent(in):: deformation_gradient !! Maps reference to deformed configuration
+        real(DP), dimension(3):: new_normal                         !! Surface normal in the deformed configuration
+
+        new_normal = matmul(invert(transpose(deformation_gradient)), normal)
+    end function
+
     !> Determine the weight of a cluster
     !>
     !> The boundary influence zone is assumed to be proportional to the surface area of the boundary.
@@ -356,9 +370,7 @@ contains
         real(DP):: boundary_normal(3), &
                    oriented_area(3)
 
-        !Nanson's formula
-        boundary_normal = matmul(alamel_cluster%initial_boundary_orientation, [0._DP, 0._DP, 1._DP])
-        oriented_area = det(def_grad) * matmul(invert(transpose(def_grad)), boundary_normal)
+        oriented_area = det(def_grad) * deform_normal_direction(alamel_cluster%initial_boundary_normal, def_grad)
         weight = norm2(oriented_area)
     end function
 
@@ -396,13 +408,22 @@ contains
                    new_vec(10), &
                    dummy(10), &
                    new_boundary_frame(3, 3), &
-                   basis(10, 10)
+                   basis(10, 10), &
+                   vec(3)
         integer:: i
 
-        !Calculate current boundary reference frame
-        new_boundary_frame = matmul(def_grad, alamel_cluster%initial_boundary_orientation)
-        new_boundary_frame(:,3) = new_boundary_frame(:,1) .cross. new_boundary_frame(:,2)
-        new_boundary_frame(:,2) = new_boundary_frame(:,3) .cross. new_boundary_frame(:,1)
+        !Construct current boundary frame from the initial normal and deformation gradient:
+
+        !We can use nanson's formula to map the reference boundary normal to the current one:
+        new_boundary_frame(:,3) = deform_normal_direction(alamel_cluster%initial_boundary_normal, def_grad)
+        !The second vector is orthogonal to the normal, so take cross product with arbitrary vector
+        !Make sure the arbitrary vector is not pointing in the same direction as the reference vector.
+        vec = 0.0
+        vec(minloc(abs(new_boundary_frame(:,3)))) = 1.0
+        new_boundary_frame(:,2) = new_boundary_frame(:,3) .cross. vec
+        !Final vector must be orthogonal to both existing vectors:
+        new_boundary_frame(:,1) = new_boundary_frame(:,2) .cross. new_boundary_frame(:,3)
+        !Normalize everything at once
         new_boundary_frame = normalize(new_boundary_frame)
 
         !Transform relaxation from boundary frame to crystal frame
