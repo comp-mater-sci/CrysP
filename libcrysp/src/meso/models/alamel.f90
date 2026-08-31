@@ -343,16 +343,16 @@ contains
     end subroutine
 
 
-    !> Get the direction of a vector after application of a deformation gradient.
+    !> Get the direction of a surface normal after application of a deformation gradient.
     !>
     !> Based on Nanson's formula.
     !> Input and output are NOT normalized.
-    function deformed_direction(vector, deformation_gradient) result(deformed_vector)
-        real(DP), dimension(3), intent(in):: vector                 !! Direction in the reference configuration
+    function deform_normal_direction(normal, deformation_gradient) result(new_normal)
+        real(DP), dimension(3), intent(in):: normal                 !! Surface normal in the reference configuration
         real(DP), dimension(3,3), intent(in):: deformation_gradient !! Maps reference to deformed configuration
-        real(DP), dimension(3):: deformed_vector                    !! Direction in the deformed configuration
+        real(DP), dimension(3):: new_normal                         !! Surface normal in the deformed configuration
 
-        deformed_vector = matmul(invert(transpose(deformation_gradient)), vector)
+        new_normal = matmul(invert(transpose(deformation_gradient)), normal)
     end function
 
     !> Determine the weight of a cluster
@@ -369,7 +369,7 @@ contains
         real(DP):: boundary_normal(3), &
                    oriented_area(3)
 
-        oriented_area = det(def_grad) * deformed_direction(alamel_cluster%initial_boundary_normal, def_grad)
+        oriented_area = det(def_grad) * deform_normal_direction(alamel_cluster%initial_boundary_normal, def_grad)
         weight = norm2(oriented_area)
     end function
 
@@ -414,12 +414,10 @@ contains
         !Construct current boundary frame from the initial normal and deformation gradient:
 
         !We can use nanson's formula to map the reference boundary normal to the current one:
-        new_boundary_frame(:,3) = deformed_direction(alamel_cluster%initial_boundary_normal, def_grad)
+        new_boundary_frame(:,3) = deform_normal_direction(alamel_cluster%initial_boundary_normal, def_grad)
         !The second vector is orthogonal to the normal, so take cross product with arbitrary vector
         !Make sure the arbitrary vector is not pointing in the same direction as the reference vector.
-        vec = [1.0,0.0,0.0]
-        if (sum(abs(vec-new_boundary_frame(:,3))) < TOLERANCE) &
-            vec = [0.0,1.0,0.0]
+        vec = merge([1.0,0.0,0.0], [0.0,1.0,0.0], new_boundary_frame(1,3) < new_boundary_frame(2,3))
         new_boundary_frame(:,2) = new_boundary_frame(:,3) .cross. vec
         !Final vector must be orthogonal to both existing vectors:
         new_boundary_frame(:,1) = new_boundary_frame(:,2) .cross. new_boundary_frame(:,3)
