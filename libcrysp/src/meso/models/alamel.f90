@@ -418,7 +418,8 @@ contains
         new_boundary_frame(:,3) = deform_normal_direction(alamel_cluster%initial_boundary_normal, def_grad)
         !The second vector is orthogonal to the normal, so take cross product with arbitrary vector
         !Make sure the arbitrary vector is not pointing in the same direction as the reference vector.
-        vec = merge([1.0,0.0,0.0], [0.0,1.0,0.0], new_boundary_frame(1,3) < new_boundary_frame(2,3))
+        vec = 0.0
+        vec(minloc(abs(new_boundary_frame(:,3)))) = 1.0
         new_boundary_frame(:,2) = new_boundary_frame(:,3) .cross. vec
         !Final vector must be orthogonal to both existing vectors:
         new_boundary_frame(:,1) = new_boundary_frame(:,2) .cross. new_boundary_frame(:,3)
