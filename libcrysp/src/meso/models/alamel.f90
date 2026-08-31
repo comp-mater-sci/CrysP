@@ -347,6 +347,7 @@ contains
     !>
     !> Based on Nanson's formula.
     !> Input and output are NOT normalized.
+    !> Deformation is assumed isochoric so det(F) == 1
     function deform_normal_direction(normal, deformation_gradient) result(new_normal)
         real(DP), dimension(3), intent(in):: normal                 !! Surface normal in the reference configuration
         real(DP), dimension(3,3), intent(in):: deformation_gradient !! Maps reference to deformed configuration
