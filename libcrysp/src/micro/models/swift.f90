@@ -7,6 +7,7 @@ module swift
     use crysp_serialization
     use crysp_input
     use conversions
+    use crysp_model
     use crysp_isotropic_state
 
     implicit none
@@ -27,6 +28,9 @@ module swift
         procedure, nopass:: get_grain_state => swift_get_state
         procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure:: make_hardening_state => swift_make_state
+        procedure:: init_hardening_state => swift_init_state
+        procedure:: size => swift_size
         procedure:: serialize => swift_serialize
         procedure:: deserialize => swift_deserialize
     end type
@@ -64,35 +68,31 @@ contains
     end function
 
     pure function swift_get_state() result(state)
-        class(GrainState), allocatable:: state
+        class(HardeningState), allocatable:: state
 
         allocate(IsotropicState:: state)
     end function
 
     !> See [[ConstitutiveModel:init]]
-    function swift_init(this, miller_indices, params) result(initial_state)
-        class(ConstitutiveModelSwift),   intent(inout):: this
+    subroutine swift_init(this, miller_indices, params)
+        class(ConstitutiveModelSwift), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(GrainState), allocatable:: initial_state
 
         real(DP):: crss0
 
-        allocate(IsotropicState:: initial_state)
-        call this%base_init(miller_indices, initial_state)
+        call this%ConstitutiveModel%init(miller_indices, params)
 
         crss0       = params(1)
         this%gamma0 = params(2)
         this%n      = params(3)
         this%k = crss0 / (this%gamma0**this%n)
-
-        initial_state%crss = crss0
-   end function
+    end subroutine
 
     !> See [[ConstitutiveModel:deform]]
     subroutine swift_deform(this, state, time, slip_rates)
         class(ConstitutiveModelSwift), intent(inout)::               this
-        class(GrainState), target, intent(inout)::               state
+        class(HardeningState), target, intent(inout)::               state
         real(DP), intent(in)::                                       time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 
@@ -104,25 +104,52 @@ contains
         state_ptr%crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)
     end subroutine
 
-    pure function serialize(this) result(params)
+    pure function swift_make_state() result(state)
+        class(HardeningState), allocatable:: state
+
+        allocate(IsotropicState::state)
+    end function
+
+    pure subroutine swift_init_state(this, state)
         class(ConstitutiveModelSwift), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+        class(HardeningState), intent(out):: state
+
+        call this%ConstitutiveModel%init_hardening_state(state)
+        state%crss = this%k * (this%gamma0**this%n)
+    end subroutine
+
+    pure function swift_size(this) result(size)
+        class(ConstitutiveModelSwift), intent(in):: this
+        integer:: size
+
+        size = this%ConstitutiveModel%size() + 3
+    end function
+
+    pure function swift_serialize(this) result(params)
+        class(ConstitutiveModelSwift), intent(in):: this
+        type(Parameter), dimension(this%size()):: params
+
+        integer:: offset
 
         params = this%ConstitutiveModel%serialize()
-        params = params .add. [serialize(this%k), &
-                               serialize(this%gamma0), &
-                               serialize(this%n)]
+        offset = this%ConstitutiveModel%size()
+
+        params(offset+1) = this%k
+        params(offset+2) = this%gamma0
+        params(offset+3) = this%n
     end function
 
-    function deserialize(this, params) result(params_)
-        class(ConstitutiveModelSwift), intent(inout):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
+    pure subroutine swift_deserialize(this, params)
+        class(ConstitutiveModelSwift), intent(out):: this
+        type(Parameter), dimension(this%size()), intent(in):: params
 
-        params_ = this%ConstitutiveModel%deserialize(params)
-        this%k = params_(1)
-        this%gamma0 = params_(2)
-        this%n = params_(3)
-        params_ = params_ .pop. 3
-    end function
+        integer:: offset
+
+        call this%ConstitutiveModel%deserialize(params)
+        offset = this%ConstitutiveModel%size()
+
+        this%k = params(offset+1)
+        this%gamma0 = params(offset+2)
+        this%n = params(offset+3)
+    end subroutine
 end module swift

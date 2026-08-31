@@ -27,13 +27,16 @@ module voce
         real(DP)   ::  transition_slip = 0._DP !! Value for total slip at which to transition from stage 1 to stage 2.
         type(Stage), dimension(2):: stages
     contains
-        procedure, nopass:: get_name    => voce_get_name
+        procedure, nopass:: get_name        => voce_get_name
         procedure, nopass:: get_description => voce_get_description
-        procedure, nopass:: get_signature => voce_get_signature
-        procedure, nopass:: get_input      => voce_get_input          !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature   => voce_get_signature
+        procedure, nopass:: get_input       => voce_get_input          !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_grain_state => voce_get_state
-        procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                    => voce_init                    !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                  => voce_deform                  !! Inherited from [[ConstitutiveModel]]
+        procedure:: make_hardening_state => voce_make_state
+        procedure:: init_hardening_state => voce_init_state
+        procedure:: size => voce_size
         procedure:: serialize => voce_serialize
         procedure:: deserialize => voce_deserialize
     end type
@@ -75,17 +78,16 @@ contains
     end function
 
     pure function voce_get_state() result(state)
-        class(GrainState), allocatable:: state
+        class(HardeningState), allocatable:: state
 
         allocate(IsotropicState:: state)
     end function
 
     !> See [[ConstitutiveModel:init]]
-    function voce_init(this, miller_indices, params) result(initial_state)
+    subroutine voce_init(this, miller_indices, params)
         class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(GrainState), allocatable:: initial_state
 
         !Local variables
         real(DP):: THT, &
@@ -93,8 +95,7 @@ contains
                    TAUT, &
                    THIII1
 
-        allocate(IsotropicState:: initial_state)
-        call this%base_init(miller_indices, initial_state)
+        call this%ConstitutiveModel%init(miller_indices, params)
 
         !Parse the hardening parameters
         this%stages(1)%T1 = params(1)
@@ -109,15 +110,13 @@ contains
         TAUT = this%stages(1)%TS - (this%stages(1)%TS-this%stages(1)%T1) * exp(-this%stages(1)%TH*this%transition_slip/this%stages(1)%TS)
         this%stages(2)%TH = THT / (1.D0-TAUT/this%stages(2)%TS)
         this%stages(2)%T1 = this%stages(2)%TS + (TAUT-this%stages(2)%TS) * exp(this%stages(2)%TH*this%transition_slip/this%stages(2)%TS)
-
-        initial_state%crss = this%stages(1)%T1
-    end function
+    end subroutine
 
     !> See [[ConstitutiveModel:deform]]
     subroutine voce_deform(this, state, time, slip_rates)
-        class(ConstitutiveModelVoce),                      intent(inout):: this
-        class(GrainState), target,                  intent(inout):: state
-        real(DP),                                       intent(in)::    time
+        class(ConstitutiveModelVoce),  intent(inout):: this
+        class(HardeningState), target, intent(inout):: state
+        real(DP),                      intent(in)::    time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in)::    slip_rates
 
         type(Stage):: current_stage          !Current stage in the Voce hardening process
@@ -134,38 +133,65 @@ contains
         state_ptr%crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*state_ptr%total_slip/current_stage%TS)
     end subroutine
 
-    pure function voce_serialize(this) result(params)
-        class(ConstitutiveModelVoce), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+    pure function voce_make_state() result(state)
+        class(HardeningState), allocatable:: state
 
-        integer:: i
-
-        params = this%ConstitutiveModel%serialize()
-        params = params .add. this%transition_slip
-        do i=1,2
-            params = params .add. [this%stages(i)%TS, &
-                                   this%stages(i)%T1, &
-                                   this%stages(i)%TH]
-        end do
+        allocate(IsotropicState::state)
     end function
 
-    function voce_deserialize(this, params) result(params_)
-        class(ConstitutiveModelVoce), intent(inout):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
+    pure subroutine voce_init_state(this, state)
+        class(ConstitutiveModelVoce), intent(in):: this
+        class(HardeningState), intent(out):: state
+
+        call this%ConstitutiveModel%init_hardening_state(state)
+        state%crss = this%stages(1)%T1
+    end subroutine
+
+    pure function voce_size(this) result(size)
+        class(ConstitutiveModelVoce), intent(in):: this
+        integer:: size
+
+        size = this%ConstitutiveModel%size() + 7
+    end function
+
+    pure function voce_serialize(this) result(params)
+        class(ConstitutiveModelVoce), intent(in):: this
+        type(Parameter), dimension(this%size()):: params
 
         integer:: i, &
                   offset
 
-        params_ = this%ConstitutiveModel%deserialize(params)
-        this%transition_slip = params_(1)
-        do i=1,2
-            offset = 3*(i-1)
-            this%stages(i)%TS = params_(offset+1)
-            this%stages(i)%T1 = params_(offset+2)
-            this%stages(i)%TH = params_(offset+3)
-        end do
+        params = this%ConstitutiveModel%serialize()
+        offset = this%ConstitutiveModel%size()
 
-        params_ = params_ .pop. 7
+        params(offset+1) = this%transition_slip
+        offset = offset+1
+        do i=1,2
+            offset = offset + 3*(i-1)
+            params(offset+1) = this%stages(i)%TS
+            params(offset+2) = this%stages(i)%T1
+            params(offset+3) = this%stages(i)%TH
+        end do
     end function
+
+    pure subroutine voce_deserialize(this, params)
+        class(ConstitutiveModelVoce), target, intent(out):: this
+        type(Parameter), dimension(this%size()), intent(in):: params
+
+        integer:: i, &
+                  offset
+
+        call this%ConstitutiveModel%deserialize(params)
+        offset = this%ConstitutiveModel%size()
+
+        this%transition_slip = params(offset+1)
+        offset = offset+1
+
+        do i=1,2
+            this%stages(i)%TS = params(offset+1)
+            this%stages(i)%T1 = params(offset+2)
+            this%stages(i)%TH = params(offset+3)
+            offset = offset + 3
+        end do
+    end subroutine
 end module voce

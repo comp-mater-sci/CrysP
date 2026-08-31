@@ -203,7 +203,7 @@ contains
                   n_grains
         integer, allocatable:: miller_indices(:,:,:)
         real(DP):: orientation(3)
-        class(GrainState), allocatable:: initial_state
+        class(HardeningState), allocatable:: initial_state
         type(Phase), pointer:: phase_ptr
 
         !First determine the total number of grains so we  can allocate the return array.

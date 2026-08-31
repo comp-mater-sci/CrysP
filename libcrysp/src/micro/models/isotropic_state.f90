@@ -9,22 +9,23 @@ module crysp_isotropic_state
              to_isotropic_state
 
     !> Hardening state used by many simple isotropic hardening models
-    type, extends(GrainState):: IsotropicState
+    type, extends(HardeningState):: IsotropicState
         real(DP):: total_slip = 0._DP !! Sum of all the slip on all the slip systems of the grain.
     contains
+        procedure:: size => isotropic_state_size
         procedure:: serialize => isotropic_state_serialize
         procedure:: deserialize => isotropic_state_deserialize
     end type
 
 contains
 
-    !> Convert a generic GrainState to a pointer to a IsotropicState object
+    !> Convert a generic HardeningState to a pointer to a IsotropicState object
     !>
     !> Closest Fortran comes to type casting
     !> If the provided state is not of type swift_state, the program crashes.
     function to_isotropic_state(state) result(isotropic_state_ptr)
-        class(GrainState), target, intent(in):: state   !! GrainState to be converted.
-        type(IsotropicState), pointer:: isotropic_state_ptr !! Pointer of type IsotropicState to the GrainState
+        class(HardeningState), target, intent(in):: state   !! HardeningState to be converted.
+        type(IsotropicState), pointer:: isotropic_state_ptr !! Pointer of type IsotropicState to the HardeningState
 
         select type (state)
             type is (IsotropicState)
@@ -34,21 +35,26 @@ contains
         end select
     end function
 
+    pure function isotropic_state_size(this) result(size)
+        class(IsotropicState), intent(in):: this
+        integer:: size
+
+        size = this%HardeningState%size() + 1
+    end function
+
     pure function isotropic_state_serialize(this) result(params)
         class(IsotropicState), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(this%size()):: params
 
-        params = this%GrainState%serialize()
-        params = params .add. serialize(this%total_slip)
+        params = this%HardeningState%serialize()
+        params(this%size()) = serialize(this%total_slip)
     end function
 
-    function isotropic_state_deserialize(this, params) result(params_)
+    subroutine isotropic_state_deserialize(this, params)
         class(IsotropicState), intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
 
-        params_ = this%GrainState%deserialize(params)
-        this%total_slip = params_(1)
-        params_ = params_ .pop. 1
-    end function
+        call this%HardeningState%deserialize(params)
+        this%total_slip = params(this%size())
+    end subroutine
 end module

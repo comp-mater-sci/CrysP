@@ -16,8 +16,9 @@ module none
     contains
         procedure, nopass:: get_name        => none_get_name
         procedure, nopass:: get_description => none_get_description
-        procedure:: init                    => none_init
         procedure:: deform                  => none_deform
+        procedure:: make_hardening_state    => none_make_hardening_state
+        procedure:: init_hardening_state    => none_init_hardening_state
     end type
 
 contains
@@ -34,26 +35,25 @@ contains
         description = "Critical resolved shear stress on all slip systems is kept constant at 1."
     end function
 
-    !> @Brief See hardening_model_init
-    !> @Details All slip systems get a CRSS of 1 in both directions to make all slip systems equally hard. Note that this
-    !! yields an unrealistic value for the amount of plastic work and that this trick only works if all phases have no hardening.
-    function none_init(this, miller_indices, params) result(initial_state)
-        class(ConstitutiveModelNone), intent(inout):: this
-        integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), intent(in):: params
-        class(GrainState), allocatable:: initial_state
-
-        allocate(GrainState:: initial_state)
-        call this%base_init(miller_indices, initial_state)
-
-        initial_state%crss = 1._DP
-    end function
-
     !> @Brief See hardening_model_deform
     subroutine none_deform(this, state, time, slip_rates)
         class(ConstitutiveModelNone), intent(inout):: this
-        class(GrainState), target, intent(inout)      :: state
+        class(HardeningState), target, intent(inout)      :: state
         real(DP), intent(in)                    :: time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
+    end subroutine
+
+    pure function none_make_hardening_state() result(state)
+        class(HardeningState), allocatable:: state
+
+        allocate(state)
+    end function
+
+    pure subroutine none_init_hardening_state(this, state)
+        class(ConstitutiveModelNone), intent(in):: this
+        class(HardeningState), intent(out):: state
+
+        call this%ConstitutiveModel%init_hardening_state(state)
+        state%crss = 1._DP
     end subroutine
 end module

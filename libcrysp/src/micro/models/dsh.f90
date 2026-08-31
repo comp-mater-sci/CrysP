@@ -42,11 +42,12 @@ module dsh
                    RHOwd_ini = 0._DP
     end type
 
-    type, extends(GrainState):: DSHState    !! Grain-bound state. See PhD thesis Peeters for the meaning of the fields.
+    type, extends(HardeningState):: DSHState    !! Grain-bound state. See PhD thesis Peeters for the meaning of the fields.
         real(DP)                   :: RHOcb = 0._DP
         type(CBBtype), dimension(6):: CBB
         integer, dimension(2)      :: ActiveCBB = 0
     contains
+        procedure:: size => dsh_state_size
         procedure:: serialize => dsh_state_serialize
         procedure:: deserialize => dsh_state_deserialize
     end type
@@ -79,8 +80,10 @@ module dsh
     contains
         procedure, nopass:: get_signature => dsh_get_signature  !! Inherited from ConstitutiveModel
         procedure, nopass:: get_input => dsh_get_input  !! Inherited from ConstitutiveModel
-        procedure, nopass:: get_grain_state => dsh_get_state
         procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
+        procedure:: make_hardening_state => dsh_make_state
+        procedure:: init_hardening_state => dsh_init_state
+        procedure:: size => dsh_size
         procedure:: serialize  => dsh_serialize
         procedure:: deserialize => dsh_deserialize
         procedure:: init_common, &
@@ -132,19 +135,13 @@ contains
                   Input(to_c_string('R2',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
     end function
 
-    pure function dsh_get_state() result(state)
-        class(GrainState), allocatable:: state
-
-        allocate(DSHState:: state)
-    end function
-
-    !> Convert a generic GrainState to a pointer to a DSHState object
+    !> Convert a generic HardeningState to a pointer to a DSHState object
     !>
     !> Closest Fortran comes to type casting
     !> If the provided state is not of type dsh_state, the program crashes.
     function to_dsh_state(state) result(dsh_state_ptr)
-        class(GrainState), target, intent(in):: state   !! GrainState to be converted. Must have dynamic type DSHState.
-        type(DSHState), pointer:: dsh_state_ptr             !! Pointer of type DSHState to the GrainState
+        class(HardeningState), target, intent(in):: state   !! HardeningState to be converted. Must have dynamic type DSHState.
+        type(DSHState), pointer:: dsh_state_ptr             !! Pointer of type DSHState to the HardeningState
 
         select type (state)
             type is (DSHState)
@@ -158,16 +155,14 @@ contains
     !>
     !> The only difference between the variants of DSH is the interaction coefficients between dislocations and cell block
     !> boundaries. Thus, each model defines its own coefficients and calls this common initialization procedure with them.
-    function init_common(this, miller_indices, params, eff) result(initial_state)
+    subroutine init_common(this, miller_indices, params, eff)
         class(ConstitutiveModelDSH), intent(inout):: this          !! DSH model variant to be initialized.
         integer, dimension(:,:,:), intent(in):: miller_indices     !! Miller indices of the deformation mechanism to be used.
         type(Parameter), dimension(:), intent(in):: params
         real(DP), dimension(24, 6), intent(in):: eff               !! 'Wall-effectivity' matrix == cosines of the angle between
                                                                    !! dislocation movement vectors and the cell block boundary normals.
-        class(GrainState), allocatable:: initial_state         !! Initial state of each grain using a DSH model.
 
-        allocate(DSHState:: initial_state)
-        call this%base_init(miller_indices, initial_state)
+        call this%ConstitutiveModel%init(miller_indices, params)
 
         this%b     = params(1)
         this%b = this%b * 1.e6_DP ![m] -> [um]
@@ -202,26 +197,46 @@ contains
         !Quantities derived from input parameters. Kept as fields to avoid having to recompute them all the time.
         this%effslashb       = eff/this%b
         this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
+    end subroutine
 
-        !Select type is required here due to Fortran semantics even though the type is obvious
-        select type (initial_state)
+    pure function dsh_make_state() result(state)
+        class(HardeningState), allocatable:: state
+
+        allocate(DSHState::state)
+    end function
+
+    !> Initialize the hardening state for a DSH grain.
+    subroutine dsh_init_state(this, state)
+        class(ConstitutiveModelDSH), intent(in):: this
+        class(HardeningState), intent(out):: state
+
+        call this%ConstitutiveModel%init_hardening_state(state)
+
+        select type (state)
             type is (DSHState)
-                initial_state%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
-                initial_state%CBB%RHOwd        = this%RHOwdMIN
-                initial_state%CBB%RHOwp        = 0._DP
-                initial_state%CBB%RHOwdHOM     = this%RHOwdMIN
-                initial_state%CBB%accGAMMA_new = 0._DP
-                initial_state%CBB%RHOwd_ini    = this%RHOwdMIN
-                initial_state%ActiveCBB        = 0
+                state%RHOcb            = MINFRAC * (this%I)**2 / (this%R)**2  ! Minfrac*rho_cb_sat
+                state%CBB%RHOwd        = this%RHOwdMIN
+                state%CBB%RHOwp        = 0._DP
+                state%CBB%RHOwdHOM     = this%RHOwdMIN
+                state%CBB%accGAMMA_new = 0._DP
+                state%CBB%RHOwd_ini    = this%RHOwdMIN
+                state%ActiveCBB        = 0
 
-                call this%update_crss(initial_state)
+                call this%update_crss(state)
         end select
+    end subroutine
+
+    pure function dsh_size(this) result(size)
+        class(ConstitutiveModelDSH), intent(in):: this
+        integer:: size
+
+        size = this%ConstitutiveModel%size() + 22
     end function
 
     !> See cm_deform
     subroutine dsh_deform(this, state, time, slip_rates)
         class(ConstitutiveModelDSH), intent(inout)                  :: this
-        class(GrainState), target, intent(inout)                :: state
+        class(HardeningState), target, intent(inout)                :: state
         real(DP), intent(in)                                        :: time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 
@@ -397,108 +412,122 @@ contains
 
     pure function dsh_serialize(this) result(params)
         class(ConstitutiveModelDSH), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(this%size()):: params
+
+        integer:: offset
 
         params = this%ConstitutiveModel%serialize()
-        params .add. [serialize(this%b), &
-                      serialize(this%g), &
-                      serialize(this%alfa), &
-                      serialize(this%f), &
-                      serialize(this%tau0), &
-                      serialize(this%i), &
-                      serialize(this%r), &
-                      serialize(this%iwd), &
-                      serialize(this%rwd), &
-                      serialize(this%rncg), &
-                      serialize(this%beta1), &
-                      serialize(this%beta2), &
-                      serialize(this%iwp), &
-                      serialize(this%rwp), &
-                      serialize(this%rrev), &
-                      serialize(this%r2), &
-                      serialize(this%rhowpsat), &
-                      serialize(this%rhowdmin), &
-                      serialize(this%rhowpmin), &
-                      serialize(this%rhowplow), &
-                      serialize(this%effslashb), &
-                      serialize(this%alfa_g_b_eff)]
+        offset = this%ConstitutiveModel%size()
+
+        params(offset+1)  = this%b
+        params(offset+2)  = this%G
+        params(offset+3)  = this%alfa
+        params(offset+4)  = this%f
+        params(offset+5)  = this%tau0
+        params(offset+6)  = this%I
+        params(offset+7)  = this%R
+        params(offset+8)  = this%Iwd
+        params(offset+9)  = this%Rwd
+        params(offset+10) = this%Rncg
+        params(offset+11) = this%beta1
+        params(offset+12) = this%beta2
+        params(offset+13) = this%Iwp
+        params(offset+14) = this%Rwp
+        params(offset+15) = this%Rrev
+        params(offset+16) = this%R2
+        params(offset+17) = this%RHOwpSAT
+        params(offset+18) = this%RHOwdMIN
+        params(offset+19) = this%RHOwpMIN
+        params(offset+20) = this%RHOwpLOW
+        params(offset+21) = this%effslashb
+        params(offset+22) = this%alfa_G_b_eff
     end function
 
-    function dsh_deserialize(this, params) result(params_)
-        class(ConstitutiveModelDSH), intent(inout):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
+    pure subroutine dsh_deserialize(this, params)
+        class(ConstitutiveModelDSH), intent(out):: this
+        type(Parameter), dimension(this%size()), intent(in):: params
 
-        params_ = this%ConstitutiveModel%deserialize(params)
-        this%b = params(1)
-        this%g = params(2)
-        this%alfa = params(3)
-        this%f = params(4)
-        this%tau0 = params(5)
-        this%i = params(6)
-        this%r = params(7)
-        this%iwd = params(8)
-        this%rwd = params(9)
-        this%rncg = params(10)
-        this%beta1 = params(11)
-        this%beta2 = params(12)
-        this%iwp = params(13)
-        this%rwp = params(14)
-        this%rrev = params(15)
-        this%r2 = params(16)
-        this%rhowpsat = params(17)
-        this%rhowdmin = params(18)
-        this%rhowpmin = params(19)
-        this%rhowplow = params(20)
-        this%effslashb = params(21)
-        this%alfa_g_b_eff = params(22)
+        integer:: offset
 
-        params_ = params_ .pop. 22
+        call this%ConstitutiveModel%deserialize(params)
+        offset = this%ConstitutiveModel%size()
+
+        this%b       = params(offset+1)
+        this%G       = params(offset+2)
+        this%alfa    = params(offset+3)
+        this%f       = params(offset+4)
+        this%tau0    = params(offset+5)
+        this%I       = params(offset+6)
+        this%R       = params(offset+7)
+        this%Iwd     = params(offset+8)
+        this%Rwd     = params(offset+9)
+        this%Rncg    = params(offset+10)
+        this%beta1   = params(offset+11)
+        this%beta2   = params(offset+12)
+        this%Iwp     = params(offset+13)
+        this%Rwp     = params(offset+14)
+        this%Rrev    = params(offset+15)
+        this%R2      = params(offset+16)
+        this%RHOwpSAT  = params(offset+17)
+        this%RHOwdMIN  = params(offset+18)
+        this%RHOwpMIN  = params(offset+19)
+        this%RHOwpLOW  = params(offset+20)
+        this%effslashb     = params(offset+21)
+        this%alfa_G_b_eff  = params(offset+22)
+    end subroutine
+
+    pure function dsh_state_size(this) result(size)
+        class(DSHState), intent(in):: this
+        integer:: size
+
+        size = this%HardeningState%size() + 32
     end function
 
     pure function dsh_state_serialize(this) result(params)
         class(DSHState), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(this%size()):: params
 
-        integer:: i
+        integer:: i, offset
 
-        params = this%GrainState%serialize()
-        params = params .add. this%rhocb
+        params = this%HardeningState%serialize()
+        offset = this%HardeningState%size()
+
+        params(offset+1) = this%rhocb
+        offset = offset + 1
         do i=1,6
             associate (cbb => this%cbb(i))
-                params = params .add. [serialize(cbb%rhowd), &
-                                       serialize(cbb%rhowp), &
-                                       serialize(cbb%rhowdhom), &
-                                       serialize(cbb%accgamma_new), &
-                                       serialize(cbb%rhowd_ini)]
+                params(offset+1) = serialize(cbb%rhowd)
+                params(offset+2) = serialize(cbb%rhowp)
+                params(offset+3) = serialize(cbb%rhowdhom)
+                params(offset+4) = serialize(cbb%accgamma_new)
+                params(offset+5) = serialize(cbb%rhowd_ini)
             end associate
+            offset = offset + 5
         end do
-        params = params .add. this%activecbb
+        params(offset+1) = this%activecbb
     end function
 
-    function dsh_state_deserialize(this, params) result(params_)
+    pure subroutine dsh_state_deserialize(this, params)
         class(DSHState), intent(out):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
+        type(Parameter), dimension(this%size()), intent(in):: params
 
-        integer:: i, &
-                  offset
+        integer:: i, offset
 
-        params_ = this%GrainState%deserialize(params)
-        this%rhocb = params_(1)
+        call this%HardeningState%deserialize(params)
+        offset = this%HardeningState%size()
+
+        this%rhocb = params(offset+1)
+        offset = offset + 1
         do i=1,6
-            offset = 1 + (i-1)*5
             associate (cbb => this%cbb(i))
-                cbb%rhowd = params_(offset+1)
-                cbb%rhowp = params_(offset+2)
-                cbb%rhowdhom = params_(offset+3)
-                cbb%accgamma_new = params_(offset+4)
-                cbb%rhowd_ini = params_(offset+5)
+                cbb%rhowd = params(offset+1)
+                cbb%rhowp = params(offset+2)
+                cbb%rhowdhom = params(offset+3)
+                cbb%accgamma_new = params(offset+4)
+                cbb%rhowd_ini = params(offset+5)
             end associate
+            offset = offset + 5
         end do
-        offset = offset+6
-        this%activecbb = params_(offset)
-
-        params_ = params_ .pop. offset
-    end function
+        this%activecbb = params(offset+1)
+    end subroutine
 end module

@@ -36,11 +36,10 @@ contains
                        "This variant of the model considers only screw dislocations."
     end function
 
-    function dsh_screw_init(this, miller_indices, params) result(initial_state)
+    subroutine dsh_screw_init(this, miller_indices, params)
         class(ConstitutiveModelDSHScrew), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(GrainState), allocatable:: initial_state
 
         integer:: i
         real(DP):: screwdir(24, 3)
@@ -50,7 +49,7 @@ contains
             screwdir(i, :) = normalize(BCC24(:,2, i) .cross. BCC24(:,1, i))
         end do
 
-        initial_state = this%init_common(miller_indices, params, matmul(screwdir, transpose(CBBNORMAL)))  ! 'Wall-effectivity' matrix == cosines of the angle between
+        call this%init_common(miller_indices, params, matmul(screwdir, transpose(CBBNORMAL)))  ! 'Wall-effectivity' matrix == cosines of the angle between
                                                               !the dislocation movement vectors and the cell block boundary normals.
-    end function
+    end subroutine
 end module

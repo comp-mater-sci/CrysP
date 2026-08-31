@@ -38,12 +38,11 @@ contains
                        "This variant of the model considers only edge dislocations."
     end function
 
-    function dsh_edge_init(this, miller_indices, params) result(initial_state)
+    subroutine dsh_edge_init(this, miller_indices, params)
         class(ConstitutiveModelDSHEdge), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(GrainState), allocatable:: initial_state
 
-        initial_state = this%init_common(miller_indices, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
-    end function
+        call this%init_common(miller_indices, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
+    end subroutine
 end module

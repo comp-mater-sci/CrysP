@@ -33,35 +33,32 @@ module crysp_serialization
         enumerator:: TYPE_STRING        !! Character(C_CHAR,:)
     end enum
 
-    type:: ReferenceRegistry
-        type(c_ptr), dimension(:), allocatable:: references
-    contains
-        procedure:: store => registry_store
-        procedure:: fetch => registry_fetch
-    end type
-
     type, abstract:: State
     contains
+        procedure(state_get_size), deferred:: size
         procedure(state_serialize), deferred:: serialize
         procedure(state_deserialize), deferred:: deserialize
     end type
 
     abstract interface
+        pure function state_get_size(this) result(size)
+            class(State), intent(in):: this
+            integer:: size
+        end function
         pure function state_serialize(this) result(params)
             import State
             import Parameter
 
             class(State), target, intent(in):: this
-            type(Parameter), dimension(:), allocatable:: params
+            type(Parameter), dimension(this%get_size()):: params
         end function
-        function state_deserialize(this, params) result(remaining_params)
+        pure subroutine state_deserialize(this, params)
             import State
             import Parameter
 
             class(State), target, intent(out):: this
-            type(Parameter), dimension(:), intent(in):: params
-            type(Parameter), dimension(:), allocatable:: remaining_params
-        end function
+            type(Parameter), dimension(this%get_size()), intent(in):: params
+        end subroutine
     end interface
 
     !> Wrapper type for storing parameter values.
@@ -275,7 +272,7 @@ contains
             type is (RealValue)
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_int', ERR_TYPE, 'Parameter is not of correct type')
+                call log_error(MOD_NAME, 'parameter_to_real', ERR_TYPE, 'Parameter is not of correct type')
         end select
 
         deallocate(val)
@@ -309,7 +306,7 @@ contains
             type is (RealMatrixValue)
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_int', ERR_TYPE, 'Parameter is not of correct type')
+                call log_error(MOD_NAME, 'parameter_to_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
         end select
 
         deallocate(val)
@@ -326,7 +323,7 @@ contains
             type is (StringValue)
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_int', ERR_TYPE, 'Parameter is not of correct type')
+                call log_error(MOD_NAME, 'parameter_to_string', ERR_TYPE, 'Parameter is not of correct type')
         end select
 
         deallocate(val)
@@ -409,24 +406,5 @@ contains
             call log_error(MOD_NAME, 'pop', ERR_DIMS, 'Parameter list too small!')
 
         popped = params(n+1:)
-    end function
-
-    subroutine registry_store(this, ptr)
-        class(ReferenceRegistry), intent(inout):: this
-        type(c_ptr), intent(in):: ptr
-
-        if (.not. allocated(this%references)) then
-            allocate(this%references(1))
-    end subroutine
-
-
-    end subroutine
-
-    function registry_fetch(this, id) result(ptr)
-        class(ReferenceRegistry), intent(in):: this
-        integer, intent(in):: id
-        type(c_ptr):: ptr
-
-        ptr = this%references(id)
     end function
 end module
