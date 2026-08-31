@@ -131,7 +131,7 @@ contains
 
         integer:: offset
 
-        params = this%ConstitutiveModel%serialize()
+        params(:this%ConstitutiveModel%size()) = this%ConstitutiveModel%serialize()
         offset = this%ConstitutiveModel%size()
 
         params(offset+1) = this%k
@@ -139,13 +139,13 @@ contains
         params(offset+3) = this%n
     end function
 
-    pure subroutine swift_deserialize(this, params)
+    subroutine swift_deserialize(this, params)
         class(ConstitutiveModelSwift), intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params)
+        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
         offset = this%ConstitutiveModel%size()
 
         this%k = params(offset+1)

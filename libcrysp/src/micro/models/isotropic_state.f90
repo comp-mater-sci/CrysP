@@ -46,7 +46,7 @@ contains
         class(IsotropicState), intent(in):: this
         type(Parameter), dimension(this%size()):: params
 
-        params = this%HardeningState%serialize()
+        params(:this%HardeningState%size()) = this%HardeningState%serialize()
         params(this%size()) = serialize(this%total_slip)
     end function
 
@@ -54,7 +54,7 @@ contains
         class(IsotropicState), intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        call this%HardeningState%deserialize(params)
+        call this%HardeningState%deserialize(params(:this%HardeningState%size()))
         this%total_slip = params(this%size())
     end subroutine
 end module

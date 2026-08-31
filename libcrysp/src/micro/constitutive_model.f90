@@ -23,7 +23,6 @@ module constitutive_model
     type, extends(State):: HardeningState
         real(DP), dimension(:,:), allocatable:: crss
     contains
-        procedure:: init => hs_init
         procedure:: size => hs_size
         procedure:: serialize => hs_serialize
         procedure:: deserialize => hs_deserialize
@@ -99,18 +98,11 @@ contains
         this%basis = basis_indices(this%taylor_coeffs)
     end subroutine
 
-    pure subroutine hs_init(this, n_systems)
-        class(HardeningState), intent(out):: this
-        integer, intent(in):: n_systems
-
-        allocate(this%crss(2, n_systems))
-    end subroutine
-
     pure subroutine cm_init_hardening_state(this, state)
         class(ConstitutiveModel), intent(in):: this
         class(HardeningState), intent(out):: state
 
-        call state%init(size(this%taylor_coeffs, 2))
+        allocate(state%crss(2, size(this%taylor_coeffs, 2)))
     end subroutine
 
     pure function cm_size(this) result(size)
@@ -129,9 +121,9 @@ contains
                        serialize(this%basis)]
     end function
 
-    pure subroutine cm_deserialize(this, params)
+    subroutine cm_deserialize(this, params)
         class(ConstitutiveModel), target, intent(out):: this
-        type(Parameter), dimension(this%get_size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         this%taylor_coeffs = params(1)
         this%spin_coeffs = params(2)
@@ -152,9 +144,9 @@ contains
         params(1) = serialize(this%crss)
     end function
 
-    pure subroutine hs_deserialize(this, params)
+    subroutine hs_deserialize(this, params)
         class(HardeningState), intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         this%crss = params(1)
     end subroutine

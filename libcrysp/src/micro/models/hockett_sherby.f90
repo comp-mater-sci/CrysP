@@ -130,7 +130,7 @@ contains
 
         integer:: offset
 
-        params = this%ConstitutiveModel%serialize()
+        params(:this%ConstitutiveModel%size()) = this%ConstitutiveModel%serialize()
         offset = this%ConstitutiveModel%size()
 
         params(offset+1) = this%tau_0
@@ -139,13 +139,13 @@ contains
         params(offset+4) = this%n
     end function
 
-    pure subroutine hs_deserialize(this, params)
+    subroutine hs_deserialize(this, params)
         class(ConstitutiveModelHockettSherby), intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params)
+        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
         offset = this%ConstitutiveModel%size()
 
         this%tau_0 = params(offset+1)

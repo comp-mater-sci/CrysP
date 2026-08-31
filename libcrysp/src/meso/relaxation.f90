@@ -24,6 +24,7 @@ module relaxation_module
                                                                     !cluster type
         real(DP), dimension(6):: spin_coeffs  ! Defined in this way to be consistent with taylor_coeffs
     contains
+        procedure:: size => relaxation_size
         procedure:: init => relaxation_init
         procedure:: update => relaxation_update
         procedure:: serialize => relaxation_serialize
@@ -33,6 +34,13 @@ module relaxation_module
     public:: Relaxation
 
 contains
+
+    pure function relaxation_size(this) result(size)
+        class(Relaxation), intent(in):: this
+        integer:: size
+
+        size = 3
+    end function
 
     subroutine relaxation_init(this, type)
         class(Relaxation), target, intent(inout):: this
@@ -62,24 +70,21 @@ contains
 
     pure function relaxation_serialize(this) result(params)
         class(Relaxation), target, intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+        type(Parameter), dimension(this%size()):: params
 
-        params = [serialize(this%type), &
-                  serialize(this%taylor_coeffs), &
-                  serialize(this%spin_coeffs)]
+        params(1) = this%type
+        params(2) = this%taylor_coeffs
+        params(3) = this%spin_coeffs
     end function
 
-    function relaxation_deserialize(this, params) result(params_)
+    pure subroutine relaxation_deserialize(this, params)
         class(Relaxation), target, intent(out):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
+        type(Parameter), dimension(this%size()), intent(in):: params
 
         this%type = params(1)
         this%taylor_coeffs = params(2)
         this%spin_coeffs = params(3)
-
-        params_ = params .pop. 3
-    end function
+    end subroutine
 end module
 
 

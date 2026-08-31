@@ -25,7 +25,7 @@ module alamel
     character(*), parameter:: MOD_NAME = 'alamel'   !! Module name for easy logging.
 
     !> Cluster used by the ALAMEL model.
-    type, extends(ClusterState):: AlamelClusterState
+    type, extends(Cluster):: AlamelCluster
         integer, dimension(10):: ind_basis_systems                  !! Indices of the currently active slip systems
         real(DP), dimension(3):: initial_boundary_normal            !! Inital direction of the normal to the boundary plane.
         real(DP), dimension(10, 10):: inverse_basis = 0._DP         !! Inverse of the matrix formed by selecting the active slip
@@ -33,6 +33,7 @@ module alamel
         type(Relaxation), dimension(2):: relaxations                !! ALAMEL clusters contain 2 relaxations which act as slip
                                                                     !! systems with 0 critical resolved shear stress.
     contains
+        procedure:: size => alamel_cluster_size
         procedure:: serialize => alamel_cluster_serialize
         procedure:: deserialize => alamel_cluster_deserialize
     end type
@@ -45,7 +46,7 @@ module alamel
         procedure, nopass:: get_description => alamel_get_description
         procedure, nopass:: get_signature  => alamel_get_signature
         procedure, nopass:: get_input => alamel_get_input         !! Inherited from [[MesoModel]]
-        procedure, nopass:: get_cluster_state => alamel_get_state
+        procedure, nopass:: make_cluster => alamel_make_cluster
         procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
@@ -86,10 +87,10 @@ contains
         inputs = [Input(to_c_string("Boundaries",NAME_LEN), INPUT_ANGLES_LIST)]
     end function
 
-    pure function alamel_get_state() result(state)
-        class(ClusterState), allocatable:: state
+    pure function alamel_make_cluster() result(clstr)
+        class(Cluster), allocatable:: clstr
 
-        allocate(AlamelClusterState):: state
+        allocate(AlamelCluster:: clstr)
     end function
 
     !> Convert the type of a provided generic cluster to AlamelCluster
@@ -499,35 +500,54 @@ contains
         params_ = params .pop. 1
     end function
 
-    pure function alamel_cluster_serialize(this) result(params)
-        class(AlamelClusterState), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+    pure function alamel_cluster_size(this) result(size)
+        class(AlamelCluster), intent(in):: this
+        integer:: size
 
-        integer:: i
+        size = this%Cluster%size() + 9
+    end function
 
-        params = this%ClusterState%serialize()
-        params .add. [serialize(this%ind_basis_systems), &
-                      serialize(this%initial_boundary_normal), &
-                      serialize(this%inverse_basis)]
+    pure function alamel_cluster_serialize(this, phases) result(params)
+        class(AlamelCluster), target, intent(in):: this
+        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
+        type(Parameter), dimension(this%size()):: params
+
+        integer:: base_size, &
+                  offset, &
+                  i
+
+        base_size = this%Cluster%size()
+        params(:base_size) = this%Cluster%serialize(phases)
+        params(base_size+1) = this%ind_basis_systems
+        params(base_size+2) = this%initial_boundary_normal
+        params(base_size+3) = this%inverse_basis
+
+        offset = base_size + 3
         do i=1,2
-            params = params .add. this%relaxations(i)%serialize()
+            params(offset+1:offset+3) = this%relaxations(i)%serialize()
+            offset = offset + 3
         end do
     end function
 
-    function alamel_cluster_deserialize(this, params) result(params_)
-        class(AlamelClusterState), intent(out):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
+    pure subroutine alamel_cluster_deserialize(this, params, phases)
+        class(AlamelCluster), target, intent(out):: this
+        type(Parameter), dimension(this%size()), intent(in):: params
+        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
 
-        integer:: i
+        integer:: base_size, &
+                  offset, &
+                  i
 
-        params_ = this%ClusterState%deserialize(params)
-        this%ind_basis_systems = params_(1)
-        this%initial_boundary_normal = params_(2)
-        this%inverse_basis = params_(3)
+        base_size = this%Cluster%size()
+        call this%Cluster%deserialize(params(:base_size), phases)
+        this%ind_basis_systems = params(base_size+1)
+        this%initial_boundary_normal = params(base_size+2)
+        this%inverse_basis = params(base_size+3)
 
+        offset = base_size + 3
         do i=1,2
-            params_ = this%relaxations(i)%deserialize(params_)
+            call this%relaxations(i)%deserialize(params(offset+1:offset+3))
+            offset = offset + 3
         end do
-    end function
+    end subroutine
 end module

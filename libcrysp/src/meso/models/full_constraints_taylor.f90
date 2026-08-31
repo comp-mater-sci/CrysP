@@ -25,10 +25,11 @@ module full_constraints_taylor
     !> Cluster-specific state needed for full constraints Taylor simulations.
     !>
     !> A Taylor cluster only holds 1 grain.
-    type, extends(ClusterState):: TaylorClusterState
+    type, extends(Cluster):: TaylorCluster
         integer, dimension(5):: ind_basis_systems
         real(DP), dimension(5, 5):: inverse_basis
     contains
+        procedure:: size => taylor_cluster_size
         procedure:: serialize => taylor_cluster_serialize
         procedure:: deserialize => taylor_cluster_deserialize
     end type
@@ -39,7 +40,7 @@ module full_constraints_taylor
     contains
         procedure, nopass:: get_name => fctaylor_get_name
         procedure, nopass:: get_description => fctaylor_get_description
-        procedure, nopass:: get_cluster_state => fctaylor_get_state
+        procedure, nopass:: make_cluster => fctaylor_make_cluster
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
         procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
@@ -59,10 +60,10 @@ contains
         description = "Each grain is forced to deform exactly like the material as a whole."
     end function
 
-    pure function fctaylor_get_state() result(state)
-        class(ClusterState), allocatable:: state
+    pure function fctaylor_make_cluster() result(clstr)
+        class(Cluster), allocatable:: clstr
 
-        allocate(TaylorClusterState:: state)
+        allocate(TaylorCluster:: clstr)
     end function
 
     !> Convert the type of a provided generic cluster to TaylorCluster
@@ -191,23 +192,36 @@ contains
         end associate
     end subroutine
 
-    pure function taylor_cluster_serialize(this) result(params)
-        class(TaylorClusterState), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+    pure function taylor_cluster_size(this) result(size)
+        class(TaylorCluster), intent(in):: this
+        integer:: size
 
-        params = this%ClusterState%serialize()
-        params = params .add. [serialize(this%ind_basis_systems), &
-                               serialize(this%inverse_basis)]
+        size = this%Cluster%size() + 2
     end function
 
-    function taylor_cluster_deserialize(this, params) result(params_)
-        class(TaylorClusterState), intent(out):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
+    pure function taylor_cluster_serialize(this, phases) result(params)
+        class(TaylorCluster), target, intent(in):: this
+        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
+        type(Parameter), dimension(this%size()):: params
 
-        params_ = this%ClusterState%deserialize(params)
-        this%ind_basis_systems = params_(1)
-        this%inverse_basis = params_(2)
-        params_ = params_ .pop. 2
+        integer:: base_size
+
+        base_size = this%Cluster%size()
+        params(:base_size) = this%Cluster%serialize(phases)
+        params(base_size+1) = this%ind_basis_systems
+        params(base_size+2) = this%inverse_basis
     end function
+
+    pure subroutine taylor_cluster_deserialize(this, params, phases)
+        class(TaylorCluster), target, intent(out):: this
+        type(Parameter), dimension(this%size()), intent(in):: params
+        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
+
+        integer:: base_size
+
+        base_size = this%Cluster%size()
+        call this%Cluster%deserialize(params(:base_size), phases)
+        this%ind_basis_systems = params(base_size+1)
+        this%inverse_basis = params(base_size+2)
+    end subroutine
 end module

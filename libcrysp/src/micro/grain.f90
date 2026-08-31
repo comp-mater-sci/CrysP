@@ -1,4 +1,4 @@
-module crysp_grain
+dule crysp_grain
     use conversions
     use logging
     use constitutive_model
@@ -107,10 +107,10 @@ contains
         params(4:) = this%hardening_state%serialize()
     end subroutine
 
-    pure subroutine grain_deserialize(this, phases, params)
-        class(HardeningState), target, intent(out):: this
+    subroutine grain_deserialize(this, params, phases)
+        class(Grain), target, intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
         class(ConstitutiveModel), intent(in):: phases
-        type(Parameter), dimension(this%size()), intent(in):: params
 
         integer:: phase_id
 
@@ -119,6 +119,7 @@ contains
 
         this%orientation = params(2)
         this%stress_increment = params(3)
+        this%hardening_state = this%model%make_hardening_state()
         call this%hardening_state%deserialize(params(4:))
     end subroutine
 end module

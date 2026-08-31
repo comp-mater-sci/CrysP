@@ -416,7 +416,7 @@ contains
 
         integer:: offset
 
-        params = this%ConstitutiveModel%serialize()
+        params(:this%ConstitutiveModel%size()) = this%ConstitutiveModel%serialize()
         offset = this%ConstitutiveModel%size()
 
         params(offset+1)  = this%b
@@ -443,13 +443,13 @@ contains
         params(offset+22) = this%alfa_G_b_eff
     end function
 
-    pure subroutine dsh_deserialize(this, params)
+    subroutine dsh_deserialize(this, params)
         class(ConstitutiveModelDSH), intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params)
+        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
         offset = this%ConstitutiveModel%size()
 
         this%b       = params(offset+1)
@@ -489,7 +489,7 @@ contains
 
         integer:: i, offset
 
-        params = this%HardeningState%serialize()
+        params(:this%HardeningState%size()) = this%HardeningState%serialize()
         offset = this%HardeningState%size()
 
         params(offset+1) = this%rhocb
@@ -507,13 +507,13 @@ contains
         params(offset+1) = this%activecbb
     end function
 
-    pure subroutine dsh_state_deserialize(this, params)
+    subroutine dsh_state_deserialize(this, params)
         class(DSHState), intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         integer:: i, offset
 
-        call this%HardeningState%deserialize(params)
+        call this%HardeningState%deserialize(params(:this%HardeningState%size()))
         offset = this%HardeningState%size()
 
         this%rhocb = params(offset+1)

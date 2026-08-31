@@ -17,7 +17,7 @@ module crysp_meso_model
     !> Concrete mesoscopic models must extend this base type.
     type, extends(Model), abstract:: MesoModel
     contains
-        procedure(cp_model_get_state), nopass, deferred:: get_cluster_state
+        procedure(cp_model_make_cluster), nopass, deferred:: make_cluster
         procedure(cp_model_init), deferred::       init                                                   !! Initialize the model.
         procedure(cp_model_get_stress), deferred:: get_stress                                             !! Get the stress state of a cluster under a certain strain condition.
         procedure(cp_model_apply_step), deferred:: apply_step                                             !! Apply a single deformation step to a single cluster.
@@ -25,8 +25,8 @@ module crysp_meso_model
     end type
 
     abstract interface
-        pure function cp_model_get_state() result(state)
-            class(ClusterState), allocatable:: state
+        pure function cp_model_make_cluster() result(clstr)
+            class(Cluster), allocatable:: clstr
         end function
 
         !> Initialize the mesoscopic model.

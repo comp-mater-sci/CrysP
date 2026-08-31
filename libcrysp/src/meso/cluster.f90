@@ -32,10 +32,12 @@ contains
         class(Cluster), intent(in):: this
         integer:: size
 
-        integer:: i
+        integer:: i, &
+                  n_grains
 
-        size = 1
-        do i,size(this%grains)
+        n_grains = size(this%grains)
+        size = n_grains + 1
+        do i=1,n_grains
             size = size + this%grains(i)%size()
         end do
         size = size + 1
@@ -50,10 +52,12 @@ contains
                   offset, &
                   size_grain
 
-        params(1) = serialize(size(this%grains))
+        params(1) = size(this%grains)
         offset = 1
         do i=1,size(this%grains)
             size_grain = this%grains(i)%size()
+            params(offset+1) = size_grain
+            offset = offset + 1
             params(offset+1:offset+size_grain) = this%grains(i)%serialize(phases)
             offset = offset + size_grain
         end do
@@ -73,14 +77,14 @@ contains
         n_grains = params(1)
         allocate(this%grains(n_grains))
 
-        offset=0
+        offset=1
         do i=1,n_grains
-            call this%grains(i)%deserialize(params, phases)
+            size_grain = params(offset+1)
+            offset = offset+1
+            call this%grains(i)%deserialize(params(offset+1:offset+size_grain), phases)
+            offset = offset + size_grain
         end do
 
-
-        this%weight = params(1)
-    end function
-
+        this%weight = params(offset+1)
+    end subroutine
 end module
-

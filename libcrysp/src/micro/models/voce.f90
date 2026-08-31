@@ -161,7 +161,7 @@ contains
         integer:: i, &
                   offset
 
-        params = this%ConstitutiveModel%serialize()
+        params(:this%ConstitutiveModel%size()) = this%ConstitutiveModel%serialize()
         offset = this%ConstitutiveModel%size()
 
         params(offset+1) = this%transition_slip
@@ -174,14 +174,14 @@ contains
         end do
     end function
 
-    pure subroutine voce_deserialize(this, params)
+    subroutine voce_deserialize(this, params)
         class(ConstitutiveModelVoce), target, intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         integer:: i, &
                   offset
 
-        call this%ConstitutiveModel%deserialize(params)
+        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
         offset = this%ConstitutiveModel%size()
 
         this%transition_slip = params(offset+1)
