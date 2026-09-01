@@ -36,13 +36,6 @@ module micro
         enumerator:: HARDENING_DSH_LOOP         = 13 !! Variant of DSH hardening using loop dislocations.
     end enum
 
-    !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
-    !and Fortran semantics require lists to be of homogeneous type.
-    type:: Phase
-        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
-    end type
-
-
     !> Supported deformation mechanisms (i.e. slip system sets).
     enum, bind(C)
         enumerator:: SLIP_SYSTEMS_FCC   !! Face-Centered Cubic.
@@ -217,15 +210,16 @@ contains
         j = 1
         do i = 1, size(phases)
             phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
-            phase_ptr%id = i
             phase_ptr%model = get_model_instance(phase_descriptors(i)%model_id)
             miller_indices = get_miller_indices(phase_descriptors(i)%deformation_mechanism)
-            initial_state = phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
+            call phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
+            initial_state = phases(i)%model%make_hardening_state()
+            call phases(i)%model%init_hardening_state(initial_state)
 
             do k = 1, size(phase_descriptors(i)%orientations, 2)
                 !assignment of orientation needed for gfortran
                 orientation = phase_descriptors(i)%orientations(:,k)
-                call grains(j)%init(orientation, phases(i)%model, initial_state)
+                call grains(j)%init(orientation, phases(i), initial_state)
                 j = j+1
             end do
         end do

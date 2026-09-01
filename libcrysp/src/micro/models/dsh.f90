@@ -81,7 +81,7 @@ module dsh
         procedure, nopass:: get_signature => dsh_get_signature  !! Inherited from ConstitutiveModel
         procedure, nopass:: get_input => dsh_get_input  !! Inherited from ConstitutiveModel
         procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
-        procedure:: make_hardening_state => dsh_make_state
+        procedure, nopass:: make_hardening_state => dsh_make_state
         procedure:: init_hardening_state => dsh_init_state
         procedure:: size => dsh_size
         procedure:: serialize  => dsh_serialize
@@ -199,7 +199,7 @@ contains
         this%alfa_G_b_eff    = this%alfa*this%G*this%b*eff
     end subroutine
 
-    pure function dsh_make_state() result(state)
+    function dsh_make_state() result(state)
         class(HardeningState), allocatable:: state
 
         allocate(DSHState::state)
@@ -411,7 +411,7 @@ contains
     end subroutine
 
     pure function dsh_serialize(this) result(params)
-        class(ConstitutiveModelDSH), intent(in):: this
+        class(ConstitutiveModelDSH), target, intent(in):: this
         type(Parameter), dimension(this%size()):: params
 
         integer:: offset
@@ -444,12 +444,12 @@ contains
     end function
 
     subroutine dsh_deserialize(this, params)
-        class(ConstitutiveModelDSH), intent(out):: this
+        class(ConstitutiveModelDSH), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
+        call this%ConstitutiveModel%deserialize(params)
         offset = this%ConstitutiveModel%size()
 
         this%b       = params(offset+1)
@@ -484,7 +484,7 @@ contains
     end function
 
     pure function dsh_state_serialize(this) result(params)
-        class(DSHState), intent(in):: this
+        class(DSHState), target, intent(in):: this
         type(Parameter), dimension(this%size()):: params
 
         integer:: i, offset
@@ -508,12 +508,12 @@ contains
     end function
 
     subroutine dsh_state_deserialize(this, params)
-        class(DSHState), intent(out):: this
+        class(DSHState), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: i, offset
 
-        call this%HardeningState%deserialize(params(:this%HardeningState%size()))
+        call this%HardeningState%deserialize(params)
         offset = this%HardeningState%size()
 
         this%rhocb = params(offset+1)

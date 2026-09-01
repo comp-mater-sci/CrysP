@@ -4,7 +4,9 @@ module crysp_meso_model
     use base_defs
     use conversions
     use crysp_cluster
+    use crysp_grain
     use crysp_model
+    use logging
 
     implicit none
 
@@ -17,15 +19,17 @@ module crysp_meso_model
     !> Concrete mesoscopic models must extend this base type.
     type, extends(Model), abstract:: MesoModel
     contains
-        procedure(cp_model_make_cluster), nopass, deferred:: make_cluster
-        procedure(cp_model_init), deferred::       init                                                   !! Initialize the model.
-        procedure(cp_model_get_stress), deferred:: get_stress                                             !! Get the stress state of a cluster under a certain strain condition.
-        procedure(cp_model_apply_step), deferred:: apply_step                                             !! Apply a single deformation step to a single cluster.
-        procedure::                                  update              => cp_model_update               !! Update the model state after a deformation step.
+        procedure, nopass, deferred:: make_cluster => cp_model_make_cluster
+        procedure, deferred:: init => cp_model_init_default
+        procedure, deferred:: get_stress => cp_model_get_stress_default
+        procedure, deferred:: apply_step => cp_model_apply_step_default
+        procedure, deferred:: update     => cp_model_update               !! Update the model state after a deformation step.
     end type
 
     abstract interface
-        pure function cp_model_make_cluster() result(clstr)
+        function cp_model_make_cluster() result(clstr)
+            import Cluster
+
             class(Cluster), allocatable:: clstr
         end function
 
@@ -81,17 +85,15 @@ module crysp_meso_model
             real(DP), dimension(3, 3), intent(out):: stress     !! Homogenized stress state of the cluster during the time step.
             real(DP), intent(out):: slip                        !! Homogenized slip that occured in the cluster to realize the deformation during this time step.
         end subroutine
+
+        !> Update the mesoscopic model.
+        subroutine cp_model_update(this, velocity_gradient, time)
+            import MesoModel
+            import DP
+
+            class(MesoModel), intent(inout):: this  !! Model instance
+            real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
+            real(DP), intent(in):: time                              !! Duration of the time step.
+        end subroutine
     end interface
-
-contains
-
-    !> Update the mesoscopic model.
-    !>
-    !> The default implementation does nothing.
-    subroutine cp_model_update(this, velocity_gradient, time)
-        class(MesoModel), intent(inout):: this  !! Model instance
-        real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
-        real(DP), intent(in):: time                              !! Duration of the time step.
-    end subroutine
-
 end module

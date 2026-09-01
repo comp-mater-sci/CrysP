@@ -33,6 +33,13 @@ module crysp_serialization
         enumerator:: TYPE_STRING        !! Character(C_CHAR,:)
     end enum
 
+    !> Opaque C-compatible wrapper for parameters.
+    !>
+    !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
+    type, bind(C):: Parameter
+        type(C_PTR):: handle = C_NULL_PTR
+    end type
+
     type, abstract:: State
     contains
         procedure(state_get_size), deferred:: size
@@ -42,6 +49,8 @@ module crysp_serialization
 
     abstract interface
         pure function state_get_size(this) result(size)
+            import State
+
             class(State), intent(in):: this
             integer:: size
         end function
@@ -50,14 +59,14 @@ module crysp_serialization
             import Parameter
 
             class(State), target, intent(in):: this
-            type(Parameter), dimension(this%get_size()):: params
+            type(Parameter), dimension(this%size()):: params
         end function
-        pure subroutine state_deserialize(this, params)
+        subroutine state_deserialize(this, params)
             import State
             import Parameter
 
             class(State), target, intent(out):: this
-            type(Parameter), dimension(this%get_size()), intent(in):: params
+            type(Parameter), dimension(:), intent(in):: params
         end subroutine
     end interface
 
@@ -103,20 +112,14 @@ module crysp_serialization
         class(Value), allocatable:: value
     end type
 
-    !> Opaque C-compatible wrapper for parameters.
-    !>
-    !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
-    type, bind(C):: Parameter
-        type(C_PTR):: handle = C_NULL_PTR
-    end type
-
 
 
     !> From within fortran, creating and destroying parameters is done using intrinsic assignment to/from the types described in the
     !> enum at the top of this module.
     interface assignment(=)
         module procedure int_to_param, int_array_to_param, real_to_param, real_array_to_param, real_matrix_to_param, string_to_param, &
-                         param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, param_to_string
+                         param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, &
+                         param_to_real_matrix_fixed, param_to_string
     end interface
 
     interface operator(.add.)
@@ -307,6 +310,23 @@ contains
                 data = value%buffer
             class default
                 call log_error(MOD_NAME, 'parameter_to_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+    subroutine param_to_real_matrix_fixed(data, param) bind(C)
+        real(C_DOUBLE), dimension(:,:), intent(out):: data
+        type(Parameter), intent(in):: param
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (RealMatrixValue)
+                data = value%buffer
+            class default
+                call log_error(MOD_NAME, 'parameter_to_real_matrix_fixed', ERR_TYPE, 'Parameter is not of correct type')
         end select
 
         deallocate(val)

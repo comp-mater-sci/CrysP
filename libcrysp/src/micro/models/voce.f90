@@ -34,7 +34,7 @@ module voce
         procedure, nopass:: get_grain_state => voce_get_state
         procedure:: init                    => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                  => voce_deform                  !! Inherited from [[ConstitutiveModel]]
-        procedure:: make_hardening_state => voce_make_state
+        procedure, nopass:: make_hardening_state => voce_make_state
         procedure:: init_hardening_state => voce_init_state
         procedure:: size => voce_size
         procedure:: serialize => voce_serialize
@@ -133,7 +133,7 @@ contains
         state_ptr%crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*state_ptr%total_slip/current_stage%TS)
     end subroutine
 
-    pure function voce_make_state() result(state)
+    function voce_make_state() result(state)
         class(HardeningState), allocatable:: state
 
         allocate(IsotropicState::state)
@@ -155,7 +155,7 @@ contains
     end function
 
     pure function voce_serialize(this) result(params)
-        class(ConstitutiveModelVoce), intent(in):: this
+        class(ConstitutiveModelVoce), target, intent(in):: this
         type(Parameter), dimension(this%size()):: params
 
         integer:: i, &
@@ -181,7 +181,7 @@ contains
         integer:: i, &
                   offset
 
-        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
+        call this%ConstitutiveModel%deserialize(params)
         offset = this%ConstitutiveModel%size()
 
         this%transition_slip = params(offset+1)

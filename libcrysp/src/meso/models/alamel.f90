@@ -51,6 +51,7 @@ module alamel
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
         procedure:: update                 => alamel_update                 !! Inherited from [[MesoModel]]
+        procedure:: size => alamel_model_size
         procedure:: serialize => alamel_serialize
         procedure:: deserialize => alamel_deserialize
     end type
@@ -87,7 +88,7 @@ contains
         inputs = [Input(to_c_string("Boundaries",NAME_LEN), INPUT_ANGLES_LIST)]
     end function
 
-    pure function alamel_make_cluster() result(clstr)
+    function alamel_make_cluster() result(clstr)
         class(Cluster), allocatable:: clstr
 
         allocate(AlamelCluster:: clstr)
@@ -484,21 +485,26 @@ contains
         end do
     end subroutine
 
-    pure function alamel_serialize(this) result(params)
+    pure function alamel_model_size(this) result(size)
         class(AlamelModel), intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+        integer:: size
 
-        params = [serialize(this%deformation_gradient)]
+        size = 1
     end function
 
-    function alamel_deserialize(this, params) result(params_)
-        class(AlamelModel), intent(out):: this
+    pure function alamel_serialize(this) result(params)
+        class(AlamelModel), target, intent(in):: this
+        type(Parameter), dimension(this%size()):: params
+
+        params(1) = this%deformation_gradient
+    end function
+
+    subroutine alamel_deserialize(this, params)
+        class(AlamelModel), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), allocatable:: params_
 
         this%deformation_gradient = params(1)
-        params_ = params .pop. 1
-    end function
+    end subroutine
 
     pure function alamel_cluster_size(this) result(size)
         class(AlamelCluster), intent(in):: this
@@ -529,17 +535,17 @@ contains
         end do
     end function
 
-    pure subroutine alamel_cluster_deserialize(this, params, phases)
+    subroutine alamel_cluster_deserialize(this, params, phases)
         class(AlamelCluster), target, intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(ConstitutiveModel), dimension(:), target, intent(in):: phases
 
         integer:: base_size, &
                   offset, &
                   i
 
+        call this%Cluster%deserialize(params, phases)
         base_size = this%Cluster%size()
-        call this%Cluster%deserialize(params(:base_size), phases)
         this%ind_basis_systems = params(base_size+1)
         this%initial_boundary_normal = params(base_size+2)
         this%inverse_basis = params(base_size+3)

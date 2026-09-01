@@ -60,7 +60,7 @@ contains
         description = "Each grain is forced to deform exactly like the material as a whole."
     end function
 
-    pure function fctaylor_make_cluster() result(clstr)
+    function fctaylor_make_cluster() result(clstr)
         class(Cluster), allocatable:: clstr
 
         allocate(TaylorCluster:: clstr)
@@ -212,15 +212,15 @@ contains
         params(base_size+2) = this%inverse_basis
     end function
 
-    pure subroutine taylor_cluster_deserialize(this, params, phases)
+    subroutine taylor_cluster_deserialize(this, params, phases)
         class(TaylorCluster), target, intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(ConstitutiveModel), dimension(:), target, intent(in):: phases
 
         integer:: base_size
 
+        call this%Cluster%deserialize(params, phases)
         base_size = this%Cluster%size()
-        call this%Cluster%deserialize(params(:base_size), phases)
         this%ind_basis_systems = params(base_size+1)
         this%inverse_basis = params(base_size+2)
     end subroutine

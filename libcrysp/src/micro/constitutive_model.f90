@@ -4,13 +4,14 @@ module constitutive_model
     use conversions
     use crysp_serialization
     use crysp_model
-    use crysp_grain
+    use logging
 
     implicit none
 
     private
     public:: ConstitutiveModel, &
-             HardeningState
+             HardeningState, &
+             Phase
 
     !> Hardening state object specific to each grain.
     !>
@@ -30,14 +31,21 @@ module constitutive_model
 
     !> Base constitutive model
     !>
-    !> Each concrete constitutive model must extend this model and implement its deferred procedures.
-    type, extends(Model), abstract:: ConstitutiveModel
+    !> Each concrete constitutive model extends this model and implements @c deform and @c make_hardening_state.
+    !> @note
+    !> This type is deliberately NOT abstract (even though @c deform / @c make_hardening_state should always be overridden), because
+    !> concrete models call their parent's procedures via `this%ConstitutiveModel%...`, and the Fortran standard only permits such a
+    !> type-bound procedure reference when the parent part-name is not of abstract type (F2018 19.4.5: a data-ref of abstract type
+    !> preceding a procedure name must be polymorphic, which an inherited-component reference is not). The default implementations
+    !> below terminate with an error if invoked on an unextended instance.
+    !> @endnote
+    type, extends(Model):: ConstitutiveModel
         real(DP), dimension(:,:), allocatable:: taylor_coeffs  !! Taylor coefficients of the slip systems. I.e. the 5D vector representation of the symmetric component of the Schmidt matrix.
         real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
         integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
     contains
-        procedure(cm_deform), deferred::        deform                !! Update the hardening state under a given deformation.
-        procedure(cm_make_hardening_state), nopass, deferred:: make_hardening_state
+        procedure:: deform => cm_deform_default              !! Update the hardening state under a given deformation.
+        procedure, nopass:: make_hardening_state => cm_make_hardening_state_default
         procedure:: init => cm_init
         procedure:: init_hardening_state => cm_init_hardening_state
         procedure:: size => cm_size
@@ -45,12 +53,22 @@ module constitutive_model
         procedure:: deserialize => cm_deserialize
     end type
 
+    !> Wrapper type for the constitutive model backing a phase.
+    !>
+    !> Different phases may be backed by different subtypes of [[ConstitutiveModel]], but Fortran requires lists to be of
+    !> homogeneous type, so the concrete model is stored as an allocatable polymorphic component inside this thin wrapper.
+    !> This lets an array of `Phase` hold heterogeneous concrete models.
+    type:: Phase
+        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
+    end type
+
     abstract interface
 
-        pure function cm_make_hardening_state() result(state)
+        function cm_make_hardening_state() result(state)
+            import HardeningState
+
             class(HardeningState), allocatable:: state
         end function
-
         !> Update the critical resolved shear stresses (CRSS) of a grain.
         !>
         !> Updates CRSS based on the slip rates provided by the caller, assuming these slip rates remain constant over the time
@@ -98,12 +116,29 @@ contains
         this%basis = basis_indices(this%taylor_coeffs)
     end subroutine
 
-    pure subroutine cm_init_hardening_state(this, state)
+    subroutine cm_init_hardening_state(this, state)
         class(ConstitutiveModel), intent(in):: this
         class(HardeningState), intent(out):: state
 
         allocate(state%crss(2, size(this%taylor_coeffs, 2)))
     end subroutine
+
+    !> Default @c deform: should never be called on an unextended [[ConstitutiveModel]] instance.
+    subroutine cm_deform_default(this, state, time, slip_rates)
+        class(ConstitutiveModel), intent(inout):: this
+        class(HardeningState), target, intent(inout):: state
+        real(DP), intent(in)                :: time
+        real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
+
+        call log_error('constitutive_model', 'cm_deform_default', ERR_TYPE, 'ConstitutiveModel::deform not overridden')
+    end subroutine
+
+    !> Default @c make_hardening_state: see [[cm_deform_default]].
+    function cm_make_hardening_state_default() result(state)
+        class(HardeningState), allocatable:: state
+
+        call log_error(ERR_TYPE)
+    end function
 
     pure function cm_size(this) result(size)
         class(ConstitutiveModel), intent(in):: this
@@ -114,7 +149,7 @@ contains
 
     pure function cm_serialize(this) result(params)
         class(ConstitutiveModel), target, intent(in):: this
-        type(Parameter), dimension(this%get_size()):: params
+        type(Parameter), dimension(this%size()):: params
 
         params(1:3) = [serialize(this%taylor_coeffs), &
                        serialize(this%spin_coeffs), &
@@ -128,14 +163,14 @@ contains
         this%taylor_coeffs = params(1)
         this%spin_coeffs = params(2)
         this%basis = params(3)
-    end function
+    end subroutine
 
-    pure subroutine hs_size(this) result(size)
+    pure function hs_size(this) result(size)
         class(HardeningState), intent(in):: this
         integer:: size
 
-        return 1
-    end subroutine
+        size = 1
+    end function
 
     pure function hs_serialize(this) result(params)
         class(HardeningState), target, intent(in):: this
@@ -145,7 +180,7 @@ contains
     end function
 
     subroutine hs_deserialize(this, params)
-        class(HardeningState), intent(out):: this
+        class(HardeningState), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
         this%crss = params(1)

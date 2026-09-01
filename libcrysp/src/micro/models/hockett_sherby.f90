@@ -29,7 +29,7 @@ module hockett_sherby
         procedure, nopass:: get_grain_state => hs_get_state
         procedure:: init                    => hs_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                  => hs_deform              !! Inherited from [[ConstitutiveModel]]
-        procedure:: make_hardening_state => hs_make_state
+        procedure, nopass:: make_hardening_state => hs_make_state
         procedure:: init_hardening_state => hs_init_state
         procedure:: size => hs_size
         procedure:: serialize => hs_serialize
@@ -103,7 +103,7 @@ contains
         state_ptr%crss = this%tau_sat - (this%tau_sat - this%tau_0) * exp(-this%b*state_ptr%total_slip**this%n)
     end subroutine
 
-    pure function hs_make_state() result(state)
+    function hs_make_state() result(state)
         class(HardeningState), allocatable:: state
 
         allocate(IsotropicState::state)
@@ -125,7 +125,7 @@ contains
     end function
 
     pure function hs_serialize(this) result(params)
-        class(ConstitutiveModelHockettSherby), intent(in):: this
+        class(ConstitutiveModelHockettSherby), target, intent(in):: this
         type(Parameter), dimension(this%size()):: params
 
         integer:: offset
@@ -140,12 +140,12 @@ contains
     end function
 
     subroutine hs_deserialize(this, params)
-        class(ConstitutiveModelHockettSherby), intent(out):: this
+        class(ConstitutiveModelHockettSherby), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
+        call this%ConstitutiveModel%deserialize(params)
         offset = this%ConstitutiveModel%size()
 
         this%tau_0 = params(offset+1)

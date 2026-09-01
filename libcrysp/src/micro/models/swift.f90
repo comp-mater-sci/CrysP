@@ -28,7 +28,7 @@ module swift
         procedure, nopass:: get_grain_state => swift_get_state
         procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
-        procedure:: make_hardening_state => swift_make_state
+        procedure, nopass:: make_hardening_state => swift_make_state
         procedure:: init_hardening_state => swift_init_state
         procedure:: size => swift_size
         procedure:: serialize => swift_serialize
@@ -104,7 +104,7 @@ contains
         state_ptr%crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)
     end subroutine
 
-    pure function swift_make_state() result(state)
+    function swift_make_state() result(state)
         class(HardeningState), allocatable:: state
 
         allocate(IsotropicState::state)
@@ -126,7 +126,7 @@ contains
     end function
 
     pure function swift_serialize(this) result(params)
-        class(ConstitutiveModelSwift), intent(in):: this
+        class(ConstitutiveModelSwift), target, intent(in):: this
         type(Parameter), dimension(this%size()):: params
 
         integer:: offset
@@ -140,12 +140,12 @@ contains
     end function
 
     subroutine swift_deserialize(this, params)
-        class(ConstitutiveModelSwift), intent(out):: this
+        class(ConstitutiveModelSwift), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params(:this%ConstitutiveModel%size()))
+        call this%ConstitutiveModel%deserialize(params)
         offset = this%ConstitutiveModel%size()
 
         this%k = params(offset+1)

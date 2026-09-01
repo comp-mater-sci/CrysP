@@ -77,9 +77,9 @@ contains
         params(3) = this%spin_coeffs
     end function
 
-    pure subroutine relaxation_deserialize(this, params)
+    subroutine relaxation_deserialize(this, params)
         class(Relaxation), target, intent(out):: this
-        type(Parameter), dimension(this%size()), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
 
         this%type = params(1)
         this%taylor_coeffs = params(2)

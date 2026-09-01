@@ -43,7 +43,7 @@ contains
     end function
 
     pure function isotropic_state_serialize(this) result(params)
-        class(IsotropicState), intent(in):: this
+        class(IsotropicState), target, intent(in):: this
         type(Parameter), dimension(this%size()):: params
 
         params(:this%HardeningState%size()) = this%HardeningState%serialize()
@@ -51,10 +51,10 @@ contains
     end function
 
     subroutine isotropic_state_deserialize(this, params)
-        class(IsotropicState), intent(out):: this
+        class(IsotropicState), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        call this%HardeningState%deserialize(params(:this%HardeningState%size()))
+        call this%HardeningState%deserialize(params)
         this%total_slip = params(this%size())
     end subroutine
 end module

@@ -17,7 +17,7 @@ module none
         procedure, nopass:: get_name        => none_get_name
         procedure, nopass:: get_description => none_get_description
         procedure:: deform                  => none_deform
-        procedure:: make_hardening_state    => none_make_hardening_state
+        procedure, nopass:: make_hardening_state    => none_make_hardening_state
         procedure:: init_hardening_state    => none_init_hardening_state
     end type
 
@@ -43,7 +43,7 @@ contains
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
     end subroutine
 
-    pure function none_make_hardening_state() result(state)
+    function none_make_hardening_state() result(state)
         class(HardeningState), allocatable:: state
 
         allocate(state)
