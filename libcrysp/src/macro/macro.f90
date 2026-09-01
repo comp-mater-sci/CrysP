@@ -1,6 +1,6 @@
 !> Top-level module of the macro layer
 !>
-!> Assimilates all the logic from the underlying layers and performs operattions on the material as a whole.
+!> Assimilates all the logic from the underlying layers and performs operattions on the mat as a whole.
 !> @note
 !> This module can be seen as the Fortran interface of libcrysp. If you wish to embed libcrysp into another Fortran project, it may
 !> be more convenient to compile libcrysp without the top-level libcrysp module and interface with the library through this module.
@@ -29,27 +29,27 @@ module macro
 
 contains
 
-    subroutine macro_simulate_stress_mode(material, stress_mode, strain_mode, stress, residual)
-        type(MaterialState), intent(inout):: material
+    subroutine macro_simulate_stress_mode(mat, stress_mode, strain_mode, stress, residual)
+        type(Material), intent(inout):: mat
         real(DP), dimension(5), intent(in)::  stress_mode
         real(DP), dimension(5), intent(inout):: strain_mode
 
         real(DP), dimension(5), intent(out):: stress
         real(DP), dimension(5), intent(out):: residual
 
-        call simulate_stress_mode(material%meso_model, material%clusters, stress_mode, strain_mode, stress, residual)
+        call simulate_stress_mode(mat%cp_model, mat%clusters, stress_mode, strain_mode, stress, residual)
     end subroutine
 
-    subroutine macro_simulate_strain_mode(material, strain_mode, stress)
-        type(MaterialState), intent(inout):: material
+    subroutine macro_simulate_strain_mode(mat, strain_mode, stress)
+        type(Material), intent(inout):: mat
         real(DP), dimension(5), intent(in)::  strain_mode
         real(DP), dimension(5), intent(out):: stress
 
-        call simulate_strain_mode(material%meso_model, material%clusters, strain_mode, stress)
+        call simulate_strain_mode(mat%cp_model, mat%clusters, strain_mode, stress)
     end subroutine
 
-    subroutine macro_stress_driven_deformation(material, target_stress_mode, target_vm_strain, increments)
-        type(MaterialState), target, intent(inout):: material
+    subroutine macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments)
+        type(Material), target, intent(inout):: mat
         real(DP), dimension(5), intent(in):: target_stress_mode
         real(DP), intent(in):: target_vm_strain
         type(StressIncrement), dimension(:), allocatable, intent(out):: increments
@@ -70,9 +70,9 @@ contains
         strain_rate = target_stress_mode
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
-            call simulate_stress_mode(material%meso_model, material%clusters, target_stress_mode, strain_rate, stress, residual)
-            strain_incs = deform(material%meso_model, &
-                                 material%clusters, &
+            call simulate_stress_mode(mat%cp_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
+            strain_incs = deform(mat%cp_model, &
+                                 mat%clusters, &
                                  deviatoric_to_tensor(strain_rate), &
                                  target_vm_strain - cur_vm_strain, &
                                  target_stress_mode)
@@ -88,12 +88,12 @@ contains
         increments = incs%get()
     end subroutine
 
-    subroutine macro_strain_driven_deformation(material, velocity_gradient, target_vm_strain, increments)
-        type(MaterialState), target, intent(inout):: material
+    subroutine macro_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)
+        type(Material), target, intent(inout):: mat
         real(DP), dimension(3,3), intent(in):: velocity_gradient
         real(DP), intent(in)::                 target_vm_strain
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
 
-        increments = deform(material%meso_model, material%clusters, velocity_gradient, target_vm_strain)
+        increments = deform(mat%cp_model, mat%clusters, velocity_gradient, target_vm_strain)
     end subroutine
 end module

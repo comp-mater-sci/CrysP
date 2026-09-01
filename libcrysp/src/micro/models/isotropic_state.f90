@@ -1,6 +1,9 @@
 module crysp_isotropic_state
+    use base_defs
+    use logging
     use crysp_serialization
     use crysp_grain
+    use constitutive_model
 
     implicit none
 

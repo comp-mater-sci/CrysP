@@ -118,16 +118,7 @@ module crysp_serialization
     !> enum at the top of this module.
     interface assignment(=)
         module procedure int_to_param, int_array_to_param, real_to_param, real_array_to_param, real_matrix_to_param, string_to_param, &
-                         param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, &
-                         param_to_real_matrix_fixed, param_to_string
-    end interface
-
-    interface operator(.add.)
-        module procedure parameters_add_scalar, parameters_add_list
-    end interface
-
-    interface operator(.pop.)
-        module procedure parameters_pop
+                         param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, param_to_string
     end interface
 
     !> Convenience functions wrapping the setter subroutines above.
@@ -136,6 +127,9 @@ module crysp_serialization
     !> No serialize_real_matrix due to IFX compiler bug as of 2026.1.1.19
     interface serialize
         module procedure serialize_int, serialize_int_array, serialize_real, serialize_real_array, serialize_real_matrix, serialize_string
+    end interface
+    interface deserialize
+        module procedure deserialize_real_matrix
     end interface
 
 contains
@@ -298,7 +292,7 @@ contains
         deallocate(val)
     end subroutine
     subroutine param_to_real_matrix(data, param) bind(C)
-        real(C_DOUBLE), dimension(:,:), allocatable, intent(out):: data
+        real(C_DOUBLE), dimension(:,:), intent(out):: data
         type(Parameter), intent(in):: param
 
         type(ParameterValue), pointer:: val
@@ -392,7 +386,6 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end function
-
     pure function serialize_string(data) result(param) bind(C)
         character(kind=C_CHAR,len=*), intent(in):: data
         type(Parameter):: param
@@ -400,31 +393,22 @@ contains
         param = data
     end function
 
-    function parameters_add_scalar(params, new) result(params_new)
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), intent(in):: new
-        type(Parameter), dimension(size(params)+1):: params_new
+    function deserialize_real_matrix(param) result(data)
+        type(Parameter), intent(in):: param
+        real(DP), dimension(:,:), allocatable:: data
 
-        params_new(:size(params)) = params
-        params_new(size(params_new)) = new
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (RealMatrixValue)
+                data = value%buffer
+            class default
+                call log_error(MOD_NAME, 'deserialize_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
     end function
-    function parameters_add_list(params, new) result(params_new)
-        type(Parameter), dimension(:), intent(in):: params
-        type(Parameter), dimension(:), intent(in):: new
-        type(Parameter), dimension(size(params)+size(new)):: params_new
 
-        params_new(:size(params)) = params
-        params_new(size(params)+1:size(params_new)) = new
-    end function
-
-    function parameters_pop(params, n) result(popped)
-        type(Parameter), dimension(:), intent(in):: params
-        integer, intent(in):: n
-        type(Parameter), dimension(:), allocatable:: popped
-
-        if (size(params) < n) &
-            call log_error(MOD_NAME, 'pop', ERR_DIMS, 'Parameter list too small!')
-
-        popped = params(n+1:)
-    end function
 end module

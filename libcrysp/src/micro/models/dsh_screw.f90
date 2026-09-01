@@ -37,7 +37,7 @@ contains
     end function
 
     subroutine dsh_screw_init(this, miller_indices, params)
-        class(ConstitutiveModelDSHScrew), intent(inout):: this
+        class(ConstitutiveModelDSHScrew), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 

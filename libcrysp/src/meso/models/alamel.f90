@@ -137,9 +137,9 @@ contains
             do i = 1, size(clusters)
                 clusters(i)%grains = grains(2*(i-1)+1:2*i)
                 clusters(i)%initial_boundary_normal = spherical_to_cartesian(boundaries(:,j))
-                n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
+                n_systems_first_grain = size(clusters(i)%grains(1)%phase%model%taylor_coeffs, 2)
                 do k = 1, 2
-                    ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
+                    ind_basis_systems_grain = clusters(i)%grains(k)%phase%model%basis
                     clusters(i)%ind_basis_systems((k-1)*5+1:k*5) = ind_basis_systems_grain + (k-1)*n_systems_first_grain
                     call clusters(i)%relaxations(k)%init(k)
                 end do
@@ -161,7 +161,7 @@ contains
         integer:: i
 
         do i = 1, size(cluster_%grains)
-            n_systems(i) = size(cluster_%grains(i)%state%crss, 2)
+            n_systems(i) = size(cluster_%grains(i)%hardening_state%crss, 2)
         end do
     end function
 
@@ -172,7 +172,7 @@ contains
         class(Cluster), intent(in):: cluster_
         integer:: n_systems
 
-        n_systems = size(cluster_%grains(1)%model%taylor_coeffs, 2) + size(cluster_%grains(2)%model%taylor_coeffs, 2) + 2
+        n_systems = size(cluster_%grains(1)%phase%model%taylor_coeffs, 2) + size(cluster_%grains(2)%phase%model%taylor_coeffs, 2) + 2
     end function
 
 
@@ -215,10 +215,10 @@ contains
 
         n_systems = get_n_systems(alamel_cluster)
 
-        coeffs(1:5, 1:n_systems(1))                 = alamel_cluster%grains(1)%model%taylor_coeffs
+        coeffs(1:5, 1:n_systems(1))                 = alamel_cluster%grains(1)%phase%model%taylor_coeffs
         coeffs(6:10, 1:n_systems(1))                = 0._DP
         coeffs(1:5, n_systems(1)+1:sum(n_systems))  = 0._DP
-        coeffs(6:10, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%model%taylor_coeffs
+        coeffs(6:10, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%phase%model%taylor_coeffs
         coeffs(:,sum(n_systems)+1)                  = alamel_cluster%relaxations(1)%taylor_coeffs
         coeffs(:,sum(n_systems)+2)                  = alamel_cluster%relaxations(2)%taylor_coeffs
     end function
@@ -232,8 +232,8 @@ contains
 
         n_systems = get_n_systems(alamel_cluster)
 
-        crss(:,1:n_systems(1)) = alamel_cluster%grains(1)%state%crss
-        crss(:, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%state%crss
+        crss(:,1:n_systems(1)) = alamel_cluster%grains(1)%hardening_state%crss
+        crss(:, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%hardening_state%crss
         crss(:, sum(n_systems)+1:) = 0._DP
     end function
 
@@ -351,7 +351,7 @@ contains
                     slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
                         rss(ind_overstressed_slip_systems+offset_systems), &
                         strain_grain, &
-                        grain_%model%taylor_coeffs, &
+                        grain_%phase%model%taylor_coeffs, &
                         n_active_simplex)
                 end if
 
@@ -426,11 +426,11 @@ contains
         do i = 1, 10
             ind_basis_system = alamel_cluster%ind_basis_systems(i)
             if (ind_basis_system <= n_systems(1)) then
-                basis(1:5, i) = alamel_cluster%grains(1)%model%taylor_coeffs(:,ind_basis_system)
+                basis(1:5, i) = alamel_cluster%grains(1)%phase%model%taylor_coeffs(:,ind_basis_system)
                 basis(6:10, i) = 0._DP
             else if (ind_basis_system <= sum(n_systems)) then
                 basis(1:5, i) = 0._DP
-                basis(6:10, i) = alamel_cluster%grains(2)%model%taylor_coeffs(:,ind_basis_system-n_systems(1))
+                basis(6:10, i) = alamel_cluster%grains(2)%phase%model%taylor_coeffs(:,ind_basis_system-n_systems(1))
             else
                 basis(:,i) = alamel_cluster%relaxations(ind_basis_system-sum(n_systems))%taylor_coeffs
             end if
@@ -515,7 +515,7 @@ contains
 
     pure function alamel_cluster_serialize(this, phases) result(params)
         class(AlamelCluster), target, intent(in):: this
-        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
+        type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(this%size()):: params
 
         integer:: base_size, &
@@ -538,7 +538,7 @@ contains
     subroutine alamel_cluster_deserialize(this, params, phases)
         class(AlamelCluster), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
-        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
+        type(Phase), dimension(:), target, intent(in):: phases
 
         integer:: base_size, &
                   offset, &

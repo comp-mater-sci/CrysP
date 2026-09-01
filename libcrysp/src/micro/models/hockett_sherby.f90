@@ -26,7 +26,6 @@ module hockett_sherby
         procedure, nopass:: get_description => hs_get_description
         procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_input => hs_get_input             !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_grain_state => hs_get_state
         procedure:: init                    => hs_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                  => hs_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => hs_make_state
@@ -68,15 +67,9 @@ contains
                   Input(to_c_string('n',NAME_LEN), INPUT_REAL)]
     end function
 
-    pure function hs_get_state() result(state)
-        class(HardeningState), allocatable:: state
-
-        allocate(IsotropicState:: state)
-    end function
-
     !> See [[ConstitutiveModel:init]]
     subroutine hs_init(this, miller_indices, params)
-        class(ConstitutiveModelHockettSherby), intent(inout):: this
+        class(ConstitutiveModelHockettSherby), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 
@@ -109,7 +102,7 @@ contains
         allocate(IsotropicState::state)
     end function
 
-    pure subroutine hs_init_state(this, state)
+    subroutine hs_init_state(this, state)
         class(ConstitutiveModelHockettSherby), intent(in):: this
         class(HardeningState), intent(out):: state
 

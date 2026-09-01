@@ -36,7 +36,7 @@ contains
     end function
 
     subroutine dsh_loop_init(this, miller_indices, params)
-        class(ConstitutiveModelDSHLoop), intent(inout):: this
+        class(ConstitutiveModelDSHLoop), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 

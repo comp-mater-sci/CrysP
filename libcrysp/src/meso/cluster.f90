@@ -49,7 +49,7 @@ contains
 
     pure function cluster_serialize(this, phases) result(params)
         class(Cluster), target, intent(in):: this
-        type(Phase), dimension(:), intent(in):: phases
+        type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(this%size()):: params
 
         integer:: i, &

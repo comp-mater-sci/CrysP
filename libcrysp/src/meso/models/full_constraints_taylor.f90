@@ -92,7 +92,7 @@ contains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
-        real(DP), dimension(5, size(grains(1)%model%taylor_coeffs, 2)):: taylor_coeffs
+        real(DP), dimension(5, size(grains(1)%phase%model%taylor_coeffs, 2)):: taylor_coeffs
         integer:: i
 
         allocate(TaylorCluster:: clusters(size(grains)))
@@ -103,8 +103,8 @@ contains
                 do i = 1, size(clusters)
                     clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
-                    clusters(i)%ind_basis_systems = grains(1)%model%basis
-                    taylor_coeffs = clusters(i)%grains(1)%model%taylor_coeffs
+                    clusters(i)%ind_basis_systems = grains(1)%phase%model%basis
+                    taylor_coeffs = clusters(i)%grains(1)%phase%model%taylor_coeffs
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
                 end do
         end select
@@ -117,7 +117,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
-        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%phase%model%taylor_coeffs, 2)):: slip_rates, &
                                                                      rss
         real(DP), dimension(5):: stress_cluster
         type(TaylorCluster), pointer:: cluster_ptr
@@ -125,9 +125,9 @@ contains
         cluster_ptr => to_taylor_cluster(cluster_)
 
         associate (grain_ => cluster_ptr%grains(1))
-            call simplex_solve(grain_%model%taylor_coeffs, &
+            call simplex_solve(grain_%phase%model%taylor_coeffs, &
                                tensor_to_deviatoric(v_grad .toframe. grain_%orientation), &
-                               grain_%state%crss, &
+                               grain_%hardening_state%crss, &
                                cluster_ptr%inverse_basis, &
                                cluster_ptr%ind_basis_systems, &
                                slip_rates, &
@@ -148,7 +148,7 @@ contains
 
         integer::                   n_systems, &
                                     n_active_simplex
-        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%phase%model%taylor_coeffs, 2)):: slip_rates, &
                                                                                rss
         real(DP):: stress_cluster(5), &
                    imposed_strain_rate(5), &
@@ -161,13 +161,13 @@ contains
 
         associate(grain_=>cluster_ptr%grains(1))
 
-            n_systems = size(grain_%model%taylor_coeffs, 2)
+            n_systems = size(grain_%phase%model%taylor_coeffs, 2)
 
             imposed_strain_rate = tensor_to_deviatoric(velocity_gradient .toframe. grain_%orientation)
 
-            call simplex_solve(grain_%model%taylor_coeffs, &
+            call simplex_solve(grain_%phase%model%taylor_coeffs, &
                                imposed_strain_rate, &
-                               grain_%state%crss, &
+                               grain_%hardening_state%crss, &
                                cluster_ptr%inverse_basis, &
                                cluster_ptr%ind_basis_systems, &
                                slip_rates, &
@@ -182,7 +182,7 @@ contains
                 slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
                     rss(ind_active_slip_systems), &
                     imposed_strain_rate, &
-                    grain_%model%taylor_coeffs, &
+                    grain_%phase%model%taylor_coeffs, &
                     n_active_simplex)
             end if
 
@@ -201,7 +201,7 @@ contains
 
     pure function taylor_cluster_serialize(this, phases) result(params)
         class(TaylorCluster), target, intent(in):: this
-        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
+        type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(this%size()):: params
 
         integer:: base_size
@@ -215,7 +215,7 @@ contains
     subroutine taylor_cluster_deserialize(this, params, phases)
         class(TaylorCluster), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
-        class(ConstitutiveModel), dimension(:), target, intent(in):: phases
+        type(Phase), dimension(:), target, intent(in):: phases
 
         integer:: base_size
 

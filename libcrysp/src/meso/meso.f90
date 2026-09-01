@@ -101,9 +101,9 @@ contains
     module procedure meso_get_model
         select case (id)
             case (MESO_MODEL_FCTaylor)
-                allocate(TaylorModel:: m)
+                allocate(TaylorModel:: model)
             case (MESO_MODEL_ALAMEL)
-                allocate(AlamelModel:: m)
+                allocate(AlamelModel:: model)
             case default
                 call log_error("Meso", "get_model_instance", ERR_VAL, "Invalid model ID")
         end select

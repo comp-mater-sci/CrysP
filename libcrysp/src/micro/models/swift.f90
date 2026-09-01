@@ -25,7 +25,6 @@ module swift
         procedure, nopass:: get_description => swift_get_description
         procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_input       => swift_get_input       !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_grain_state => swift_get_state
         procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => swift_make_state
@@ -67,15 +66,9 @@ contains
                   Input(to_c_string('n',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
     end function
 
-    pure function swift_get_state() result(state)
-        class(HardeningState), allocatable:: state
-
-        allocate(IsotropicState:: state)
-    end function
-
     !> See [[ConstitutiveModel:init]]
     subroutine swift_init(this, miller_indices, params)
-        class(ConstitutiveModelSwift), intent(inout):: this
+        class(ConstitutiveModelSwift), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 
@@ -110,7 +103,7 @@ contains
         allocate(IsotropicState::state)
     end function
 
-    pure subroutine swift_init_state(this, state)
+    subroutine swift_init_state(this, state)
         class(ConstitutiveModelSwift), intent(in):: this
         class(HardeningState), intent(out):: state
 

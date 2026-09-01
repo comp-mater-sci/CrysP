@@ -178,7 +178,7 @@ contains
     module procedure micro_get_signature
         class(ConstitutiveModel), allocatable:: dummy_instance
 
-        dummy_instance = get_model_instance(model_id)
+        dummy_instance = micro_get_model(model_id)
         signature = dummy_instance%get_signature()
     end procedure
 
@@ -186,7 +186,7 @@ contains
     module procedure micro_get_input
         class(ConstitutiveModel), allocatable:: dummy_instance
 
-        dummy_instance = get_model_instance(model_id)
+        dummy_instance = micro_get_model(model_id)
         inputs = dummy_instance%get_input()
     end procedure
 
@@ -210,7 +210,7 @@ contains
         j = 1
         do i = 1, size(phases)
             phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
-            phase_ptr%model = get_model_instance(phase_descriptors(i)%model_id)
+            phase_ptr%model = micro_get_model(phase_descriptors(i)%model_id)
             miller_indices = get_miller_indices(phase_descriptors(i)%deformation_mechanism)
             call phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
             initial_state = phases(i)%model%make_hardening_state()

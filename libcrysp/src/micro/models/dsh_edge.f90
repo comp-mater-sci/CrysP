@@ -39,7 +39,7 @@ contains
     end function
 
     subroutine dsh_edge_init(this, miller_indices, params)
-        class(ConstitutiveModelDSHEdge), intent(inout):: this
+        class(ConstitutiveModelDSHEdge), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 

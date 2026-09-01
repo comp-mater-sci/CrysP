@@ -7,7 +7,7 @@ module voce
     use crysp_serialization
     use crysp_input
     use conversions
-    use mod_model
+    use crysp_model
     use crysp_isotropic_state
 
     implicit none
@@ -31,7 +31,6 @@ module voce
         procedure, nopass:: get_description => voce_get_description
         procedure, nopass:: get_signature   => voce_get_signature
         procedure, nopass:: get_input       => voce_get_input          !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_grain_state => voce_get_state
         procedure:: init                    => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                  => voce_deform                  !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => voce_make_state
@@ -77,15 +76,9 @@ contains
                   Input(to_c_string('THT',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
 
-    pure function voce_get_state() result(state)
-        class(HardeningState), allocatable:: state
-
-        allocate(IsotropicState:: state)
-    end function
-
     !> See [[ConstitutiveModel:init]]
     subroutine voce_init(this, miller_indices, params)
-        class(ConstitutiveModelVoce), intent(inout):: this
+        class(ConstitutiveModelVoce), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 
@@ -139,7 +132,7 @@ contains
         allocate(IsotropicState::state)
     end function
 
-    pure subroutine voce_init_state(this, state)
+    subroutine voce_init_state(this, state)
         class(ConstitutiveModelVoce), intent(in):: this
         class(HardeningState), intent(out):: state
 

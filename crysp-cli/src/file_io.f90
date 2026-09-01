@@ -1,8 +1,8 @@
 module file_io
     use conversions
     use logging
-    use cluster_module
-    use grain_module
+    use crysp_cluster
+    use crysp_grain
     use macro
 
     implicit none

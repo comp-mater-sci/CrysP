@@ -13,6 +13,7 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 add_library(crysp STATIC
     src/libcrysp.f90
+    src/material.f90
     src/model.f90
     src/input.f90
     src/utils/base_defs.f90

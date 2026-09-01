@@ -95,7 +95,9 @@ contains
     subroutine cm_init(this, miller_indices, params)
         class(ConstitutiveModel), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices              !! Miller indices of all the slip systems.
-        type(Parameter), dimension(size(this%get_signature())), intent(in):: params
+        !> The params argument is assumed-shape because gfortran cannot statically resolve a call to the type-bound
+        !> procedure get_signature() inside an array-specifier when the call is dynamically dispatched on a polymorphic object.
+        type(Parameter), dimension(:), intent(in):: params
 
         integer:: i, &
                   n_systems

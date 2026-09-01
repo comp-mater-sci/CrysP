@@ -4,7 +4,7 @@ module none
     use crysp_grain
     use crysp_serialization
     use crysp_input
-    use mod_model
+    use crysp_model
 
     implicit none
 
@@ -49,7 +49,7 @@ contains
         allocate(state)
     end function
 
-    pure subroutine none_init_hardening_state(this, state)
+    subroutine none_init_hardening_state(this, state)
         class(ConstitutiveModelNone), intent(in):: this
         class(HardeningState), intent(out):: state
 
