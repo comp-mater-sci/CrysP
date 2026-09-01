@@ -124,7 +124,7 @@ contains
                   n_systems_first_grain
         real(DP), dimension(:,:), allocatable:: boundaries
 
-        boundaries = params(1)
+        boundaries = deserialize_real_matrix(params(1))
 
         this%deformation_gradient = UNIT_MATRIX_3X3
 

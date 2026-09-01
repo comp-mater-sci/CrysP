@@ -17,7 +17,7 @@ module crysp_serialization
              serialize, &
              typeof, &
              State, &
-             operator(.pop.)
+             deserialize_real_matrix
 
     character(*), parameter:: MOD_NAME = 'serialization'
 
@@ -127,9 +127,6 @@ module crysp_serialization
     !> No serialize_real_matrix due to IFX compiler bug as of 2026.1.1.19
     interface serialize
         module procedure serialize_int, serialize_int_array, serialize_real, serialize_real_array, serialize_real_matrix, serialize_string
-    end interface
-    interface deserialize
-        module procedure deserialize_real_matrix
     end interface
 
 contains

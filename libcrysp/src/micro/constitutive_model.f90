@@ -162,8 +162,8 @@ contains
         class(ConstitutiveModel), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        this%taylor_coeffs = params(1)
-        this%spin_coeffs = params(2)
+        this%taylor_coeffs = deserialize_real_matrix(params(1))
+        this%spin_coeffs = deserialize_real_matrix(params(2))
         this%basis = params(3)
     end subroutine
 
@@ -185,6 +185,6 @@ contains
         class(HardeningState), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        this%crss = params(1)
+        this%crss = deserialize_real_matrix(params(1))
     end subroutine
 end module
