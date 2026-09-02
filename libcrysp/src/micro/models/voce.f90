@@ -149,13 +149,17 @@ contains
 
     pure function voce_serialize(this) result(params)
         class(ConstitutiveModelVoce), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: i, &
                   offset
+        type(Parameter), dimension(:), allocatable:: base
 
-        params(:this%ConstitutiveModel%size()) = this%ConstitutiveModel%serialize()
-        offset = this%ConstitutiveModel%size()
+        allocate(params(this%size()))
+
+        base = this%ConstitutiveModel%serialize()
+        offset = size(base)
+        params(:offset) = base
 
         params(offset+1) = this%transition_slip
         offset = offset+1

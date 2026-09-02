@@ -412,12 +412,16 @@ contains
 
     pure function dsh_serialize(this) result(params)
         class(ConstitutiveModelDSH), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: offset
+        type(Parameter), dimension(:), allocatable:: base
 
-        params(:this%ConstitutiveModel%size()) = this%ConstitutiveModel%serialize()
-        offset = this%ConstitutiveModel%size()
+        allocate(params(this%size()))
+
+        base = this%ConstitutiveModel%serialize()
+        offset = size(base)
+        params(:offset) = base
 
         params(offset+1)  = this%b
         params(offset+2)  = this%G
@@ -485,12 +489,16 @@ contains
 
     pure function dsh_state_serialize(this) result(params)
         class(DSHState), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: i, offset
+        type(Parameter), dimension(:), allocatable:: base
 
-        params(:this%HardeningState%size()) = this%HardeningState%serialize()
-        offset = this%HardeningState%size()
+        allocate(params(this%size()))
+
+        base = this%HardeningState%serialize()
+        offset = size(base)
+        params(:offset) = base
 
         params(offset+1) = this%rhocb
         offset = offset + 1

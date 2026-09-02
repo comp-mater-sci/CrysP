@@ -92,9 +92,11 @@ contains
     pure function grain_serialize(this, phases) result(params)
         class(Grain), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: i
+
+        allocate(params(this%size()))
 
         do i = 1, size(phases)
             if (c_associated(c_loc(phases(i)), c_loc(this%phase))) then

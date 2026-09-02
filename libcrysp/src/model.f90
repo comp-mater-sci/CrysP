@@ -54,7 +54,9 @@ contains
 
     pure function model_serialize(this) result(params)
         class(Model), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(this%size()))
     end function
 
     subroutine model_deserialize(this, params)

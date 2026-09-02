@@ -92,7 +92,7 @@ contains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
-        real(DP), dimension(5, size(grains(1)%phase%model%taylor_coeffs, 2)):: taylor_coeffs
+        real(DP), dimension(:,:), allocatable:: taylor_coeffs
         integer:: i
 
         allocate(TaylorCluster:: clusters(size(grains)))
@@ -103,8 +103,9 @@ contains
                 do i = 1, size(clusters)
                     clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
-                    clusters(i)%ind_basis_systems = grains(1)%phase%model%basis
-                    taylor_coeffs = clusters(i)%grains(1)%phase%model%taylor_coeffs
+                    !Per grain: phases may differ in slip system set, so neither the basis nor the number of systems is shared.
+                    clusters(i)%ind_basis_systems = grains(i)%phase%model%basis
+                    taylor_coeffs = grains(i)%phase%model%taylor_coeffs
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
                 end do
         end select
@@ -202,12 +203,16 @@ contains
     pure function taylor_cluster_serialize(this, phases) result(params)
         class(TaylorCluster), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: base_size
+        type(Parameter), dimension(:), allocatable:: base
 
-        base_size = this%Cluster%size()
-        params(:base_size) = this%Cluster%serialize(phases)
+        allocate(params(this%size()))
+
+        base = this%Cluster%serialize(phases)
+        base_size = size(base)
+        params(:base_size) = base
         params(base_size+1) = this%ind_basis_systems
         params(base_size+2) = this%inverse_basis
     end function

@@ -494,7 +494,9 @@ contains
 
     pure function alamel_serialize(this) result(params)
         class(AlamelModel), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(this%size()))
 
         params(1) = this%deformation_gradient
     end function
@@ -516,22 +518,27 @@ contains
     pure function alamel_cluster_serialize(this, phases) result(params)
         class(AlamelCluster), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: base_size, &
                   offset, &
                   i
+        type(Parameter), dimension(:), allocatable:: sub
 
-        base_size = this%Cluster%size()
-        params(:base_size) = this%Cluster%serialize(phases)
+        allocate(params(this%size()))
+
+        sub = this%Cluster%serialize(phases)
+        base_size = size(sub)
+        params(:base_size) = sub
         params(base_size+1) = this%ind_basis_systems
         params(base_size+2) = this%initial_boundary_normal
         params(base_size+3) = this%inverse_basis
 
         offset = base_size + 3
         do i=1,2
-            params(offset+1:offset+3) = this%relaxations(i)%serialize()
-            offset = offset + 3
+            sub = this%relaxations(i)%serialize()
+            params(offset+1:offset+size(sub)) = sub
+            offset = offset + size(sub)
         end do
     end function
 

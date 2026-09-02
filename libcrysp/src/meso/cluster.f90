@@ -50,17 +50,21 @@ contains
     pure function cluster_serialize(this, phases) result(params)
         class(Cluster), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
         integer:: i, &
                   offset, &
                   size_grain
+        type(Parameter), dimension(:), allocatable:: grain
+
+        allocate(params(this%size()))
 
         params(1) = size(this%grains)
         offset = 1
         do i=1,size(this%grains)
-            size_grain = this%grains(i)%size()
-            params(offset+1:offset+size_grain) = this%grains(i)%serialize(phases)
+            grain = this%grains(i)%serialize(phases)
+            size_grain = size(grain)
+            params(offset+1:offset+size_grain) = grain
             offset = offset + size_grain
         end do
         params(offset+1) = this%weight

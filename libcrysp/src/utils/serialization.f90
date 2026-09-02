@@ -16,6 +16,7 @@ module crysp_serialization
              assignment(=), &
              serialize, &
              typeof, &
+             shape_of, &
              State, &
              deserialize_real_matrix
 
@@ -40,6 +41,15 @@ module crysp_serialization
         type(C_PTR):: handle = C_NULL_PTR
     end type
 
+    !> Interface implemented by every serializable type.
+    !>
+    !> @note
+    !> `serialize` returns an allocatable array rather than an explicit-shape result `dimension(this%size())`. With the latter,
+    !> the shape of the result is a specification expression that the *caller* evaluates, and IFX (as of 2026.1) evaluates
+    !> `this%size()` there using the declared rather than the dynamic type of `this`. A call through a polymorphic object then
+    !> yields an array of the parent type's size, silently truncating the state. Letting the callee allocate the result avoids any
+    !> dependence on how the compiler resolves the spec expression, and also avoids walking the state tree twice per call.
+    !> @endnote
     type, abstract:: State
     contains
         procedure(state_get_size), deferred:: size
@@ -59,7 +69,7 @@ module crysp_serialization
             import Parameter
 
             class(State), target, intent(in):: this
-            type(Parameter), dimension(this%size()):: params
+            type(Parameter), dimension(:), allocatable:: params !! Allocated to this%size() by the callee.
         end function
         subroutine state_deserialize(this, params)
             import State
@@ -112,8 +122,6 @@ module crysp_serialization
         class(Value), allocatable:: value
     end type
 
-
-
     !> From within fortran, creating and destroying parameters is done using intrinsic assignment to/from the types described in the
     !> enum at the top of this module.
     interface assignment(=)
@@ -155,6 +163,36 @@ contains
                 t = TYPE_REAL_MATRIX
             type is (StringValue)
                 t = TYPE_STRING
+        end select
+    end function
+
+    !> Get the shape of the value held by a parameter.
+    !>
+    !> Returns a zero-size array for scalars, the string length for strings and the array shape otherwise.
+    !> Useful for allocating a receiving buffer of the right size before reading the value. Does not consume the parameter.
+    function shape_of(param) result(s)
+        type(Parameter), intent(in):: param
+        integer, dimension(:), allocatable:: s
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (IntValue)
+                allocate(s(0))
+            type is (IntArrayValue)
+                s = shape(value%buffer)
+            type is (RealValue)
+                allocate(s(0))
+            type is (RealArrayValue)
+                s = shape(value%buffer)
+            type is (RealMatrixValue)
+                s = shape(value%buffer)
+            type is (StringValue)
+                s = [len(value%buffer)]
+            class default
+                call log_error(MOD_NAME, 'shape_of', ERR_TYPE, 'Unknown parameter type')
         end select
     end function
 
@@ -247,6 +285,8 @@ contains
 
         select type (value => val%value)
             type is (IntArrayValue)
+                if (size(data) /= size(value%buffer)) &
+                    call log_error(MOD_NAME, 'parameter_to_int_array', ERR_DIMS, 'Parameter size does not match destination')
                 data = value%buffer
             class default
                 call log_error(MOD_NAME, 'parameter_to_int_array', ERR_TYPE, 'Parameter is not of correct type')
@@ -281,6 +321,8 @@ contains
 
         select type (value => val%value)
             type is (RealArrayValue)
+                if (size(data) /= size(value%buffer)) &
+                    call log_error(MOD_NAME, 'parameter_to_real_array', ERR_DIMS, 'Parameter size does not match destination')
                 data = value%buffer
             class default
                 call log_error(MOD_NAME, 'parameter_to_real_array', ERR_TYPE, 'Parameter is not of correct type')
@@ -298,26 +340,11 @@ contains
 
         select type (value => val%value)
             type is (RealMatrixValue)
+                if (any(shape(data) /= shape(value%buffer))) &
+                    call log_error(MOD_NAME, 'parameter_to_real_matrix', ERR_DIMS, 'Parameter shape does not match destination')
                 data = value%buffer
             class default
                 call log_error(MOD_NAME, 'parameter_to_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
-        end select
-
-        deallocate(val)
-    end subroutine
-    subroutine param_to_real_matrix_fixed(data, param) bind(C)
-        real(C_DOUBLE), dimension(:,:), intent(out):: data
-        type(Parameter), intent(in):: param
-
-        type(ParameterValue), pointer:: val
-
-        call c_f_pointer(param%handle, val)
-
-        select type (value => val%value)
-            type is (RealMatrixValue)
-                data = value%buffer
-            class default
-                call log_error(MOD_NAME, 'parameter_to_real_matrix_fixed', ERR_TYPE, 'Parameter is not of correct type')
         end select
 
         deallocate(val)

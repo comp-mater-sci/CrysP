@@ -70,7 +70,9 @@ contains
 
     pure function relaxation_serialize(this) result(params)
         class(Relaxation), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(this%size()))
 
         params(1) = this%type
         params(2) = this%taylor_coeffs

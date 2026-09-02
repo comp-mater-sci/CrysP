@@ -151,11 +151,14 @@ contains
 
     pure function cm_serialize(this) result(params)
         class(ConstitutiveModel), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
-        params(1:3) = [serialize(this%taylor_coeffs), &
-                       serialize(this%spin_coeffs), &
-                       serialize(this%basis)]
+        allocate(params(this%size()))
+
+        !Assigned one by one: an array constructor of serialize() results yields a duplicated element with IFX as of 2026.1.1.19
+        params(1) = this%taylor_coeffs
+        params(2) = this%spin_coeffs
+        params(3) = this%basis
     end function
 
     subroutine cm_deserialize(this, params)
@@ -176,7 +179,9 @@ contains
 
     pure function hs_serialize(this) result(params)
         class(HardeningState), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(this%size()))
 
         params(1) = serialize(this%crss)
     end function

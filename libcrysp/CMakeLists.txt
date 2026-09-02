@@ -51,6 +51,13 @@ add_library(crysp STATIC
 
 include(CMakePackageConfigHelpers)
 
+# Unit tests (run with `ctest --test-dir build --output-on-failure`).
+option(CRYSP_BUILD_TESTS "Build the libCrysP unit tests" ON)
+if(CRYSP_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
+
 # This tells CMake exactly where the headers are depending on how it's consumed
 target_include_directories(crysp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>  # Used when building locally

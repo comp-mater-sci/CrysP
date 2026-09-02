@@ -47,9 +47,14 @@ contains
 
     pure function isotropic_state_serialize(this) result(params)
         class(IsotropicState), target, intent(in):: this
-        type(Parameter), dimension(this%size()):: params
+        type(Parameter), dimension(:), allocatable:: params
 
-        params(:this%HardeningState%size()) = this%HardeningState%serialize()
+        type(Parameter), dimension(:), allocatable:: base
+
+        allocate(params(this%size()))
+
+        base = this%HardeningState%serialize()
+        params(:size(base)) = base
         params(this%size()) = serialize(this%total_slip)
     end function
 
