@@ -106,7 +106,12 @@ contains
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain) / max(.001_DP, vm_strain_inc * inc_corr)) + 1
             call incs%add(StrainIncrement(t_inc, def_grad, cur_vm_strain, homogenized_stress, taylor_factor), prob_rem_incs)
 
-            if (present(target_stress_mode)) then
+            !Force minimal amount of deformation before checking the stress mode because it is possible that the target stress mode
+            !deviates quite a bit from the actual stress mode for the applied strain mode if the trust region solver gets stuck. In
+            !that case, we want at least some deformation to happen so that the solver can recover.
+            !After testing, the exit condition triggers roughly every 0.06 VM_strain in the non-degenerate case. This makes ACCURACY
+            !a good bound.
+            if (present(target_stress_mode) .and. cur_vm_strain > ACCURACY) then
                 stress_mode = tensor_to_deviatoric(homogenized_stress)
                 stress_mode = stress_mode / norm2(stress_mode)
                 if (norm2(target_stress_mode - stress_mode) > ACCURACY) exit
