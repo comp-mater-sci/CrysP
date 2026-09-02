@@ -48,12 +48,9 @@ program test_material_roundtrip
 
     !> Euler angles (Bunge, degrees) per grain per phase, same order as MODEL_IDS.
     !>
-    !> @warning
-    !> A fixed table rather than generated values, and not to be changed casually: for a fair share of orientations, ALAMEL
-    !> deformation of a hardening grain aborts in detect_taylor_ambiguity ("No active slip systems found"), depending on
-    !> compiler and optimization level. That is a robustness issue of the deformation code, not of the serializer this test is
-    !> about. The pairs below have been verified to deform without problems with IFX and gfortran at -O0 and -O3.
-    !> @endwarning
+    !> A fixed table rather than generated values, so that the test is deterministic. Should ALAMEL deformation ever abort here
+    !> ("No active slip systems found"), that is a robustness issue of the deformation code, not of the serializer this test is
+    !> about: it happened before the boundary frame construction in alamel::update_relaxations was made well-conditioned.
     real(DP), parameter:: ORIENTATIONS_DEG(3, GRAINS_PER_PHASE, size(MODEL_IDS)) = reshape([ &
          37._DP, 23._DP,  53._DP,    74._DP, 46._DP, 106._DP, &   ! NONE            bcc48
         111._DP, 69._DP, 159._DP,   148._DP,  2._DP, 212._DP, &   ! VOCE            bcc24
