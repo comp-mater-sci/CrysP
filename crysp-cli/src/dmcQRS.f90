@@ -88,7 +88,7 @@ contains
             if (this%angular_resolution > 0.1_DP) &
                 strain_mode = target_stress_mode
 
-            call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
+            call crysp_simulate_stress_mode(this%material, target_stress_mode, strain_mode, stress, residual)
 
             !Rotate results such that the stress mode aligns with the virtual tensile test direction.
             strain_test_frame = deviatoric_to_tensor(strain_mode) .toframe. test_frame

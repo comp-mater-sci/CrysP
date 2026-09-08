@@ -35,7 +35,7 @@ module meso
         !> The ID must exist in the enum defined in this module. If not, this routine crashes the program.
         module function meso_get_parameters(model_id) result(params)
             integer, intent(in):: model_id                         !! ID of the model for which to return the parameters.
-            type(Parameter), dimension(:), allocatable:: params    !! The list of parameters for the specified model.
+            type(ParameterDescriptor), dimension(:), allocatable:: params    !! The list of parameters for the specified model.
         end function
 
         !> Initialize the mesoscopic level of the simulation.

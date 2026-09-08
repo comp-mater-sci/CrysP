@@ -1,11 +1,12 @@
 !> Implementation of the isotropic phenomenological SWIFT hardening law.
 
 module hockett_sherby
-    use base_defs, only: dp
+    use base_defs
     use constitutive_model
     use logging
     use parameters
     use grain_module
+    use conversions
 
     implicit none
 
@@ -24,13 +25,19 @@ module hockett_sherby
         real(DP):: b        !! Hardening exponent
         real(DP):: n        !! Hardening exponent on slip
     contains
-        procedure, nopass:: get_parameters      => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: validate_parameters => hs_validate_parameters !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                        => hs_init                !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                      => hs_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_parameters => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                   => hs_init                !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                 => hs_deform              !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
+
+    function hs_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(4), source=TYPE_REAL)
+    end function
 
     !> Convert a generic HardeningState to a pointer to a HockettSherbyState object
     !>
@@ -49,43 +56,32 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-        function hs_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
+    function hs_get_parameters() result(params)
+        type(ParameterDescriptor), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
                                                         !! - **tau_sat**: Final critical resolved shear stress
                                                         !! - **b**: Hardening exponent
                                                         !! - **n**: Hardening exponent on slip
 
-        params = [parameter_init('tau_0', TYPE_REAL),             &
-                  parameter_init('tau_sat', TYPE_REAL),            &
-                  parameter_init('b', TYPE_REAL),            &
-                  parameter_init('n', TYPE_REAL)]
+        params = [ParameterDescriptor(to_c_string('tau_0',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
+                  ParameterDescriptor(to_c_string('tau_sat',NAME_LEN), TYPE_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('b',NAME_LEN), TYPE_REAL),       &
+                  ParameterDescriptor(to_c_string('n',NAME_LEN), TYPE_REAL)]
     end function
-
-    !> See [[ConstitutiveModel:validate_parameters]]
-    subroutine hs_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params
-
-        type(Parameter), pointer:: buffer
-
-        call parameter_check_bounds(params .find. 'tau_0', lower = TOLERANCE, lower_inclusive=.true.)
-        buffer => params .find. 'tau_0'
-        call parameter_check_bounds(params .find. 'tau_sat',  buffer, lower_inclusive=.false.)
-    end subroutine
 
     !> See [[ConstitutiveModel:init]]
     function hs_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelHockettSherby),   intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         allocate(HockettSherbyState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        this%tau_0 = params .find. 'tau_0'
-        this%tau_sat = params .find. 'tau_sat'
-        this%b = params .find. 'b'
-        this%n = params .find. 'n'
+        this%tau_0 =   params(1)
+        this%tau_sat = params(2)
+        this%b =       params(3)
+        this%n =       params(4)
 
         initial_state%crss = this%tau_0
     end function

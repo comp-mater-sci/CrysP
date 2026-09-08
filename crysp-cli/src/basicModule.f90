@@ -63,12 +63,11 @@ contains
             case ('ALAMEL')
                 meso_model_id = MESO_MODEL_ALAMEL
                 call read_value(cnfunit, microstructure_file_name)
+                allocate(meso_params(1))
+                meso_params(1) = read_microstructure(microstructure_file_name)
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
         end select
-        meso_params = meso_get_parameters(meso_model_id)
-        if (meso_params .includes. "Boundaries") &
-            call parameter_set(meso_params, 'Boundaries', read_microstructure(microstructure_file_name))
 
         read(cnfunit, '(A)') buffer
         select case (buffer)
@@ -84,19 +83,19 @@ contains
 
         !Read hardening section
         call read_value(cnfunit, phase_%model_id)
-        phase_%parameters = micro_get_parameters(phase_%model_id)
-        n_params = size(phase_%parameters)
+        n_params = size(micro_get_signature(phase_%model_id))
 
         !Hardening parameters must be provided in the order in which they are defined in the hardening models.
         if (n_params > 0) then
             allocate(tmp(n_params))
+            allocate(phase_%parameters(n_params))
             call read_value(cnfunit,tmp)
             do i=1,n_params
                 phase_%parameters(i) = tmp(i)
             end do
         end if
 
-        call altay_new_material(meso_model_id, meso_params, [phase_], this%material)
+        call crysp_new_material(meso_model_id, meso_params, [phase_], this%material)
     end subroutine
 
     subroutine BasicModule_run(this)

@@ -95,11 +95,11 @@ contains
             associate(step => this%steps(i_step))
                 if (step%target_strain < TOLERANCE) then
                     allocate(step%increments(1))
-                    call altay_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress)
+                    call crysp_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress)
                     step%increments(1)%stress = deviatoric_to_tensor(dev_stress)
                     n_incs = n_incs + 1
                 else
-                    call altay_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments)
+                    call crysp_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments)
                     n_incs = n_incs + size(step%increments)
                     call write_texture_increment(texture_unit, n_incs, this%material%clusters)
                 end if

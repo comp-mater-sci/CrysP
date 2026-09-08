@@ -54,29 +54,25 @@ module micro
         integer:: model_id                                      !! ID of the hardening model used by this phase. Must exist in the
                                                                 !! enum above.
         integer:: deformation_mechanism                         !! Deformation mechanism for all grains of this phase.
-        type(Parameter), dimension(:), allocatable:: parameters !! Parameters used to initialize the hardening model. Assumed to
-                                                                !! have passed micro_validate_parameters(model_id).
+        type(Parameter), dimension(:), allocatable:: parameters
         real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
     end type
 
     interface
+
+        module function micro_get_signature(model_id) result(signature)
+            integer, intent(in):: model_id
+            integer, dimension(:), allocatable:: signature
+        end function
+
         !> Returns the parameter list for a particular hardening model.
         !>
         !> The parameters are used to initialize the hardening model.
         !> ID must exist in the enum above. If not, the procedure crashes the program.
         module function micro_get_parameters(model_id) result(params)
             integer, intent(in)::          model_id  !! ID of the hardening model. Must exist in the list above.
-            type(Parameter), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
+            type(ParameterDescriptor), allocatable:: params(:) !! List of parameters for the hardening model corresponding to the provided ID.
         end function
-
-        !> Check if a list of initialized parameters is valid for a given hardening model.
-        !>
-        !> If any of the parameters is invalid, the implementation is expected to crashes the program.
-        module subroutine micro_validate_parameters(model_id, params)
-            integer, intent(in):: model_id                             !! ID of the hardening model to be initialized. Must
-                                                                       !! exist in the enum above.
-            type(Parameter), dimension(:), target, intent(in):: params !! List of initialized parameters to be validated.
-        end subroutine
 
         !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
         !>
@@ -161,7 +157,14 @@ contains
         end select
     end function
 
-    !> See interface domentation
+    module procedure micro_get_signature
+        class(ConstitutiveModel), allocatable:: dummy_instance
+
+        dummy_instance = get_model_instance(model_id)
+        signature = dummy_instance%get_signature()
+    end procedure
+
+    !> See interface documentation
     module procedure micro_get_parameters
         class(ConstitutiveModel), allocatable:: dummy_instance
 
@@ -169,15 +172,7 @@ contains
         params = dummy_instance%get_parameters()
     end procedure
 
-    !> See interface domentation
-    module procedure micro_validate_parameters
-        class(ConstitutiveModel), allocatable:: dummy_instance
-
-        dummy_instance = get_model_instance(model_id)
-        call dummy_instance%validate_parameters(params)
-    end procedure
-
-    !> See interface domentation
+    !> See interface documentation
     module procedure micro_init
         integer:: i, j, k, &
                   n_grains

@@ -17,6 +17,7 @@ module dsh
     use parameters
     use logging
     use slip_systems
+    use conversions
 
     implicit none
 
@@ -73,9 +74,10 @@ module dsh
         real(DP), dimension(24, 6):: effslashb    = 0._DP
         real(DP), dimension(24, 6):: alfa_G_b_eff = 0._DP
     contains
+        procedure, nopass:: get_signature => dsh_get_signature  !! Inherited from ConstitutiveModel
         procedure, nopass:: get_parameters => dsh_get_parameters  !! Inherited from ConstitutiveModel
 
-        procedure, nopass:: validate_parameters => dsh_validate_parameters !! Inherited from ConstitutiveModel
+!        procedure, nopass:: validate_parameters => dsh_validate_parameters !! Inherited from ConstitutiveModel
                 procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
 
         procedure:: init_common, &
@@ -83,6 +85,16 @@ module dsh
     end type
 
 contains
+
+
+    function dsh_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(16), source=TYPE_REAL)
+    end function
+
+
+
 
     !> Convert a generic HardeningState to a pointer to a DSHState object
     !>
@@ -102,80 +114,40 @@ contains
 
     !> See [[ConstitutiveModel:get_parameters]]
     function dsh_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:) !! - **b**:     Magnitude of burgers vector [m]
-                                                     !! - **G**:     Shear modulus [MPa]
-                                                     !! - **alfa**:  Dislocation interaction parameter
-                                                     !! - **f**:     Volume fraction of Cell Block Boundaries
-                                                     !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
-                                                     !! - **I**:     Immobilization coefficient of Cell Boundaries
-                                                     !! - **R**:     Recovery coefficient of cell boundaries [m]
-                                                     !! - **Iwd**:   Immobilization coefficient of CBBs
-                                                     !! - **Rwd**:   Recovery coefficient of CBBs [m]
-                                                     !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
-                                                     !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
-                                                     !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
-                                                     !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
-                                                     !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
-                                                     !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
-                                                     !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
+        type(ParameterDescriptor), allocatable:: params(:) !! - **b**:     Magnitude of burgers vector [m]
+                                                 !! - **G**:     Shear modulus [MPa]
+                                                 !! - **alfa**:  Dislocation interaction parameter
+                                                 !! - **f**:     Volume fraction of Cell Block Boundaries
+                                                 !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
+                                                 !! - **I**:     Immobilization coefficient of Cell Boundaries
+                                                 !! - **R**:     Recovery coefficient of cell boundaries [m]
+                                                 !! - **Iwd**:   Immobilization coefficient of CBBs
+                                                 !! - **Rwd**:   Recovery coefficient of CBBs [m]
+                                                 !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
+                                                 !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
+                                                 !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
+                                                 !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
+                                                 !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
+                                                 !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
+                                                 !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
 
-        params = [parameter_init('b',     TYPE_REAL), &
-                  parameter_init('G',     TYPE_REAL), &
-                  parameter_init('alfa',  TYPE_REAL), &
-                  parameter_init('f',     TYPE_REAL), &
-                  parameter_init('tau0',  TYPE_REAL), &
-                  parameter_init('I',     TYPE_REAL), &
-                  parameter_init('R',     TYPE_REAL), &
-                  parameter_init('Iwd',   TYPE_REAL), &
-                  parameter_init('Rwd',   TYPE_REAL), &
-                  parameter_init('Rncg',  TYPE_REAL), &
-                  parameter_init('beta1', TYPE_REAL), &
-                  parameter_init('beta2', TYPE_REAL), &
-                  parameter_init('Iwp',   TYPE_REAL), &
-                  parameter_init('Rwp',   TYPE_REAL), &
-                  parameter_init('Rrev',  TYPE_REAL), &
-                  parameter_init('R2',    TYPE_REAL)]
+        params = [ParameterDescriptor(to_c_string('b',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('G',NAME_LEN),     TYPE_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('alfa',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('f',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('tau0',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('I',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('R',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Iwd',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rwd',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rncg',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('beta1',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('beta2',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Iwp',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rwp',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rrev',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('R2',NAME_LEN),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
     end function dsh_get_parameters
-
-    !> See cm_validate_parameters
-    subroutine dsh_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params !! - **b**:     ]0.;1.E-8]
-                                                                   !! - **G**:     [1.E4; 5.E5]
-                                                                   !! - **alfa**:  ]0.;5.]
-                                                                   !! - **f**:     ]0.;1.]
-                                                                   !! - **tau0**:  [0.;1.E4]
-                                                                   !! - **I**:     [0.;1.E1]
-                                                                   !! - **R**:     ]0.;1.E-6]
-                                                                   !! - **Iwd**:   [0.;1.E1]
-                                                                   !! - **Rwd**:   ]0.;1.E-6]
-                                                                   !! - **Rncg**:  ]0.;1.E-6]
-                                                                   !! - **beta1**: [0.;1.E2]
-                                                                   !! - **beta2**: [0.;1.E2]
-                                                                   !! - **Iwp**:   [0.;1.E1]
-                                                                   !! - **Rwp**:   ]0.;1.E-6]
-                                                                   !! - **Rrev**:  ]0.;1.E-6]
-                                                                   !! - **R2**:    ]0.;1.E-6]
-
-        if ((params .find. 'n_slip_systems') /= 24)  &
-            call log_error('DSH', 'validate_parameters', ERR_VAL, 'DSH only supports BCC24 slip systems.')
-
-        call parameter_check_bounds(params .find. 'b',     0._dp,   1.e-8_dp)
-        call parameter_check_bounds(params .find. 'G',     1.e4_dp, 5.e5_dp)
-        call parameter_check_bounds(params .find. 'alfa',  0._dp,   5._dp)
-        call parameter_check_bounds(params .find. 'f',     0._dp,   1.0_dp)
-        call parameter_check_bounds(params .find. 'tau0',  0._dp,   1.e4_dp)
-        call parameter_check_bounds(params .find. 'I',     0._dp,   10._dp)
-        call parameter_check_bounds(params .find. 'Iwd',   0._dp,   10._dp)
-        call parameter_check_bounds(params .find. 'Iwp',   0._dp,   10._dp)
-        call parameter_check_bounds(params .find. 'R',     0._dp,   1.e-6_dp)
-        call parameter_check_bounds(params .find. 'Rwd',   0._dp,   1.e-6_dp)
-        call parameter_check_bounds(params .find. 'Rncg',  0._dp,   1.e-6_dp)
-        call parameter_check_bounds(params .find. 'Rwp',   0._dp,   1.e-6_dp)
-        call parameter_check_bounds(params .find. 'Rrev',  0._dp,   1.e-6_dp)
-        call parameter_check_bounds(params .find. 'R2',    0._dp,   1.e-6_dp)
-        call parameter_check_bounds(params .find. 'beta1', 0._dp,   100._dp)
-        call parameter_check_bounds(params .find. 'beta2', 0._dp,   100._dp)
-    end subroutine
 
     !> Main model initialization procedure common to all variants of the DSH model family.
     !>
@@ -184,7 +156,7 @@ contains
     function init_common(this, miller_indices, params, eff) result(initial_state)
         class(ConstitutiveModelDSH), intent(inout):: this          !! DSH model variant to be initialized.
         integer, dimension(:,:,:), intent(in):: miller_indices     !! Miller indices of the deformation mechanism to be used.
-        type(Parameter), dimension(:), target, intent(in):: params !! Model parameters. Assumed to pass dsh_validate_parameters(params)
+        type(Parameter), dimension(:), intent(in):: params
         real(DP), dimension(24, 6), intent(in):: eff               !! 'Wall-effectivity' matrix == cosines of the angle between
                                                                    !! dislocation movement vectors and the cell block boundary normals.
         class(HardeningState), allocatable:: initial_state         !! Initial state of each grain using a DSH model.
@@ -192,22 +164,29 @@ contains
         allocate(DSHState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        this%b     = (params .find. 'b')    * 1.e6_DP ![m] -> [um]
-        this%G     =  params .find. 'G'
-        this%alfa  =  params .find. 'alfa'
-        this%f     =  params .find. 'f'
-        this%tau0  =  params .find. 'tau0'
-        this%I     =  params .find. 'I'
-        this%R     = (params .find. 'R')    * 1.e6_dp ![m] -> [um]
-        this%Iwd   =  params .find. 'Iwd'
-        this%Rwd   = (params .find. 'Rwd')  * 1.e6_dp ![m] -> [um]
-        this%Rncg  = (params .find. 'Rncg') * 1.e6_dp ![m] -> [um]
-        this%beta1 =  params .find. 'beta1'
-        this%beta2 =  params .find. 'beta2'
-        this%Iwp   =  params .find. 'Iwp'
-        this%Rwp   = (params .find. 'Rwp')  * 1.e6_dp ![m] -> [um]
-        this%Rrev  = (params .find. 'Rrev') * 1.e6_dp ![m] -> [um]
-        this%R2    = (params .find. 'R2')   * 1.e6_dp ![m] -> [um]
+        this%b     = params(1)
+        this%b = this%b * 1.e6_DP ![m] -> [um]
+        this%G     = params(2)
+        this%alfa  = params(3)
+        this%f     = params(4)
+        this%tau0  = params(5)
+        this%I     = params(6)
+        this%R     = params(7)
+        this%R = this%R * 1.e6_dp ![m] -> [um]
+        this%Iwd   = params(8)
+        this%Rwd   = params(9)
+        this%rwd = this%rwd * 1.e6_dp ![m] -> [um]
+        this%Rncg  = params(10)
+        this%rncg = this%rncg * 1.e6_dp ![m] -> [um]
+        this%beta1 = params(11)
+        this%beta2 = params(12)
+        this%Iwp   = params(13)
+        this%Rwp   = params(14)
+        this%rwp = this%rwp * 1.e6_dp ![m] -> [um]
+        this%Rrev  = params(15)
+        this%rrev = this%rrev * 1.e6_dp ![m] -> [um]
+        this%R2    = params(16)
+        this%r2 = this%r2 * 1.e6_dp ![m] -> [um]
 
         !Calculate dependent hardening parameters
         this%RHOwdMIN = MINFRAC* (this%Iwd)**2 / (this%Rwd)**2  ! Minfrac*rho_wd_sat

@@ -5,6 +5,7 @@ module voce
     use constitutive_model
     use logging
     use parameters
+    use conversions
 
     implicit none
 
@@ -29,13 +30,19 @@ module voce
         type(Stage)::  stage_1                 !! Initial hardening behavior.
         type(Stage)::  stage_2                 !! Hardening behavior after the total slip surpasses the transition slip.
     contains
+        procedure, nopass:: get_signature => voce_get_signature
         procedure, nopass:: get_parameters      => voce_get_parameters          !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: validate_parameters => voce_validate_parameters     !! Inherited from [[ConstitutiveModel]]
         procedure:: init                        => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                      => voce_deform                  !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
+
+    function voce_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(5), source=TYPE_REAL)
+    end function
 
     !> Convert a generic HardeningState to a pointer to a VoceState object
     !>
@@ -55,55 +62,43 @@ contains
 
     !> See [[ConstitutiveModel:get_parameters]]
     function voce_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
+        type(ParameterDescriptor), dimension(:), allocatable:: params !! - **TIII1**: Initial flow stress.
                                                             !! - **TIIIS**: Saturation flow stress for the first stage.
                                                             !! - **TIVS**: Saturation flow stress for the second stage.
                                                             !! - **THIII1**: Initial hardening rate.
                                                             !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
 
-
-        params = [parameter_init('TIII1',  TYPE_REAL), &
-                  parameter_init('TIIIS',  TYPE_REAL), &
-                  parameter_init('TIVS',   TYPE_REAL), &
-                  parameter_init('THIII1', TYPE_REAL), &
-                  parameter_init('THT',    TYPE_REAL)]
+        params = [ParameterDescriptor(to_c_string('TIII1',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
+                  ParameterDescriptor(to_c_string('TIIIS',NAME_LEN),  TYPE_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('TIVS',NAME_LEN),   TYPE_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('THIII1',NAME_LEN), TYPE_REAL), &
+                  ParameterDescriptor(to_c_string('THT',NAME_LEN),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
-
-    !> See [[ConstitutiveModel:validate_parameters]]
-    subroutine voce_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params !! - 0 < TIII1 < TIIIS < TIVS
-                                                                   !! - 0 < THT < THIII1
-        type(Parameter), pointer:: buffer                          !Buffer for bounds in calls to parameter_check_bounds. Needed due to a bug in gfortran.
-
-        buffer => params .find. 'TIIIS'
-        call parameter_check_bounds(params .find. 'TIII1', 0._DP, buffer, .false., .false.)
-        buffer => params .find. 'TIVS'
-        call parameter_check_bounds(params .find. 'TIIIS', upper = buffer)
-        buffer => params .find. 'THIII1'
-        call parameter_check_bounds(params .find. 'THT', 0._DP, buffer, .false., .false.)
-    end subroutine
 
     !> See [[ConstitutiveModel:init]]
     function voce_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), target, intent(in):: params(:)
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         !Local variables
         real(DP):: THT, &
                    ETA, &
-                   TAUT
+                   TAUT, &
+                   THIII1
 
         allocate(VoceState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        this%stage_1%T1 = params .find. 'TIII1'
-        this%stage_1%TS = params .find. 'TIIIS'
-        this%stage_2%TS = params .find. 'TIVS'
-        THT             = params .find. 'THT'
+        !Parse the hardening parameters
+        this%stage_1%T1 = params(1)
+        this%stage_1%TS = params(2)
+        this%stage_2%TS = params(3)
+        THIII1          = params(4)
+        THT             = params(5)
 
-        this%stage_1%TH = (params .find. 'THIII1') / (1.D0-this%stage_1%T1/this%stage_1%TS)
+        this%stage_1%TH = THIII1 / (1.D0-this%stage_1%T1/this%stage_1%TS)
         ETA = THT/this%stage_1%TH
         this%transition_slip = -this%stage_1%TS*log(ETA*this%stage_1%TS / (this%stage_1%TS-this%stage_1%T1)) / this%stage_1%TH
         TAUT = this%stage_1%TS - (this%stage_1%TS-this%stage_1%T1) * exp(-this%stage_1%TH*this%transition_slip/this%stage_1%TS)

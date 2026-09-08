@@ -15,25 +15,26 @@ module none
     !> @Brief Hardening model representing no hardening.
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
+        procedure, nopass:: get_signature => none_get_signature
         procedure, nopass:: get_parameters      => none_get_parameters
-        procedure, nopass:: validate_parameters => none_validate_parameters
         procedure:: init                        => none_init
         procedure:: deform                      => none_deform
     end type
 
 contains
 
-    !> @Brief See hardening_model_get_parameters
+    function none_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(0))
+    end function
+
+    !!> See [[hardening_model_get_parameters]]
     function none_get_parameters() result(params)
-        type(Parameter), dimension(:), allocatable:: params
+        type(ParameterDescriptor), dimension(:), allocatable:: params
 
         allocate(params(0))
     end function
-
-    !> @Brief See hardening_model_validate_parameters
-    subroutine none_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params
-    end subroutine
 
     !> @Brief See hardening_model_init
     !> @Details All slip systems get a CRSS of 1 in both directions to make all slip systems equally hard. Note that this
@@ -41,7 +42,7 @@ contains
     function none_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelNone), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         allocate(HardeningStateNone:: initial_state)

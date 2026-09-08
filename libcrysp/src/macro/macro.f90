@@ -1,26 +1,37 @@
+!> Top-level module of the macro layer
+!>
+!> Assimilates all the logic from the underlying layers and performs operattions on the material as a whole.
+!> @note
+!> This module can be seen as the Fortran interface of libcrysp. If you wish to embed libcrysp into another Fortran project, it may
+!> be more convenient to compile libcrysp without the top-level libcrysp module and interface with the library through this module.
+!> Doing this allows you to interface with the library through the much richer Fortran interface and avoids many conversions needed
+!> for the C interface implemented in the top-level libcrysp module.
+!> If you decide to do this, make sure to sanitize the inputs of these routines because that is normally done in the libcrysp
+!> module and this module expects to get proper inputs.
+!> @endnote
+
 module macro
     use base_defs
+    use math_utils
     use cluster_module
-    use mode
-    use deformation
     use meso
     use micro
-    use conversions
     use incrementation
+    use deformation
+    use mode
+    use conversions
 
     implicit none
     public
-
 
     character(*), parameter, private:: MOD_NAME = 'macro'
 
     !> All state associated to a material
     type:: MaterialState
-        type(Phase), dimension(:), allocatable:: phases !! State associated to all grains of a particular phase
-        class(MesoModel), allocatable:: meso_model      !! Global state of the meso model
+        type(Phase), dimension(:), allocatable:: phases      !! State associated to all grains of a particular phase
+        class(MesoModel), allocatable:: meso_model           !! Global state of the meso model
         class(Cluster), dimension(:), allocatable:: clusters !! State associated to individual clusters. Contains state of each grain.
     end type
-
 
 contains
 

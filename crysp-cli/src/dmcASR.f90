@@ -102,12 +102,12 @@ contains
                     associate (inc => step%increments(1))
                         allocate(inc%strain_increments(1))
                         inc%strain_rate = target_dev_stress
-                        call altay_simulate_stress_mode(this%material, target_dev_stress, inc%strain_rate, dev_stress, inc%residual)
+                        call crysp_simulate_stress_mode(this%material, target_dev_stress, inc%strain_rate, dev_stress, inc%residual)
                         inc%strain_increments(1)%stress = deviatoric_to_tensor(dev_stress)
                         n_incs = n_incs + 1
                     end associate
                 else
-                    call altay_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%increments)
+                    call crysp_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%increments)
                     !Write new texture to file
                     do i_stress = 1, size(step%increments)
                         n_incs = n_incs + size(step%increments(i_stress)%strain_increments)

@@ -84,7 +84,7 @@ contains
             if (i==1 .or. this%angular_resolution > 0.1_DP) &
                 strain_mode = target_stress_mode
 
-            call altay_simulate_stress_mode(this%material, target_stress_mode, strain_mode, dev_stress, residual)
+            call crysp_simulate_stress_mode(this%material, target_stress_mode, strain_mode, dev_stress, residual)
 
             !Because the direcion remains identical, ||stress||/||dev(stress)|| == ||stress_mode||/||dev(stress_mode)||
             !Therefore, scaling ||dev_stress|| by ||stress_mode||/||dev(stress_mode)|| yields ||stress||.

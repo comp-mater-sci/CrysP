@@ -1,17 +1,17 @@
 !> Implementation of the isotropic phenomenological SWIFT hardening law.
 
 module swift
-    use base_defs, only: dp
+    use base_defs
     use constitutive_model
     use logging
     use parameters
     use grain_module
+    use conversions
 
     implicit none
 
     private
     public:: ConstitutiveModelSwift
-
 
     !> Grain-specific hardening state data needed by the SWIFT hardening law.
     type, extends(HardeningState):: SwiftState
@@ -24,13 +24,20 @@ module swift
         real(DP):: gamma0 !! Initial sum of slip across all slip systems
         real(DP):: n      !! Exponent
     contains
-        procedure, nopass:: get_parameters      => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: validate_parameters => swift_validate_parameters !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                        => swift_init                !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                      => swift_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_parameters => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
+
+    function swift_get_signature() result(signature)
+        integer, dimension(:), allocatable:: signature
+
+        allocate(signature(3), source=TYPE_REAL)
+    end function
+
 
     !> Convert a generic HardeningState to a pointer to a SwiftState object
     !>
@@ -49,44 +56,35 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-        function swift_get_parameters() result(params)
-        type(Parameter), allocatable    :: params(:)    !! - **crss0**: Initial critical resoved shear stress
-                                                        !! - **gamma0**: Initial sum of slip across all slip systems
-                                                        !! - **n**: Hardening exponent
+    function swift_get_parameters() result(params)
+        type(ParameterDescriptor), allocatable:: params(:)    !! - **crss0**: Initial critical resoved shear stress
+                                                    !! - **gamma0**: Initial sum of slip across all slip systems
+                                                    !! - **n**: Hardening exponent
 
-        params = [parameter_init('crss0', TYPE_REAL),             &
-                  parameter_init('gamma0', TYPE_REAL),            &
-                  parameter_init('n', TYPE_REAL)]
+        params = [ParameterDescriptor(to_c_string('crss0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
+                  ParameterDescriptor(to_c_string('gamma0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('n',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE))]
     end function swift_get_parameters
-
-    !> See [[ConstitutiveModel:validate_parameters]]
-    subroutine swift_validate_parameters(params)
-        type(Parameter), dimension(:), target, intent(in):: params !! - gamma0 > 0
-                                                                   !! - n > 0
-                                                                   !! - crss0 > 0
-
-
-        call parameter_check_bounds(params .find. 'gamma0', lower = 0._DP, lower_inclusive=.false.)
-        call parameter_check_bounds(params .find. 'n',      lower = 0._DP, lower_inclusive=.false.)
-        call parameter_check_bounds(params .find. 'crss0',  lower = 0._DP, lower_inclusive=.false.)
-    end subroutine swift_validate_parameters
 
     !> See [[ConstitutiveModel:init]]
     function swift_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelSwift),   intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
+
+        real(DP):: crss0
 
         allocate(SwiftState:: initial_state)
         call this%base_init(miller_indices, initial_state)
 
-        this%gamma0 = params .find. 'gamma0'
-        this%n = params .find. 'n'
-        this%k = (params .find. 'crss0') / (this%gamma0**this%n)
+        crss0       = params(1)
+        this%gamma0 = params(2)
+        this%n      = params(3)
+        this%k = crss0 / (this%gamma0**this%n)
 
-        initial_state%crss = this%k*this%gamma0**this%n
-    end function
+        initial_state%crss = crss0
+   end function
 
     !> See [[ConstitutiveModel:deform]]
     subroutine swift_deform(this, state, time, slip_rates)

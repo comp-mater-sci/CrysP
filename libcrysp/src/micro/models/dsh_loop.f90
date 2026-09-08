@@ -22,7 +22,7 @@ contains
     function dsh_loop_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelDSHLoop), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
-        type(Parameter), dimension(:), target, intent(in):: params
+        type(Parameter), dimension(:), intent(in):: params
         class(HardeningState), allocatable:: initial_state
 
         integer:: s, i
