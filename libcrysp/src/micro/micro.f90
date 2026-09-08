@@ -43,18 +43,7 @@ module micro
         enumerator:: SLIP_SYSTEMS_BCC48 !! Body-Centered Cubic including the 123-planes.
     end enum
 
-    !> High-level description of a phase. Used for passing phase information to and from higher-level program units. Necessary
-    !> because much of the phase description may vary in size between phases so using regular arrays is inconvenient/inefficient/unsafe.
-    type:: PhaseDescriptor
-        integer:: model_id                                      !! ID of the hardening model used by this phase. Must exist in the
-                                                                !! enum above.
-        integer:: deformation_mechanism                         !! Deformation mechanism for all grains of this phase.
-        type(Parameter), dimension(:), allocatable:: parameters
-        real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
-    end type
-
     interface
-
         module function micro_get_signature(model_id) result(signature)
             integer, intent(in):: model_id
             integer, dimension(:), allocatable:: signature
@@ -74,8 +63,12 @@ module micro
         !> For each provided phase descriptor, a constitutive model is initialized. For each of the orientations in each of
         !> the phase descriptors, a grain object is initialized which points to its constitutive model. All of the grains across all
         !> phases are assimilated as output.
-        module subroutine  micro_init(phase_descriptors, phases, grains)
-            type(PhaseDescriptor), dimension(:), intent(in):: phase_descriptors    !! Phase descriptors for each phase.
+        module subroutine  micro_init(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_parameters, phases, grains)
+            integer, dimension(:), intent(in):: phase_sizes
+            real(DP), dimension(3,sum(phase_sizes)), intent(in):: orientations
+            integer, dimension(size(phase_sizes)), intent(in):: deformation_mechanisms
+            integer, dimension(size(phase_sizes)), intent(in):: hardening_model_ids
+            type(Parameter), dimension(:), intent(in):: hardening_parameters
             type(Phase), dimension(:), allocatable, target, intent(out):: phases
             type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
         end subroutine
@@ -193,33 +186,31 @@ contains
     !> See interface documentation
     module procedure micro_init
         integer:: i, j, k, &
-                  n_grains
+                  offset_params, &
+                  n_params
         integer, allocatable:: miller_indices(:,:,:)
-        real(DP):: orientation(3)
         class(HardeningState), allocatable:: initial_state
         type(Phase), pointer:: phase_ptr
 
-        !First determine the total number of grains so we  can allocate the return array.
-        allocate(phases(size(phase_descriptors)))
-        n_grains = 0
-        do i = 1, size(phases)
-            n_grains = n_grains+size(phase_descriptors(i)%orientations, 2)
-        end do
-        allocate(grains(n_grains))
 
+        !First determine the total number of grains so we  can allocate the return array.
+        allocate(phases(size(phase_sizes)))
+        allocate(grains(size(orientations,2)))
+
+        offset_params = 0
         j = 1
         do i = 1, size(phases)
             phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
-            phase_ptr%model = micro_get_model(phase_descriptors(i)%model_id)
-            miller_indices = get_miller_indices(phase_descriptors(i)%deformation_mechanism)
-            call phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
+            phase_ptr%model = micro_get_model(hardening_model_ids(i))
+            miller_indices = get_miller_indices(deformation_mechanisms(i))
+            n_params = size(phase_ptr%model%get_signature())
+            call phases(i)%model%init(miller_indices, hardening_parameters(offset_params+1:offset_params+n_params))
+            offset_params = offset_params + n_params
             initial_state = phases(i)%model%make_hardening_state()
             call phases(i)%model%init_hardening_state(initial_state)
 
-            do k = 1, size(phase_descriptors(i)%orientations, 2)
-                !assignment of orientation needed for gfortran
-                orientation = phase_descriptors(i)%orientations(:,k)
-                call grains(j)%init(orientation, phases(i), initial_state)
+            do k = 1, phase_sizes(i)
+                call grains(j)%init(orientations(:,j), phases(i), initial_state)
                 j = j+1
             end do
         end do

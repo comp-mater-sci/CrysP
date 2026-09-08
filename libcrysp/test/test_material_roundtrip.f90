@@ -1,14 +1,15 @@
-!> Serialize a Material, deserialize it into a fresh instance, and verify that the result is indistinguishable from the original.
+!> Roundtrip a material state through the serialized parameter stream.
 !>
-!> The material is built through the public API (crysp_new_material) with one phase per supported constitutive model (so every
-!> model's and hardening state's serialization is covered), using varying slip system sets, so that the grain -> phase index
-!> resolution in the serializer is exercised. It is deformed before serialization so that the serialized state is non-trivial
-!> (rotated grains, hardened CRSS, evolved dislocation densities, cluster weights).
+!> With the new public API the material state is passed as a serialized list of [[Parameter]] objects; libcrysp deserializes and
+!> serializes this list internally on every call. The material is built through the public API (crysp_new_material) with one
+!> phase per supported constitutive model (so every model's and hardening state's serialization is covered), using varying slip
+!> system sets, so that the grain -> phase index resolution in the serializer is exercised. It is deformed before serialization
+!> so that the serialized state is non-trivial (rotated grains, hardened CRSS, evolved dislocation densities, cluster weights).
 !>
 !> Equivalence is verified in two independent ways:
-!>  1. Structurally: the parameter stream produced by the restored material is compared element by element to the stream of
-!>     the original. This is exhaustive over everything the serializer writes.
-!>  2. Behaviorally: original and restored material are subjected to the same deformation and must produce the same stresses.
+!>  1. Structurally: a stream deserialized into a Material and serialized back is compared element by element to a pristine
+!>     stream of an identically built material. This is exhaustive over everything the serializer writes.
+!>  2. Behaviorally: two identically built materials are subjected to the same deformation and must produce the same stresses.
 !>     This catches wiring errors that the stream comparison cannot see (e.g. a grain pointing to the wrong phase object).
 !>
 !> Both mesoscopic models are tested since they serialize different cluster types.
@@ -17,7 +18,7 @@ program test_material_roundtrip
     use base_defs, only: DP, TOLERANCE
     use conversions, only: deg_to_rad
     use libcrysp, only: crysp_new_material, crysp_strain_driven_deformation, crysp_simulate_strain_mode
-    use micro, only: PhaseDescriptor, micro_get_signature, &
+    use micro, only: micro_get_signature, &
                      HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, HARDENING_SWIFT, &
                      HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP, &
                      SLIP_SYSTEMS_FCC, SLIP_SYSTEMS_BCC24, SLIP_SYSTEMS_BCC48
@@ -33,8 +34,7 @@ program test_material_roundtrip
     real(DP), dimension(3,3), parameter:: V_GRAD = reshape([1._DP, 0._DP, 0._DP, &
                                                             0._DP, -0.5_DP, 0._DP, &
                                                             0._DP, 0._DP, -0.5_DP], [3, 3])
-    real(DP), parameter:: PRE_STRAIN = 0.02_DP   !! Strain applied before serialization
-    real(DP), parameter:: POST_STRAIN = 0.02_DP  !! Strain applied to both materials after deserialization
+    real(DP), parameter:: POST_STRAIN = 0.02_DP  !! Strain applied to both materials after construction
 
     !> Every constitutive model gets its own phase. Extend this list (and model_parameters) when adding a model.
     integer, parameter:: MODEL_IDS(*) = [HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, HARDENING_SWIFT, &
@@ -72,26 +72,16 @@ contains
         integer, intent(in):: cp_model_id
         character(*), intent(in):: label
 
-        type(Material), target:: original, restored
-        type(Parameter), dimension(:), allocatable:: reference, stream, restored_stream
+        type(Parameter), dimension(:), allocatable:: original, restored, roundtripped
         type(StrainIncrement), dimension(:), allocatable:: increments_original, increments_restored
         real(DP), dimension(5):: strain_mode, stress_original, stress_restored
+        type(Material), target:: material_
 
+        !Build two independent but identical material states through the public API.
         call make_material(cp_model_id, original)
-        call crysp_strain_driven_deformation(original, V_GRAD, PRE_STRAIN, increments_original)
+        call make_material(cp_model_id, restored)
 
-        ! Two independent streams: reading a Parameter consumes it, so the one fed to deserialize cannot be compared afterwards.
-        reference = original%serialize()
-        stream = original%serialize()
-        call check_equal(size(stream), original%size(), label // ': serialized stream has the advertised size')
-
-        call restored%deserialize(stream)
-        call check_equal(restored%size(), original%size(), label // ': restored material advertises the same size')
-
-        restored_stream = restored%serialize()
-        call check_streams_equal(reference, restored_stream, label)
-
-        ! Behavioral equivalence: a pure query first ...
+        !Behavioral equivalence: a pure query first ...
         strain_mode = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP]
         strain_mode = strain_mode / norm2(strain_mode)
         call crysp_simulate_strain_mode(original, strain_mode, stress_original)
@@ -99,7 +89,7 @@ contains
         call check_equal(stress_restored, stress_original, label // ': simulate_strain_mode yields the same stress', &
                          tolerance=2._DP*TOLERANCE)
 
-        ! ... then an evolution of the full state.
+        !... then an evolution of the full state.
         call crysp_strain_driven_deformation(original, V_GRAD, POST_STRAIN, increments_original)
         call crysp_strain_driven_deformation(restored, V_GRAD, POST_STRAIN, increments_restored)
         call check_equal(size(increments_restored), size(increments_original), label // ': same number of increments')
@@ -114,10 +104,10 @@ contains
             end associate
         end if
 
-        ! The state after continued deformation must still be identical.
-        reference = original%serialize()
-        restored_stream = restored%serialize()
-        call check_streams_equal(reference, restored_stream, label // ' (after continued deformation)')
+        !The deformed state must roundtrip (stream -> Material -> stream) to an identical stream.
+        call material_%deserialize(original)
+        roundtripped = material_%serialize()
+        call check_streams_equal(restored, roundtripped, label // ' (after continued deformation)')
     end subroutine
 
     !> Tolerance for comparing quantities computed with OpenMP reductions: tiny relative to the magnitude, huge relative to any
@@ -130,31 +120,43 @@ contains
     end function
 
     !> Build a material with one phase per constitutive model and GRAINS_PER_PHASE grains each.
+    !>
+    !> The material is assembled through the public API from the flat, C-compatible input lists.
     subroutine make_material(cp_model_id, mat)
         integer, intent(in):: cp_model_id
-        type(Material), target, intent(out):: mat
+        type(Parameter), dimension(:), allocatable, intent(out):: mat
 
-        type(PhaseDescriptor), dimension(size(MODEL_IDS)):: phases
-        type(Parameter), dimension(:), allocatable:: meso_params
+        integer(C_INT), dimension(size(MODEL_IDS)):: phase_sizes, deformation_mechanisms, hardening_model_ids
+        real(DP), dimension(3, GRAINS_PER_PHASE*size(MODEL_IDS)):: orientations
+        type(Parameter), dimension(:), allocatable:: hardening_params, meso_params
         real(DP), dimension(:), allocatable:: values
         real(DP), dimension(2, 2):: boundaries
         character(8):: id_str
-        integer:: i, j
+        integer:: i, j, offset, n_params
 
+        !Flatten the per-phase input data. The orientations are grouped per phase, in phase order, matching the grain ordering
+        !used by the micro layer.
+        phase_sizes = GRAINS_PER_PHASE
+        deformation_mechanisms = SLIP_SYSTEMS
+        hardening_model_ids = MODEL_IDS
+        orientations = reshape(deg_to_rad(ORIENTATIONS_DEG), [3, GRAINS_PER_PHASE*size(MODEL_IDS)])
+
+        !Concatenate the hardening parameters of all phases, in phase order.
+        n_params = 0
         do i = 1, size(MODEL_IDS)
-            phases(i)%model_id = MODEL_IDS(i)
-            phases(i)%deformation_mechanism = SLIP_SYSTEMS(i)
-
+            n_params = n_params + size(micro_get_signature(MODEL_IDS(i)))
+        end do
+        allocate(hardening_params(n_params))
+        offset = 0
+        do i = 1, size(MODEL_IDS)
             values = model_parameters(MODEL_IDS(i))
             write(id_str, '(I0)') MODEL_IDS(i)
             call check_equal(size(values), size(micro_get_signature(MODEL_IDS(i))), &
                              'test setup: parameter count for constitutive model ' // trim(id_str))
-            allocate(phases(i)%parameters(size(values)))
             do j = 1, size(values)
-                phases(i)%parameters(j) = values(j)
+                offset = offset + 1
+                hardening_params(offset) = values(j)
             end do
-
-            phases(i)%orientations = deg_to_rad(ORIENTATIONS_DEG(:, :, i))
         end do
 
         select case (cp_model_id)
@@ -168,7 +170,8 @@ contains
                 allocate(meso_params(0))
         end select
 
-        call crysp_new_material(cp_model_id, meso_params, phases, mat)
+        call crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, &
+                                hardening_params, cp_model_id, meso_params, mat)
     end subroutine
 
     !> Initialization parameters per model, in signature order. Values taken from the integration test configuration.

@@ -1,6 +1,7 @@
 !> Implementation of a basic DMC computational module.
 module dmcBasicModule
     use, intrinsic:: iso_fortran_env, only: error_unit, output_unit
+    use iso_c_binding, only: C_INT
     use base_defs
     use micro
     use meso
@@ -26,7 +27,7 @@ module dmcBasicModule
     !>       `this%ParentClassName%method()`
     type:: BasicModule
           character(:), allocatable:: output_prefix
-          type(Material)::   material
+          type(Parameter), dimension(:), allocatable:: material
     contains
           procedure:: initialize =>  BasicModule_initialize
           procedure:: run => BasicModule_run
@@ -45,21 +46,29 @@ contains
                                microstructure_file_name
         character(20):: buffer
         integer:: meso_model_id, &
+                  hardening_model_id, &
+                  n_grains, &
                   i, &
                   n_params
-        real(DP), allocatable:: tmp(:)
-        type(Parameter), allocatable:: meso_params(:)
-        type(PhaseDescriptor):: phase_
+        integer(C_INT):: phase_sizes(1)
+        integer(C_INT), allocatable:: deformation_mechanisms(:), &
+                                       hardening_model_ids(:)
+        real(DP), allocatable:: tmp(:), &
+                                orientations(:,:)
+        type(Parameter), allocatable:: meso_params(:), &
+                                       hardening_params(:)
 
         ! Read input texture file name
         call read_value(cnfunit, texture_file_name)
-        phase_%orientations = read_orientations(trim(texture_file_name))
+        orientations = read_orientations(trim(texture_file_name))
+        n_grains = size(orientations, 2)
 
         ! Determine crystal plasticity model type
         read(cnfunit, '(A)') buffer
         select case (buffer)
             case ('FCTaylor')
                 meso_model_id = MESO_MODEL_FCTAYLOR
+                allocate(meso_params(0))
             case ('ALAMEL')
                 meso_model_id = MESO_MODEL_ALAMEL
                 call read_value(cnfunit, microstructure_file_name)
@@ -69,33 +78,43 @@ contains
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
         end select
 
+        allocate(deformation_mechanisms(1))
         read(cnfunit, '(A)') buffer
         select case (buffer)
             case ('fcc12')
-                phase_%deformation_mechanism = SLIP_SYSTEMS_FCC
+                deformation_mechanisms(1) = SLIP_SYSTEMS_FCC
             case ('bcc24')
-                phase_%deformation_mechanism = SLIP_SYSTEMS_BCC24
+                deformation_mechanisms(1) = SLIP_SYSTEMS_BCC24
             case ('bcc48')
-                phase_%deformation_mechanism = SLIP_SYSTEMS_BCC48
+                deformation_mechanisms(1) = SLIP_SYSTEMS_BCC48
             case default
                 call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
         end select
 
         !Read hardening section
-        call read_value(cnfunit, phase_%model_id)
-        n_params = size(micro_get_signature(phase_%model_id))
+        call read_value(cnfunit, hardening_model_id)
+        n_params = size(micro_get_signature(hardening_model_id))
 
         !Hardening parameters must be provided in the order in which they are defined in the hardening models.
         if (n_params > 0) then
             allocate(tmp(n_params))
-            allocate(phase_%parameters(n_params))
+            allocate(hardening_params(n_params))
             call read_value(cnfunit,tmp)
             do i=1,n_params
-                phase_%parameters(i) = tmp(i)
+                hardening_params(i) = tmp(i)
             end do
+        else
+            allocate(hardening_params(0))
         end if
 
-        call crysp_new_material(meso_model_id, meso_params, [phase_], this%material)
+        !Assemble the model inputs for libcrysp
+        allocate(hardening_model_ids(1))
+        hardening_model_ids(1) = hardening_model_id
+        phase_sizes(1) = n_grains
+
+        call crysp_new_material(phase_sizes, orientations, deformation_mechanisms, &
+                                hardening_model_ids, hardening_params, &
+                                meso_model_id, meso_params, this%material)
     end subroutine
 
     subroutine BasicModule_run(this)

@@ -49,13 +49,15 @@ contains
         call simulate_strain_mode(mat%meso_model, mat%clusters, strain_mode, stress)
     end subroutine
 
-    subroutine macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments)
+    subroutine macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments)
         type(Material), target, intent(inout):: mat
         real(DP), dimension(5), intent(in):: target_stress_mode
         real(DP), intent(in):: target_vm_strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: increments
+        type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments
+        type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments
 
-        integer:: prob_rem_incs
+        integer:: prob_rem_incs, &
+                  n_incs_old
         real(DP):: strain_rate(5), &
                    cur_vm_strain, &
                    next_vm_strain, &
@@ -63,8 +65,10 @@ contains
                    residual(5), &
                    def_grad(3,3)
 
-        type(StrainIncrement), allocatable:: strain_incs(:)
-        type(StressIncrementFactory):: incs
+        type(StrainIncrement), allocatable:: strain_incs(:), &
+                                             strain_inc_buffer(:)
+        type(StressIncrementFactory):: stress_incs
+
 
         cur_vm_strain = 0._DP
         def_grad = UNIT_MATRIX_3X3
@@ -78,12 +82,22 @@ contains
                                  target_vm_strain - cur_vm_strain, &
                                  target_stress_mode)
 
+            if (.not. allocated(strain_increments)) then
+                strain_increments = strain_incs
+            else
+                n_incs_old = size(strain_increments)
+                allocate(strain_inc_buffer(n_incs_old+size(strain_incs)))
+                strain_inc_buffer(:n_incs_old) = strain_increments
+                strain_inc_buffer(n_incs_old+1:) = strain_incs
+                call move_alloc(strain_inc_buffer, strain_increments)
+            end if
+
             def_grad = matmul(strain_incs(size(strain_incs))%deformation_gradient, def_grad)
             next_vm_strain = stretch_to_von_mises_true_strain(def_grad)
             !Add one for current increment and to make sure padding in incrementation is positive
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain)/(next_vm_strain - cur_vm_strain))
             cur_vm_strain = next_vm_strain
-            call incs%add(StressIncrement(strain_rate, residual, strain_incs), prob_rem_incs)
+            call incs%add(StressIncrement(strain_rate, residual, size(strain_incs)), prob_rem_incs)
         end do
 
         increments = incs%get()

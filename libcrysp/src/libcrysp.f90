@@ -28,7 +28,7 @@ contains
     !> Initializes all data structures associated to a meterial state and assembles them into a Material object.
     !> An initialized Material object is needed for all other calls to libCrysP
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
-    subroutine crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, meso_model_id, meso_params, material)
+    subroutine crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, meso_model_id, meso_params, mat) bind(C)
         integer(C_INT), dimension(:), intent(in):: phase_sizes !! Amount of grains belonging to each phase.
         real(C_DOUBLE), dimension(3,sum(phase_sizes)), intent(in):: orientations !! List of Euler angle triplets in bunge convention representing all grains.
         integer(C_INT), dimension(size(phase_sizes)), intent(in):: deformation_mechanisms !! ID of slip system family to use for each phase. Must
@@ -44,47 +44,58 @@ contains
         type(Parameter), dimension(:), intent(in):: meso_params !! List containing values for the parameters of the
                                                                       !!selected meso model. Order and types must correspond to meso_get_parameters(meso_model_id)
 
-        type(Parameter), dimension(:), allocatable, intent(out):: material              !! The initialized material state
+        type(Parameter), dimension(:), allocatable, intent(out):: mat                  !! The initialized material state
 
         type(Grain), allocatable:: grains_(:)
+        type(Material), target:: mat_
 
 
-        call micro_init(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, material%phases, grains_)
-        call meso_init(meso_model_id, grains_, meso_params, material%meso_model, material%clusters)
+        call micro_init(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, mat_%phases, grains_)
+        call meso_init(meso_model_id, grains_, meso_params, mat_%meso_model, mat_%clusters)
+
+        mat = mat_%serialize()
     end subroutine
 
     !> Apply a strain-driven deformation to a material
     subroutine crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)
-        type(Material), target, intent(inout):: mat
+        type(Parameter), dimension(:), allocatable, intent(inout):: mat
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(DP), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! List of increments of the deformation.
 
         character(*), parameter:: PROC_NAME = 'crysp_strain_driven_deformation'
 
+        type(Material), target:: mat_
+
         if (abs(math_trace33(velocity_gradient)) > TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Volumetric deformation is not allowed.')
         if (target_vm_strain < TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Target von mises equivalent strain must be larger than 0.')
 
-        call macro_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)
+        call mat_%deserialize(mat)
+        call macro_strain_driven_deformation(mat_, velocity_gradient, target_vm_strain, increments)
+        mat = mat_%serialize()
     end subroutine
 
-    !> Apply a stress-driven deformtation to a material.
-    subroutine crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments)
-        type(Material), target, intent(inout):: mat
+    subroutine crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments)
+        type(Parameter), dimension(:), allocatable, intent(inout):: mat
         real(DP), dimension(5), intent(in):: target_stress_mode
         real(DP), intent(in):: target_vm_strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: increments
+        type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments
+        type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments
 
         character(*), parameter:: PROC_NAME = 'crysp_stress_driven_deformation'
+
+        type(Material), target:: mat_
 
         if (abs(norm2(target_stress_mode) - 1._DP) > TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Norm of stress mode must be 1.')
         if (target_vm_strain < TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Target von mises equivalent strain must be strictly positive.')
 
-        call macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments)
+        call mat_%deserialize(mat)
+        call macro_stress_driven_deformation(mat_, target_stress_mode, target_vm_strain, stress_increments, strain_increments)
+        mat = mat_%serialize()
     end subroutine
 
     !> Calculate strain mode and stress corresponding to a desired stress mode.
@@ -93,7 +104,7 @@ contains
     !> An accurate initial guess for the strain mode should be provided to improve convergence and performance. The residual of the search is returned to provide
     !> an estimation of search accuracy.
     subroutine crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual)
-        type(Material), target, intent(inout):: mat !! Material state.
+        type(Parameter), dimension(:), allocatable, intent(inout):: mat !! Material state.
         real(DP), dimension(5), intent(in)::  target_stress_mode   !! Intended stress mode
         real(DP), dimension(5), intent(inout):: strain_mode !! On entry, contains an initial guess of the strain mode matching the
                                                             !! target stress mode. On exit, contains the actual strain mode.
@@ -102,18 +113,26 @@ contains
 
         character(*), parameter:: PROC_NAME = 'crysp_simulate_stress_mode'
 
+        type(Material), target:: mat_
+
         if (abs(norm2(target_stress_mode) - 1._DP) > TOLERANCE) &
             call log_error(MOD_NAME, PROC_NAME, ERR_ARG, 'Norm of stress mode must be 1.')
 
-        call macro_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual)
+        call mat_%deserialize(mat)
+        call macro_simulate_stress_mode(mat_, target_stress_mode, strain_mode, stress, residual)
+        mat = mat_%serialize()
     end subroutine
 
     !> Calculate stress state corresponding to a given strain mode.
     subroutine crysp_simulate_strain_mode(mat, strain_mode, stress)
-        type(Material), target, intent(inout):: mat !! Material state
+        type(Parameter), dimension(:), allocatable, intent(inout):: mat !! Material state
         real(DP), dimension(5), intent(in)::    strain_mode !! Deviatoric strain mode
         real(DP), dimension(5), intent(out)::   stress      !! Stress state corresponding to the strain mode.
 
-        call macro_simulate_strain_mode(mat, strain_mode, stress)
+        type(Material), target:: mat_
+
+        call mat_%deserialize(mat)
+        call macro_simulate_strain_mode(mat_, strain_mode, stress)
+        mat = mat_%serialize()
     end subroutine
 end module
