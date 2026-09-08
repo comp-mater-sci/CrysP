@@ -30,7 +30,7 @@ module constitutive_model
         real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
         integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
     contains
-        procedure(cm_get_signature), deferred, nopass::      get_signature
+        procedure(cm_get_signature), deferred, nopass::      get_signature          !! Get the type signature of the parameters of this model
         procedure(cm_get_parameters), deferred, nopass::      get_parameters        !! Get the parameters for this model
         procedure(cm_init), deferred::                        init                  !! Initialize the model
         procedure(cm_deform), deferred::                      deform                !! Update the hardening state under a given deformation.
@@ -38,8 +38,10 @@ module constitutive_model
     end type
 
     abstract interface
+        !> Get the type signature of the input parameters of this model
         function cm_get_signature() result(signature)
-            integer, dimension(:), allocatable:: signature
+            integer, dimension(:), allocatable:: signature !! Type signature. Each element represents 1 input parameter. The value
+                                                           !! of the element represents its type, encoded as a TYPE enum.
         end function
 
         !> Get the parameters associated with the hardening model.
