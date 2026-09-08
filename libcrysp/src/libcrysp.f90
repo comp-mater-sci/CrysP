@@ -69,7 +69,6 @@ contains
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps that
                                                                                    !! were applied. See [[strainIncrement]] for
                                                                                    !! details.
-
         character(*), parameter:: PROC_NAME = 'crysp_strain_driven_deformation'
 
         type(Material), target:: mat_
