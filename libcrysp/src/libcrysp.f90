@@ -28,16 +28,29 @@ contains
     !> Initializes all data structures associated to a meterial state and assembles them into a Material object.
     !> An initialized Material object is needed for all other calls to libCrysP
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
-    subroutine crysp_new_material(meso_model_id, meso_params, phase_descriptors, mat)
-        integer, intent(in):: meso_model_id
-        type(Parameter), dimension(:), intent(in):: meso_params
-        type(PhaseDescriptor), dimension(:), intent(in):: phase_descriptors
-        type(Material), target, intent(out):: mat
+    subroutine crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, meso_model_id, meso_params, material)
+        integer(C_INT), dimension(:), intent(in):: phase_sizes !! Amount of grains belonging to each phase.
+        real(C_DOUBLE), dimension(3,sum(phase_sizes)), intent(in):: orientations !! List of Euler angle triplets in bunge convention representing all grains.
+        integer(C_INT), dimension(size(phase_sizes)), intent(in):: deformation_mechanisms !! ID of slip system family to use for each phase. Must
+                                                                          !! exist in the list in [[micro]]
+
+        integer(C_INT), dimension(size(phase_sizes)), intent(in):: hardening_model_ids !! ID of the hardening model of
+                                                                                                  !! each phase, in the same order as deformation_mechanisms.
+                                                                                                   !! Must exist in the list in [[micro]]
+        type(Parameter), dimension(:), intent(in):: hardening_params !! list containing the parameter lists of the hardening model of each phase,
+                                                                         !! in the smae order as deformation_mechanisms
+
+        integer(C_INT), intent(in):: meso_model_id                       !! ID of the meso model. Must exist in the enum list in [[meso]]
+        type(Parameter), dimension(:), intent(in):: meso_params !! List containing values for the parameters of the
+                                                                      !!selected meso model. Order and types must correspond to meso_get_parameters(meso_model_id)
+
+        type(Parameter), dimension(:), allocatable, intent(out):: material              !! The initialized material state
 
         type(Grain), allocatable:: grains_(:)
 
-        call micro_init(phase_descriptors, mat%phases, grains_)
-        call meso_init(meso_model_id, grains_, meso_params, mat%meso_model, mat%clusters)
+
+        call micro_init(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, material%phases, grains_)
+        call meso_init(meso_model_id, grains_, meso_params, material%meso_model, material%clusters)
     end subroutine
 
     !> Apply a strain-driven deformation to a material
