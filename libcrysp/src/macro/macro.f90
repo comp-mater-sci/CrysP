@@ -97,10 +97,10 @@ contains
             !Add one for current increment and to make sure padding in incrementation is positive
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain)/(next_vm_strain - cur_vm_strain))
             cur_vm_strain = next_vm_strain
-            call incs%add(StressIncrement(strain_rate, residual, size(strain_incs)), prob_rem_incs)
+            call stress_incs%add(StressIncrement(strain_rate, residual, size(strain_incs)), prob_rem_incs)
         end do
 
-        increments = incs%get()
+        stress_increments = stress_incs%get()
     end subroutine
 
     subroutine macro_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)

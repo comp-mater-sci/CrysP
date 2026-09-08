@@ -25,7 +25,7 @@ module crysp_cluster
     !> @endnote
     type:: Cluster
         type(Grain), dimension(:), allocatable:: grains !! List of grains making up this cluster.
-        real(DP):: weight = 1._DP !! Measure of importance of the cluster with respect to the whole microstructure
+        real(DP):: weight !! Measure of importance of the cluster with respect to the whole microstructure
     contains
         procedure:: size => cluster_size
         procedure:: serialize => cluster_serialize

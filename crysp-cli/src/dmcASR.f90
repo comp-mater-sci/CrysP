@@ -109,13 +109,14 @@ contains
                         stress_inc%n_strain_increments = 1
                         call crysp_simulate_stress_mode(this%material, target_dev_stress, stress_inc%strain_rate, dev_stress, stress_inc%residual)
                         strain_inc%stress = deviatoric_to_tensor(dev_stress)
+                        strain_inc%deformation_gradient = UNIT_MATRIX_3X3
                         n_incs = n_incs + 1
                     end associate
                 else
                     call crysp_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%stress_increments, step%strain_increments)
                     !Write new texture to file
                     do i_stress = 1, size(step%stress_increments)
-                        n_incs = n_incs + step%increments(i_stress)%n_strain_increments
+                        n_incs = n_incs + step%stress_increments(i_stress)%n_strain_increments
                     end do
                     call mat_%deserialize(this%material)
                     call write_texture_increment(texture_unit, n_incs, mat_%clusters)
@@ -127,7 +128,7 @@ contains
                 do i_stress = 1, size(step%stress_increments)
                     associate (stress_inc => step%stress_increments(i_stress))
                         do i_strain=offset+1, offset+stress_inc%n_strain_increments
-                            associate (strain_inc => stress_inc%strain_increments(i_strain))
+                            associate (strain_inc => step%strain_increments(i_strain))
                                 stress = tensor_to_unscaled_voigt(strain_inc%stress)
                                 stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress)
 

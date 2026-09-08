@@ -57,10 +57,10 @@ contains
     end subroutine
 
     !> Apply a strain-driven deformation to a material
-    subroutine crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)
+    subroutine crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments) bind(C)
         type(Parameter), dimension(:), allocatable, intent(inout):: mat
-        real(DP), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
-        real(DP), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
+        real(C_DOUBLE), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
+        real(C_DOUBLE), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! List of increments of the deformation.
 
         character(*), parameter:: PROC_NAME = 'crysp_strain_driven_deformation'

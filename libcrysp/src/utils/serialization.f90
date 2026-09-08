@@ -38,7 +38,7 @@ module crysp_serialization
     !>
     !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
     type, bind(C):: Parameter
-        type(C_PTR):: handle = C_NULL_PTR
+        type(C_PTR):: handle
     end type
 
     !> Interface implemented by every serializable type.
