@@ -1,11 +1,12 @@
 !> Implementation of the isotropic phenomenological SWIFT hardening law.
 
 module swift
-    use base_defs, only: dp
+    use base_defs
     use constitutive_model
     use logging
     use parameters
     use grain_module
+    use conversions
 
     implicit none
 
@@ -60,9 +61,9 @@ contains
                                                     !! - **gamma0**: Initial sum of slip across all slip systems
                                                     !! - **n**: Hardening exponent
 
-        params = [ParameterDescriptor('crss0', TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
-                  ParameterDescriptor('gamma0', TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)), &
-                  ParameterDescriptor('n', TYPE_REAL, lower_bound = serialize(0._C_DOUBLE))]
+        params = [ParameterDescriptor(to_c_string('crss0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
+                  ParameterDescriptor(to_c_string('gamma0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('n',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE))]
     end function swift_get_parameters
 
     !> See [[ConstitutiveModel:init]]

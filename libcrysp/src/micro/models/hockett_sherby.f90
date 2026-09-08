@@ -1,11 +1,12 @@
 !> Implementation of the isotropic phenomenological SWIFT hardening law.
 
 module hockett_sherby
-    use base_defs, only: dp
+    use base_defs
     use constitutive_model
     use logging
     use parameters
     use grain_module
+    use conversions
 
     implicit none
 
@@ -61,10 +62,10 @@ contains
                                                         !! - **b**: Hardening exponent
                                                         !! - **n**: Hardening exponent on slip
 
-        params = [ParameterDescriptor('tau_0', TYPE_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
-                  ParameterDescriptor('tau_sat', TYPE_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
-                  ParameterDescriptor('b', TYPE_REAL),       &
-                  ParameterDescriptor('n', TYPE_REAL)]
+        params = [ParameterDescriptor(to_c_string('tau_0',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
+                  ParameterDescriptor(to_c_string('tau_sat',NAME_LEN), TYPE_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('b',NAME_LEN), TYPE_REAL),       &
+                  ParameterDescriptor(to_c_string('n',NAME_LEN), TYPE_REAL)]
     end function
 
     !> See [[ConstitutiveModel:init]]
