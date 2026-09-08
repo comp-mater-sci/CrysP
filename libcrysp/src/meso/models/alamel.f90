@@ -70,7 +70,7 @@ contains
 
                                                             !! denoting the orientation of the grain boundary plane normals.
 
-        params = [ParameterDescriptor(to_c_string("Boundaries",32), TYPE_ANGLES_LIST)]
+        params = [ParameterDescriptor(to_c_string("Boundaries",NAME_LEN), TYPE_ANGLES_LIST)]
     end function
 
     !> See [[MesoModel:init]]

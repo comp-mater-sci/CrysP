@@ -68,11 +68,11 @@ contains
                                                             !! - **THIII1**: Initial hardening rate.
                                                             !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
 
-        params = [ParameterDescriptor(to_c_string('TIII1',32),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
-                  ParameterDescriptor(to_c_string('TIIIS',32),  TYPE_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
-                  ParameterDescriptor(to_c_string('TIVS',32),   TYPE_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
-                  ParameterDescriptor(to_c_string('THIII1',32), TYPE_REAL), &
-                  ParameterDescriptor(to_c_string('THT',32),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
+        params = [ParameterDescriptor(to_c_string('TIII1',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
+                  ParameterDescriptor(to_c_string('TIIIS',NAME_LEN),  TYPE_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('TIVS',NAME_LEN),   TYPE_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
+                  ParameterDescriptor(to_c_string('THIII1',NAME_LEN), TYPE_REAL), &
+                  ParameterDescriptor(to_c_string('THT',NAME_LEN),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
 
     !> See [[ConstitutiveModel:init]]

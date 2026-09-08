@@ -131,22 +131,22 @@ contains
                                                  !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
                                                  !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
 
-        params = [ParameterDescriptor(to_c_string('b',32),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('G',32),     TYPE_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('alfa',32),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('f',32),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('tau0',32),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('I',32),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('R',32),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Iwd',32),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rwd',32),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rncg',32),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('beta1',32), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('beta2',32), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Iwp',32),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rwp',32),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('Rrev',32),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('R2',32),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
+        params = [ParameterDescriptor(to_c_string('b',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('G',NAME_LEN),     TYPE_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('alfa',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('f',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('tau0',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('I',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('R',NAME_LEN),     TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Iwd',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rwd',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rncg',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('beta1',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('beta2',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Iwp',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rwp',NAME_LEN),   TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('Rrev',NAME_LEN),  TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
+                  ParameterDescriptor(to_c_string('R2',NAME_LEN),    TYPE_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
     end function dsh_get_parameters
 
     !> Main model initialization procedure common to all variants of the DSH model family.
