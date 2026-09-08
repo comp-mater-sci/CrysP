@@ -25,7 +25,7 @@ contains
 
     !> Initialize a new material state.
     !>
-    !> Initializes all data structures associated to a meterial state and assembles them into a Material object.
+    !> Initializes all data structures associated to a material state and assembles them into a Material object.
     !> An initialized Material object is needed for all other calls to libCrysP
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
     subroutine crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, meso_model_id, meso_params, mat) bind(C)
