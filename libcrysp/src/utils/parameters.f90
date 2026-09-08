@@ -73,9 +73,9 @@ module parameters
     !> Contains all needed information to enforce sanitization at the front-end.
     !> Any parameters needed by models should be described using this type.
     type, bind(C):: ParameterDescriptor
-        character(kind=C_CHAR), dimension(32)  :: name                    !! Name of the parameter
+        character(kind=C_CHAR), dimension(NAME_LEN)  :: name                    !! Name of the parameter
         integer(C_INT)                         :: type                    !! Type of the parameter. Must exist in enum list in serialization.
-        character(kind=C_CHAR), dimension(1024):: description           = ""      !! Description of the parameter
+        character(kind=C_CHAR), dimension(DESCRIPTION_LEN):: description           = ""      !! Description of the parameter
         logical(C_BOOL)                        :: optional              = .false. !! Indicate if the parameter is optional
         type(Parameter)       :: lower_bound
         logical(C_BOOL)                        :: lower_bound_inclusive = .false. !! Ignored if lower_bound == ""
