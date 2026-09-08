@@ -15,11 +15,11 @@ module incrementation
     character(*), parameter:: MOD_NAME = 'incrementation'
 
     type, bind(C):: StrainIncrement
-        real(C_DOUBLE):: duration
-        real(C_DOUBLE), dimension(3,3):: deformation_gradient !! Technically redundant but saves a lot of computation
-        real(C_DOUBLE):: vm_strain                           !! Von mises true strain. Technically redundant but saves a lot of computation
-        real(C_DOUBLE), dimension(3,3):: stress
-        real(C_DOUBLE):: taylor_factor
+        real(C_DOUBLE):: duration = 0._DP
+        real(C_DOUBLE), dimension(3,3):: deformation_gradient = UNIT_MATRIX_3X3 !! Technically redundant but saves a lot of computation
+        real(C_DOUBLE):: vm_strain = 0._DP                           !! Von mises true strain. Technically redundant but saves a lot of computation
+        real(C_DOUBLE), dimension(3,3):: stress = 0._DP
+        real(C_DOUBLE):: taylor_factor = 0._DP
     end type
 
     type, bind(C):: StressIncrement
@@ -98,9 +98,4 @@ contains
 
         increments = this%increments(:this%size)
     end function
-
-
-
 end module
-
-

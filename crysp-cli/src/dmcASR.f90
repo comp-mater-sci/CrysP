@@ -109,7 +109,6 @@ contains
                         stress_inc%n_strain_increments = 1
                         call crysp_simulate_stress_mode(this%material, target_dev_stress, stress_inc%strain_rate, dev_stress, stress_inc%residual)
                         strain_inc%stress = deviatoric_to_tensor(dev_stress)
-                        strain_inc%deformation_gradient = UNIT_MATRIX_3X3
                         n_incs = n_incs + 1
                     end associate
                 else
@@ -139,6 +138,7 @@ contains
                                                                        stress, &
                                                                        deviatoric_to_unscaled_voigt(stress_inc%strain_rate)])
                             end associate
+                            offset = offset + stress_inc%n_strain_increments
                         end do
                         offset = offset + stress_inc%n_strain_increments
                         def_grad = matmul(step%strain_increments(offset)%deformation_gradient, def_grad)
