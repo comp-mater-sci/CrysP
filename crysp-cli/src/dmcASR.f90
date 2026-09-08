@@ -139,9 +139,9 @@ contains
                                                                        stress, &
                                                                        deviatoric_to_unscaled_voigt(stress_inc%strain_rate)])
                             end associate
-                            offset = offset + stress_inc%n_strain_increments
                         end do
-                        def_grad = matmul(step%strain_increments(i_strain-1)%deformation_gradient, def_grad)
+                        offset = offset + stress_inc%n_strain_increments
+                        def_grad = matmul(step%strain_increments(offset)%deformation_gradient, def_grad)
                     end associate
                 end do
             end associate

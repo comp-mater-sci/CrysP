@@ -77,10 +77,10 @@ contains
         mat = mat_%serialize()
     end subroutine
 
-    subroutine crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments)
+    subroutine crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments) bind(C)
         type(Parameter), dimension(:), allocatable, intent(inout):: mat
-        real(DP), dimension(5), intent(in):: target_stress_mode
-        real(DP), intent(in):: target_vm_strain
+        real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode
+        real(C_DOUBLE), intent(in):: target_vm_strain
         type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments
         type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments
 
