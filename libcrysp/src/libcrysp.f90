@@ -56,12 +56,19 @@ contains
         mat = mat_%serialize()
     end subroutine
 
-    !> Apply a strain-driven deformation to a material
+    !> Deform a material according to a prescribed velocity gradient.
+    !>
+    !> The material has to be pre-initialized via crysp_new_material
+    !> The velocity gradient must not contain a volumetric component (sum(trace) == )
+    !> The velocity gradient is applied until a given von-mises equivalent true strain is reached.
+    !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
     subroutine crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments) bind(C)
         type(Parameter), dimension(:), allocatable, intent(inout):: mat
         real(C_DOUBLE), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(C_DOUBLE), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! List of increments of the deformation.
+        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps that
+                                                                                   !! were applied. See [[strainIncrement]] for
+                                                                                   !! details.
 
         character(*), parameter:: PROC_NAME = 'crysp_strain_driven_deformation'
 
@@ -77,12 +84,24 @@ contains
         mat = mat_%serialize()
     end subroutine
 
+    !> Deform a material based on a stress mode.
+    !>
+    !> The material has to be pre-initialized via crysp_new_material
+    !> The stress mode is applied until a given von-mises equivalent true strain is reached.
+    !> The stress mode is iteratively matched to the appropriate strain mode. This process is inexact, so a deviation of 10^-2
+    !> between the requested stress mode and the actually applied stress mode is expected.
+    !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
     subroutine crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments) bind(C)
-        type(Parameter), dimension(:), allocatable, intent(inout):: mat
-        real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode
-        real(C_DOUBLE), intent(in):: target_vm_strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments
+        type(Parameter), dimension(:), allocatable, intent(inout):: mat                   !! Initialized material
+        real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode                     !! Norm must be 1
+        real(C_DOUBLE), intent(in):: target_vm_strain                                     !! Target true von mises strain
+        type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments !! Step-wise reporting of the mapping
+                                                                                          !! between requested stress mode and strain mode.
+                                                                                          !! See [[stressincrement]] for details.
+        type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments !! Reporting of individual deformation steps that
+                                                                                          !! were applied. See [[strainIncrement]] for
+                                                                                          !! details.
+
 
         character(*), parameter:: PROC_NAME = 'crysp_stress_driven_deformation'
 
@@ -100,7 +119,8 @@ contains
 
     !> Calculate strain mode and stress corresponding to a desired stress mode.
     !>
-    !> Uses iterative search to find an accurate match for the strain mode and stress state corresponding to the d  esired stress mode.
+    !> The material has to be pre-initialized via crysp_new_material
+    !> Uses iterative search to find an accurate match for the strain mode and stress state corresponding to the desired stress mode.
     !> An accurate initial guess for the strain mode should be provided to improve convergence and performance. The residual of the search is returned to provide
     !> an estimation of search accuracy.
     subroutine crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual) bind(C)
