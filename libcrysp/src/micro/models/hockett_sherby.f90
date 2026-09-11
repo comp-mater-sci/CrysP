@@ -7,6 +7,7 @@ module hockett_sherby
     use grain_module
     use crysp_serialization
     use crysp_input
+    use conversions
 
     implicit none
 
@@ -59,10 +60,10 @@ contains
                                                         !! - **b**: Hardening exponent
                                                         !! - **n**: Hardening exponent on slip
 
-        inputs = [Input(to_c_string('tau_0',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
-                  Input(to_c_string('tau_sat',NAME_LEN), TYPE_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
-                  Input(to_c_string('b',NAME_LEN), TYPE_REAL),       &
-                  Input(to_c_string('n',NAME_LEN), TYPE_REAL)]
+        inputs = [Input(to_c_string('tau_0',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
+                  Input(to_c_string('tau_sat',NAME_LEN), INPUT_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
+                  Input(to_c_string('b',NAME_LEN), INPUT_REAL),       &
+                  Input(to_c_string('n',NAME_LEN), INPUT_REAL)]
     end function
 
     !> Convert a generic HardeningState to a pointer to a HockettSherbyState object

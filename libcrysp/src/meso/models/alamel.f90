@@ -77,7 +77,7 @@ contains
         type(Input), dimension(:), allocatable:: inputs !! - **Boundaries**: List of Euler angles in Bunge convention
                                                             !! denoting the orientation of the grain boundary plane normals.
 
-        inputs = [Input(to_c_string("Boundaries",NAME_LEN), TYPE_ANGLES_LIST)]
+        inputs = [Input(to_c_string("Boundaries",NAME_LEN), INPUT_ANGLES_LIST)]
     end function
 
     !> Convert the type of a provided generic cluster to AlamelCluster

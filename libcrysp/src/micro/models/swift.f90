@@ -7,6 +7,7 @@ module swift
     use grain_module
     use crysp_serialization
     use crysp_input
+    use conversions
 
     implicit none
 
@@ -58,10 +59,10 @@ contains
                                                     !! - **gamma0**: Initial sum of slip across all slip systems
                                                     !! - **n**: Hardening exponent
 
-        inputs = [Input(to_c_string('crss0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
-                  Input(to_c_string('gamma0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)), &
-                  Input(to_c_string('n',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE))]
-    end function swift_get_parameters
+        inputs = [Input(to_c_string('crss0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
+                  Input(to_c_string('gamma0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)), &
+                  Input(to_c_string('n',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
+    end function
 
     !> Convert a generic HardeningState to a pointer to a SwiftState object
     !>
