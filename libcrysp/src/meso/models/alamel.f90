@@ -75,11 +75,11 @@ contains
     !> See [[MesoModel:get_parameters]]
     pure function alamel_get_parameters() result(params)
         type(ParameterDescriptor), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
-                                                                      !! denoting the orientation of the grain boundary plane normals.
 
-        params = [ParameterDescriptor(to_c_string("Boundaries",32), TYPE_ANGLES_LIST)]
+                                                            !! denoting the orientation of the grain boundary plane normals.
+
+        params = [ParameterDescriptor(to_c_string("Boundaries",NAME_LEN), TYPE_ANGLES_LIST)]
     end function
-
 
     !> Convert the type of a provided generic cluster to AlamelCluster
     !>
@@ -97,15 +97,6 @@ contains
             class default
                 call log_error(MOD_NAME, 'to_alamel_cluster', ERR_TYPE)
         end select
-    end function
-
-    !> See [[MesoModel:get_parameters]]
-    function alamel_get_parameters() result(params)
-        type(ParameterDescriptor), dimension(:), allocatable:: params !! - **Boundaries**: List of Euler angles in Bunge convention
-
-                                                            !! denoting the orientation of the grain boundary plane normals.
-
-        params = [ParameterDescriptor(to_c_string("Boundaries",NAME_LEN), TYPE_ANGLES_LIST)]
     end function
 
     !> See [[MesoModel:init]]
