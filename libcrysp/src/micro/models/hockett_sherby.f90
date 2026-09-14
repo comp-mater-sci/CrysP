@@ -55,7 +55,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    pure function hs_get_input() result(inputs)
+    function hs_get_input() result(inputs)
         type(Input), dimension(:), allocatable:: inputs    !! - **tau_0**: Initial critical resoved shear stress
                                                         !! - **tau_sat**: Final critical resolved shear stress
                                                         !! - **b**: Hardening exponent
@@ -117,7 +117,7 @@ contains
         size = this%ConstitutiveModel%size() + 4
     end function
 
-    pure function hs_serialize(this) result(params)
+    function hs_serialize(this) result(params)
         class(ConstitutiveModelHockettSherby), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 

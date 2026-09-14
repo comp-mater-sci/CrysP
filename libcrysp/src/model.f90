@@ -52,7 +52,7 @@ contains
     end function
 
 
-    pure function model_serialize(this) result(params)
+    function model_serialize(this) result(params)
         class(Model), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
@@ -70,7 +70,7 @@ contains
         allocate(signature(0))
     end function
 
-    pure function model_get_input() result(inputs)
+    function model_get_input() result(inputs)
         type(Input), dimension(:), allocatable:: inputs
 
         allocate(inputs(0))

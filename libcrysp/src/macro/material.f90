@@ -46,7 +46,7 @@ contains
         end do
     end function
 
-    pure function material_serialize(this) result(params)
+    function material_serialize(this) result(params)
         class(Material), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 

@@ -47,7 +47,7 @@ contains
         n = n + 1
     end function
 
-    pure function cluster_serialize(this, phases) result(params)
+    function cluster_serialize(this, phases) result(params)
         class(Cluster), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(:), allocatable:: params

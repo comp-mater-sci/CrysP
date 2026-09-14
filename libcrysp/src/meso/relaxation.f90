@@ -68,7 +68,7 @@ contains
         end do
     end subroutine
 
-    pure function relaxation_serialize(this) result(params)
+    function relaxation_serialize(this) result(params)
         class(Relaxation), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 

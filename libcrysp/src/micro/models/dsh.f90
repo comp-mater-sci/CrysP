@@ -99,7 +99,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    pure function dsh_get_input() result(inputs)
+    function dsh_get_input() result(inputs)
         type(Input), dimension(:), allocatable:: inputs !! - **b**:     Magnitude of burgers vector [m]
                                                         !! - **G**:     Shear modulus [MPa]
                                                         !! - **alfa**:  Dislocation interaction parameter
@@ -410,7 +410,7 @@ contains
         end do
     end subroutine
 
-    pure function dsh_serialize(this) result(params)
+    function dsh_serialize(this) result(params)
         class(ConstitutiveModelDSH), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
@@ -487,7 +487,7 @@ contains
         size = this%HardeningState%size() + 32
     end function
 
-    pure function dsh_state_serialize(this) result(params)
+    function dsh_state_serialize(this) result(params)
         class(DSHState), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 

@@ -492,7 +492,7 @@ contains
         size = 1
     end function
 
-    pure function alamel_serialize(this) result(params)
+    function alamel_serialize(this) result(params)
         class(AlamelModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
@@ -515,7 +515,7 @@ contains
         size = this%Cluster%size() + 9
     end function
 
-    pure function alamel_cluster_serialize(this, phases) result(params)
+    function alamel_cluster_serialize(this, phases) result(params)
         class(AlamelCluster), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(:), allocatable:: params

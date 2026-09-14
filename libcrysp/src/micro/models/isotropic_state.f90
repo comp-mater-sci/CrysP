@@ -45,7 +45,7 @@ contains
         size = this%HardeningState%size() + 1
     end function
 
-    pure function isotropic_state_serialize(this) result(params)
+    function isotropic_state_serialize(this) result(params)
         class(IsotropicState), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 

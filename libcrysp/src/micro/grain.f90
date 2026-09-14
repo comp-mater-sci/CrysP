@@ -89,7 +89,7 @@ contains
         size = 3 + this%hardening_state%size()
     end function
 
-    pure function grain_serialize(this, phases) result(params)
+    function grain_serialize(this, phases) result(params)
         class(Grain), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(:), allocatable:: params

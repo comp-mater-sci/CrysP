@@ -149,7 +149,7 @@ contains
         size = 3
     end function
 
-    pure function cm_serialize(this) result(params)
+    function cm_serialize(this) result(params)
         class(ConstitutiveModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
@@ -177,7 +177,7 @@ contains
         size = 1
     end function
 
-    pure function hs_serialize(this) result(params)
+    function hs_serialize(this) result(params)
         class(HardeningState), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 

@@ -69,8 +69,7 @@ module crysp_serialization
             class(State), intent(in):: this
             integer:: size
         end function
-        !> Transform a state into a list of parameters
-        pure function state_serialize(this) result(params)
+        function state_serialize(this) result(params)
             import State
             import Parameter
 
@@ -264,7 +263,15 @@ contains
     end subroutine
 
     !> Initialize a parameter based on a Value object of any type.
-    pure function to_parameter(data) result(param)
+    !>
+    !> @note
+    !> Deliberately not `pure`, even though it reads like a constructor. It allocates a `ParameterValue` whose lifetime outlives
+    !> the call and hands back its address, which is a side effect however it is spelled. `pure` is also exactly the licence a
+    !> compiler needs to collapse two calls with identical arguments into one, and two `Parameter`s sharing one handle would
+    !> double-free on destruction. IFX 2026.1 does not currently do that, but nothing stops it from starting. Purity has to come
+    !> off the whole chain that reaches here, including the `state_serialize` binding and its implementations.
+    !> @endnote
+    function to_parameter(data) result(param)
         class(Value), intent(in):: data
         type(Parameter):: param
 
@@ -275,13 +282,13 @@ contains
         param%handle = c_loc(val)
     end function
 
-    pure subroutine int_to_param(param, data) bind(C)
+    subroutine int_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         integer(C_INT), intent(in):: data
 
         param = to_parameter(IntValue(data))
     end subroutine
-    pure subroutine int_array_to_param(param, data) bind(C)
+    subroutine int_array_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         integer(C_INT), dimension(:), intent(in):: data
 
@@ -291,13 +298,13 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end subroutine
-    pure subroutine real_to_param(param, data) bind(C)
+    subroutine real_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), intent(in):: data
 
         param = to_parameter(RealValue(data))
     end subroutine
-    pure subroutine real_array_to_param(param, data) bind(C)
+    subroutine real_array_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), dimension(:), intent(in):: data
 
@@ -307,7 +314,7 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end subroutine
-    pure subroutine real_matrix_to_param(param, data) bind(C)
+    subroutine real_matrix_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), dimension(:,:), intent(in):: data
 
@@ -318,7 +325,7 @@ contains
         param = to_parameter(val)
     end subroutine
 
-    pure subroutine string_to_param(param, data) bind(C)
+    subroutine string_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         character(kind=C_CHAR,len=*), intent(in):: data
 
@@ -434,14 +441,14 @@ contains
         deallocate(val)
     end subroutine
 
-    pure function serialize_int(data) result(param) bind(C)
+    function serialize_int(data) result(param) bind(C)
         integer(C_INT), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
 
-    pure function serialize_int_array(data, len) result(param) bind(C)
+    function serialize_int_array(data, len) result(param) bind(C)
         integer(C_INT), intent(in), value:: len
         integer(C_INT), dimension(len), intent(in):: data
         type(Parameter):: param
@@ -452,7 +459,7 @@ contains
         param = to_parameter(val)
     end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_int_array_desc(data) result(param) bind(C)
+    function serialize_int_array_desc(data) result(param) bind(C)
         integer(C_INT), dimension(:), intent(in):: data
         type(Parameter):: param
 
@@ -461,14 +468,14 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end function
-    pure function serialize_real(data) result(param) bind(C)
+    function serialize_real(data) result(param) bind(C)
         real(C_DOUBLE), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
 
-    pure function serialize_real_array(data, len) result(param) bind(C)
+    function serialize_real_array(data, len) result(param) bind(C)
         integer(C_INT), intent(in), value:: len
         real(C_DOUBLE), dimension(len), intent(in):: data
         type(Parameter):: param
@@ -479,7 +486,7 @@ contains
         param = to_parameter(val)
     end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_real_array_desc(data) result(param) bind(C)
+    function serialize_real_array_desc(data) result(param) bind(C)
         real(C_DOUBLE), dimension(:), intent(in):: data
         type(Parameter):: param
 
@@ -492,7 +499,7 @@ contains
     !>
     !> The buffer is read in Fortran (column-major) order, so a C caller laying out its data row by row must pass the extents of
     !> the transposed matrix and transpose the result, or fill the buffer column by column.
-    pure function serialize_real_matrix(data, rows, cols) result(param) bind(C)
+    function serialize_real_matrix(data, rows, cols) result(param) bind(C)
         integer(C_INT), intent(in), value:: rows
         integer(C_INT), intent(in), value:: cols
         real(C_DOUBLE), dimension(rows,cols), intent(in):: data
@@ -504,7 +511,7 @@ contains
         param = to_parameter(val)
     end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_real_matrix_desc(data) result(param) bind(C)
+    function serialize_real_matrix_desc(data) result(param) bind(C)
         real(C_DOUBLE), dimension(:,:), intent(in):: data
         type(Parameter):: param
 
@@ -513,7 +520,7 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end function
-    pure function serialize_string(data) result(param) bind(C)
+    function serialize_string(data) result(param) bind(C)
         character(kind=C_CHAR,len=*), intent(in):: data
         type(Parameter):: param
 
@@ -537,5 +544,4 @@ contains
 
         deallocate(val)
     end function
-
 end module
