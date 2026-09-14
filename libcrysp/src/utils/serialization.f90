@@ -39,6 +39,16 @@ module crysp_serialization
     !> Opaque C-compatible wrapper for parameters.
     !>
     !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
+    !>
+    !> @note
+    !> `handle` deliberately has no `= C_NULL_PTR` default initializer, tempting though it is. GFortran rejects a dummy argument
+    !> that is both allocatable and of a default-initialized type inside a `bind(C)` procedure, for every intent ("Default-
+    !> initialized dummy argument with ALLOCATABLE attribute is not permitted in BIND(C) procedure"). The C entry points in
+    !> `libcrysp` pass the material state as exactly that shape, `type(Parameter), dimension(:), allocatable, intent(inout)`, so a
+    !> default here would break the C API under GFortran. The same rule is why the increment types carry no component defaults
+    !> either. A default-initialized type on its own is fine, and an allocatable `bind(C)` dummy on its own is fine; only the
+    !> combination is rejected. IFX (as of 2026.1) accepts it silently, so this does not surface unless GFortran is run.
+    !> @endnote
     type, bind(C):: Parameter
         type(C_PTR):: handle
     end type
@@ -130,6 +140,11 @@ module crysp_serialization
 
     !> From within fortran, creating and destroying parameters is done using intrinsic assignment to/from the types described in the
     !> enum at the top of this module.
+    !>
+    !> Reading a parameter destroys it: a parameter is a one-shot container, and the assignment that reads it is also what frees it.
+    !> A parameter must therefore not be touched again after it has been read, by assignment or otherwise. Doing so dereferences a
+    !> freed handle and is not diagnosed. `parameter_destroy` is the C-side release and is not to be called from Fortran, where
+    !> reading is the only free operation.
     interface assignment(=)
         module procedure int_to_param, int_array_to_param, real_to_param, real_array_to_param, real_matrix_to_param, string_to_param, &
                          param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, param_to_string
