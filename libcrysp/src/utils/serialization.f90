@@ -139,9 +139,13 @@ module crysp_serialization
     !> Convenience functions wrapping the setter subroutines above.
     !>
     !> Useful for creating anonymous Parameter instances not bound to a local variable.
-    !> No serialize_real_matrix due to IFX compiler bug as of 2026.1.1.19
+    !> Every array and matrix type comes in two flavours: one taking the extents explicitly, so that C callers can pass a plain
+    !> pointer plus its length, and a `_desc` one taking an assumed-shape argument for use from Fortran. The explicit-extent forms
+    !> are the C-callable ones; the `_desc` forms require a descriptor and are therefore Fortran-only despite their bind(C).
     interface serialize
-        module procedure serialize_int, serialize_int_array, serialize_real, serialize_real_array, serialize_real_matrix, serialize_string
+        module procedure serialize_int, serialize_int_array, serialize_int_array_desc, &
+                         serialize_real, serialize_real_array, serialize_real_array_desc, serialize_real_matrix, serialize_real_matrix_desc, &
+                         serialize_string
     end interface
 
 contains
@@ -437,8 +441,18 @@ contains
         param = data
     end function
 
+    pure function serialize_int_array(data, len) result(param) bind(C)
+        integer(C_INT), intent(in), value:: len
+        integer(C_INT), dimension(len), intent(in):: data
+        type(Parameter):: param
+
+        type(IntArrayValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_int_array(data) result(param) bind(C)
+    pure function serialize_int_array_desc(data) result(param) bind(C)
         integer(C_INT), dimension(:), intent(in):: data
         type(Parameter):: param
 
@@ -453,9 +467,10 @@ contains
 
         param = data
     end function
-    !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_real_array(data) result(param) bind(C)
-        real(C_DOUBLE), dimension(:), intent(in):: data
+
+    pure function serialize_real_array(data, len) result(param) bind(C)
+        integer(C_INT), intent(in), value:: len
+        real(C_DOUBLE), dimension(len), intent(in):: data
         type(Parameter):: param
 
         type(RealArrayValue):: val
@@ -464,7 +479,32 @@ contains
         param = to_parameter(val)
     end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_real_matrix(data) result(param) bind(C)
+    pure function serialize_real_array_desc(data) result(param) bind(C)
+        real(C_DOUBLE), dimension(:), intent(in):: data
+        type(Parameter):: param
+
+        type(RealArrayValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
+    !> Build a matrix parameter from a contiguous buffer.
+    !>
+    !> The buffer is read in Fortran (column-major) order, so a C caller laying out its data row by row must pass the extents of
+    !> the transposed matrix and transpose the result, or fill the buffer column by column.
+    pure function serialize_real_matrix(data, rows, cols) result(param) bind(C)
+        integer(C_INT), intent(in), value:: rows
+        integer(C_INT), intent(in), value:: cols
+        real(C_DOUBLE), dimension(rows,cols), intent(in):: data
+        type(Parameter):: param
+
+        type(RealMatrixValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
+    !!Longer notation due to bug in IFX as of 2026.1.1.19
+    pure function serialize_real_matrix_desc(data) result(param) bind(C)
         real(C_DOUBLE), dimension(:,:), intent(in):: data
         type(Parameter):: param
 
