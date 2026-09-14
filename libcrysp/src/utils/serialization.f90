@@ -15,7 +15,7 @@ module crysp_serialization
              Parameter, &
              assignment(=), &
              serialize, &
-             typeof, &
+             type_of, &
              shape_of, &
              State, &
              deserialize_real_matrix
@@ -147,7 +147,7 @@ contains
     !> Get the type of a parameter
     !>
     !> Returns one of the types declared in the enum at the top of this module.
-    function typeof(param) result(t)
+    function type_of(param) result(t) bind(C)
         type(Parameter), intent(in):: param
         integer(C_INT):: t
 
@@ -173,11 +173,12 @@ contains
 
     !> Get the shape of the value held by a parameter.
     !>
-    !> Returns a zero-size array for scalars, the string length for strings and the array shape otherwise.
+    !> The shape is always reported as two extents, so that the interface is interoperable with C. Matrices fill both; scalars
+    !> ([1, 0]), arrays ([size, 0]) and strings ([length, 0]) leave the second extent zero.
     !> Useful for allocating a receiving buffer of the right size before reading the value. Does not consume the parameter.
-    function shape_of(param) result(s)
+    subroutine shape_of(param,s) bind(C)
         type(Parameter), intent(in):: param
-        integer, dimension(:), allocatable:: s
+        integer(C_INT), dimension(2), intent(out):: s
 
         type(ParameterValue), pointer:: val
 
@@ -185,21 +186,21 @@ contains
 
         select type (value => val%value)
             type is (IntValue)
-                allocate(s(0))
+                s = [1,0]
             type is (IntArrayValue)
-                s = shape(value%buffer)
+                s = [size(value%buffer),0]
             type is (RealValue)
-                allocate(s(0))
+                s = [1,0]
             type is (RealArrayValue)
-                s = shape(value%buffer)
+                s = [size(value%buffer),0]
             type is (RealMatrixValue)
                 s = shape(value%buffer)
             type is (StringValue)
-                s = [len(value%buffer)]
+                s = [len(value%buffer),0]
             class default
                 call log_error(MOD_NAME, 'shape_of', ERR_TYPE, 'Unknown parameter type')
         end select
-    end function
+    end subroutine
 
     !> Initialize a parameter based on a Value object of any type.
     pure function to_parameter(data) result(param)

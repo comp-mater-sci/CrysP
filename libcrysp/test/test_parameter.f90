@@ -1,6 +1,6 @@
 !> Round-trip every value type supported by crysp_serialization through a Parameter.
 !>
-!> Covers both ways of creating a parameter (assignment and the `serialize` function family), the `typeof` and `shape_of`
+!> Covers both ways of creating a parameter (assignment and the `serialize` function family), the `type_of` and `shape_of`
 !> queries, and reading the value back via assignment.
 !>
 !> Ends with a negative test: reading a matrix parameter into a destination of the wrong shape must abort through `log_error`.
@@ -31,10 +31,12 @@ contains
     subroutine test_integer()
         type(Parameter):: p, q
         integer:: out
+        integer(C_INT), dimension(2):: s
 
         p = 42
-        call check_equal(int(typeof(p)), TYPE_INTEGER, 'integer: typeof')
-        call check_equal(size(shape_of(p)), 0, 'integer: shape_of is scalar')
+        call check_equal(int(type_of(p)), TYPE_INTEGER, 'integer: type_of')
+        call shape_of(p, s)
+        call check_equal(int(s), [1, 0], 'integer: shape_of reports a single element')
         out = p
         call check_equal(out, 42, 'integer: roundtrip via assignment')
 
@@ -47,18 +49,20 @@ contains
         type(Parameter):: p, q
         integer, dimension(5):: in = [3, 1, 4, 1, 5]
         integer, dimension(5):: out
-        integer, dimension(:), allocatable:: dyn, s
+        integer, dimension(:), allocatable:: dyn
+        integer(C_INT), dimension(2):: s
 
         p = in
-        call check_equal(int(typeof(p)), TYPE_INT_ARRAY, 'int array: typeof')
-        call check_equal(shape_of(p), [5], 'int array: shape_of')
+        call check_equal(int(type_of(p)), TYPE_INT_ARRAY, 'int array: type_of')
+        call shape_of(p, s)
+        call check_equal(int(s), [5, 0], 'int array: shape_of')
         out = 0
         out = p
         call check_equal(out, in, 'int array: roundtrip via assignment')
 
         ! Typical consumer pattern: query the shape, allocate, then read.
         q = serialize(in(2:4))
-        s = shape_of(q)
+        call shape_of(q, s)
         allocate(dyn(s(1)))
         dyn = q
         call check_equal(dyn, [1, 4, 1], 'int array: roundtrip via serialize() into allocated buffer')
@@ -67,10 +71,12 @@ contains
     subroutine test_real()
         type(Parameter):: p, q
         real(DP):: out
+        integer(C_INT), dimension(2):: s
 
         p = 2.5_DP
-        call check_equal(int(typeof(p)), TYPE_REAL, 'real: typeof')
-        call check_equal(size(shape_of(p)), 0, 'real: shape_of is scalar')
+        call check_equal(int(type_of(p)), TYPE_REAL, 'real: type_of')
+        call shape_of(p, s)
+        call check_equal(int(s), [1, 0], 'real: shape_of reports a single element')
         out = p
         call check_equal(out, 2.5_DP, 'real: roundtrip via assignment')
 
@@ -84,17 +90,18 @@ contains
         real(DP), dimension(3):: in = [1._DP, -2._DP, 0.125_DP]
         real(DP), dimension(3):: out
         real(DP), dimension(:), allocatable:: dyn
-        integer, dimension(:), allocatable:: s
+        integer(C_INT), dimension(2):: s
 
         p = in
-        call check_equal(int(typeof(p)), TYPE_REAL_ARRAY, 'real array: typeof')
-        call check_equal(shape_of(p), [3], 'real array: shape_of')
+        call check_equal(int(type_of(p)), TYPE_REAL_ARRAY, 'real array: type_of')
+        call shape_of(p, s)
+        call check_equal(int(s), [3, 0], 'real array: shape_of')
         out = 0._DP
         out = p
         call check_equal(out, in, 'real array: roundtrip via assignment')
 
         q = serialize(in)
-        s = shape_of(q)
+        call shape_of(q, s)
         allocate(dyn(s(1)))
         dyn = q
         call check_equal(dyn, in, 'real array: roundtrip via serialize() into allocated buffer')
@@ -104,6 +111,7 @@ contains
         type(Parameter):: p, q, r
         real(DP), dimension(2,3):: in, out
         real(DP), dimension(:,:), allocatable:: dyn
+        integer(C_INT), dimension(2):: s
         integer:: i, j
 
         do j = 1, 3
@@ -113,8 +121,9 @@ contains
         end do
 
         p = in
-        call check_equal(int(typeof(p)), TYPE_REAL_MATRIX, 'real matrix: typeof')
-        call check_equal(shape_of(p), [2, 3], 'real matrix: shape_of preserves extent order')
+        call check_equal(int(type_of(p)), TYPE_REAL_MATRIX, 'real matrix: type_of')
+        call shape_of(p, s)
+        call check_equal(int(s), [2, 3], 'real matrix: shape_of preserves extent order')
         out = 0._DP
         out = p
         call check_equal(out, in, 'real matrix: roundtrip via assignment')
@@ -126,16 +135,19 @@ contains
 
         ! A zero-extent matrix must survive as well (models with no parameters may produce these).
         r = serialize(reshape([real(DP)::], [0, 4]))
-        call check_equal(shape_of(r), [0, 4], 'real matrix: zero-extent shape preserved')
+        call shape_of(r, s)
+        call check_equal(int(s), [0, 4], 'real matrix: zero-extent shape preserved')
     end subroutine
 
     subroutine test_string()
         type(Parameter):: p, q
         character(:), allocatable:: out
+        integer(C_INT), dimension(2):: s
 
         p = 'Boundaries'
-        call check_equal(int(typeof(p)), TYPE_STRING, 'string: typeof')
-        call check_equal(shape_of(p), [10], 'string: shape_of is the length')
+        call check_equal(int(type_of(p)), TYPE_STRING, 'string: type_of')
+        call shape_of(p, s)
+        call check_equal(int(s), [10, 0], 'string: shape_of is the length')
         out = p
         call check_equal(out, 'Boundaries', 'string: roundtrip via assignment')
 

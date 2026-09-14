@@ -219,7 +219,7 @@ contains
         character(:), allocatable:: msg
         character(16):: index_str
         integer(C_INT):: type_a, type_b
-        integer, dimension(:), allocatable:: shape_a, shape_b
+        integer(C_INT), dimension(2):: shape_a, shape_b
         integer:: ia, ib
         integer, dimension(:), allocatable:: iaa, iab
         real(DP):: ra, rb
@@ -230,15 +230,14 @@ contains
         write(index_str, '(I0)') index
         msg = label // ': parameter #' // trim(index_str)
 
-        type_a = typeof(a)
-        type_b = typeof(b)
+        type_a = type_of(a)
+        type_b = type_of(b)
         call check(type_a == type_b, msg // ' has the same type')
         if (type_a /= type_b) return
 
-        shape_a = shape_of(a)
-        shape_b = shape_of(b)
-        call check_equal(shape_b, shape_a, msg // ' has the same shape')
-        if (size(shape_a) /= size(shape_b)) return
+        call shape_of(a, shape_a)
+        call shape_of(b, shape_b)
+        call check_equal(int(shape_b), int(shape_a), msg // ' has the same shape')
         if (any(shape_a /= shape_b)) return
 
         select case (type_a)
