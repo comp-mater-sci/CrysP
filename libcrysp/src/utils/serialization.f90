@@ -18,6 +18,8 @@ module crysp_serialization
              type_of, &
              shape_of, &
              State, &
+             get_data_ptr, &
+             parameter_destroy, &
              deserialize_real_matrix
 
     character(*), parameter:: MOD_NAME = 'serialization'
@@ -200,6 +202,61 @@ contains
             class default
                 call log_error(MOD_NAME, 'shape_of', ERR_TYPE, 'Unknown parameter type')
         end select
+    end subroutine
+
+    !> Get a C pointer to the raw buffer of the value held by a parameter.
+    !>
+    !> The pointer stays valid until the parameter is destroyed. Does not consume the parameter.
+    function get_data_ptr(param) result(ptr) bind(C)
+        type(Parameter), intent(in):: param
+        type(c_ptr):: ptr
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        ptr = value_data_ptr(val%value)
+    end function
+
+    !> Get a C pointer to the raw buffer of a value.
+    !>
+    !> @note
+    !> The `target` attribute on the dummy argument is what makes `c_loc` legal here: the buffers are components of `val%value`,
+    !> and neither an allocatable component nor the associate-name of a SELECT TYPE whose selector lacks TARGET/POINTER is a valid
+    !> `c_loc` argument (IFX diagnoses this as error #9022; taking the address directly in `get_data_ptr` therefore does not
+    !> compile). Passing the value through a TARGET dummy gives the buffers the attribute `c_loc` requires. The argument is a
+    !> scalar, so it is passed by reference and the address remains valid after the call returns.
+    !> @endnote
+    function value_data_ptr(data) result(ptr)
+        class(Value), target, intent(in):: data
+        type(c_ptr):: ptr
+
+        select type (value => data)
+            type is (IntValue)
+                ptr = c_loc(value%buffer)
+            type is (IntArrayValue)
+                ptr = c_loc(value%buffer)
+            type is (RealValue)
+                ptr = c_loc(value%buffer)
+            type is (RealArrayValue)
+                ptr = c_loc(value%buffer)
+            type is (RealMatrixValue)
+                ptr = c_loc(value%buffer)
+            type is (StringValue)
+                ptr = c_loc(value%buffer)
+            class default
+                call log_error(MOD_NAME, 'get_data_ptr', ERR_TYPE, 'Unknown parameter type')
+        end select
+    end function
+
+    subroutine parameter_destroy(param) bind(C)
+        type(Parameter), intent(inout):: param
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        deallocate(val)
     end subroutine
 
     !> Initialize a parameter based on a Value object of any type.
