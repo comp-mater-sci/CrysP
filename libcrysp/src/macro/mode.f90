@@ -26,7 +26,7 @@ module mode
     !> response. This calculation needs the clusters, which are of polymorphic type. Passing a polymorphic type directly to C is
     !> forbidden, but passing a nonpolymorphic type which contains a pointer to a polymorphic one is not. Hence the wrapper.
     type:: Wrapper
-        class(CrystalPlasticityModel), pointer:: model
+        class(MesoModel), pointer:: model
         class(Cluster), dimension(:), pointer:: clusters
     end type
 
@@ -65,7 +65,7 @@ contains
                    velocity_gradient(3,3), &
                    homogenized_stress(3,3)
         type(Wrapper), pointer:: wrap
-        class(CrystalPlasticityModel), pointer:: model
+        class(MesoModel), pointer:: model
         class(Cluster), dimension(:), pointer:: clusters
 
         call c_f_pointer(wrapper_ptr, wrap)
@@ -76,7 +76,7 @@ contains
 
     !> Find the stress state corresponding to a particular strain mode
     subroutine simulate_strain_mode(model, clusters, strain_mode, stress)
-        class(CrystalPlasticityModel), intent(in):: model
+        class(MesoModel), intent(in):: model
         class(Cluster), dimension(:), intent(inout):: clusters
         real(DP), dimension(5), intent(in):: strain_mode       !! Deviatoric strain mode to be imposed.
         real(DP), dimension(5), intent(out):: stress           !! Deviatoric stress state
@@ -107,7 +107,7 @@ contains
     !>
     !> Iteratively finds a strain mode that yields a stress state of which the mode closely matches the requested stress mode.
     subroutine simulate_stress_mode(model, clusters, stress_mode, strain_mode, stress, residual)
-        class(CrystalPlasticityModel), target, intent(in):: model
+        class(MesoModel), target, intent(in):: model
         class(Cluster), dimension(:), target, intent(inout):: clusters !! Material state
         real(DP), dimension(5), intent(in)::  stress_mode              !! Requested stress mode
         real(DP), dimension(5), intent(inout):: strain_mode            !! Strain mode (approx.) yielding the requested stress mode.

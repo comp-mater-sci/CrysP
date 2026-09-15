@@ -12,7 +12,7 @@ module full_constraints_taylor
     use micro
     use simplex
     use parameters
-    use crystal_plasticity_model
+    use crysp_meso_model
 
     implicit none
 
@@ -30,7 +30,7 @@ module full_constraints_taylor
     end type
 
     !> Model for full constraints Taylor simulations.
-    type, extends(CrystalPlasticityModel):: TaylorModel
+    type, extends(MesoModel):: TaylorModel
     contains
         procedure, nopass:: get_name => fctaylor_get_name
         procedure, nopass:: get_description => fctaylor_get_description

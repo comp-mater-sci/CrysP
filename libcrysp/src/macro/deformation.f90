@@ -13,7 +13,7 @@ module deformation
 contains
 
     function deform(model, clusters, velocity_gradient, target_vm_strain, target_stress_mode) result(increments)
-        class(CrystalPlasticityModel), intent(inout):: model
+        class(MesoModel), intent(inout):: model
         class(Cluster), dimension(:), intent(inout)::  clusters
         real(DP), dimension(3,3), intent(in)::         velocity_gradient
         real(DP), intent(in)::                         target_vm_strain

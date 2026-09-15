@@ -1,6 +1,6 @@
 !> This module defines the interface every mesoscopic model must implement.
 
-module crystal_plasticity_model
+module crysp_meso_model
     use base_defs
     use conversions
     use parameters
@@ -10,13 +10,13 @@ module crystal_plasticity_model
     implicit none
 
     private
-    public:: CrystalPlasticityModel
+    public:: MesoModel
 
     !> Base type for mesoscopic models.
     !>
     !> Declares common properties of all mesoscopic models.
     !> Concrete mesoscopic models must extend this base type.
-    type, extends(Model), abstract:: CrystalPlasticityModel
+    type, extends(Model), abstract:: MesoModel
     contains
         procedure(cp_model_init), deferred::       init                                                   !! Initialize the model.
         procedure(cp_model_get_stress), deferred:: get_stress                                             !! Get the stress state of a cluster under a certain strain condition.
@@ -33,13 +33,13 @@ module crystal_plasticity_model
         !> We must make this a subroutine to avoid IFX copying the cluster list through the stack, leading to stack overflow/segfault.
         !> @endnote
         subroutine cp_model_init(this, grains, params, clusters)
-            import CrystalPlasticityModel
+            import MesoModel
             import Cluster
             import DP
             import Grain
             import Parameter
 
-            class(CrystalPlasticityModel), intent(inout):: this                              !! Model instance
+            class(MesoModel), intent(inout):: this                              !! Model instance
             type(Grain), dimension(:), intent(in):: grains                      !! List of initialized grains to be arranged into clusters.
             type(Parameter), dimension(:), intent(in):: params
             class(Cluster), dimension(:), allocatable, intent(out):: clusters   !! List of initialized clusters.
@@ -49,11 +49,11 @@ module crystal_plasticity_model
         !>
         !> Returns the homogenized stress state over all of the grains of the cluster.
         function cp_model_get_stress(this, cluster_, v_grad) result(stress)
-            import CrystalPlasticityModel
+            import MesoModel
             import Cluster
             import DP
 
-            class(CrystalPlasticityModel), intent(in):: this                !! Model instance
+            class(MesoModel), intent(in):: this                !! Model instance
             class(Cluster), target, intent(inout):: cluster_   !! The cluster for which to calculate the homogenized stress state
             real(DP), dimension(3, 3), intent(in):: v_grad     !! Velocity gradient representing the strain condition for which to calculate the stress.
             real(DP), dimension(3, 3):: stress                 !! Homogenized stress response of the cluster
@@ -64,11 +64,11 @@ module crystal_plasticity_model
         !> Returns some statistics of the deformation to the caller.
         !> The cluster state is updated to the state after the deformation step.
         subroutine cp_model_apply_step(this, cluster_, velocity_gradient, time, stress, slip)
-            import CrystalPlasticityModel
+            import MesoModel
             import Cluster
             import DP
 
-            class(CrystalPlasticityModel), intent(in):: this                 !! Model instance
+            class(MesoModel), intent(in):: this                 !! Model instance
             class(Cluster), target, intent(inout):: cluster_    !! The cluster to apply the deformation step to.
                                                                 !! Upon entry, the cluster state must be consistent with the beginning of the time step.
                                                                 !! Upon exit, the cluster state corresponds to the end of the time step.
@@ -85,7 +85,7 @@ contains
     !>
     !> The default implementation does nothing.
     subroutine cp_model_update(this, velocity_gradient, time)
-        class(CrystalPlasticityModel), intent(inout):: this  !! Model instance
+        class(MesoModel), intent(inout):: this  !! Model instance
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
         real(DP), intent(in):: time                              !! Duration of the time step.
     end subroutine

@@ -13,7 +13,7 @@ module alamel
     use taylor_ambiguity
     use micro
     use simplex
-    use crystal_plasticity_model
+    use crysp_meso_model
     use parameters
     use iso_c_binding
 
@@ -35,7 +35,7 @@ module alamel
     end type
 
     !> Implementation of the ALAMEL model
-    type, extends(CrystalPlasticityModel):: AlamelModel
+    type, extends(MesoModel):: AlamelModel
         real(DP), dimension(3, 3):: deformation_gradient                    !! Description of the current grain shape (at the beginning of the current time step). Considered identical for all grains.
     contains
         procedure, nopass:: get_name       => alamel_get_name
