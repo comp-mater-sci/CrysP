@@ -1,10 +1,11 @@
 !> This module defines the interface every mesoscopic model must implement.
 
-module meso_model
+module crysp_meso_model
     use base_defs
     use conversions
     use parameters
     use cluster_module
+    use mod_model
 
     implicit none
 
@@ -15,14 +16,12 @@ module meso_model
     !>
     !> Declares common properties of all mesoscopic models.
     !> Concrete mesoscopic models must extend this base type.
-    type, abstract:: MesoModel
+    type, extends(Model), abstract:: MesoModel
     contains
-        procedure, nopass::                          get_parameters      => meso_model_get_parameters       !! Get the parameters needed to initialize the model.
-        procedure(meso_model_init), deferred::       init                                                   !! Initialize the model.
-        procedure(meso_model_get_stress), deferred:: get_stress                                             !! Get the stress state of a cluster under a certain strain condition.
-        procedure(meso_model_apply_step), deferred:: apply_step                                             !! Apply a single deformation step to a single cluster.
-        procedure::                                  update              => meso_model_update               !! Update the model state after a deformation step.
-        procedure::                                  finalize            => meso_model_finalize             !! Free memory
+        procedure(cp_model_init), deferred::       init                                                   !! Initialize the model.
+        procedure(cp_model_get_stress), deferred:: get_stress                                             !! Get the stress state of a cluster under a certain strain condition.
+        procedure(cp_model_apply_step), deferred:: apply_step                                             !! Apply a single deformation step to a single cluster.
+        procedure::                                  update              => cp_model_update               !! Update the model state after a deformation step.
     end type
 
     abstract interface
@@ -33,7 +32,7 @@ module meso_model
         !> @note
         !> We must make this a subroutine to avoid IFX copying the cluster list through the stack, leading to stack overflow/segfault.
         !> @endnote
-        subroutine meso_model_init(this, grains, params, clusters)
+        subroutine cp_model_init(this, grains, params, clusters)
             import MesoModel
             import Cluster
             import DP
@@ -49,7 +48,7 @@ module meso_model
         !> Get the stress state for a cluster under a certain strain condition.
         !>
         !> Returns the homogenized stress state over all of the grains of the cluster.
-        function meso_model_get_stress(this, cluster_, v_grad) result(stress)
+        function cp_model_get_stress(this, cluster_, v_grad) result(stress)
             import MesoModel
             import Cluster
             import DP
@@ -64,7 +63,7 @@ module meso_model
         !>
         !> Returns some statistics of the deformation to the caller.
         !> The cluster state is updated to the state after the deformation step.
-        subroutine meso_model_apply_step(this, cluster_, velocity_gradient, time, stress, slip)
+        subroutine cp_model_apply_step(this, cluster_, velocity_gradient, time, stress, slip)
             import MesoModel
             import Cluster
             import DP
@@ -82,28 +81,13 @@ module meso_model
 
 contains
 
-    !> Get the parameters for the mesoscopic model.
-    !>
-    !> The default implementation returns an empty list.
-    function meso_model_get_parameters() result(params)
-        type(ParameterDescriptor), dimension(:), allocatable:: params !! List of parameters.
-
-        allocate(params(0))
-    end function
-
     !> Update the mesoscopic model.
     !>
     !> The default implementation does nothing.
-    subroutine meso_model_update(this, velocity_gradient, time)
+    subroutine cp_model_update(this, velocity_gradient, time)
         class(MesoModel), intent(inout):: this  !! Model instance
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
         real(DP), intent(in):: time                              !! Duration of the time step.
     end subroutine
 
-    !> Finalize the mesoscopic model
-    !>
-    !> The default implementation does nothing.
-    subroutine meso_model_finalize(this)
-        class(MesoModel), intent(in):: this     !! Model instance
-    end subroutine
 end module

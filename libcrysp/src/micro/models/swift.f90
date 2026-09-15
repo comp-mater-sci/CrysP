@@ -24,6 +24,8 @@ module swift
         real(DP):: gamma0 !! Initial sum of slip across all slip systems
         real(DP):: n      !! Exponent
     contains
+        procedure, nopass:: get_name       => swift_get_name
+        procedure, nopass:: get_description => swift_get_description
         procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_parameters => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
         procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
@@ -32,7 +34,19 @@ module swift
 
 contains
 
-    function swift_get_signature() result(signature)
+    pure function swift_get_name() result(name)
+        character(:), allocatable:: name
+
+        name = "Swift"
+    end function
+
+    pure function swift_get_description() result(description)
+        character(:), allocatable:: description
+
+        description = "Swift hardening model."
+    end function
+
+    pure function swift_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
         allocate(signature(3), source=TYPE_REAL)
@@ -56,7 +70,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    function swift_get_parameters() result(params)
+    pure function swift_get_parameters() result(params)
         type(ParameterDescriptor), allocatable:: params(:)    !! - **crss0**: Initial critical resoved shear stress
                                                     !! - **gamma0**: Initial sum of slip across all slip systems
                                                     !! - **n**: Hardening exponent

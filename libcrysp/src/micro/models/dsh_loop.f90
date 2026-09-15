@@ -14,10 +14,26 @@ module dsh_loop
     !Dislocation substructural hardening (DSH) model assuming slip is carried by dislocation loops with equal slip realized by edge and screw segments.
     type, extends(ConstitutiveModelDSH):: ConstitutiveModelDSHLoop
     contains
+        procedure, nopass:: get_name => dsh_loop_get_name
+        procedure, nopass:: get_description => dsh_loop_get_description
         procedure:: init => dsh_loop_init
     end type
 
 contains
+    pure function dsh_loop_get_name() result(name)
+        character(:), allocatable:: name
+
+        name = "Dislocation Substructural Hardening (loop variant)"
+    end function
+
+    pure function dsh_loop_get_description() result(description)
+        character(:), allocatable:: description
+
+        description = "Physics-based hardening model mapping the movement of (clusters of) dislocations. " // &
+                       "First formulated and documented in Bart Peeters's PhD thesis: " // &
+                       "'Multiscale modelling of the induced plastic anisotropy in IF steel during sheet forming'. " // &
+                       "This variant of the model assumes slip is carried by dislocation loops with equal slip realized by edge and screw segments."
+    end function
 
     function dsh_loop_init(this, miller_indices, params) result(initial_state)
         class(ConstitutiveModelDSHLoop), intent(inout):: this

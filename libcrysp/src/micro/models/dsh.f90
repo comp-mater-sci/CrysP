@@ -87,14 +87,11 @@ module dsh
 contains
 
 
-    function dsh_get_signature() result(signature)
+    pure function dsh_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
         allocate(signature(16), source=TYPE_REAL)
     end function
-
-
-
 
     !> Convert a generic HardeningState to a pointer to a DSHState object
     !>
@@ -113,7 +110,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    function dsh_get_parameters() result(params)
+    pure function dsh_get_parameters() result(params)
         type(ParameterDescriptor), allocatable:: params(:) !! - **b**:     Magnitude of burgers vector [m]
                                                  !! - **G**:     Shear modulus [MPa]
                                                  !! - **alfa**:  Dislocation interaction parameter

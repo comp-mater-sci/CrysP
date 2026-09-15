@@ -3,6 +3,7 @@ module none
     use constitutive_model
     use grain_module
     use parameters
+    use mod_model
 
     implicit none
 
@@ -15,7 +16,9 @@ module none
     !> @Brief Hardening model representing no hardening.
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
-        procedure, nopass:: get_signature => none_get_signature
+        procedure, nopass:: get_name            => none_get_name
+        procedure, nopass:: get_description     => none_get_description
+        procedure, nopass:: get_signature       => none_get_signature
         procedure, nopass:: get_parameters      => none_get_parameters
         procedure:: init                        => none_init
         procedure:: deform                      => none_deform
@@ -23,14 +26,26 @@ module none
 
 contains
 
-    function none_get_signature() result(signature)
+    pure function none_get_name() result(name)
+        character(:), allocatable:: name
+
+        name = "No Hardening"
+    end function
+
+    pure function none_get_description() result(description)
+        character(:), allocatable:: description
+
+        description = "Critical resolved shear stress on all slip systems is kept constant at 1."
+    end function
+
+    pure function none_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
         allocate(signature(0))
     end function
 
     !!> See [[hardening_model_get_parameters]]
-    function none_get_parameters() result(params)
+    pure function none_get_parameters() result(params)
         type(ParameterDescriptor), dimension(:), allocatable:: params
 
         allocate(params(0))

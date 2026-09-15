@@ -20,6 +20,7 @@ module macro
     use deformation
     use mode
     use conversions
+    use crysp_meso_model
 
     implicit none
     public

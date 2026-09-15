@@ -25,6 +25,8 @@ module hockett_sherby
         real(DP):: b        !! Hardening exponent
         real(DP):: n        !! Hardening exponent on slip
     contains
+        procedure, nopass:: get_name => hs_get_name
+        procedure, nopass:: get_description => hs_get_description
         procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_parameters => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
         procedure:: init                   => hs_init                !! Inherited from [[ConstitutiveModel]]
@@ -33,7 +35,18 @@ module hockett_sherby
 
 contains
 
-    function hs_get_signature() result(signature)
+    pure function hs_get_name() result(name)
+        character(:), allocatable:: name
+
+        name = "Hockett-Sherby"
+    end function
+
+    pure function hs_get_description() result(description)
+        character(:), allocatable:: description
+        description = "Hockett-Sherby hardening law"
+    end function
+
+    pure function hs_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
         allocate(signature(4), source=TYPE_REAL)
@@ -56,7 +69,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    function hs_get_parameters() result(params)
+    pure function hs_get_parameters() result(params)
         type(ParameterDescriptor), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
                                                         !! - **tau_sat**: Final critical resolved shear stress
                                                         !! - **b**: Hardening exponent

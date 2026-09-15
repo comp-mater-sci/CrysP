@@ -13,7 +13,7 @@ module meso
     use base_defs
     use parameters
     use cluster_module
-    use meso_model
+    use crysp_meso_model
     use grain_module
 
     implicit none
@@ -70,7 +70,7 @@ end module
 !> Links the different model IDs to specific mesoscopic models and keeps a reference to the particular model currently in use.
 submodule(meso) meso_imp
     use logging
-    use meso_model
+    use crysp_meso_model
     use full_constraints_taylor
     use alamel
 
