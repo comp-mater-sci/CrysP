@@ -37,13 +37,13 @@ contains
     pure function swift_get_name() result(name)
         character(:), allocatable:: name
 
-        name = "SWIFT"
+        name = "Swift"
     end function
 
     pure function swift_get_description() result(description)
         character(:), allocatable:: description
 
-        description = "SWIFT hardening model."
+        description = "Swift hardening model."
     end function
 
     pure function swift_get_signature() result(signature)
