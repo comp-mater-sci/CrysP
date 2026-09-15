@@ -42,6 +42,7 @@ module crysp_serialization
     type, extends(Value):: IntValue
         integer(C_INT):: buffer
     end type
+    !> Wrapper for integer arrays. Corresponds to TYPE_INT_ARRAY
     type, extends(Value):: IntArrayValue
         integer(C_INT), dimension(:), allocatable:: buffer
     end type
@@ -49,7 +50,7 @@ module crysp_serialization
     type, extends(Value):: RealValue
         real(C_DOUBLE):: buffer
     end type
-    !> Wrapper for angle lists. Corresponds to TYPE_ANGLES_LIST
+    !> Wrapper for Real matrices. Corresponds to TYPE_REAL_MATRIX.
     type, extends(Value):: RealMatrixValue
         real(C_DOUBLE), dimension(:,:), allocatable:: buffer
     end type
