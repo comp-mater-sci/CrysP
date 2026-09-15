@@ -11,10 +11,11 @@
 
 module meso
     use base_defs
-    use parameters
     use cluster_module
     use crysp_meso_model
     use grain_module
+    use crysp_serialization
+    use crysp_input
 
     implicit none
 
@@ -33,9 +34,9 @@ module meso
         !> Gets the parameters corresponding to a certain mesoscopic model
         !>
         !> The ID must exist in the enum defined in this module. If not, this routine crashes the program.
-        module function meso_get_parameters(model_id) result(params)
+        module function meso_get_input(model_id) result(inputs)
             integer, intent(in):: model_id                         !! ID of the model for which to return the parameters.
-            type(ParameterDescriptor), dimension(:), allocatable:: params    !! The list of parameters for the specified model.
+            type(Input), dimension(:), allocatable:: inputs    !! The list of parameters for the specified model.
         end function
 
         !> Initialize the mesoscopic level of the simulation.
@@ -103,12 +104,12 @@ contains
     end function
 
     !> See interface definition in meso module.
-    module procedure meso_get_parameters
+    module procedure meso_get_input
         class(MesoModel), allocatable:: m
 
         !We must get an instance of the model if we want to exploit polymorphism in Fortran.
         m = get_model_instance(model_id)
-        params = m%get_parameters()
+        inputs = m%get_input()
     end procedure
 
     !> See interface definition in meso module.

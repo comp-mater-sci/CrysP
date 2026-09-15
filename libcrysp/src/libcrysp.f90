@@ -10,10 +10,9 @@ module libcrysp
     use meso
     use micro
     use logging
-    use parameters
     use grain_module
-    use parameters
     use incrementation
+    use crysp_serialization
 
     implicit none
 

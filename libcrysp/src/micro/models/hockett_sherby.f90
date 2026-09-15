@@ -4,8 +4,9 @@ module hockett_sherby
     use base_defs
     use constitutive_model
     use logging
-    use parameters
     use grain_module
+    use crysp_serialization
+    use crysp_input
     use conversions
 
     implicit none
@@ -27,10 +28,10 @@ module hockett_sherby
     contains
         procedure, nopass:: get_name => hs_get_name
         procedure, nopass:: get_description => hs_get_description
-        procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_parameters => hs_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                   => hs_init                !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                 => hs_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature  => hs_get_signature    !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_input => hs_get_input             !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                   => hs_init             !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                 => hs_deform           !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
@@ -49,7 +50,20 @@ contains
     pure function hs_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
-        allocate(signature(4), source=TYPE_REAL)
+        allocate(signature(4), source=INPUT_REAL)
+    end function
+
+    !> See [[ConstitutiveModel:get_parameters]]
+    pure function hs_get_input() result(inputs)
+        type(Input), dimension(:), allocatable:: inputs    !! - **tau_0**: Initial critical resoved shear stress
+                                                        !! - **tau_sat**: Final critical resolved shear stress
+                                                        !! - **b**: Hardening exponent
+                                                        !! - **n**: Hardening exponent on slip
+
+        inputs = [Input(to_c_string('tau_0',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
+                  Input(to_c_string('tau_sat',NAME_LEN), INPUT_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
+                  Input(to_c_string('b',NAME_LEN), INPUT_REAL),       &
+                  Input(to_c_string('n',NAME_LEN), INPUT_REAL)]
     end function
 
     !> Convert a generic HardeningState to a pointer to a HockettSherbyState object
@@ -66,19 +80,6 @@ contains
             class default
                 call log_error(ERR_TYPE)
         end select
-    end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    pure function hs_get_parameters() result(params)
-        type(ParameterDescriptor), allocatable    :: params(:)    !! - **tau_0**: Initial critical resoved shear stress
-                                                        !! - **tau_sat**: Final critical resolved shear stress
-                                                        !! - **b**: Hardening exponent
-                                                        !! - **n**: Hardening exponent on slip
-
-        params = [ParameterDescriptor(to_c_string('tau_0',NAME_LEN), TYPE_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
-                  ParameterDescriptor(to_c_string('tau_sat',NAME_LEN), TYPE_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
-                  ParameterDescriptor(to_c_string('b',NAME_LEN), TYPE_REAL),       &
-                  ParameterDescriptor(to_c_string('n',NAME_LEN), TYPE_REAL)]
     end function
 
     !> See [[ConstitutiveModel:init]]

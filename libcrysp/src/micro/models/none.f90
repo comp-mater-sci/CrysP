@@ -2,7 +2,8 @@ module none
     use base_defs
     use constitutive_model
     use grain_module
-    use parameters
+    use crysp_serialization
+    use crysp_input
     use mod_model
 
     implicit none
@@ -16,12 +17,12 @@ module none
     !> @Brief Hardening model representing no hardening.
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
-        procedure, nopass:: get_name            => none_get_name
-        procedure, nopass:: get_description     => none_get_description
-        procedure, nopass:: get_signature       => none_get_signature
-        procedure, nopass:: get_parameters      => none_get_parameters
-        procedure:: init                        => none_init
-        procedure:: deform                      => none_deform
+        procedure, nopass:: get_name        => none_get_name
+        procedure, nopass:: get_description => none_get_description
+        procedure, nopass:: get_signature   => none_get_signature
+        procedure, nopass:: get_input       => none_get_input
+        procedure:: init                    => none_init
+        procedure:: deform                  => none_deform
     end type
 
 contains
@@ -45,10 +46,10 @@ contains
     end function
 
     !!> See [[hardening_model_get_parameters]]
-    pure function none_get_parameters() result(params)
-        type(ParameterDescriptor), dimension(:), allocatable:: params
+    pure function none_get_input() result(inputs)
+        type(Input), dimension(:), allocatable:: inputs
 
-        allocate(params(0))
+        allocate(inputs(0))
     end function
 
     !> @Brief See hardening_model_init

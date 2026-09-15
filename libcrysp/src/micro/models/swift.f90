@@ -4,8 +4,9 @@ module swift
     use base_defs
     use constitutive_model
     use logging
-    use parameters
     use grain_module
+    use crysp_serialization
+    use crysp_input
     use conversions
 
     implicit none
@@ -24,12 +25,12 @@ module swift
         real(DP):: gamma0 !! Initial sum of slip across all slip systems
         real(DP):: n      !! Exponent
     contains
-        procedure, nopass:: get_name       => swift_get_name
-        procedure, nopass:: get_description => swift_get_description
-        procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_parameters => swift_get_parameters      !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_name        => swift_get_name        !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_description => swift_get_description !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature   => swift_get_signature   !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_input       => swift_get_input       !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                    => swift_init            !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                  => swift_deform          !! Inherited from [[ConstitutiveModel]]
     end type
 
 contains
@@ -49,9 +50,19 @@ contains
     pure function swift_get_signature() result(signature)
         integer, dimension(:), allocatable:: signature
 
-        allocate(signature(3), source=TYPE_REAL)
+        allocate(signature(3), source=INPUT_REAL)
     end function
 
+    !> See [[ConstitutiveModel:get_parameters]]
+    pure function swift_get_input() result(inputs)
+        type(Input), allocatable:: inputs(:)    !! - **crss0**: Initial critical resoved shear stress
+                                                    !! - **gamma0**: Initial sum of slip across all slip systems
+                                                    !! - **n**: Hardening exponent
+
+        inputs = [Input(to_c_string('crss0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
+                  Input(to_c_string('gamma0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)), &
+                  Input(to_c_string('n',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
+    end function
 
     !> Convert a generic HardeningState to a pointer to a SwiftState object
     !>
@@ -68,17 +79,6 @@ contains
                 call log_error(ERR_TYPE)
         end select
     end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    pure function swift_get_parameters() result(params)
-        type(ParameterDescriptor), allocatable:: params(:)    !! - **crss0**: Initial critical resoved shear stress
-                                                    !! - **gamma0**: Initial sum of slip across all slip systems
-                                                    !! - **n**: Hardening exponent
-
-        params = [ParameterDescriptor(to_c_string('crss0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
-                  ParameterDescriptor(to_c_string('gamma0',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE)), &
-                  ParameterDescriptor(to_c_string('n',NAME_LEN), TYPE_REAL, lower_bound = serialize(0._C_DOUBLE))]
-    end function swift_get_parameters
 
     !> See [[ConstitutiveModel:init]]
     function swift_init(this, miller_indices, params) result(initial_state)

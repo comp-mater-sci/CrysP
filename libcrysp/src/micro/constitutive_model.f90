@@ -2,7 +2,7 @@ module constitutive_model
     use base_defs
     use math_utils
     use conversions
-    use parameters
+    use crysp_serialization
     use mod_model
 
     implicit none

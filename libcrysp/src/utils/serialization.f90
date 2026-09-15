@@ -1,4 +1,4 @@
-module parameters
+module crysp_serialization
     use iso_c_binding
     use base_defs
     use logging
@@ -7,26 +7,28 @@ module parameters
 
     private
     public:: TYPE_INTEGER, &
+             TYPE_INT_ARRAY, &
              TYPE_REAL, &
+             TYPE_REAL_ARRAY, &
+             TYPE_REAL_MATRIX, &
              TYPE_STRING, &
-             TYPE_ANGLES_LIST, &
              Parameter, &
-             ParameterDescriptor, &
              assignment(=), &
              serialize, &
              typeof
 
-
-    character(*), parameter:: MOD_NAME = 'parameters'
+    character(*), parameter:: MOD_NAME = 'serialization'
 
     !> Supported types for serialization.
     !>
     !> Each type represents a unique C-compatible Fortran type
     enum, bind(C)
         enumerator:: TYPE_INTEGER       !! Integer(C_INT)
+        enumerator:: TYPE_INT_ARRAY     !! integer(C_INT), dimension(:)
         enumerator:: TYPE_REAL          !! Real(C_DOUBLE)
+        enumerator:: TYPE_REAL_ARRAY    !! real(C_DOUBLE), dimension(:)
+        enumerator:: TYPE_REAL_MATRIX   !! Real(C_DOUBLE), dimension(:,:)
         enumerator:: TYPE_STRING        !! Character(C_CHAR,:)
-        enumerator:: TYPE_ANGLES_LIST   !! Real(C_DOUBLE), dimension(2,:)
     end enum
 
     !> Wrapper type for storing parameter values.
@@ -40,17 +42,22 @@ module parameters
     type, extends(Value):: IntValue
         integer(C_INT):: buffer
     end type
+    !> Wrapper for integer arrays. Corresponds to TYPE_INT_ARRAY
+    type, extends(Value):: IntArrayValue
+        integer(C_INT), dimension(:), allocatable:: buffer
+    end type
     !> Wrapper for doubles. Corresponds to TYPE_REAL
     type, extends(Value):: RealValue
         real(C_DOUBLE):: buffer
     end type
+    !> Wrapper for Real matrices. Corresponds to TYPE_REAL_MATRIX.
+    type, extends(Value):: RealMatrixValue
+        real(C_DOUBLE), dimension(:,:), allocatable:: buffer
+    end type
+
     !> Wrapper for strings. Corresponds to TYPE_STRING
     type, extends(Value):: StringValue
         character(kind=C_CHAR,len=:), allocatable:: buffer
-    end type
-    !> Wrapper for angle lists. Corresponds to TYPE_ANGLES_LIST
-    type, extends(Value):: AnglesListValue
-        real(C_DOUBLE), dimension(:,:), allocatable:: buffer
     end type
 
     !> Generic container to pass values between program units in an opaque, yet type-safe way
@@ -68,35 +75,27 @@ module parameters
         type(C_PTR):: handle = C_NULL_PTR
     end type
 
-    !> Descriptor of a parameter requested from the user.
-    !>
-    !> Contains all needed information to enforce sanitization at the front-end.
-    !> Any parameters needed by models should be described using this type.
-    type, bind(C):: ParameterDescriptor
-        character(kind=C_CHAR), dimension(NAME_LEN)  :: name                    !! Name of the parameter
-        integer(C_INT)                         :: type                    !! Type of the parameter. Must exist in enum list in serialization.
-        character(kind=C_CHAR), dimension(DESCRIPTION_LEN):: description           = ""      !! Description of the parameter
-        logical(C_BOOL)                        :: optional              = .false. !! Indicate if the parameter is optional
-        type(Parameter)       :: lower_bound
-        logical(C_BOOL)                        :: lower_bound_inclusive = .false. !! Ignored if lower_bound == ""
-        type(Parameter)       :: upper_bound
-        logical(C_BOOL)                        :: upper_bound_inclusive = .false. !! Ignored if upper_bound == ""
-        type(Parameter):: default_value
-    end type
-
     !> From within fortran, creating and destroying parameters is done using intrinsic assignment to/from the types described in the
     !> enum at the top of this module.
     interface assignment(=)
-        module procedure int_to_parameter, real_to_parameter, string_to_parameter, angles_list_to_parameter, &
-                         parameter_to_int, parameter_to_real, parameter_to_string, parameter_to_angles_list
+        module procedure int_to_parameter, int_array_to_parameter, real_to_parameter, real_matrix_to_parameter, string_to_parameter, &
+                         parameter_to_int, parameter_to_int_array, parameter_to_real, parameter_to_real_matrix, parameter_to_string
+    end interface
+
+    interface operator(.add.)
+        module procedure parameters_add_scalar, parameters_add_list
+    end interface
+
+    interface operator(.pop.)
+        module procedure parameters_pop
     end interface
 
     !> Convenience functions wrapping the setter subroutines above.
     !>
     !> Useful for creating anonymous Parameter instances not bound to a local variable.
-    !> No serialize_angles_list due to IFX compiler bug as of 2026.1.1.19
+    !> No serialize_real_matrix due to IFX compiler bug as of 2026.1.1.19
     interface serialize
-        module procedure serialize_int, serialize_real, serialize_string
+        module procedure serialize_int, serialize_int_array, serialize_real, serialize_string
     end interface
 
 contains
@@ -115,12 +114,14 @@ contains
         select type (value => val%value)
             type is (IntValue)
                 t = TYPE_INTEGER
+            type is (IntArrayValue)
+                t = TYPE_INT_ARRAY
             type is (RealValue)
                 t = TYPE_REAL
+            type is (RealMatrixValue)
+                t = TYPE_REAL_MATRIX
             type is (StringValue)
                 t = TYPE_STRING
-            type is (AnglesListValue)
-                t = TYPE_ANGLES_LIST
         end select
     end function
 
@@ -142,28 +143,38 @@ contains
 
         param = to_parameter(IntValue(data))
     end subroutine
+    pure subroutine int_array_to_parameter(param, data) bind(C)
+        type(Parameter), intent(out):: param
+        integer(C_INT), dimension(:), intent(in):: data
+
+        type(IntArrayValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end subroutine
     pure subroutine real_to_parameter(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), intent(in):: data
 
         param = to_parameter(RealValue(data))
     end subroutine
-    pure subroutine string_to_parameter(param, data) bind(C)
-        type(Parameter), intent(out):: param
-        character(kind=C_CHAR,len=*), intent(in):: data
-
-        param = to_parameter(StringValue(data))
-    end subroutine
-    pure subroutine angles_list_to_parameter(param, data) bind(C)
+    pure subroutine real_matrix_to_parameter(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), dimension(:,:), intent(in):: data
 
-        type(AnglesListValue):: val
+        type(RealMatrixValue):: val
 
         !Manually copy over data due to bug in IFX as of 2026.1.1.19
         val%buffer = data
 
         param = to_parameter(val)
+    end subroutine
+
+    pure subroutine string_to_parameter(param, data) bind(C)
+        type(Parameter), intent(out):: param
+        character(kind=C_CHAR,len=*), intent(in):: data
+
+        param = to_parameter(StringValue(data))
     end subroutine
 
     subroutine parameter_to_int(data, param) bind(C)
@@ -183,6 +194,24 @@ contains
 
         deallocate(val)
     end subroutine
+    subroutine parameter_to_int_array(data, param) bind(C)
+        integer(C_INT), dimension(:), intent(out):: data
+        type(Parameter), intent(in):: param
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (IntArrayValue)
+                data = value%buffer
+            class default
+                call log_error(MOD_NAME, 'parameter_to_int_array', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+
     subroutine parameter_to_real(data, param) bind(C)
         real(C_DOUBLE), intent(out):: data
         type(Parameter), intent(in):: param
@@ -200,7 +229,25 @@ contains
 
         deallocate(val)
     end subroutine
-   subroutine parameter_to_string(data, param) bind(C)
+    subroutine parameter_to_real_matrix(data, param) bind(C)
+        real(C_DOUBLE), dimension(:,:), allocatable, intent(out):: data
+        type(Parameter), intent(in):: param
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (RealMatrixValue)
+                data = value%buffer
+            class default
+                call log_error(MOD_NAME, 'parameter_to_int', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+
+    subroutine parameter_to_string(data, param) bind(C)
         character(kind=C_CHAR,len=:), allocatable, intent(out):: data
         type(Parameter), intent(in):: param
 
@@ -217,23 +264,6 @@ contains
 
         deallocate(val)
     end subroutine
-   subroutine parameter_to_angles_list(data, param) bind(C)
-        real(C_DOUBLE), dimension(:,:), allocatable, intent(out):: data
-        type(Parameter), intent(in):: param
-
-        type(ParameterValue), pointer:: val
-
-        call c_f_pointer(param%handle, val)
-
-        select type (value => val%value)
-            type is (AnglesListValue)
-                data = value%buffer
-            class default
-                call log_error(MOD_NAME, 'parameter_to_int', ERR_TYPE, 'Parameter is not of correct type')
-        end select
-
-        deallocate(val)
-    end subroutine
 
     pure function serialize_int(data) result(param) bind(C)
         integer(C_INT), intent(in):: data
@@ -241,16 +271,67 @@ contains
 
         param = data
     end function
+
+    !!Longer notation due to bug in IFX as of 2026.1.1.19
+    pure function serialize_int_array(data) result(param) bind(C)
+        integer(C_INT), dimension(:), intent(in):: data
+        type(Parameter):: param
+
+        type(IntArrayValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
     pure function serialize_real(data) result(param) bind(C)
         real(C_DOUBLE), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
+
+    !!Longer notation due to bug in IFX as of 2026.1.1.19
+    pure function serialize_real_matrix(data) result(param) bind(C)
+        real(C_DOUBLE), dimension(:,:), intent(in):: data
+        type(Parameter):: param
+
+        type(RealMatrixValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
+
     pure function serialize_string(data) result(param) bind(C)
         character(kind=C_CHAR,len=*), intent(in):: data
         type(Parameter):: param
 
         param = data
+    end function
+
+    function parameters_add_scalar(params, new) result(params_new)
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), intent(in):: new
+        type(Parameter), dimension(size(params)+1):: params_new
+
+        params_new(:size(params)) = params
+        params_new(size(params_new)) = new
+    end function
+    function parameters_add_list(params, new) result(params_new)
+        type(Parameter), dimension(:), intent(in):: params
+        type(Parameter), dimension(:), intent(in):: new
+        type(Parameter), dimension(size(params)+size(new)):: params_new
+
+        params_new(:size(params)) = params
+        params_new(size(params)+1:size(params_new)) = new
+    end function
+
+    function parameters_pop(params, n) result(popped)
+        type(Parameter), dimension(:), intent(in):: params
+        integer, intent(in):: n
+        type(Parameter), dimension(:), allocatable:: popped
+
+        if (size(params) < n) &
+            call log_error(MOD_NAME, 'pop', ERR_DIMS, 'Parameter list too small!')
+
+        popped = params(n+1:)
     end function
 end module
