@@ -8,7 +8,6 @@ module crysp_cluster
     use crysp_grain
     use constitutive_model
     use crysp_serialization
-
     implicit none
 
     private
@@ -86,6 +85,7 @@ contains
         offset=1
         do i=1,n_grains
             call this%grains(i)%deserialize(params(offset+1:), phases)
+
             offset = offset + this%grains(i)%size()
         end do
 

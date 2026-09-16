@@ -15,7 +15,8 @@
 module taylor_ambiguity
     use base_defs
     use math_utils
-    use logging
+    use conversions, only: int_to_str
+    use crysp_status
     use crysp_grain
 
     implicit none
@@ -33,13 +34,15 @@ contains
     !>
     !> Active slip systems have a nonzero slip rate, while overstressed slip systems are systems where the resolved shear
     !> stress exceeds the critical resolved shear stress. From this we can determine if Taylor ambiguity is occuring.
-    subroutine assess_slip_system_activity(grain_, rss, slip_rates, n_active, ind_overstressed)
+    function assess_slip_system_activity(grain_, rss, slip_rates, n_active, ind_overstressed) result(stat)
         class(Grain), intent(in):: grain_                                                 !! Grain suffering from Taylor ambiguity.
         real(DP), dimension(size(grain_%phase%model%taylor_coeffs, 2)), intent(in):: rss        !! The resolved shear stress on each of the slip systems of the grain (as calculated by simplex)
         real(DP), dimension(size(grain_%phase%model%taylor_coeffs, 2)), intent(in):: slip_rates !! Slip rates for each slip system (as calculated by simplex).
         integer, intent(out):: n_active                                                   !! The number of active systems (with nonzero slip rate)
         integer, dimension(:), allocatable, intent(out):: ind_overstressed                !! If taylor ambiguity is occurring, contains the
                                                                                           !! indices of the overstressed slip systems (rss >= crss). Otherwise it is returned unallocated.
+        type(Status):: stat                                                               !! `CRYSP_OK`, or a failure if the number of
+                                                                                          !! overstressed systems is outside its theoretical bounds.
 
         integer:: i, &
                   n_overstressed, &             !Number of active slip systems in the grain
@@ -67,25 +70,29 @@ contains
 
         !Check if the number of overstressed slip systems is within theoretical bounds.
         if (n_overstressed > 8) then
-            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too many active slip systems.')
+            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Too many active slip systems: ' // int_to_str(n_overstressed))
+            return
         elseif (n_overstressed == 0) then
-            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'No active slip systems found.')
+            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'No active slip systems found.')
+            return
         endif
 
         if (n_overstressed > n_active) &
             ind_overstressed = ind_overstressed_buffer(:n_overstressed)
-    end subroutine
+    end function
 
     !> Resolves the Taylor ambiguity
     !>
     !> This subroutine finds the solution for the slip rates that minimizes the sum their squares.
-    function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs, n_active_simplex) result(slip_rates)
+    function resolve_taylor_ambiguity(ind_active_slip_systems, rss, strain, taylor_coeffs, n_active_simplex, slip_rates) result(stat)
         integer, intent(in)::                        ind_active_slip_systems(:)  !! Indices of the active slip systems.
         real(DP), dimension(:,:), intent(in)::       taylor_coeffs               !! Slip systems in stress-strain space.
         real(DP), dimension(:), intent(in)::         rss                         !! Resolved shear stress on the active slip systems.
         real(DP), dimension(5), intent(in)::         strain(5)                   !! Imposed strain on the current grain.
         integer, intent(in)::                        n_active_simplex            !! Number of active slip systems according to the simplex solution.
-        real(DP), dimension(size(taylor_coeffs,2)):: slip_rates                  !! Slip rates for all the slip systems
+        real(DP), dimension(size(taylor_coeffs,2)), intent(out):: slip_rates     !! Slip rates for all the slip systems
+        type(Status):: stat                                                      !! `CRYSP_OK`, or a failure if no valid combination of
+                                                                                 !! slip rates could be found.
 
         real(DP)::              coeffs(5, size(ind_active_slip_systems)), &
                                 sum_squares_optimal
@@ -98,11 +105,12 @@ contains
             coeffs(:, i) = taylor_coeffs(:, ind_active_slip_systems(i)) * sign_slip(i)
         end do
 
+        slip_rates = 0._DP
         sum_squares_optimal = REAL_DP_MAX_VAL
         call iterate_combinations(coeffs, strain, ind_active_slip_systems, 1, sign_slip, slip_rates, sum_squares_optimal, n_active_simplex)
 
         if (sum_squares_optimal == REAL_DP_MAX_VAL) &
-            call log_error(MOD_NAME, 'resolve_taylor_ambiguity', ERR, 'Could not find optimal solution.')
+            stat = fail(MOD_NAME, 'resolve_taylor_ambiguity', CRYSP_ERR, 'Could not find optimal solution.')
     end function
 
     !> Iterate over all combinations of active slip systems to find the minimum norm solution

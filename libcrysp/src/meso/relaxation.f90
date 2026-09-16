@@ -3,7 +3,6 @@ module relaxation_module
     use math_utils
     use conversions
     use crysp_serialization
-
     implicit none
     private
 

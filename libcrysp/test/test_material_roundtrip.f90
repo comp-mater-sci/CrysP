@@ -18,6 +18,8 @@ program test_material_roundtrip
     use base_defs, only: DP, TOLERANCE
     use conversions, only: deg_to_rad
     use libcrysp, only: crysp_new_material, crysp_strain_driven_deformation, crysp_simulate_strain_mode
+    use crysp_status, only: Status, failed
+    use conversions, only: from_c_string
     use micro, only: micro_get_signature, &
                      HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, HARDENING_SWIFT, &
                      HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP, &
@@ -76,6 +78,7 @@ contains
         type(StrainIncrement), dimension(:), allocatable:: increments_original, increments_restored
         real(DP), dimension(5):: strain_mode, stress_original, stress_restored
         type(Material), target:: material_
+        type(Status):: stat
 
         !Build two independent but identical material states through the public API.
         call make_material(cp_model_id, original)
@@ -84,14 +87,18 @@ contains
         !Behavioral equivalence: a pure query first ...
         strain_mode = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP]
         strain_mode = strain_mode / norm2(strain_mode)
-        call crysp_simulate_strain_mode(original, strain_mode, stress_original)
-        call crysp_simulate_strain_mode(restored, strain_mode, stress_restored)
+        stat = crysp_simulate_strain_mode(original, strain_mode, stress_original)
+        call check_ok(stat, label // ': simulate_strain_mode (original)')
+        stat = crysp_simulate_strain_mode(restored, strain_mode, stress_restored)
+        call check_ok(stat, label // ': simulate_strain_mode (restored)')
         call check_equal(stress_restored, stress_original, label // ': simulate_strain_mode yields the same stress', &
                          tolerance=2._DP*TOLERANCE)
 
         !... then an evolution of the full state.
-        call crysp_strain_driven_deformation(original, V_GRAD, POST_STRAIN, increments_original)
-        call crysp_strain_driven_deformation(restored, V_GRAD, POST_STRAIN, increments_restored)
+        stat = crysp_strain_driven_deformation(original, V_GRAD, POST_STRAIN, increments_original)
+        call check_ok(stat, label // ': strain_driven_deformation (original)')
+        stat = crysp_strain_driven_deformation(restored, V_GRAD, POST_STRAIN, increments_restored)
+        call check_ok(stat, label // ': strain_driven_deformation (restored)')
         call check_equal(size(increments_restored), size(increments_original), label // ': same number of increments')
         if (size(increments_restored) == size(increments_original)) then
             associate (a => increments_original(size(increments_original)), b => increments_restored(size(increments_restored)))
@@ -133,6 +140,8 @@ contains
         real(DP), dimension(2, 2):: boundaries
         character(8):: id_str
         integer:: i, j, offset, n_params
+        integer, dimension(:), allocatable:: signature
+        type(Status):: stat
 
         !Flatten the per-phase input data. The orientations are grouped per phase, in phase order, matching the grain ordering
         !used by the micro layer.
@@ -144,14 +153,18 @@ contains
         !Concatenate the hardening parameters of all phases, in phase order.
         n_params = 0
         do i = 1, size(MODEL_IDS)
-            n_params = n_params + size(micro_get_signature(MODEL_IDS(i)))
+            stat = micro_get_signature(MODEL_IDS(i), signature)
+            call check_ok(stat, 'test setup: signature lookup')
+            n_params = n_params + size(signature)
         end do
         allocate(hardening_params(n_params))
         offset = 0
         do i = 1, size(MODEL_IDS)
             values = model_parameters(MODEL_IDS(i))
             write(id_str, '(I0)') MODEL_IDS(i)
-            call check_equal(size(values), size(micro_get_signature(MODEL_IDS(i))), &
+            stat = micro_get_signature(MODEL_IDS(i), signature)
+            call check_ok(stat, 'test setup: signature lookup for model ' // trim(id_str))
+            call check_equal(size(values), size(signature), &
                              'test setup: parameter count for constitutive model ' // trim(id_str))
             do j = 1, size(values)
                 offset = offset + 1
@@ -170,8 +183,19 @@ contains
                 allocate(meso_params(0))
         end select
 
-        call crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, &
-                                hardening_params, cp_model_id, meso_params, mat)
+        stat = crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, &
+                                  hardening_params, cp_model_id, meso_params, mat)
+        call check_ok(stat, 'test setup: crysp_new_material')
+    end subroutine
+
+    !> Assert that an operation reported success, printing the full status line when it did not.
+    subroutine check_ok(stat, message)
+        type(Status), intent(in):: stat
+        character(*), intent(in):: message
+
+        call check(.not. failed(stat), message)
+        if (failed(stat)) print '(A,I0,6A)', '          code ', stat%code, ' in ', from_c_string(stat%mod_name), ', ', &
+                                 from_c_string(stat%proc_name), ': ', from_c_string(stat%message)
     end subroutine
 
     !> Initialization parameters per model, in signature order. Values taken from the integration test configuration.

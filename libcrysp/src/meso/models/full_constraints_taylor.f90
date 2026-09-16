@@ -7,7 +7,7 @@ module full_constraints_taylor
     use math_utils
     use conversions
     use crysp_cluster
-    use logging
+    use crysp_status
     use taylor_ambiguity
     use micro
     use simplex
@@ -44,7 +44,7 @@ module full_constraints_taylor
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
         procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
-        procedure:: update => fctaylor_update
+        procedure:: update     => fctaylor_update     !! Inherited from [[MesoModel]]
     end type
 
 contains
@@ -72,17 +72,19 @@ contains
     !> This is the closest Fortran can get to proper type casting.
     !> Useful for accessing TaylorCluster-specific fields without the boilerplate of type selection and error handling in
     !> each calling procedure.
-    !> If the input cluster is not a TaylorCluster, the routine crashes the program.
-    !> If the input cluster is indeed a TaylorCluster, a pointer to this cluster of type TaylorCluster is returned.
-    function to_taylor_cluster(cluster_) result(ptr)
+    !> A cluster of any other dynamic type means the model and the cluster list disagree, which is a defect in libCrysP rather than
+    !> caller error. It is still reported rather than fatal, so that an embedding host survives it.
+    function to_taylor_cluster(cluster_, ptr) result(stat)
         class(Cluster), target, intent(in):: cluster_   !! Generic input cluster
-        type(TaylorCluster), pointer:: ptr              !! Pointer to input cluster of type TaylorCluster
+        type(TaylorCluster), pointer, intent(out):: ptr !! Pointer to input cluster of type TaylorCluster
+        type(Status):: stat                             !! `CRYSP_OK`, or `CRYSP_ERR_TYPE` if the cluster is not a `TaylorCluster`.
 
         select type (cluster_)
             type is (TaylorCluster)
                 ptr => cluster_
             class default
-                call log_error(MOD_NAME, 'to_taylor_cluster', ERR_TYPE)
+                ptr => null()
+                stat = fail(MOD_NAME, 'to_taylor_cluster', CRYSP_ERR_TYPE, 'Cluster is not a TaylorCluster')
         end select
     end function
 
@@ -113,40 +115,47 @@ contains
     end subroutine
 
     !> See [[MesoModel:get_stress]]
-    function fctaylor_get_stress(this, cluster_, v_grad) result(stress)
+    function fctaylor_get_stress(this, cluster_, v_grad, stress) result(stat)
         class(TaylorModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
         real(DP), dimension(3, 3), intent(in):: v_grad
-        real(DP), dimension(3, 3):: stress
+        real(DP), dimension(3, 3), intent(out):: stress
+        type(Status):: stat
 
         real(DP), dimension(size(cluster_%grains(1)%phase%model%taylor_coeffs, 2)):: slip_rates, &
                                                                      rss
         real(DP), dimension(5):: stress_cluster
         type(TaylorCluster), pointer:: cluster_ptr
 
-        cluster_ptr => to_taylor_cluster(cluster_)
+        stress = 0._DP
+
+        stat = to_taylor_cluster(cluster_, cluster_ptr)
+        if (failed(stat)) return
 
         associate (grain_ => cluster_ptr%grains(1))
-            call simplex_solve(grain_%phase%model%taylor_coeffs, &
-                               tensor_to_deviatoric(v_grad .toframe. grain_%orientation), &
-                               grain_%hardening_state%crss, &
-                               cluster_ptr%inverse_basis, &
-                               cluster_ptr%ind_basis_systems, &
-                               slip_rates, &
-                               stress_cluster, &
-                               rss)
+            stat = simplex_solve(grain_%phase%model%taylor_coeffs, &
+                                 tensor_to_deviatoric(v_grad .toframe. grain_%orientation), &
+                                 grain_%hardening_state%crss, &
+                                 cluster_ptr%inverse_basis, &
+                                 cluster_ptr%ind_basis_systems, &
+                                 slip_rates, &
+                                 stress_cluster, &
+                                 rss)
+            if (failed(stat)) return
+
             stress = deviatoric_to_tensor(stress_cluster) .fromframe. grain_%orientation
         end associate
     end function
 
     !> See [[MesoModel:apply_step]]
-    subroutine fctaylor_deform(this, cluster_, velocity_gradient, time, stress, slip)
+    function fctaylor_deform(this, cluster_, velocity_gradient, time, stress, slip) result(stat)
         class(TaylorModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
         real(DP), dimension(3,3), intent(in):: velocity_gradient
         real(DP), intent(in):: time
         real(DP), dimension(3, 3), intent(out):: stress
         real(DP), intent(out):: slip
+        type(Status):: stat
 
         integer::                   n_systems, &
                                     n_active_simplex
@@ -159,7 +168,11 @@ contains
         integer, dimension(:), allocatable:: ind_active_slip_systems
         type(TaylorCluster), pointer:: cluster_ptr
 
-        cluster_ptr => to_taylor_cluster(cluster_)
+        stress = 0._DP
+        slip = 0._DP
+
+        stat = to_taylor_cluster(cluster_, cluster_ptr)
+        if (failed(stat)) return
 
         associate(grain_=>cluster_ptr%grains(1))
 
@@ -167,32 +180,36 @@ contains
 
             imposed_strain_rate = tensor_to_deviatoric(velocity_gradient .toframe. grain_%orientation)
 
-            call simplex_solve(grain_%phase%model%taylor_coeffs, &
-                               imposed_strain_rate, &
-                               grain_%hardening_state%crss, &
-                               cluster_ptr%inverse_basis, &
-                               cluster_ptr%ind_basis_systems, &
-                               slip_rates, &
-                               stress_cluster, &
-                               rss)
+            stat = simplex_solve(grain_%phase%model%taylor_coeffs, &
+                                 imposed_strain_rate, &
+                                 grain_%hardening_state%crss, &
+                                 cluster_ptr%inverse_basis, &
+                                 cluster_ptr%ind_basis_systems, &
+                                 slip_rates, &
+                                 stress_cluster, &
+                                 rss)
+            if (failed(stat)) return
 
             stress = deviatoric_to_tensor(stress_cluster) .fromframe. grain_%orientation
 
-            call  assess_slip_system_activity(grain_, rss, slip_rates, n_active_simplex, ind_active_slip_systems)
+            stat = assess_slip_system_activity(grain_, rss, slip_rates, n_active_simplex, ind_active_slip_systems)
+            if (failed(stat)) return
 
             if (allocated(ind_active_slip_systems)) then
-                slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
+                stat = resolve_taylor_ambiguity(ind_active_slip_systems, &
                     rss(ind_active_slip_systems), &
                     imposed_strain_rate, &
                     grain_%phase%model%taylor_coeffs, &
-                    n_active_simplex)
+                    n_active_simplex, &
+                    slip_rates)
+                if (failed(stat)) return
             end if
 
             slip = sum(abs(slip_rates))
 
-            call grain_%deform(velocity_gradient, time, slip_rates, stress)
+            stat = grain_%deform(velocity_gradient, time, slip_rates, stress)
         end associate
-    end subroutine
+    end function
 
     !> Update the model state
     !>
@@ -202,7 +219,6 @@ contains
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
         real(DP), intent(in):: time                              !! Duration of the time step.
     end subroutine
-
 
     pure function taylor_cluster_size(this) result(size)
         class(TaylorCluster), intent(in):: this
@@ -236,11 +252,9 @@ contains
         integer:: base_size
 
         call this%Cluster%deserialize(params, phases)
+
         base_size = this%Cluster%size()
         this%ind_basis_systems = params(base_size+1)
         this%inverse_basis = params(base_size+2)
     end subroutine
-
-
-
 end module

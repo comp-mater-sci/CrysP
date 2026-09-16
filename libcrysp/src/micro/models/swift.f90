@@ -3,7 +3,7 @@
 module swift
     use base_defs
     use constitutive_model
-    use logging
+    use crysp_status
     use crysp_serialization
     use crysp_input
     use conversions
@@ -83,19 +83,22 @@ contains
     end subroutine
 
     !> See [[ConstitutiveModel:deform]]
-    subroutine swift_deform(this, state, time, slip_rates)
+    function swift_deform(this, state, time, slip_rates) result(stat)
         class(ConstitutiveModelSwift), intent(inout)::               this
         class(HardeningState), target, intent(inout)::               state
         real(DP), intent(in)::                                       time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
+        type(Status):: stat
 
         type(IsotropicState), pointer:: state_ptr
 
-        state_ptr => to_isotropic_state(state)
+        stat = to_isotropic_state(state, state_ptr)
+        if (failed(stat)) return
+
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
 
         state_ptr%crss = this%k * (state_ptr%total_slip+this%gamma0)**(this%n)
-    end subroutine
+    end function
 
     function swift_make_state() result(state)
         class(HardeningState), allocatable:: state
@@ -143,6 +146,7 @@ contains
         integer:: offset
 
         call this%ConstitutiveModel%deserialize(params)
+
         offset = this%ConstitutiveModel%size()
 
         this%k = params(offset+1)

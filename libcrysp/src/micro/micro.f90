@@ -12,7 +12,8 @@ module micro
     use base_defs
     use crysp_serialization
     use crysp_input
-    use logging
+    use conversions, only: int_to_str
+    use crysp_status
     use constitutive_model
     use crysp_grain
 
@@ -44,18 +45,20 @@ module micro
     end enum
 
     interface
-        module function micro_get_signature(model_id) result(signature)
+        module function micro_get_signature(model_id, signature) result(stat)
             integer, intent(in):: model_id
-            integer, dimension(:), allocatable:: signature
+            integer, dimension(:), allocatable, intent(out):: signature
+            type(Status):: stat
         end function
 
         !> Returns the parameter list for a particular hardening model.
         !>
         !> The parameters are used to initialize the hardening model.
-        !> ID must exist in the enum above. If not, the procedure crashes the program.
-        module function micro_get_input(model_id) result(inputs)
+        !> The ID comes from the caller, so an unknown one is reported as `CRYSP_ERR_TYPE` rather than terminating.
+        module function micro_get_input(model_id, inputs) result(stat)
             integer, intent(in)::                model_id  !! ID of the hardening model. Must exist in the list above.
-            type(Input), allocatable:: inputs(:) !! List of parameters for the hardening model corresponding to the provided ID.
+            type(Input), allocatable, intent(out):: inputs(:) !! List of parameters for the hardening model corresponding to the provided ID.
+            type(Status):: stat                            !! `CRYSP_OK`, or `CRYSP_ERR_TYPE` if the model ID is unknown.
         end function
 
         !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
@@ -63,7 +66,7 @@ module micro
         !> For each provided phase descriptor, a constitutive model is initialized. For each of the orientations in each of
         !> the phase descriptors, a grain object is initialized which points to its constitutive model. All of the grains across all
         !> phases are assimilated as output.
-        module subroutine  micro_init(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_parameters, phases, grains)
+        module function micro_init(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_parameters, phases, grains) result(stat)
             integer, dimension(:), intent(in):: phase_sizes
             real(DP), dimension(3,sum(phase_sizes)), intent(in):: orientations
             integer, dimension(size(phase_sizes)), intent(in):: deformation_mechanisms
@@ -71,11 +74,14 @@ module micro
             type(Parameter), dimension(:), intent(in):: hardening_parameters
             type(Phase), dimension(:), allocatable, target, intent(out):: phases
             type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
-        end subroutine
+            type(Status):: stat                                          !! `CRYSP_OK`, or a failure if any model or deformation
+                                                                         !! mechanism ID supplied by the caller is unknown.
+        end function
 
-        module function micro_get_model(id) result(model)
+        module function micro_get_model(id, model) result(stat)
             integer, intent(in):: id
-            class(ConstitutiveModel), allocatable:: model
+            class(ConstitutiveModel), allocatable, intent(out):: model
+            type(Status):: stat
         end function
         module pure function micro_get_model_id(model) result(id)
             class(ConstitutiveModel), intent(in):: model
@@ -107,7 +113,7 @@ contains
     !> Retrieve an unitialized instance of a given hardening model.
     !>
     !> Workaround to be able to call type-bound overriden procedures.
-    !> If an invalid model ID is provided, this routine crashes the program.
+    !> The ID originates from the caller, so an unknown one yields `CRYSP_ERR_TYPE` and leaves `model` unallocated.
     module procedure micro_get_model
         select case(id)
             case (HARDENING_NONE)
@@ -125,7 +131,7 @@ contains
             case (HARDENING_DSH_LOOP)
                 allocate(ConstitutiveModelDSHLoop:: model)
             case default
-                call log_error(MOD_NAME, 'get_model', ERR_TYPE, 'Invalid hardening model ID')
+                stat = fail(MOD_NAME, 'micro_get_model', CRYSP_ERR_TYPE, 'Invalid hardening model ID: ' // int_to_str(id))
         end select
     end procedure
     module procedure micro_get_model_id
@@ -149,13 +155,15 @@ contains
 
     !> Get the list of miller indices associated to ta given deformation mechanism.
     !>
-    !> If an invalid deformation mechanism ID is provided, this routine crashes the program.
-    function  get_miller_indices(deformation_mechanism) result(miller_indices)
+    !> The mechanism ID originates from the caller, so an unknown one yields `CRYSP_ERR_VAL` and leaves `miller_indices` unallocated.
+    function  get_miller_indices(deformation_mechanism, miller_indices) result(stat)
         use slip_systems
 
         integer, intent(in):: deformation_mechanism             !! ID of the deformation mechanism. Must exist in the enum above.
-        integer, dimension(:,:,:), allocatable:: miller_indices !! Miller indices for the deformation ordered as
+        integer, dimension(:,:,:), allocatable, intent(out):: miller_indices !! Miller indices for the deformation ordered as
                                                                 !! [slip plane normal, slip direction] for each slip system
+        type(Status):: stat                                     !! `CRYSP_OK`, or `CRYSP_ERR_VAL` if the deformation mechanism is unknown.
+
         select case(deformation_mechanism)
             case (SLIP_SYSTEMS_FCC)
                 miller_indices = FCC12
@@ -164,14 +172,16 @@ contains
             case (SLIP_SYSTEMS_BCC48)
                 miller_indices = BCC48
             case default
-                call log_error(MOD_NAME, 'get_miller_indices', ERR_VAL, 'Invalid slip system set')
+                stat = fail(MOD_NAME, 'get_miller_indices', CRYSP_ERR_VAL, 'Invalid slip system set: ' // int_to_str(deformation_mechanism))
         end select
     end function
 
     module procedure micro_get_signature
         class(ConstitutiveModel), allocatable:: dummy_instance
 
-        dummy_instance = micro_get_model(model_id)
+        stat = micro_get_model(model_id, dummy_instance)
+        if (failed(stat)) return
+
         signature = dummy_instance%get_signature()
     end procedure
 
@@ -179,7 +189,9 @@ contains
     module procedure micro_get_input
         class(ConstitutiveModel), allocatable:: dummy_instance
 
-        dummy_instance = micro_get_model(model_id)
+        stat = micro_get_model(model_id, dummy_instance)
+        if (failed(stat)) return
+
         inputs = dummy_instance%get_input()
     end procedure
 
@@ -201,12 +213,17 @@ contains
         j = 1
         do i = 1, size(phases)
             phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
-            phase_ptr%model = micro_get_model(hardening_model_ids(i))
-            miller_indices = get_miller_indices(deformation_mechanisms(i))
+            stat = micro_get_model(hardening_model_ids(i), phase_ptr%model)
+            if (failed(stat)) return
+
+            stat = get_miller_indices(deformation_mechanisms(i), miller_indices)
+            if (failed(stat)) return
+
             n_params = size(phase_ptr%model%get_signature())
             call phases(i)%model%init(miller_indices, hardening_parameters(offset_params+1:offset_params+n_params))
             offset_params = offset_params + n_params
             initial_state = phases(i)%model%make_hardening_state()
+
             call phases(i)%model%init_hardening_state(initial_state)
 
             do k = 1, phase_sizes(i)

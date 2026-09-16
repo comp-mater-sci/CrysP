@@ -95,7 +95,7 @@ contains
 
         integer :: i
 
-        if (size(xi) /= size(yi)) call log_error(MOD_NAME, 'BarycentricInterpolator_init', ERR_VAL, 'Sizes of inputs do not match')
+        if (size(xi) /= size(yi)) call log_error(MOD_NAME, 'BarycentricInterpolator_init', CRYSP_ERR_VAL, 'Sizes of inputs do not match')
 
         ! TODO: check if the nodes are in strictly ascending order
 
@@ -122,8 +122,8 @@ contains
 
             character(*), parameter:: PROC_NAME = 'BarycentricInterpolator_init_allocate'
 
-            if (order < 1) call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Order must not be negative')
-            if (npoints <= order) call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Too few points.')
+            if (order < 1) call log_error(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Order must not be negative')
+            if (npoints <= order) call log_error(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Too few points.')
 
             this%npoints = npoints
             this%order = order
@@ -142,7 +142,7 @@ contains
             integer :: j,k, n
 
             n = ubound(xi,dim=1)
-            if (n /= ubound(wi,dim=1)) call log_error(MOD_NAME, 'barycentric_weights', ERR_VAL, 'Too few values')
+            if (n /= ubound(wi,dim=1)) call log_error(MOD_NAME, 'barycentric_weights', CRYSP_ERR_VAL, 'Too few values')
             !
             ! Follow (3.2) in [1]
             do j = 0, n

@@ -4,9 +4,9 @@
 !> queries, and reading the value back via assignment. The `serialize` family is tested in both of its flavours: the assumed-shape
 !> `_desc` forms used from Fortran, and the explicit-extent forms that C callers reach with a bare pointer plus its extents.
 !>
-!> Ends with a negative test: reading a matrix parameter into a destination of the wrong shape must abort through `log_error`.
+!> Ends with a negative test: reading a matrix parameter into a destination of the wrong shape must abort through `error stop`.
 !> Since that terminates the program, it runs last, after the summary. CTest therefore judges this test on its output rather
-!> than its exit status (see CMakeLists.txt): any "FAILED" line fails it, and the logged exception is required for it to pass.
+!> than its exit status (see CMakeLists.txt): any "FAILED" line fails it, and the stop message is required for it to pass.
 program test_parameter
     use iso_c_binding
     use base_defs, only: DP
@@ -237,7 +237,7 @@ contains
         call check(all(c_out == transfer('Boundaries', c_out)), 'string: roundtrip via deserialize_string')
     end subroutine
 
-    !> Negative test. Expected to end the program via log_error(..., ERR_DIMS, ...); reaching the print means the check was skipped.
+    !> Negative test. Expected to end the program via `error stop`; reaching the print means the check was skipped.
     subroutine test_shape_mismatch_aborts()
         type(Parameter):: p
         real(DP), dimension(3,3):: source = 0._DP

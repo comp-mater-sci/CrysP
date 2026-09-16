@@ -1,8 +1,6 @@
 module crysp_serialization
     use iso_c_binding
     use base_defs
-    use logging
-
     implicit none
 
     private
@@ -25,6 +23,16 @@ module crysp_serialization
              deserialize_string
 
     character(*), parameter:: MOD_NAME = 'serialization'
+
+    !> @note
+    !> The `param_to_*` readers and [[deserialize_real_matrix]] below still terminate on a type or shape mismatch, and are the only
+    !> such sites left in libCrysP outside [[crysp_model]]. They are reached through the `assignment(=)` interface, and a defined
+    !> assignment subroutine takes exactly two arguments by definition, so there is nowhere to put a [[crysp_status:Status]]
+    !> without giving up the assignment syntax that the whole deserialization layer is written in.
+    !>
+    !> Deserialization as a whole does not report failures either: the `deserialize` bindings are subroutines, and an invalid
+    !> parameter list, including one with an unknown model ID, is not detected. This is a known gap.
+    !> @endnote
 
     !> Supported types for serialization.
     !>
@@ -220,7 +228,7 @@ contains
             type is (StringValue)
                 s = [len(value%buffer),0]
             class default
-                call log_error(MOD_NAME, 'shape_of', ERR_TYPE, 'Unknown parameter type')
+                error stop 'serialization::shape_of: Unknown parameter type'
         end select
     end subroutine
 
@@ -316,7 +324,7 @@ contains
             type is (IntValue)
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_int', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::parameter_to_int: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -332,10 +340,10 @@ contains
         select type (value => val%value)
             type is (IntArrayValue)
                 if (size(data) /= size(value%buffer)) &
-                    call log_error(MOD_NAME, 'parameter_to_int_array', ERR_DIMS, 'Parameter size does not match destination')
+                    error stop 'serialization::parameter_to_int_array: Parameter size does not match destination'
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_int_array', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::parameter_to_int_array: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -352,7 +360,7 @@ contains
             type is (RealValue)
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_real', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::parameter_to_real: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -368,10 +376,10 @@ contains
         select type (value => val%value)
             type is (RealArrayValue)
                 if (size(data) /= size(value%buffer)) &
-                    call log_error(MOD_NAME, 'parameter_to_real_array', ERR_DIMS, 'Parameter size does not match destination')
+                    error stop 'serialization::parameter_to_real_array: Parameter size does not match destination'
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_real_array', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::parameter_to_real_array: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -387,10 +395,10 @@ contains
         select type (value => val%value)
             type is (RealMatrixValue)
                 if (any(shape(data) /= shape(value%buffer))) &
-                    call log_error(MOD_NAME, 'parameter_to_real_matrix', ERR_DIMS, 'Parameter shape does not match destination')
+                    error stop 'serialization::parameter_to_real_matrix: Parameter shape does not match destination'
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::parameter_to_real_matrix: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -407,7 +415,7 @@ contains
             type is (StringValue)
                 data = value%buffer
             class default
-                call log_error(MOD_NAME, 'parameter_to_string', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::parameter_to_string: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -529,10 +537,10 @@ contains
         select type (value => val%value)
             type is (IntArrayValue)
                 if (size(value%buffer) /= len) &
-                    call log_error(MOD_NAME, 'deserialize_int_array', ERR_DIMS, 'Parameter size does not match destination')
+                    error stop 'serialization::deserialize_int_array: Parameter is not of correct shape'
                 buffer = value%buffer
             class default
-                call log_error(MOD_NAME, 'deserialize_int_array', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::deserialize_int_array: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -550,10 +558,10 @@ contains
         select type (value => val%value)
             type is (RealArrayValue)
                 if (size(value%buffer) /= len) &
-                    call log_error(MOD_NAME, 'deserialize_real_array', ERR_DIMS, 'Parameter size does not match destination')
+                    error stop 'serialization::deserialize_real_array: Parameter is not of correct shape'
                 buffer = value%buffer
             class default
-                call log_error(MOD_NAME, 'deserialize_real_array', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::deserialize_real_array: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -574,10 +582,10 @@ contains
         select type (value => val%value)
             type is (RealMatrixValue)
                 if (any(shape(value%buffer) /= [rows, cols])) &
-                    call log_error(MOD_NAME, 'deserialize_real_matrix', ERR_DIMS, 'Parameter shape does not match destination')
+                    error stop 'serialization::deserialize_real_matrix: Parameter is not of correct shape'
                 buffer = value%buffer
             class default
-                call log_error(MOD_NAME, 'deserialize_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::deserialize_real_matrix: Parameter is not of correct type'
         end select
 
         deallocate(val)
@@ -598,12 +606,12 @@ contains
         select type (value => val%value)
             type is (StringValue)
                 if (len(value%buffer) /= length) &
-                    call log_error(MOD_NAME, 'deserialize_string', ERR_DIMS, 'Parameter length does not match destination')
+                    error stop 'serialization::deserialize_string: Parameter is not of correct shape'
                 do i = 1, length
                     buffer(i) = value%buffer(i:i)
                 end do
             class default
-                call log_error(MOD_NAME, 'deserialize_string', ERR_TYPE, 'Parameter is not of correct type')
+                error stop 'serialization::deserialize_string: Parameter is not of correct type'
         end select
 
         deallocate(val)

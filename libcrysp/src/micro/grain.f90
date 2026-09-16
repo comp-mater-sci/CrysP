@@ -1,6 +1,6 @@
 module crysp_grain
     use conversions
-    use logging
+    use crysp_status
     use constitutive_model
     use crysp_serialization
     use iso_c_binding
@@ -46,12 +46,13 @@ contains
         this%hardening_state = state
     end subroutine
 
-    subroutine grain_deform(this, v_grad, t, slip_rates, stress)
+    function grain_deform(this, v_grad, t, slip_rates, stress) result(stat)
         class(Grain), intent(inout):: this
         real(DP), dimension(3,3), intent(in):: v_grad !! Externally imposed velocity gradient.
         real(DP), intent(in):: t
         real(DP), dimension(size(this%hardening_state%crss,2)), intent(in):: slip_rates
         real(DP), dimension(3,3), intent(in):: stress !! Stress in the global frame
+        type(Status):: stat
 
         real(DP):: spin(3,3), &
                    rot_inc(3,3), &
@@ -74,12 +75,13 @@ contains
         rot_inc = matrix_exponential(spin*t)
         this%orientation = matmul(rot_inc, this%orientation)
 
-        call this%phase%model%deform(this%hardening_state, t, slip_rates)
+        stat = this%phase%model%deform(this%hardening_state, t, slip_rates)
+        if (failed(stat)) return
 
         !Upper bound on stress increment is max relative increment of CRSS multiplied by rotated stress tensor.
         stress_new = maxval(this%hardening_state%crss/crss_old) * (stress .toframe. transformation_matrix(this%orientation, orientation_old))
         this%stress_increment = norm2(stress_new-stress) / norm2(stress)
-    end subroutine
+    end function
 
 
     pure function grain_get_size(this) result(size)
@@ -123,6 +125,7 @@ contains
         this%orientation = params(2)
         this%stress_increment = params(3)
         this%hardening_state = this%phase%model%make_hardening_state()
+
         call this%hardening_state%deserialize(params(4:))
     end subroutine
 end module

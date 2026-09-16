@@ -10,10 +10,27 @@ module conversions
     interface
 
         !> Transform a fortran string to a fixed-length C string
+        !>
+        !> All unused C-string characters are filled with C_NULL_CHAR.
+        !> If the fortran string is longer than length-1, it is truncated to length-1 and the final C-string character is a \0.
         module pure function to_c_string(fortran_string, length) result(c_string)
             character(*), intent(in):: fortran_string
             integer, intent(in):: length
             character(C_CHAR), dimension(length):: c_string
+        end function
+
+        !> Recover a Fortran string from a C character buffer.
+        !>
+        !> The string ends at the first C_NULL_CHAR. If the buffer contains none, the whole buffer is used.
+        module pure function from_c_string(c_string) result(fortran_string)
+            character(C_CHAR), dimension(:), intent(in):: c_string
+            character(:), allocatable:: fortran_string
+        end function
+
+        !> Convert an integer to a string
+        module pure function int_to_str(int) result(string)
+            integer, intent(in):: int
+            character(:), allocatable:: string
         end function
 
         !> Convert an angle in radians to an angle in degrees.
@@ -209,11 +226,30 @@ contains
     module procedure to_c_string
         integer:: i
 
-        do i=1,len(fortran_string)
+        do i=1,min(len_trim(fortran_string),length-1)
             c_string(i) = char(iachar(fortran_string(i:i)),kind=C_CHAR)
         end do
-        c_string(i) = C_NULL_CHAR
+        c_string(i:) = C_NULL_CHAR
     end procedure
+
+    module procedure from_c_string
+        integer:: i, n
+
+        n = findloc(c_string, C_NULL_CHAR, 1) - 1
+        if (n < 0) n = size(c_string)
+        allocate(character(n):: fortran_string)
+        do i = 1, n
+            fortran_string(i:i) = c_string(i)
+        end do
+    end procedure
+
+    module procedure int_to_str
+        character(11):: buffer ! Fits any 32-bit integer, including the sign
+
+        write (buffer, "(I0)") int
+        string = trim(buffer)
+    end procedure
+
 
     module procedure euler_to_rotation_matrix
         real(DP):: sins(3), &

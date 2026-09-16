@@ -1,6 +1,6 @@
 module crysp_isotropic_state
     use base_defs
-    use logging
+    use crysp_status
     use crysp_serialization
     use crysp_grain
     use constitutive_model
@@ -10,6 +10,8 @@ module crysp_isotropic_state
     private
     public:: IsotropicState, &
              to_isotropic_state
+
+    character(*), parameter:: MOD_NAME = 'isotropic_state'
 
     !> Hardening state used by many simple isotropic hardening models
     type, extends(HardeningState):: IsotropicState
@@ -24,17 +26,20 @@ contains
 
     !> Convert a generic HardeningState to a pointer to a IsotropicState object
     !>
-    !> Closest Fortran comes to type casting
-    !> If the provided state is not of type IsotropicState, the program crashes.
-    function to_isotropic_state(state) result(isotropic_state_ptr)
+    !> Closest Fortran comes to type casting.
+    !> A state of any other dynamic type means the model and the state it was handed disagree, which is a defect in libCrysP rather
+    !> than anything the caller did. It is still reported rather than fatal: a library must not take its host down.
+    function to_isotropic_state(state, isotropic_state_ptr) result(stat)
         class(HardeningState), target, intent(in):: state   !! HardeningState to be converted.
-        type(IsotropicState), pointer:: isotropic_state_ptr !! Pointer of type IsotropicState to the HardeningState
+        type(IsotropicState), pointer, intent(out):: isotropic_state_ptr !! Pointer of type IsotropicState to the HardeningState
+        type(Status):: stat                                 !! `CRYSP_OK`, or `CRYSP_ERR_TYPE` if the state is not an `IsotropicState`.
 
         select type (state)
             type is (IsotropicState)
                 isotropic_state_ptr => state
             class default
-                call log_error(ERR_TYPE)
+                isotropic_state_ptr => null()
+                stat = fail(MOD_NAME, 'to_isotropic_state', CRYSP_ERR_TYPE, 'Hardening state is not an IsotropicState')
         end select
     end function
 
@@ -63,6 +68,7 @@ contains
         type(Parameter), dimension(:), intent(in):: params
 
         call this%HardeningState%deserialize(params)
+
         this%total_slip = params(this%size())
     end subroutine
 end module

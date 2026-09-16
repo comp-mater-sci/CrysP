@@ -22,6 +22,7 @@ module macro
     use conversions
     use crysp_meso_model
     use crysp_material
+    use crysp_status
 
     implicit none
     public
@@ -30,31 +31,34 @@ module macro
 
 contains
 
-    subroutine macro_simulate_stress_mode(mat, stress_mode, strain_mode, stress, residual)
+    function macro_simulate_stress_mode(mat, stress_mode, strain_mode, stress, residual) result(stat)
         type(Material), intent(inout):: mat
         real(DP), dimension(5), intent(in)::  stress_mode
         real(DP), dimension(5), intent(inout):: strain_mode
 
         real(DP), dimension(5), intent(out):: stress
         real(DP), dimension(5), intent(out):: residual
+        type(Status):: stat
 
-        call simulate_stress_mode(mat%meso_model, mat%clusters, stress_mode, strain_mode, stress, residual)
-    end subroutine
+        stat = simulate_stress_mode(mat%meso_model, mat%clusters, stress_mode, strain_mode, stress, residual)
+    end function
 
-    subroutine macro_simulate_strain_mode(mat, strain_mode, stress)
+    function macro_simulate_strain_mode(mat, strain_mode, stress) result(stat)
         type(Material), intent(inout):: mat
         real(DP), dimension(5), intent(in)::  strain_mode
         real(DP), dimension(5), intent(out):: stress
+        type(Status):: stat
 
-        call simulate_strain_mode(mat%meso_model, mat%clusters, strain_mode, stress)
-    end subroutine
+        stat = simulate_strain_mode(mat%meso_model, mat%clusters, strain_mode, stress)
+    end function
 
-    subroutine macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments)
+    function macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments) result(stat)
         type(Material), target, intent(inout):: mat
         real(DP), dimension(5), intent(in):: target_stress_mode
         real(DP), intent(in):: target_vm_strain
         type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments
         type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments
+        type(Status):: stat
 
         integer:: prob_rem_incs, &
                   n_incs_old
@@ -75,12 +79,16 @@ contains
         strain_rate = target_stress_mode
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
-            call simulate_stress_mode(mat%meso_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
-            strain_incs = deform(mat%meso_model, &
-                                 mat%clusters, &
-                                 deviatoric_to_tensor(strain_rate), &
-                                 target_vm_strain - cur_vm_strain, &
-                                 target_stress_mode)
+            stat = simulate_stress_mode(mat%meso_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
+            if (failed(stat)) return
+
+            stat = deform(mat%meso_model, &
+                          mat%clusters, &
+                          deviatoric_to_tensor(strain_rate), &
+                          target_vm_strain - cur_vm_strain, &
+                          strain_incs, &
+                          target_stress_mode)
+            if (failed(stat)) return
 
             if (.not. allocated(strain_increments)) then
                 strain_increments = strain_incs
@@ -101,14 +109,15 @@ contains
         end do
 
         stress_increments = stress_incs%get()
-    end subroutine
+    end function
 
-    subroutine macro_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)
+    function macro_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments) result(stat)
         type(Material), target, intent(inout):: mat
         real(DP), dimension(3,3), intent(in):: velocity_gradient
         real(DP), intent(in)::                 target_vm_strain
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
+        type(Status):: stat
 
-        increments = deform(mat%meso_model, mat%clusters, velocity_gradient, target_vm_strain)
-    end subroutine
+        stat = deform(mat%meso_model, mat%clusters, velocity_gradient, target_vm_strain, increments)
+    end function
 end module

@@ -54,7 +54,7 @@ contains
         ! Read parameters specific for the ASRModule
         call read_value(cnfunit, n_steps)
         if (n_steps <= 0) &
-            call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Number of steps must at least be 1.')
+            call log_error(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Number of steps must at least be 1.')
         allocate(this%steps(n_steps))
         do i = 1, n_steps
             associate (step => this%steps(i))
@@ -107,13 +107,13 @@ contains
                                strain_inc => step%strain_increments(1))
                         stress_inc%strain_rate = target_dev_stress
                         stress_inc%n_strain_increments = 1
-                        call crysp_simulate_stress_mode(this%material, target_dev_stress, stress_inc%strain_rate, dev_stress, stress_inc%residual)
+                        call handle_crysp_status(crysp_simulate_stress_mode(this%material, target_dev_stress, stress_inc%strain_rate, dev_stress, stress_inc%residual))
                         strain_inc%stress = deviatoric_to_tensor(dev_stress)
                         strain_inc%deformation_gradient = UNIT_MATRIX_3X3
                         n_incs = n_incs + 1
                     end associate
                 else
-                    call crysp_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%stress_increments, step%strain_increments)
+                    call handle_crysp_status(crysp_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%stress_increments, step%strain_increments))
                     !Write new texture to file
                     do i_stress = 1, size(step%stress_increments)
                         n_incs = n_incs + step%stress_increments(i_stress)%n_strain_increments

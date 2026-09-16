@@ -6,7 +6,7 @@ module crysp_meso_model
     use crysp_cluster
     use crysp_grain
     use crysp_model
-    use logging
+    use crysp_status
 
     implicit none
 
@@ -56,25 +56,28 @@ module crysp_meso_model
         !> Get the stress state for a cluster under a certain strain condition.
         !>
         !> Returns the homogenized stress state over all of the grains of the cluster.
-        function cp_model_get_stress(this, cluster_, v_grad) result(stress)
+        function cp_model_get_stress(this, cluster_, v_grad, stress) result(stat)
             import MesoModel
             import Cluster
             import DP
+            import Status
 
             class(MesoModel), intent(in):: this                !! Model instance
             class(Cluster), target, intent(inout):: cluster_   !! The cluster for which to calculate the homogenized stress state
             real(DP), dimension(3, 3), intent(in):: v_grad     !! Velocity gradient representing the strain condition for which to calculate the stress.
-            real(DP), dimension(3, 3):: stress                 !! Homogenized stress response of the cluster
+            real(DP), dimension(3, 3), intent(out):: stress    !! Homogenized stress response of the cluster
+            type(Status):: stat                                !! Status of execution
         end function
 
         !> Apply a deformation step to a cluster.
         !>
         !> Returns some statistics of the deformation to the caller.
         !> The cluster state is updated to the state after the deformation step.
-        subroutine cp_model_apply_step(this, cluster_, velocity_gradient, time, stress, slip)
+        function cp_model_apply_step(this, cluster_, velocity_gradient, time, stress, slip) result(stat)
             import MesoModel
             import Cluster
             import DP
+            import Status
 
             class(MesoModel), intent(in):: this                 !! Model instance
             class(Cluster), target, intent(inout):: cluster_    !! The cluster to apply the deformation step to.
@@ -84,7 +87,8 @@ module crysp_meso_model
             real(DP), intent(in):: time                         !! Duration of the time step
             real(DP), dimension(3, 3), intent(out):: stress     !! Homogenized stress state of the cluster during the time step.
             real(DP), intent(out):: slip                        !! Homogenized slip that occured in the cluster to realize the deformation during this time step.
-        end subroutine
+            type(Status):: stat                                 !! Status of execution
+        end function
 
         !> Update the mesoscopic model.
         subroutine cp_model_update(this, velocity_gradient, time)

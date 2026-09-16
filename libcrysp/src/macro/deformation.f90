@@ -5,6 +5,7 @@ module deformation
     use omp_lib
     use meso
     use incrementation
+    use crysp_status
 
     implicit none
 
@@ -12,19 +13,23 @@ module deformation
     public:: deform
 contains
 
-    function deform(model, clusters, velocity_gradient, target_vm_strain, target_stress_mode) result(increments)
+    function deform(model, clusters, velocity_gradient, target_vm_strain, increments, target_stress_mode) result(stat)
         class(MesoModel), intent(inout):: model
         class(Cluster), dimension(:), intent(inout)::  clusters
         real(DP), dimension(3,3), intent(in)::         velocity_gradient
         real(DP), intent(in)::                         target_vm_strain
+        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
         real(DP), dimension(5), intent(in), optional:: target_stress_mode
-        type(StrainIncrement), dimension(:), allocatable:: increments
+        type(Status):: stat                            !! `CRYSP_OK`, or the first failure reported by any cluster.
 
         real(DP), parameter:: MIN_T_INC =  10 * TOLERANCE !! Minimal time increment. As small as possible because hardening can be very
                                                           !! fast at low strains but still far enough from TOLERANCE to avoid roundoff problems in the constitutive models
 
         integer:: i, j, &
                   prob_rem_incs
+        logical:: any_failed
+        type(Status):: first_failure, &
+                       cluster_stat
         real(DP):: total_weight, &
                    homogenized_stress(3, 3), &
                    stress_cluster(3, 3), &
@@ -51,6 +56,7 @@ contains
         t_inc =  MIN_T_INC
         def_grad = UNIT_MATRIX_3X3
         cur_vm_strain = 0._DP
+        any_failed = .false.
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
             !Determine strain at the end of the increment if we keep the current time step
@@ -73,10 +79,25 @@ contains
             taylor_factor = 0._DP
             max_stress_inc = 0._DP
 
-            !$OMP PARALLEL SHARED(model, clusters, velocity_gradient, t_inc, max_stress_inc) PRIVATE(j, stress_cluster, slip_cluster, weight_cluster)
+            !A worker thread cannot branch out of an !$OMP DO, so the first failure is recorded under a critical section and the
+            !remaining iterations short-circuit. See the note on [[mode:simulate_strain_mode]].
+            !$OMP PARALLEL SHARED(model, clusters, velocity_gradient, t_inc, max_stress_inc, any_failed, first_failure) &
+            !$OMP          PRIVATE(j, stress_cluster, slip_cluster, weight_cluster, cluster_stat)
                 !$OMP DO SCHEDULE(GUIDED) REDUCTION(+:total_weight, homogenized_stress, taylor_factor)
                     do i = 1, size(clusters)
-                        call model%apply_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
+                        if (any_failed) cycle
+
+                        cluster_stat = model%apply_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
+                        if (failed(cluster_stat)) then
+                            !$OMP CRITICAL (crysp_first_failure)
+                                if (.not. any_failed) then
+                                    any_failed = .true.
+                                    first_failure = cluster_stat
+                                end if
+                            !$OMP END CRITICAL (crysp_first_failure)
+                            cycle
+                        end if
+
                         weight_cluster = clusters(i)%weight
                         total_weight = total_weight+weight_cluster
                         homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
@@ -90,6 +111,11 @@ contains
                     end do
                 !$OMP END DO
             !$OMP END PARALLEL
+
+            if (any_failed) then
+                stat = first_failure
+                return
+            end if
 
             !Scale increment such that the expected maximum stress change for any grain in the next iteration is ACCURACY.
             !Linear approximation is used here due to expected small time steps and large number of grains.

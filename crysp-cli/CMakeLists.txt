@@ -22,6 +22,7 @@ src/dmcQRS.f90
 src/dmcYLD.f90
 src/crysp.f90
 src/file_io.f90
+src/logging.f90
 )
 
 target_link_libraries(crysp PRIVATE crysp::libcrysp)
