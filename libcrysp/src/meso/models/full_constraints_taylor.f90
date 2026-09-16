@@ -44,6 +44,7 @@ module full_constraints_taylor
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
         procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
+        procedure:: update => fctaylor_update
     end type
 
 contains
@@ -193,6 +194,16 @@ contains
         end associate
     end subroutine
 
+    !> Update the model state
+    !>
+    !> Nothing to do for this model. Must implement procedure anyway because the base class defining it is abstract.
+    subroutine fctaylor_update(this, velocity_gradient, time)
+        class(TaylorModel), intent(inout):: this  !! Model instance
+        real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
+        real(DP), intent(in):: time                              !! Duration of the time step.
+    end subroutine
+
+
     pure function taylor_cluster_size(this) result(size)
         class(TaylorCluster), intent(in):: this
         integer:: size
@@ -229,4 +240,7 @@ contains
         this%ind_basis_systems = params(base_size+1)
         this%inverse_basis = params(base_size+2)
     end subroutine
+
+
+
 end module

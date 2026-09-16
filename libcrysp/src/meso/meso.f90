@@ -66,10 +66,10 @@ module meso
 
         module function meso_get_model(id) result(model)
             integer, intent(in):: id
-            class(CrystalPlasticityModel), allocatable:: model
+            class(MesoModel), allocatable:: model
         end function
         module pure function meso_get_model_id(model) result(id)
-            class(CrystalPlasticityModel), intent(in):: model
+            class(MesoModel), intent(in):: model
             integer:: id
         end function
     end interface

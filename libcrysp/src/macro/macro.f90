@@ -21,6 +21,7 @@ module macro
     use mode
     use conversions
     use crysp_meso_model
+    use crysp_material
 
     implicit none
     public
@@ -37,7 +38,7 @@ contains
         real(DP), dimension(5), intent(out):: stress
         real(DP), dimension(5), intent(out):: residual
 
-        call simulate_stress_mode(mat%cp_model, mat%clusters, stress_mode, strain_mode, stress, residual)
+        call simulate_stress_mode(mat%meso_model, mat%clusters, stress_mode, strain_mode, stress, residual)
     end subroutine
 
     subroutine macro_simulate_strain_mode(mat, strain_mode, stress)
@@ -45,7 +46,7 @@ contains
         real(DP), dimension(5), intent(in)::  strain_mode
         real(DP), dimension(5), intent(out):: stress
 
-        call simulate_strain_mode(mat%cp_model, mat%clusters, strain_mode, stress)
+        call simulate_strain_mode(mat%meso_model, mat%clusters, strain_mode, stress)
     end subroutine
 
     subroutine macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments)
@@ -70,8 +71,8 @@ contains
         strain_rate = target_stress_mode
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
-            call simulate_stress_mode(mat%cp_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
-            strain_incs = deform(mat%cp_model, &
+            call simulate_stress_mode(mat%meso_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
+            strain_incs = deform(mat%meso_model, &
                                  mat%clusters, &
                                  deviatoric_to_tensor(strain_rate), &
                                  target_vm_strain - cur_vm_strain, &
@@ -94,6 +95,6 @@ contains
         real(DP), intent(in)::                 target_vm_strain
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
 
-        increments = deform(mat%cp_model, mat%clusters, velocity_gradient, target_vm_strain)
+        increments = deform(mat%meso_model, mat%clusters, velocity_gradient, target_vm_strain)
     end subroutine
 end module

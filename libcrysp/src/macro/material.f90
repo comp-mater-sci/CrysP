@@ -1,7 +1,7 @@
 module crysp_material
     use crysp_serialization
     use constitutive_model
-    use crystal_plasticity_model
+    use crysp_meso_model
     use crysp_cluster
     use meso
     use micro
@@ -13,7 +13,7 @@ module crysp_material
     public:: Material
 
     type, extends(State):: Material
-          class(CrystalPlasticityModel), allocatable:: cp_model   !! Global state of the meso model
+          class(MesoModel), allocatable:: meso_model   !! Global state of the meso model
           type(Phase), dimension(:), allocatable:: phases           !! State associated to all grains of a particular phase
           class(Cluster), dimension(:), allocatable:: clusters      !! State associated to individual clusters. Contains state of each grain.
     contains
@@ -35,7 +35,7 @@ contains
         n_phases = size(this%phases)
         n_clusters = size(this%clusters)
 
-        s = 3 + this%cp_model%size()
+        s = 3 + this%meso_model%size()
 
         do i=1,n_phases
             s = s + 1 + this%phases(i)%model%size()
@@ -60,9 +60,9 @@ contains
         allocate(params(this%size()))
 
         !CP model
-        params(1) = meso_get_model_id(this%cp_model)
+        params(1) = meso_get_model_id(this%meso_model)
         offset = 1
-        sub = this%cp_model%serialize()
+        sub = this%meso_model%serialize()
         s = size(sub)
         params(offset+1:offset+s) = sub
         offset=offset+s
@@ -106,10 +106,10 @@ contains
 
         !CP model
         model_id = params(1)
-        this%cp_model = meso_get_model(model_id)
+        this%meso_model = meso_get_model(model_id)
         offset = 1
-        call this%cp_model%deserialize(params(offset+1:))
-        offset = offset + this%cp_model%size()
+        call this%meso_model%deserialize(params(offset+1:))
+        offset = offset + this%meso_model%size()
 
         !Phases
         n_phases = params(offset+1)
@@ -126,7 +126,7 @@ contains
         !Clusters
         n_clusters = params(offset+1)
         offset = offset + 1
-        allocate(this%clusters(n_clusters), mold=this%cp_model%make_cluster())
+        allocate(this%clusters(n_clusters), mold=this%meso_model%make_cluster())
         do i=1,n_clusters
             call this%clusters(i)%deserialize(params(offset+1:), this%phases)
             offset = offset + this%clusters(i)%size()

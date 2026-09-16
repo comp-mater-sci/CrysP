@@ -28,8 +28,8 @@ contains
     !> Initializes all data structures associated to a meterial state and assembles them into a Material object.
     !> An initialized Material object is needed for all other calls to AlTay
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
-    subroutine crysp_new_material(cp_model_id, meso_params, phase_descriptors, mat)
-        integer, intent(in):: cp_model_id
+    subroutine crysp_new_material(meso_model_id, meso_params, phase_descriptors, mat)
+        integer, intent(in):: meso_model_id
         type(Parameter), dimension(:), intent(in):: meso_params
         type(PhaseDescriptor), dimension(:), intent(in):: phase_descriptors
         type(Material), target, intent(out):: mat
@@ -37,7 +37,7 @@ contains
         type(Grain), allocatable:: grains_(:)
 
         call micro_init(phase_descriptors, mat%phases, grains_)
-        call meso_init(cp_model_id, grains_, meso_params, mat%cp_model, mat%clusters)
+        call meso_init(meso_model_id, grains_, meso_params, mat%meso_model, mat%clusters)
     end subroutine
 
     !> Run the AlTay for the set of steps
