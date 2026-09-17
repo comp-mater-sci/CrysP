@@ -80,7 +80,7 @@ contains
                    hydro, &
                    dev, &
                    stress_scaling_factor
-        type(Material), target:: mat_
+        type(TexturePoint), allocatable:: texture(:)
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
         texture_unit = open_texture_evolution_file(this%output_prefix)
@@ -118,9 +118,8 @@ contains
                     do i_stress = 1, size(step%stress_increments)
                         n_incs = n_incs + step%stress_increments(i_stress)%n_strain_increments
                     end do
-                    call mat_%deserialize(this%material)
-                    call write_texture_increment(texture_unit, n_incs, mat_%clusters)
-                    this%material = mat_%serialize()
+                    call handle_crysp_status(crysp_get_texture(this%material, texture))
+                    call write_texture_increment(texture_unit, n_incs, texture)
                 end if
 
                 offset = 0

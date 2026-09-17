@@ -83,7 +83,7 @@ contains
                    taylor_factor, &
                    dev_stress(5), &
                    def_grad(3,3)
-        type(Material), target:: mat_
+        type(TexturePoint), allocatable:: texture(:)
 
         !Open output files
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
@@ -107,9 +107,8 @@ contains
                 else
                     call handle_crysp_status(crysp_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments))
                     n_incs = n_incs + size(step%increments)
-                    call mat_%deserialize(this%material)
-                    call write_texture_increment(texture_unit, n_incs, mat_%clusters)
-                    this%material = mat_%serialize()
+                    call handle_crysp_status(crysp_get_texture(this%material, texture))
+                    call write_texture_increment(texture_unit, n_incs, texture)
                 end if
 
                 do i_inc = 1, size(step%increments)
