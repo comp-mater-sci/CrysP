@@ -25,12 +25,6 @@ module crysp_material
         procedure:: get_texture => material_get_texture
     end type
 
-    !> Orientation of a single grain.
-    type, bind(C):: TexturePoint
-        real(C_FLOAT), dimension(3):: euler_angles !! Euler angle triplet in Bunge convention, in radians.
-        integer(C_INT):: phase_id                  !! Index of the grain's phase in the phase list of the material.
-    end type
-
 contains
 
     !> Get the current texture of a material.
@@ -41,7 +35,7 @@ contains
         class(Material), target, intent(in):: this
         type(TexturePoint), dimension(:), allocatable:: texture
 
-        integer:: i, j, k, n
+        integer:: i, j, n
 
         n = 0
         do i = 1, size(this%clusters)
@@ -54,14 +48,7 @@ contains
         do i = 1, size(this%clusters)
             associate (grains => this%clusters(i)%grains)
                 do j = 1, size(grains)
-                    !deformation_gradient_to_euler inverts the transpose of euler_to_rotation_matrix, which built the orientation.
-                    texture(n+j)%euler_angles = real(deformation_gradient_to_euler(transpose(grains(j)%orientation)), C_FLOAT)
-                    do k=1,size(this%phases)
-                        if (c_associated(c_loc(this%phases(k)),c_loc(grains(j)%phase))) then
-                           texture(n+j)%phase_id = k
-                           exit
-                        end if
-                    end do
+                    texture(n+j) = grains(j)%to_texture_point(this%phases)
                 end do
                 n = n + size(grains)
             end associate

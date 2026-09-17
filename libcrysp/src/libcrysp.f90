@@ -167,7 +167,7 @@ contains
     !> The velocity gradient must not contain a volumetric component (sum(trace) == )
     !> The velocity gradient is applied until a given von-mises equivalent true strain is reached.
     !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
-    function crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments) bind(C) result(stat)
+    function crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments) result(stat)
         type(MaterialHandle), intent(in):: mat
         real(C_DOUBLE), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(C_DOUBLE), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
@@ -203,16 +203,14 @@ contains
     !> The stress mode is iteratively matched to the appropriate strain mode. This process is inexact, so a deviation of 10^-2
     !> between the requested stress mode and the actually applied stress mode is expected.
     !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
-    function crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments) bind(C) result(stat)
+    function crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments) result(stat)
         type(MaterialHandle), intent(in):: mat                                            !! Initialized material
         real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode                     !! Norm must be 1
         real(C_DOUBLE), intent(in):: target_vm_strain                                     !! Target true von mises strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments !! Step-wise reporting of the mapping
-                                                                                          !! between requested stress mode and strain mode.
+        type(StressIncrement), dimension(:), allocatable, intent(out):: increments        !! Step-wise reporting of the mapping
+                                                                                          !! between requested stress mode and strain mode,
+                                                                                          !! including the deformation steps that were applied.
                                                                                           !! See [[stressincrement]] for details.
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments !! Reporting of individual deformation steps that
-                                                                                          !! were applied. See [[strainIncrement]] for
-                                                                                          !! details.
         type(Status):: stat                                                               !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected
                                                                                           !! input, or a simulation failure.
 
@@ -232,7 +230,7 @@ contains
             return
         end if
 
-        stat = macro_stress_driven_deformation(mat_, target_stress_mode, target_vm_strain, stress_increments, strain_increments)
+        stat = macro_stress_driven_deformation(mat_, target_stress_mode, target_vm_strain, increments)
     end function
 
     !> Calculate strain mode and stress corresponding to a desired stress mode.

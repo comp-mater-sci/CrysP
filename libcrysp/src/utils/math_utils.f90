@@ -395,7 +395,8 @@ contains
     subroutine polar_decomposition(matrix, stretch, rotation)
         real(DP), dimension(3,3), intent(in):: matrix              !! Input matrix. Must be 3x3
         real(DP), dimension(3,3), intent(out), optional:: stretch  !! If provided by caller, contains right stretch tensor.
-        real(DP), dimension(3,3), intent(out), optional:: rotation !! If provided by caller, contains rotation tensor.
+        real(DP), dimension(3,3), intent(out), optional:: rotation !! If provided by caller, contains rotation tensor as an active
+                                                                   !! rotation matrix, i.e. matrix = rotation * stretch.
 
         integer:: i, &                !! Iterator
                   info                !! Return code for LAPACK call.
@@ -422,7 +423,7 @@ contains
 
         !Calculate rotation if requested
         if (present(rotation)) &
-            rotation = transpose(matmul(U,VT))
+            rotation = matmul(U,VT)
     end subroutine
 
     !> Take the matrix logarithm of a 3x3 matrix
