@@ -1,6 +1,7 @@
 module incrementation
     use base_defs
     use math_utils
+    use crysp_grain, only: TexturePoint
 
     implicit none
 
@@ -18,6 +19,7 @@ module incrementation
         real(DP):: vm_strain = 0._DP                           !! Von mises true strain. Technically redundant but saves a lot of computation
         real(DP), dimension(3,3):: stress = 0._DP
         real(DP):: taylor_factor = 0._DP
+        type(TexturePoint), dimension(:), allocatable:: texture
     end type
 
     type:: StressIncrement

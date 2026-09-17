@@ -125,6 +125,19 @@ module conversions
             real(DP), dimension(3):: euler_angles                       !! Euler angles in passive Bunge convention in radians.
         end function
 
+        !> Calculate Euler angles from an active rotation matrix.
+        !>
+        !> Reads the angles straight off the matrix, which is only valid if it is orthogonal: unlike
+        !> [[deformation_gradient_to_euler]] it does not compensate for any drift from orthogonality accumulated during a
+        !> simulation, it only normalizes away the drift in the components it reads. Use it where the input is known to be a proper
+        !> rotation and the conversion is done often; it is roughly two orders of magnitude cheaper.
+        !> Inverse of [[euler_to_rotation_matrix]].
+        module pure function rotation_matrix_to_euler_angles(rotation_matrix) result(euler_angles)
+            real(DP), dimension(3,3), intent(in):: rotation_matrix !! Active rotation matrix, i.e. its columns are the rotated
+                                                                   !! basis vectors expressed in the reference frame.
+            real(DP), dimension(3):: euler_angles                  !! Euler angles in passive Bunge convention in radians.
+        end function
+
         !> Extract the spin from a tensor.
         !>
         !> Follows small strain theory.
@@ -342,23 +355,31 @@ contains
     end procedure
 
     module procedure deformation_gradient_to_euler
-        real(DP) :: R(3,3)
+        euler_angles = rotation_matrix_to_euler_angles(tensor_to_rotation(deformation_gradient))
+    end procedure
 
-        R = tensor_to_rotation(deformation_gradient)
+    module procedure rotation_matrix_to_euler_angles
+        real(DP):: cos_phi, &
+                   third_column(3)
 
-        !R is active, so it is the transpose of the passive Bunge matrix: see euler_to_rotation_matrix for its components.
-        if (R(3,3) + TOLERANCE > 1._DP) then !Phi is very close to 0: only phi1 + phi2 is defined, attribute it to phi1
-            euler_angles(1) = atan2(-R(1, 2), R(2, 2))  ! range: [-pi, pi[
+        !The matrix is active, so it is the transpose of the passive Bunge matrix: see euler_to_rotation_matrix for its components.
+        !Its third column is (sin(phi1)sin(Phi), -cos(phi1)sin(Phi), cos(Phi)), so normalizing it makes the angles below
+        !insensitive to any drift in its length, which is all that can be compensated for without a polar decomposition.
+        third_column = rotation_matrix(:,3) / norm2(rotation_matrix(:,3))
+        cos_phi = third_column(3)
+
+        if (cos_phi + TOLERANCE > 1._DP) then !Phi is very close to 0: only phi1 + phi2 is defined, attribute it to phi1
+            euler_angles(1) = atan2(-rotation_matrix(1, 2), rotation_matrix(2, 2))  ! range: [-pi, pi[
             euler_angles(2) = 0._DP
             euler_angles(3) = 0._DP
-        else if (R(3,3) - TOLERANCE < -1._DP) then !Phi is very close to pi: only phi1 - phi2 is defined, attribute it to phi1
-            euler_angles(1) = atan2(R(1, 2), -R(2, 2))  ! range: [-pi, pi[
+        else if (cos_phi - TOLERANCE < -1._DP) then !Phi is very close to pi: only phi1 - phi2 is defined, attribute it to phi1
+            euler_angles(1) = atan2(rotation_matrix(1, 2), -rotation_matrix(2, 2))  ! range: [-pi, pi[
             euler_angles(2) = PI
             euler_angles(3) = 0._DP
         else
-            euler_angles(1) = atan2(R(1, 3), -R(2, 3))  ! range: [-pi, pi[
-            euler_angles(2) = acos(R(3,3))
-            euler_angles(3) = atan2(R(3, 1), R(3, 2))  ! range: [-pi, pi[
+            euler_angles(1) = atan2(third_column(1), -third_column(2))  ! range: [-pi, pi[
+            euler_angles(2) = acos(cos_phi)
+            euler_angles(3) = atan2(rotation_matrix(3, 1), rotation_matrix(3, 2))  ! range: [-pi, pi[
         end if
 
         !No need to check angles(2) because acos(-1+TOLERANCE) << (PI - TOLERANCE)

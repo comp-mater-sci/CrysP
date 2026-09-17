@@ -9,7 +9,8 @@
 program test_rotations
     use base_defs, only: DP
     use math_utils, only: PI, det, polar_decomposition, UNIT_MATRIX_3X3
-    use conversions, only: euler_to_rotation_matrix, deformation_gradient_to_euler, tensor_to_rotation
+    use conversions, only: euler_to_rotation_matrix, deformation_gradient_to_euler, rotation_matrix_to_euler_angles, &
+                           tensor_to_rotation
     use testing
 
     implicit none
@@ -31,6 +32,7 @@ program test_rotations
     call test_rotation_matrix_is_proper()
     call test_euler_roundtrip()
     call test_euler_roundtrip_degenerate()
+    call test_euler_without_polar_decomposition()
     call test_euler_from_deformation_gradient()
     call test_tensor_to_rotation()
     call test_polar_decomposition()
@@ -85,6 +87,33 @@ contains
         angles = deformation_gradient_to_euler(R)
         call check_equal(euler_to_rotation_matrix(angles), R, 'deformation_gradient_to_euler: orientation for Phi = pi', tolerance=TOL)
         call check_equal(angles(2), PI, 'deformation_gradient_to_euler: Phi = pi', tolerance=TOL)
+    end subroutine
+
+    !> rotation_matrix_to_euler_angles is the cheap equivalent of deformation_gradient_to_euler for proper rotations: for those
+    !> the two must agree, including in the degenerate cases and for a matrix that drifted slightly from orthogonality.
+    subroutine test_euler_without_polar_decomposition()
+        real(DP), dimension(3,3):: R
+        integer:: i
+
+        do i = 1, size(GENERIC_ANGLES, 2)
+            call check_equal(rotation_matrix_to_euler_angles(euler_to_rotation_matrix(GENERIC_ANGLES(:,i))), GENERIC_ANGLES(:,i), &
+                             'rotation_matrix_to_euler_angles: inverts euler_to_rotation_matrix', tolerance=TOL)
+        end do
+
+        R = euler_to_rotation_matrix([1.1_DP, 0._DP, 0.4_DP])
+        call check_equal(rotation_matrix_to_euler_angles(R), deformation_gradient_to_euler(R), &
+                         'rotation_matrix_to_euler_angles: agrees for Phi = 0', tolerance=TOL)
+        R = euler_to_rotation_matrix([1.1_DP, PI, 0.4_DP])
+        call check_equal(rotation_matrix_to_euler_angles(R), deformation_gradient_to_euler(R), &
+                         'rotation_matrix_to_euler_angles: agrees for Phi = pi', tolerance=TOL)
+
+        !A rotation that drifted from orthogonality by ~1e-9 per component, as one does over a long simulation.
+        R = euler_to_rotation_matrix(GENERIC_ANGLES(:,1)) + 1.e-9_DP*reshape([1._DP, -1._DP,  0._DP, &
+                                                                             0._DP,  1._DP, -1._DP, &
+                                                                            -1._DP,  0._DP,  1._DP], [3, 3])
+        call check_equal(rotation_matrix_to_euler_angles(R), deformation_gradient_to_euler(R), &
+                         'rotation_matrix_to_euler_angles: drift of 1e-9 shifts the angles by less than 1e-8', &
+                         tolerance=1.e-8_DP)
     end subroutine
 
     !> Only the rotational component of a deformation gradient determines its Euler angles, whether the stretch is applied before

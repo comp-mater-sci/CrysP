@@ -82,6 +82,7 @@ contains
         real(DP), dimension(5):: strain_mode, stress_original, stress_restored
         type(TexturePoint), dimension(:), allocatable:: texture
         type(Status):: stat
+        integer:: i
 
         !Build two independent but identical material states through the public API.
         call make_material(cp_model_id, original)
@@ -115,6 +116,23 @@ contains
                                  tolerance=TOLERANCE)
             end associate
         end if
+
+        !Every increment carries a texture snapshot; the last one is the texture of the deformed material.
+        call check(all([(allocated(increments_original(i)%texture), i = 1, size(increments_original))]), &
+                   label // ': every increment has a texture snapshot')
+        stat = crysp_get_texture(original, texture)
+        call check_ok(stat, label // ': get_texture (deformed)')
+        associate (snapshot => increments_original(size(increments_original))%texture)
+            call check_equal(size(snapshot), size(texture), label // ': texture snapshot has one point per grain')
+            if (size(snapshot) == size(texture)) then
+                do i = 1, size(texture)
+                    call check_equal(real(snapshot(i)%euler_angles, DP), real(texture(i)%euler_angles, DP), &
+                                     label // ': last texture snapshot matches the deformed material')
+                    call check_equal(int(snapshot(i)%phase_id), int(texture(i)%phase_id), &
+                                     label // ': last texture snapshot has the phases of the deformed material')
+                end do
+            end if
+        end associate
 
         !The deformed state must roundtrip (material -> stream -> material -> stream) to an identical stream.
         stat = crysp_serialize_material(original, stream)

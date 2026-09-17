@@ -79,8 +79,7 @@ contains
             stat = simulate_stress_mode(mat%meso_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
             if (failed(stat)) return
 
-            stat = deform(mat%meso_model, &
-                          mat%clusters, &
+            stat = deform(mat, &
                           deviatoric_to_tensor(strain_rate), &
                           target_vm_strain - cur_vm_strain, &
                           strain_incs, &
@@ -105,6 +104,6 @@ contains
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
         type(Status):: stat
 
-        stat = deform(mat%meso_model, mat%clusters, velocity_gradient, target_vm_strain, increments)
+        stat = deform(mat, velocity_gradient, target_vm_strain, increments)
     end function
 end module

@@ -152,6 +152,8 @@ contains
             end if
         end do
 
-        point%euler_angles = real(deformation_gradient_to_euler(this%orientation), C_FLOAT)
+        !A grain orientation is a proper rotation by construction, so the cheap conversion applies: it is called once per grain
+        !per increment when textures are snapshotted, where the polar decomposition would dominate the cost.
+        point%euler_angles = real(rotation_matrix_to_euler_angles(this%orientation), C_FLOAT)
     end function
 end module
