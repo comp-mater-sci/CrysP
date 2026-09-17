@@ -19,7 +19,8 @@ program test_material_roundtrip
     use base_defs, only: DP, TOLERANCE
     use conversions, only: deg_to_rad, euler_to_rotation_matrix
     use libcrysp, only: MaterialHandle, crysp_new_material, crysp_destroy_material, crysp_serialize_material, &
-                        crysp_deserialize_material, crysp_get_texture, crysp_strain_driven_deformation, crysp_simulate_strain_mode
+                        crysp_deserialize_material, crysp_get_texture, crysp_strain_driven_deformation, crysp_simulate_strain_mode, &
+                        StrainIncrementData
     use crysp_status, only: Status, failed
     use conversions, only: from_c_string
     use micro, only: micro_get_signature, &
@@ -27,7 +28,6 @@ program test_material_roundtrip
                      HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP, &
                      SLIP_SYSTEMS_FCC, SLIP_SYSTEMS_BCC24, SLIP_SYSTEMS_BCC48
     use meso, only: MESO_MODEL_ALAMEL, MESO_MODEL_FCTAYLOR
-    use incrementation, only: StrainIncrement
     use crysp_material, only: TexturePoint
     use crysp_serialization
     use testing
@@ -78,7 +78,8 @@ contains
 
         type(MaterialHandle):: original, restored, material_
         type(Parameter), dimension(:), allocatable:: stream, restored_stream, roundtripped
-        type(StrainIncrement), dimension(:), allocatable:: increments_original, increments_restored
+        type(StrainIncrementData), dimension(:), allocatable:: increments_original, increments_restored
+        type(TexturePoint), dimension(:,:), allocatable:: textures_original, textures_restored
         real(DP), dimension(5):: strain_mode, stress_original, stress_restored
         type(TexturePoint), dimension(:), allocatable:: texture
         type(Status):: stat
@@ -101,9 +102,9 @@ contains
                          tolerance=2._DP*TOLERANCE)
 
         !... then an evolution of the full state.
-        stat = crysp_strain_driven_deformation(original, V_GRAD, POST_STRAIN, increments_original)
+        stat = crysp_strain_driven_deformation(original, V_GRAD, POST_STRAIN, increments_original, textures_original)
         call check_ok(stat, label // ': strain_driven_deformation (original)')
-        stat = crysp_strain_driven_deformation(restored, V_GRAD, POST_STRAIN, increments_restored)
+        stat = crysp_strain_driven_deformation(restored, V_GRAD, POST_STRAIN, increments_restored, textures_restored)
         call check_ok(stat, label // ': strain_driven_deformation (restored)')
         call check_equal(size(increments_restored), size(increments_original), label // ': same number of increments')
         if (size(increments_restored) == size(increments_original)) then
@@ -117,22 +118,21 @@ contains
             end associate
         end if
 
-        !Every increment carries a texture snapshot; the last one is the texture of the deformed material.
-        call check(all([(allocated(increments_original(i)%texture), i = 1, size(increments_original))]), &
-                   label // ': every increment has a texture snapshot')
+        !One texture per increment, and the last one is the texture of the deformed material.
         stat = crysp_get_texture(original, texture)
         call check_ok(stat, label // ': get_texture (deformed)')
-        associate (snapshot => increments_original(size(increments_original))%texture)
-            call check_equal(size(snapshot), size(texture), label // ': texture snapshot has one point per grain')
-            if (size(snapshot) == size(texture)) then
+        call check_equal(size(textures_original, 1), size(texture), label // ': one texture point per grain per increment')
+        call check_equal(size(textures_original, 2), size(increments_original), label // ': one texture per increment')
+        if (size(textures_original, 1) == size(texture) .and. size(textures_original, 2) == size(increments_original)) then
+            associate (snapshot => textures_original(:,size(increments_original)))
                 do i = 1, size(texture)
                     call check_equal(real(snapshot(i)%euler_angles, DP), real(texture(i)%euler_angles, DP), &
-                                     label // ': last texture snapshot matches the deformed material')
+                                     label // ': last texture matches the deformed material')
                     call check_equal(int(snapshot(i)%phase_id), int(texture(i)%phase_id), &
-                                     label // ': last texture snapshot has the phases of the deformed material')
+                                     label // ': last texture has the phases of the deformed material')
                 end do
-            end if
-        end associate
+            end associate
+        end if
 
         !The deformed state must roundtrip (material -> stream -> material -> stream) to an identical stream.
         stat = crysp_serialize_material(original, stream)

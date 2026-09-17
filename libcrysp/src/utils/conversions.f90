@@ -116,8 +116,8 @@ module conversions
         !> Calculate Euler angles from a deformation gradient.
         !>
         !> Follows finite strain convention.
-        !> Performs polar decomposition on the input tensor.
-        !> Even useful for proper rotation tensors to compensate for roundoff errors during the simulation.
+        !> Performs polar decomposition on the input tensor to eliminate its stretch component.
+        !> For an input that is already a proper rotation, use [[rotation_matrix_to_euler_angles]] instead.
         !> Inverse of [[euler_to_rotation_matrix]].
         module function deformation_gradient_to_euler(deformation_gradient) result(euler_angles)
             real(DP), dimension(3,3), intent(in):: deformation_gradient !! Deformation gradient whose rotational component is an
@@ -127,10 +127,9 @@ module conversions
 
         !> Calculate Euler angles from an active rotation matrix.
         !>
-        !> Reads the angles straight off the matrix, which is only valid if it is orthogonal: unlike
-        !> [[deformation_gradient_to_euler]] it does not compensate for any drift from orthogonality accumulated during a
-        !> simulation, it only normalizes away the drift in the components it reads. Use it where the input is known to be a proper
-        !> rotation and the conversion is done often; it is roughly two orders of magnitude cheaper.
+        !> Reads the angles straight off the matrix, which is only valid if it is orthogonal, so any stretch in the input is
+        !> silently interpreted as rotation. Use [[deformation_gradient_to_euler]] for an input that may carry stretch; for a
+        !> proper rotation the two agree and this one is about 5 times cheaper.
         !> Inverse of [[euler_to_rotation_matrix]].
         module pure function rotation_matrix_to_euler_angles(rotation_matrix) result(euler_angles)
             real(DP), dimension(3,3), intent(in):: rotation_matrix !! Active rotation matrix, i.e. its columns are the rotated

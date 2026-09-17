@@ -28,7 +28,8 @@ module libcrysp
     implicit none
 
     public
-    private:: dereference_material
+    private:: dereference_material, &
+             split_strain_increments
 
     character(*), parameter, private:: MOD_NAME = 'crysp'
 
@@ -39,6 +40,29 @@ module libcrysp
     !> The material has to be freed manually!
     type, bind(C):: MaterialHandle
         type(C_PTR):: ptr
+    end type
+
+    !> One step of a deformation, as reported to callers.
+    !>
+    !> The C-compatible counterpart of [[incrementation:StrainIncrement]]: same fields, except that the texture is reported
+    !> separately because an interoperable type cannot hold one texture per grain. See [[crysp_strain_driven_deformation]].
+    type, bind(C):: StrainIncrementData
+        real(C_DOUBLE):: duration
+        real(C_DOUBLE), dimension(3,3):: deformation_gradient !! Technically redundant but saves a lot of computation
+        real(C_DOUBLE):: vm_strain                            !! Von mises true strain. Technically redundant but saves a lot of computation
+        real(C_DOUBLE), dimension(3,3):: stress
+        real(C_DOUBLE):: taylor_factor
+    end type
+
+    !> One step of the mapping between a requested stress mode and the strain mode applied to reach it, as reported to callers.
+    !>
+    !> The C-compatible counterpart of [[incrementation:StressIncrement]]: the strain increments it holds are reported as one flat
+    !> list, so `n_strain_increments` says how many of them belong to this stress increment. See
+    !> [[crysp_stress_driven_deformation]].
+    type, bind(C):: StressIncrementData
+        real(C_DOUBLE), dimension(5):: strain_rate
+        real(C_DOUBLE), dimension(5):: residual
+        integer(C_INT):: n_strain_increments !! Number of consecutive strain increments belonging to this stress increment.
     end type
 
 contains
@@ -167,19 +191,22 @@ contains
     !> The velocity gradient must not contain a volumetric component (sum(trace) == )
     !> The velocity gradient is applied until a given von-mises equivalent true strain is reached.
     !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
-    function crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments) result(stat)
+    function crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments, textures) bind(C) result(stat)
         type(MaterialHandle), intent(in):: mat
         real(C_DOUBLE), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(C_DOUBLE), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps that
-                                                                                   !! were applied. See [[strainIncrement]] for
-                                                                                   !! details.
+        type(StrainIncrementData), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps
+                                                                                       !! that were applied. See
+                                                                                       !! [[StrainIncrementData]] for details.
+        type(TexturePoint), dimension(:,:), allocatable, intent(out):: textures    !! Texture after each increment, shaped
+                                                                                   !! (grains, increments).
         type(Status):: stat                                                        !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected input,
                                                                                    !! or a failure raised during the simulation.
 
         character(*), parameter:: PROC_NAME = 'crysp_strain_driven_deformation'
 
         type(Material), pointer:: mat_
+        type(StrainIncrement), dimension(:), allocatable:: increments_
 
         stat = dereference_material(mat, mat_)
         if (failed(stat)) return
@@ -193,7 +220,10 @@ contains
             return
         end if
 
-        stat = macro_strain_driven_deformation(mat_, velocity_gradient, target_vm_strain, increments)
+        stat = macro_strain_driven_deformation(mat_, velocity_gradient, target_vm_strain, increments_)
+        if (failed(stat)) return
+
+        call split_strain_increments(increments_, increments, textures)
     end function
 
     !> Deform a material based on a stress mode.
@@ -203,20 +233,28 @@ contains
     !> The stress mode is iteratively matched to the appropriate strain mode. This process is inexact, so a deviation of 10^-2
     !> between the requested stress mode and the actually applied stress mode is expected.
     !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
-    function crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments) result(stat)
+    function crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments, &
+                                             textures) bind(C) result(stat)
         type(MaterialHandle), intent(in):: mat                                            !! Initialized material
         real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode                     !! Norm must be 1
         real(C_DOUBLE), intent(in):: target_vm_strain                                     !! Target true von mises strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: increments        !! Step-wise reporting of the mapping
-                                                                                          !! between requested stress mode and strain mode,
-                                                                                          !! including the deformation steps that were applied.
-                                                                                          !! See [[stressincrement]] for details.
+        type(StressIncrementData), dimension(:), allocatable, intent(out):: stress_increments !! Step-wise reporting of the mapping
+                                                                                          !! between requested stress mode and strain
+                                                                                          !! mode. See [[StressIncrementData]].
+        type(StrainIncrementData), dimension(:), allocatable, intent(out):: strain_increments !! The deformation steps that were
+                                                                                          !! applied, for all stress increments.
+                                                                                          !! See [[StrainIncrementData]].
+        type(TexturePoint), dimension(:,:), allocatable, intent(out):: textures           !! Texture after each strain increment,
+                                                                                          !! shaped (grains, strain increments).
         type(Status):: stat                                                               !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected
                                                                                           !! input, or a simulation failure.
 
         character(*), parameter:: PROC_NAME = 'crysp_stress_driven_deformation'
 
         type(Material), pointer:: mat_
+        type(StressIncrement), dimension(:), allocatable:: increments_
+        type(StrainIncrement), dimension(:), allocatable:: strain_increments_
+        integer:: i, offset
 
         stat = dereference_material(mat, mat_)
         if (failed(stat)) return
@@ -230,8 +268,45 @@ contains
             return
         end if
 
-        stat = macro_stress_driven_deformation(mat_, target_stress_mode, target_vm_strain, increments)
+        stat = macro_stress_driven_deformation(mat_, target_stress_mode, target_vm_strain, increments_)
+        if (failed(stat)) return
+
+        !Flatten the strain increments of all stress increments into one list, recording how many belong to each.
+        allocate(stress_increments(size(increments_)))
+        allocate(strain_increments_(sum([(size(increments_(i)%strain_increments), i = 1, size(increments_))])))
+        offset = 0
+        do i = 1, size(increments_)
+            associate (inc => increments_(i))
+                stress_increments(i) = StressIncrementData(inc%strain_rate, inc%residual, size(inc%strain_increments))
+                strain_increments_(offset+1:offset+size(inc%strain_increments)) = inc%strain_increments
+                offset = offset + size(inc%strain_increments)
+            end associate
+        end do
+
+        call split_strain_increments(strain_increments_, strain_increments, textures)
     end function
+
+    !> Split strain increments into their C-compatible fields and the textures they carry.
+    subroutine split_strain_increments(source, increments, textures)
+        type(StrainIncrement), dimension(:), intent(in):: source
+        type(StrainIncrementData), dimension(:), allocatable, intent(out):: increments
+        type(TexturePoint), dimension(:,:), allocatable, intent(out):: textures !! Shaped (grains, increments).
+
+        integer:: i, n_grains
+
+        n_grains = 0
+        if (size(source) > 0) n_grains = size(source(1)%texture)
+
+        allocate(increments(size(source)))
+        allocate(textures(n_grains, size(source)))
+        do i = 1, size(source)
+            associate (inc => source(i))
+                increments(i) = StrainIncrementData(inc%duration, inc%deformation_gradient, inc%vm_strain, inc%stress, &
+                                                    inc%taylor_factor)
+                textures(:,i) = inc%texture
+            end associate
+        end do
+    end subroutine
 
     !> Calculate strain mode and stress corresponding to a desired stress mode.
     !>

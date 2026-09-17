@@ -2,7 +2,6 @@ module file_io
     use crysp_material, only: TexturePoint
     use conversions
     use logging
-    use macro
 
     implicit none
 
