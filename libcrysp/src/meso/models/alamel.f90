@@ -15,6 +15,7 @@ module alamel
     use simplex
     use crysp_meso_model
     use crysp_serialization
+    use, intrinsic:: iso_c_binding, only: C_INT
     use crysp_input
 
     implicit none
@@ -123,8 +124,11 @@ contains
                   ind_basis_systems_grain(5), &
                   n_systems_first_grain
         real(DP), dimension(:,:), allocatable:: boundaries
+        integer(C_INT), dimension(2):: s
 
-        boundaries = deserialize_real_matrix(params(1))
+        call shape_of(params(1), s)
+        allocate(boundaries(s(1), s(2)))
+        boundaries = params(1)
 
         this%deformation_gradient = UNIT_MATRIX_3X3
 

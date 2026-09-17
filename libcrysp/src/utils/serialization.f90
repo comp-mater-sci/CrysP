@@ -18,9 +18,11 @@ module crysp_serialization
              type_of, &
              shape_of, &
              State, &
-             get_data_ptr, &
              parameter_destroy, &
-             deserialize_real_matrix
+             deserialize_int_array, &
+             deserialize_real_array, &
+             deserialize_real_matrix, &
+             deserialize_string
 
     character(*), parameter:: MOD_NAME = 'serialization'
 
@@ -221,51 +223,6 @@ contains
                 call log_error(MOD_NAME, 'shape_of', ERR_TYPE, 'Unknown parameter type')
         end select
     end subroutine
-
-    !> Get a C pointer to the raw buffer of the value held by a parameter.
-    !>
-    !> The pointer stays valid until the parameter is destroyed. Does not consume the parameter.
-    function get_data_ptr(param) result(ptr) bind(C)
-        type(Parameter), intent(in):: param
-        type(c_ptr):: ptr
-
-        type(ParameterValue), pointer:: val
-
-        call c_f_pointer(param%handle, val)
-
-        ptr = value_data_ptr(val%value)
-    end function
-
-    !> Get a C pointer to the raw buffer of a value.
-    !>
-    !> @note
-    !> The `target` attribute on the dummy argument is what makes `c_loc` legal here: the buffers are components of `val%value`,
-    !> and neither an allocatable component nor the associate-name of a SELECT TYPE whose selector lacks TARGET/POINTER is a valid
-    !> `c_loc` argument (IFX diagnoses this as error #9022; taking the address directly in `get_data_ptr` therefore does not
-    !> compile). Passing the value through a TARGET dummy gives the buffers the attribute `c_loc` requires. The argument is a
-    !> scalar, so it is passed by reference and the address remains valid after the call returns.
-    !> @endnote
-    function value_data_ptr(data) result(ptr)
-        class(Value), target, intent(in):: data
-        type(c_ptr):: ptr
-
-        select type (value => data)
-            type is (IntValue)
-                ptr = c_loc(value%buffer)
-            type is (IntArrayValue)
-                ptr = c_loc(value%buffer)
-            type is (RealValue)
-                ptr = c_loc(value%buffer)
-            type is (RealArrayValue)
-                ptr = c_loc(value%buffer)
-            type is (RealMatrixValue)
-                ptr = c_loc(value%buffer)
-            type is (StringValue)
-                ptr = c_loc(value%buffer)
-            class default
-                call log_error(MOD_NAME, 'get_data_ptr', ERR_TYPE, 'Unknown parameter type')
-        end select
-    end function
 
     subroutine parameter_destroy(param) bind(C)
         type(Parameter), intent(inout):: param
@@ -555,9 +512,60 @@ contains
         param = data
     end function
 
-    function deserialize_real_matrix(param) result(data)
+    !> Deserialize an IntArray parameter into a caller-supplied buffer of `len` elements.
+    !>
+    !> The `deserialize_*` family is the counterpart of the `param_to_*` readers for C callers, which can pass a plain pointer plus
+    !> its extents instead of a descriptor. The extents are typically obtained from `shape_of` and must match those of the stored
+    !> value. Consumes the parameter.
+    subroutine deserialize_int_array(param, buffer, len) bind(C)
         type(Parameter), intent(in):: param
-        real(DP), dimension(:,:), allocatable:: data
+        integer(C_INT), intent(in), value:: len
+        integer(C_INT), dimension(len), intent(out):: buffer
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (IntArrayValue)
+                if (size(value%buffer) /= len) &
+                    call log_error(MOD_NAME, 'deserialize_int_array', ERR_DIMS, 'Parameter size does not match destination')
+                buffer = value%buffer
+            class default
+                call log_error(MOD_NAME, 'deserialize_int_array', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+    !> Deserialize a RealArray parameter into a caller-supplied buffer of `len` elements.
+    subroutine deserialize_real_array(param, buffer, len) bind(C)
+        type(Parameter), intent(in):: param
+        integer(C_INT), intent(in), value:: len
+        real(C_DOUBLE), dimension(len), intent(out):: buffer
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (RealArrayValue)
+                if (size(value%buffer) /= len) &
+                    call log_error(MOD_NAME, 'deserialize_real_array', ERR_DIMS, 'Parameter size does not match destination')
+                buffer = value%buffer
+            class default
+                call log_error(MOD_NAME, 'deserialize_real_array', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+    !> Deserialize a RealMatrix parameter into a caller-supplied `rows` by `cols` buffer.
+    !>
+    !> The buffer is written in Fortran (column-major) order, mirroring `serialize_real_matrix`.
+    subroutine deserialize_real_matrix(param, buffer, rows, cols) bind(C)
+        type(Parameter), intent(in):: param
+        integer(C_INT), intent(in), value:: rows
+        integer(C_INT), intent(in), value:: cols
+        real(C_DOUBLE), dimension(rows,cols), intent(out):: buffer
 
         type(ParameterValue), pointer:: val
 
@@ -565,11 +573,39 @@ contains
 
         select type (value => val%value)
             type is (RealMatrixValue)
-                data = value%buffer
+                if (any(shape(value%buffer) /= [rows, cols])) &
+                    call log_error(MOD_NAME, 'deserialize_real_matrix', ERR_DIMS, 'Parameter shape does not match destination')
+                buffer = value%buffer
             class default
                 call log_error(MOD_NAME, 'deserialize_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
         end select
 
         deallocate(val)
-    end function
+    end subroutine
+    !> Deserialize a String parameter into a caller-supplied buffer of `length` characters.
+    !>
+    !> Mirrors `serialize_string`: exactly `length` characters are written and no NUL terminator is appended.
+    subroutine deserialize_string(param, buffer, length) bind(C)
+        type(Parameter), intent(in):: param
+        integer(C_INT), intent(in), value:: length
+        character(kind=C_CHAR), dimension(length), intent(out):: buffer
+
+        type(ParameterValue), pointer:: val
+        integer:: i
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (StringValue)
+                if (len(value%buffer) /= length) &
+                    call log_error(MOD_NAME, 'deserialize_string', ERR_DIMS, 'Parameter length does not match destination')
+                do i = 1, length
+                    buffer(i) = value%buffer(i:i)
+                end do
+            class default
+                call log_error(MOD_NAME, 'deserialize_string', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
 end module

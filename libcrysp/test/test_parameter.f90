@@ -77,10 +77,11 @@ contains
     !> The buffer passed in is longer than `len` asks for, so the test fails if the extent argument is ignored in favour of the
     !> size of the actual argument. A C caller relies on exactly that when it serializes a slice of a bigger allocation.
     subroutine test_int_array_explicit()
-        type(Parameter):: p
+        type(Parameter):: p, q
         integer(C_INT), dimension(5):: buffer = [3, 1, 4, 1, 5]
         integer, dimension(:), allocatable:: out
         integer(C_INT), dimension(2):: s
+        integer(C_INT), dimension(3):: c_out
 
         p = serialize(buffer, 3)
         call check_equal(int(type_of(p)), TYPE_INT_ARRAY, 'int array (explicit len): type_of')
@@ -89,6 +90,10 @@ contains
         allocate(out(s(1)))
         out = p
         call check_equal(out, [3, 1, 4], 'int array (explicit len): leading elements are the ones stored')
+
+        q = serialize(buffer, 3)
+        call deserialize_int_array(q, c_out, 3)
+        call check_equal(int(c_out), [3, 1, 4], 'int array (explicit len): roundtrip via deserialize_int_array')
     end subroutine
 
     subroutine test_real()
@@ -132,10 +137,11 @@ contains
 
     !> The explicit-extent counterpart of test_real_array. See test_int_array_explicit for why the buffer is oversized.
     subroutine test_real_array_explicit()
-        type(Parameter):: p
+        type(Parameter):: p, q
         real(C_DOUBLE), dimension(5):: buffer = [1._DP, -2._DP, 0.125_DP, 99._DP, 99._DP]
         real(DP), dimension(:), allocatable:: out
         integer(C_INT), dimension(2):: s
+        real(C_DOUBLE), dimension(3):: c_out
 
         p = serialize(buffer, 3)
         call check_equal(int(type_of(p)), TYPE_REAL_ARRAY, 'real array (explicit len): type_of')
@@ -144,6 +150,10 @@ contains
         allocate(out(s(1)))
         out = p
         call check_equal(out, buffer(1:3), 'real array (explicit len): leading elements are the ones stored')
+
+        q = serialize(buffer, 3)
+        call deserialize_real_array(q, c_out, 3)
+        call check_equal(real(c_out, DP), buffer(1:3), 'real array (explicit len): roundtrip via deserialize_real_array')
     end subroutine
 
     subroutine test_real_matrix()
@@ -167,10 +177,12 @@ contains
         out = p
         call check_equal(out, in, 'real matrix: roundtrip via assignment')
 
-        ! deserialize_real_matrix returns an allocatable of the stored shape without the caller knowing it in advance.
+        ! A receiving buffer of unknown shape is allocated from shape_of before reading.
         q = serialize(in)
-        dyn = deserialize_real_matrix(q)
-        call check_equal(dyn, in, 'real matrix: roundtrip via deserialize_real_matrix')
+        call shape_of(q, s)
+        allocate(dyn(s(1), s(2)))
+        dyn = q
+        call check_equal(dyn, in, 'real matrix: roundtrip into buffer allocated from shape_of')
 
         ! A zero-extent matrix must survive as well (models with no parameters may produce these).
         r = serialize(reshape([real(DP)::], [0, 4]))
@@ -184,23 +196,30 @@ contains
     !> `rows`. A C caller hands over a bare pointer to that same element sequence; from Fortran the actual argument has to be a
     !> matrix, since the generic `serialize` resolves on rank and would not match a flat array here.
     subroutine test_real_matrix_explicit()
-        type(Parameter):: p
+        type(Parameter):: p, q
         real(C_DOUBLE), dimension(2,4):: buffer = reshape([11._DP, 21._DP, 12._DP, 22._DP, 13._DP, 23._DP, 99._DP, 99._DP], [2, 4])
         real(DP), dimension(:,:), allocatable:: out
         integer(C_INT), dimension(2):: s
+        real(C_DOUBLE), dimension(2,3):: c_out
 
         p = serialize(buffer, 2, 3)
         call check_equal(int(type_of(p)), TYPE_REAL_MATRIX, 'real matrix (explicit extents): type_of')
         call shape_of(p, s)
         call check_equal(int(s), [2, 3], 'real matrix (explicit extents): extent arguments set the shape')
-        out = deserialize_real_matrix(p)
+        allocate(out(s(1), s(2)))
+        out = p
         call check_equal(out, buffer(:,1:3), 'real matrix (explicit extents): buffer is cut into columns')
+
+        q = serialize(buffer, 2, 3)
+        call deserialize_real_matrix(q, c_out, 2, 3)
+        call check_equal(real(c_out, DP), buffer(:,1:3), 'real matrix (explicit extents): roundtrip via deserialize_real_matrix')
     end subroutine
 
     subroutine test_string()
-        type(Parameter):: p, q
+        type(Parameter):: p, q, r
         character(:), allocatable:: out
         integer(C_INT), dimension(2):: s
+        character(kind=C_CHAR), dimension(10):: c_out
 
         p = 'Boundaries'
         call check_equal(int(type_of(p)), TYPE_STRING, 'string: type_of')
@@ -212,6 +231,10 @@ contains
         q = serialize('')
         out = q
         call check_equal(len(out), 0, 'string: empty string roundtrip')
+
+        r = serialize('Boundaries')
+        call deserialize_string(r, c_out, 10)
+        call check(all(c_out == transfer('Boundaries', c_out)), 'string: roundtrip via deserialize_string')
     end subroutine
 
     !> Negative test. Expected to end the program via log_error(..., ERR_DIMS, ...); reaching the print means the check was skipped.

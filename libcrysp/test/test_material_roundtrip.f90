@@ -260,8 +260,9 @@ contains
                 rab = b
                 call check_equal(rab, raa, msg // ' (real array) has the same value')
             case (TYPE_REAL_MATRIX)
-                ma = deserialize_real_matrix(a)
-                mb = deserialize_real_matrix(b)
+                allocate(ma(shape_a(1), shape_a(2)), mb(shape_a(1), shape_a(2)))
+                ma = a
+                mb = b
                 call check_equal(mb, ma, msg // ' (real matrix) has the same value')
             case (TYPE_STRING)
                 sa = a
