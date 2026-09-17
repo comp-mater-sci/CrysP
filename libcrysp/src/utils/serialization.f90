@@ -155,11 +155,11 @@ module crysp_serialization
     !> Useful for creating anonymous Parameter instances not bound to a local variable.
     !> Every array and matrix type comes in two flavours: one taking the extents explicitly, so that C callers can pass a plain
     !> pointer plus its length, and a `_desc` one taking an assumed-shape argument for use from Fortran. The explicit-extent forms
-    !> are the C-callable ones; the `_desc` forms require a descriptor and are therefore Fortran-only despite their bind(C).
+    !> were added to be able to serialize parameters from C without having to deal with the messy descriptors there.
     interface serialize
         module procedure serialize_int, serialize_int_array, serialize_int_array_desc, &
                          serialize_real, serialize_real_array, serialize_real_array_desc, serialize_real_matrix, serialize_real_matrix_desc, &
-                         serialize_string
+                         serialize_string, serialize_string_desc
     end interface
 
 contains
@@ -535,7 +535,20 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end function
-    function serialize_string(data) result(param) bind(C)
+    function serialize_string(data, len) result(param) bind(C)
+        integer(C_INT), intent(in), value:: len
+        character(kind=C_CHAR), dimension(len), intent(in):: data
+        type(Parameter):: param
+
+        character(len=len):: str
+        integer:: i
+
+        do i = 1, len
+            str(i:i) = data(i)
+        end do
+        param = str
+    end function
+    function serialize_string_desc(data) result(param) bind(C)
         character(kind=C_CHAR,len=*), intent(in):: data
         type(Parameter):: param
 
