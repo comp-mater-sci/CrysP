@@ -88,6 +88,11 @@ module micro
             integer:: id
         end function
 
+        !> Return a list of IDs of all the supported hardening models.
+        module pure function micro_get_model_ids() result(ids)
+            integer, dimension(:), allocatable:: ids !! List of supported hardening model IDs.
+        end function
+
     end interface
 end module
 
@@ -109,6 +114,12 @@ submodule(micro) micro_imp
     character(*), parameter:: MOD_NAME = 'micro'             !! Module name. Simplifies logging.
 
 contains
+
+    !> Return a list of IDs of all the supported hardening models.
+    module procedure micro_get_model_ids
+        ids = [HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, HARDENING_SWIFT, &
+               HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP]
+    end procedure
 
     !> Retrieve an unitialized instance of a given hardening model.
     !>

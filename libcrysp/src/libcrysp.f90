@@ -65,7 +65,95 @@ module libcrysp
         integer(C_INT):: n_strain_increments !! Number of consecutive strain increments belonging to this stress increment.
     end type
 
+    !> General information about a model supported by libCrysP, as reported to callers.
+    !>
+    !> Returned by [[crysp_get_meso_models]] and [[crysp_get_micro_models]], which also report the inputs the descriptors refer
+    !> to. The text buffers are NUL-terminated and truncated to fit; a name or description longer than its buffer loses its tail,
+    !> never its terminator.
+    type, bind(C):: ModelDescriptor
+        integer(C_INT):: id                                   !! ID identifying this model in the call it was obtained from.
+        character(kind=C_CHAR), dimension(NAME_LEN):: name    !! Short name of the model. NUL-terminated.
+        character(kind=C_CHAR), dimension(DESCRIPTION_LEN):: description !! What the model does. NUL-terminated.
+        integer(C_INT):: n_inputs                             !! Number of consecutive inputs belonging to this model.
+    end type
+
 contains
+
+    !> List the mesoscopic models libCrysP supports.
+    !>
+    !> One descriptor per model. The IDs are those accepted as `meso_model_id` by [[crysp_new_material]].
+    !>
+    !> The inputs of all models are reported as one flat list, because an interoperable type cannot hold a variable number of
+    !> them: `n_inputs` says how many consecutive entries of `inputs` belong to each descriptor, in descriptor order.
+    function crysp_get_meso_models(model_descs, inputs) bind(C) result(stat)
+        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported meso model
+        type(Input), dimension(:), allocatable, intent(out):: inputs                !! Inputs of all models, concatenated.
+        type(Status):: stat                                                         !! Return status. Should always be OK
+
+        integer:: i, &
+                  n_models
+        integer, dimension(:), allocatable:: ids
+        class(MesoModel), allocatable:: model
+        type(Input), dimension(:), allocatable:: model_inputs
+
+        ids = meso_get_model_ids()
+        n_models = size(ids)
+
+        allocate(model_descs(n_models))
+        allocate(inputs(0))
+
+        do i = 1, n_models
+            stat = meso_get_model(ids(i), model)
+            if (failed(stat)) return
+
+            !Count and data must come from the same call: get_signature() describes the serialized parameters, not the inputs.
+            model_inputs = model%get_input()
+
+            model_descs(i) = ModelDescriptor(int(ids(i), C_INT), &
+                                             to_c_string(model%get_name(), NAME_LEN), &
+                                             to_c_string(model%get_description(), DESCRIPTION_LEN), &
+                                             int(size(model_inputs), C_INT))
+            inputs = [inputs, model_inputs]
+        end do
+    end function
+
+    !> List the microscopic (hardening) models libCrysP supports.
+    !>
+    !> One descriptor per model. The IDs are those accepted as `hardening_model_ids` by [[crysp_new_material]].
+    !>
+    !> The inputs of all models are reported as one flat list, because an interoperable type cannot hold a variable number of
+    !> them: `n_inputs` says how many consecutive entries of `inputs` belong to each descriptor, in descriptor order.
+    function crysp_get_micro_models(model_descs, inputs) bind(C) result(stat)
+        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported micro model
+        type(Input), dimension(:), allocatable, intent(out):: inputs                !! Inputs of all models, concatenated.
+        type(Status):: stat                                                         !! Return status. Should always be OK
+
+        integer:: i, &
+                  n_models
+        integer, dimension(:), allocatable:: ids
+        class(ConstitutiveModel), allocatable:: model
+        type(Input), dimension(:), allocatable:: model_inputs
+
+        ids = micro_get_model_ids()
+        n_models = size(ids)
+
+        allocate(model_descs(n_models))
+        allocate(inputs(0))
+
+        do i = 1, n_models
+            stat = micro_get_model(ids(i), model)
+            if (failed(stat)) return
+
+            !Count and data must come from the same call: get_signature() describes the serialized parameters, not the inputs.
+            model_inputs = model%get_input()
+
+            model_descs(i) = ModelDescriptor(int(ids(i), C_INT), &
+                                             to_c_string(model%get_name(), NAME_LEN), &
+                                             to_c_string(model%get_description(), DESCRIPTION_LEN), &
+                                             int(size(model_inputs), C_INT))
+            inputs = [inputs, model_inputs]
+        end do
+    end function
 
     !> Initialize a new material state.
     !>

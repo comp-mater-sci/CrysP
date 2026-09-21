@@ -78,6 +78,10 @@ module meso
             class(MesoModel), intent(in):: model
             integer:: id
         end function
+
+        module pure function meso_get_model_ids() result(ids)
+            integer, dimension(:), allocatable:: ids
+        end function
     end interface
 end module
 
@@ -96,11 +100,9 @@ submodule(meso) meso_imp
 contains
 
     !> Return a list of IDs of all the supported mesoscopic models
-    pure function get_model_ids() result(ids)
-        integer, dimension(:), allocatable:: ids !! List of supported mesoscopic model IDs.
-
+    module procedure meso_get_model_ids
         ids = [MESO_MODEL_FCTAYLOR, MESO_MODEL_ALAMEL]
-    end function
+    end procedure
 
     !> Returns an instance of a mesoscopic model with the provided ID.
     !>
