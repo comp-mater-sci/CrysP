@@ -83,11 +83,6 @@ module micro
             class(ConstitutiveModel), allocatable, intent(out):: model
             type(Status):: stat
         end function
-        module pure function micro_get_model_id(model) result(id)
-            class(ConstitutiveModel), intent(in):: model
-            integer:: id
-        end function
-
         !> Return a list of IDs of all the supported hardening models.
         module pure function micro_get_model_ids() result(ids)
             integer, dimension(:), allocatable:: ids !! List of supported hardening model IDs.
@@ -143,25 +138,10 @@ contains
                 allocate(ConstitutiveModelDSHLoop:: model)
             case default
                 stat = fail(MOD_NAME, 'micro_get_model', CRYSP_ERR_TYPE, 'Invalid hardening model ID: ' // int_to_str(id))
+                return
         end select
-    end procedure
-    module procedure micro_get_model_id
-        select type(model)
-            type is (ConstitutiveModelNone)
-                id = HARDENING_NONE
-            type is (ConstitutiveModelVoce)
-                id = HARDENING_VOCE
-            type is (ConstitutiveModelHockettSherby)
-                id = HARDENING_HOCKETT_SHERBY
-            type is (ConstitutiveModelSwift)
-                id = HARDENING_SWIFT
-            type is (ConstitutiveModelDSHEdge)
-                id = HARDENING_DSH_EDGE
-            type is (ConstitutiveModelDSHScrew)
-                id = HARDENING_DSH_SCREW
-            type is (ConstitutiveModelDSHLoop)
-                id = HARDENING_DSH_LOOP
-        end select
+
+        model%id = id
     end procedure
 
     !> Get the list of miller indices associated to ta given deformation mechanism.
@@ -232,6 +212,8 @@ contains
 
             n_params = size(phase_ptr%model%get_signature())
             call phases(i)%model%init(miller_indices, hardening_parameters(offset_params+1:offset_params+n_params))
+            !Every model's init takes `this` as intent(out) and therefore clears the ID stamped by micro_get_model.
+            phases(i)%model%id = hardening_model_ids(i)
             offset_params = offset_params + n_params
             initial_state = phases(i)%model%make_hardening_state()
 

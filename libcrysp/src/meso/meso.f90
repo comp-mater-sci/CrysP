@@ -74,11 +74,6 @@ module meso
             type(Status):: stat
         end function
 
-        module pure function meso_get_model_id(model) result(id)
-            class(MesoModel), intent(in):: model
-            integer:: id
-        end function
-
         module pure function meso_get_model_ids() result(ids)
             integer, dimension(:), allocatable:: ids
         end function
@@ -115,15 +110,10 @@ contains
                 allocate(AlamelModel:: model)
             case default
                 stat = fail(MOD_NAME, 'meso_get_model', CRYSP_ERR_VAL, 'Invalid crystal plasticity model ID: '// int_to_str(id))
+                return
         end select
-    end procedure
-    module procedure meso_get_model_id
-        select type (model)
-            type is (TaylorModel)
-                id = MESO_MODEL_FCTAYLOR
-            type is (AlamelModel)
-                id = MESO_MODEL_ALAMEL
-        end select
+
+        model%id = id
     end procedure
 
     !> See interface definition in meso module.

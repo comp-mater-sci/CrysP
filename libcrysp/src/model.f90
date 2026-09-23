@@ -18,63 +18,58 @@ module crysp_model
     !> them sits on a failure path a caller can reach: they are only ever dispatched on concrete models.
     !> @endnote
     type, extends(State):: Model
+        integer:: id
     contains
-        procedure, nopass:: get_name => model_get_name_default
-        procedure, nopass:: get_description => model_get_description_default
-        procedure, nopass:: get_signature => model_get_signature
-        procedure, nopass:: get_input => model_get_input
+        procedure:: describe => model_describe
         procedure:: size => model_size
         procedure:: serialize => model_serialize
         procedure:: deserialize => model_deserialize
     end type
 
+    type:: StateDescriptor
+        character(:), allocatable:: name
+        character(:), allocatable:: description
+        integer:: type
+    end type
+
+    type:: ModelDescriptor
+        integer:: id
+        character(:), allocatable:: name
+        character(:), allocatable:: description
+        type(Input), dimension(:), allocatable:: Inputs
+        type(StateDescriptor), dimension(:), allocatable:: model_state_fields
+        type(StateDescriptor), dimension(:), allocatable:: element_state_fields
+    end type
+
 contains
 
-    !> Default @c get_name: the base model has no name, so this should never be called on an unextended instance.
-    pure function model_get_name_default() result(name)
-        character(:), allocatable:: name
+    pure function describe() result(desc)
+        type(ModelDescriptor):: desc
 
-        error stop 'Model::get_name not overridden'
-        name = ''
+        desc%id = this%id
     end function
 
-    !> Default @c get_description: see [[model_get_name_default]].
-    pure function model_get_description_default() result(description)
-        character(:), allocatable:: description
-
-        error stop 'Model::get_description not overridden'
-        description = ''
-    end function
-
+    !> The base model contributes exactly one serialized field: its ID.
     pure function model_size(this) result(size)
         class(Model), intent(in):: this
         integer:: size
 
-        size = 0
+        size = 1
     end function
-
 
     function model_serialize(this) result(params)
         class(Model), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
         allocate(params(this%size()))
+
+        params(1) = this%id
     end function
 
     subroutine model_deserialize(this, params)
         class(Model), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
+
+        this%id = params(1)
     end subroutine
-
-    pure function model_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        allocate(signature(0))
-    end function
-
-    function model_get_input() result(inputs)
-        type(Input), dimension(:), allocatable:: inputs
-
-        allocate(inputs(0))
-    end function
 end module

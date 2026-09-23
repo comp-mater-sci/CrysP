@@ -91,7 +91,7 @@ contains
         allocate(params(this%size()))
 
         !CP model
-        params(1) = meso_get_model_id(this%meso_model)
+        params(1) = this%meso_model%id
         offset = 1
         sub = this%meso_model%serialize()
         s = size(sub)
@@ -104,7 +104,7 @@ contains
         offset = offset+1
         do i=1,n_phases
             associate (m => this%phases(i)%model)
-                params(offset+1) = micro_get_model_id(m)
+                params(offset+1) = m%id
                 offset = offset+1
                 sub = m%serialize()
                 s = size(sub)

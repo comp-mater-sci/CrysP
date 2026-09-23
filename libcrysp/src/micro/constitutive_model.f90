@@ -53,6 +53,7 @@ module constitutive_model
         procedure:: size => cm_size
         procedure:: serialize => cm_serialize
         procedure:: deserialize => cm_deserialize
+        procedure:: describe => cm_describe
     end type
 
     !> Wrapper type for the constitutive model backing a phase.
@@ -123,34 +124,45 @@ contains
         class(ConstitutiveModel), intent(in):: this
         integer:: size
 
-        size = 3
+        size = this%Model%size() + 3
     end function
 
     function cm_serialize(this) result(params)
         class(ConstitutiveModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
+        integer:: offset
+        type(Parameter), dimension(:), allocatable:: base
+
         allocate(params(this%size()))
 
+        base = this%Model%serialize()
+        offset = size(base)
+        params(:offset) = base
+
         !Assigned one by one: an array constructor of serialize() results yields a duplicated element with IFX as of 2026.1.1.19
-        params(1) = this%taylor_coeffs
-        params(2) = this%spin_coeffs
-        params(3) = this%basis
+        params(offset+1) = this%taylor_coeffs
+        params(offset+2) = this%spin_coeffs
+        params(offset+3) = this%basis
     end function
 
     subroutine cm_deserialize(this, params)
         class(ConstitutiveModel), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
+        integer:: offset
         integer(C_INT), dimension(2):: s
 
-        call shape_of(params(1), s)
+        call this%Model%deserialize(params)
+        offset = this%Model%size()
+
+        call shape_of(params(offset+1), s)
         allocate(this%taylor_coeffs(s(1), s(2)))
-        this%taylor_coeffs = params(1)
-        call shape_of(params(2), s)
+        this%taylor_coeffs = params(offset+1)
+        call shape_of(params(offset+2), s)
         allocate(this%spin_coeffs(s(1), s(2)))
-        this%spin_coeffs = params(2)
-        this%basis = params(3)
+        this%spin_coeffs = params(offset+2)
+        this%basis = params(offset+3)
     end subroutine
 
     pure function hs_size(this) result(size)
@@ -179,4 +191,13 @@ contains
         allocate(this%crss(s(1), s(2)))
         this%crss = params(1)
     end subroutine
+
+    function describe(this) result(desc)
+        class(ConstitutiveModel), intent(in):: this
+        type(ModelDescriptor):: desc
+
+        desc = this%Model%describe()
+        desc%element_state_fields = [StateDescriptor("Critical resolved shear stress", "Resolved shear stress at which yielding
+        occurs for each slip system, in both positive and negative directions.", TYPE_REAL_MATRIX)]
+    end function
 end module

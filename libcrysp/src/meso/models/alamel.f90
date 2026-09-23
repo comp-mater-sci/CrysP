@@ -510,23 +510,35 @@ contains
         class(AlamelModel), intent(in):: this
         integer:: size
 
-        size = 1
+        size = this%MesoModel%Model%size() + 1
     end function
 
     function alamel_serialize(this) result(params)
         class(AlamelModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
+        integer:: offset
+        type(Parameter), dimension(:), allocatable:: base
+
         allocate(params(this%size()))
 
-        params(1) = this%deformation_gradient
+        base = this%MesoModel%Model%serialize()
+        offset = size(base)
+        params(:offset) = base
+
+        params(offset+1) = this%deformation_gradient
     end function
 
     subroutine alamel_deserialize(this, params)
         class(AlamelModel), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        this%deformation_gradient = params(1)
+        integer:: offset
+
+        call this%MesoModel%Model%deserialize(params)
+        offset = this%MesoModel%Model%size()
+
+        this%deformation_gradient = params(offset+1)
     end subroutine
 
     pure function alamel_cluster_size(this) result(size)

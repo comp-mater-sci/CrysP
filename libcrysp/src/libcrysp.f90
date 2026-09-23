@@ -70,7 +70,7 @@ module libcrysp
     !> Returned by [[crysp_get_meso_models]] and [[crysp_get_micro_models]], which also report the inputs the descriptors refer
     !> to. The text buffers are NUL-terminated and truncated to fit; a name or description longer than its buffer loses its tail,
     !> never its terminator.
-    type, bind(C):: ModelDescriptor
+    type, bind(C):: ModelDescriptorCompat
         integer(C_INT):: id                                   !! ID identifying this model in the call it was obtained from.
         character(kind=C_CHAR), dimension(NAME_LEN):: name    !! Short name of the model. NUL-terminated.
         character(kind=C_CHAR), dimension(DESCRIPTION_LEN):: description !! What the model does. NUL-terminated.
@@ -86,7 +86,7 @@ contains
     !> The inputs of all models are reported as one flat list, because an interoperable type cannot hold a variable number of
     !> them: `n_inputs` says how many consecutive entries of `inputs` belong to each descriptor, in descriptor order.
     function crysp_get_meso_models(model_descs, inputs) bind(C) result(stat)
-        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported meso model
+        type(ModelDescriptorCompat), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported meso model
         type(Input), dimension(:), allocatable, intent(out):: inputs                !! Inputs of all models, concatenated.
         type(Status):: stat                                                         !! Return status. Should always be OK
 
@@ -109,10 +109,10 @@ contains
             !Count and data must come from the same call: get_signature() describes the serialized parameters, not the inputs.
             model_inputs = model%get_input()
 
-            model_descs(i) = ModelDescriptor(int(ids(i), C_INT), &
-                                             to_c_string(model%get_name(), NAME_LEN), &
-                                             to_c_string(model%get_description(), DESCRIPTION_LEN), &
-                                             int(size(model_inputs), C_INT))
+            model_descs(i) = ModelDescriptorCompat(int(ids(i), C_INT), &
+                                                   to_c_string(model%get_name(), NAME_LEN), &
+                                                   to_c_string(model%get_description(), DESCRIPTION_LEN), &
+                                                   int(size(model_inputs), C_INT))
             inputs = [inputs, model_inputs]
         end do
     end function
@@ -124,7 +124,7 @@ contains
     !> The inputs of all models are reported as one flat list, because an interoperable type cannot hold a variable number of
     !> them: `n_inputs` says how many consecutive entries of `inputs` belong to each descriptor, in descriptor order.
     function crysp_get_micro_models(model_descs, inputs) bind(C) result(stat)
-        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported micro model
+        type(ModelDescriptorCompat), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported micro model
         type(Input), dimension(:), allocatable, intent(out):: inputs                !! Inputs of all models, concatenated.
         type(Status):: stat                                                         !! Return status. Should always be OK
 
@@ -147,10 +147,10 @@ contains
             !Count and data must come from the same call: get_signature() describes the serialized parameters, not the inputs.
             model_inputs = model%get_input()
 
-            model_descs(i) = ModelDescriptor(int(ids(i), C_INT), &
-                                             to_c_string(model%get_name(), NAME_LEN), &
-                                             to_c_string(model%get_description(), DESCRIPTION_LEN), &
-                                             int(size(model_inputs), C_INT))
+            model_descs(i) = ModelDescriptorCompat(int(ids(i), C_INT), &
+                                                   to_c_string(model%get_name(), NAME_LEN), &
+                                                   to_c_string(model%get_description(), DESCRIPTION_LEN), &
+                                                   int(size(model_inputs), C_INT))
             inputs = [inputs, model_inputs]
         end do
     end function
