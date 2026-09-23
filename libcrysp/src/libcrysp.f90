@@ -111,7 +111,7 @@ contains
 
             model_descs(i) = ModelDescriptorCompat(int(ids(i), C_INT), &
                                                    to_c_string(model%get_name(), NAME_LEN), &
-                                                   to_c_string(model%get_description(), DESCRIPTION_LEN), &
+                                                   !to_c_string(model%get_description(), DESCRIPTION_LEN), &
                                                    int(size(model_inputs), C_INT))
             inputs = [inputs, model_inputs]
         end do
@@ -149,7 +149,7 @@ contains
 
             model_descs(i) = ModelDescriptorCompat(int(ids(i), C_INT), &
                                                    to_c_string(model%get_name(), NAME_LEN), &
-                                                   to_c_string(model%get_description(), DESCRIPTION_LEN), &
+                                                   !to_c_string(model%get_description(), DESCRIPTION_LEN), &
                                                    int(size(model_inputs), C_INT))
             inputs = [inputs, model_inputs]
         end do

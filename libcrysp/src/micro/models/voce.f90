@@ -27,10 +27,7 @@ module voce
         real(DP)   ::  transition_slip = 0._DP !! Value for total slip at which to transition from stage 1 to stage 2.
         type(Stage), dimension(2):: stages
     contains
-        procedure, nopass:: get_name        => voce_get_name
-        procedure, nopass:: get_description => voce_get_description
-        procedure, nopass:: get_signature   => voce_get_signature
-        procedure, nopass:: get_input       => voce_get_input          !! Inherited from [[ConstitutiveModel]]
+        procedure:: describe => voce_describe
         procedure:: init                    => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                  => voce_deform                  !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => voce_make_state
@@ -42,38 +39,25 @@ module voce
 
 contains
 
+    pure function voce_describe(this) result(desc)
+        class(ConstitutiveModelVoce), intent(in):: this
+        type(ModelDescriptor):: desc
 
-    pure function voce_get_name() result(name)
-        character(:), allocatable:: name
+        desc = this%ConstitutiveModel%describe()
+        desc%name = "Voce"
+        desc%description = "2-stage VOCE hardening law. Can also be used as 1-stage VOCE by setting the saturation stress of stage 1 equal to the initial stress of stage 1."
+        desc%inputs = [Input('TIII1',  &
+                             "Initial CRSS", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize("TIIIS")), &
+                  Input('TIIIS',  type=INPUT_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
+                  Input('TIVS',   type=INPUT_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
+                  Input('THIII1', type=INPUT_REAL), &
+                  Input('THT',    type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
 
-        name = "VOCE"
-    end function
 
-    pure function voce_get_description() result(description)
-        character(:), allocatable:: description
 
-        description = "2-stage VOCE hardening law. Can also be used as 1-stage VOCE by setting the saturation stress of stage 1 equal to the initial stress of stage 1."
-    end function
-
-    pure function voce_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        allocate(signature(5), source=INPUT_REAL)
-    end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    function voce_get_input() result(inputs)
-        type(Input), dimension(:), allocatable:: inputs !! - **TIII1**: Initial flow stress.
-                                                        !! - **TIIIS**: Saturation flow stress for the first stage.
-                                                        !! - **TIVS**: Saturation flow stress for the second stage.
-                                                        !! - **THIII1**: Initial hardening rate.
-                                                        !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
-
-        inputs = [Input(to_c_string('TIII1',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
-                  Input(to_c_string('TIIIS',NAME_LEN),  INPUT_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
-                  Input(to_c_string('TIVS',NAME_LEN),   INPUT_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
-                  Input(to_c_string('THIII1',NAME_LEN), INPUT_REAL), &
-                  Input(to_c_string('THT',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
     end function
 
     !> See [[ConstitutiveModel:init]]

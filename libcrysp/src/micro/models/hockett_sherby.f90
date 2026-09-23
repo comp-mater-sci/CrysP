@@ -61,10 +61,10 @@ contains
                                                         !! - **b**: Hardening exponent
                                                         !! - **n**: Hardening exponent on slip
 
-        inputs = [Input(to_c_string('tau_0',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
-                  Input(to_c_string('tau_sat',NAME_LEN), INPUT_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
-                  Input(to_c_string('b',NAME_LEN), INPUT_REAL),       &
-                  Input(to_c_string('n',NAME_LEN), INPUT_REAL)]
+        inputs = [Input('tau_0', type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
+                  Input('tau_sat', type=INPUT_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
+                  Input('b', type=INPUT_REAL),       &
+                  Input('n', type=INPUT_REAL)]
     end function
 
     !> See [[ConstitutiveModel:init]]

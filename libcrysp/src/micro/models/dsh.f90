@@ -119,22 +119,22 @@ contains
                                                         !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
                                                         !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
 
-        inputs = [Input(to_c_string('b',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
-                  Input(to_c_string('G',NAME_LEN),     INPUT_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
-                  Input(to_c_string('alfa',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
-                  Input(to_c_string('f',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
-                  Input(to_c_string('tau0',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
-                  Input(to_c_string('I',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  Input(to_c_string('R',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  Input(to_c_string('Iwd',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  Input(to_c_string('Rwd',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Rncg',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('beta1',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('beta2',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Iwp',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Rwp',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Rrev',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
-                  Input(to_c_string('R2',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
+        inputs = [Input('b',     type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
+                  Input('G',     type=INPUT_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
+                  Input('alfa',  type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
+                  Input('f',     type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
+                  Input('tau0',  type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
+                  Input('I',     type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  Input('R',     type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  Input('Iwd',   type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
+                  Input('Rwd',   type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input('Rncg',  type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input('beta1', type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input('beta2', type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input('Iwp',   type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input('Rwp',   type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                  Input('Rrev',  type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
+                  Input('R2',    type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
     end function
 
     !> Convert a generic HardeningState to a pointer to a DSHState object

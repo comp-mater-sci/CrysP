@@ -15,7 +15,7 @@ module base_defs
     real(DP), parameter:: TOLERANCE  = 1.E-9_DP            !! Default tolerance on floating point calculations to compensate for inherent inaccuracy of floating point arithmetic,
     integer, parameter:: NAME_LEN = 56
     integer, parameter:: MSG_LEN = 128
-    integer, parameter:: DESCRIPTION_LEN = 1024
+    integer, parameter:: DESC_LEN = 1024
                                                            !! especially for multithreaded computations.
     real(DP), parameter:: ACCURACY = 1.E-2_DP              !! Accuracy on linear approximations.
 

@@ -61,9 +61,9 @@ contains
                                                     !! - **gamma0**: Initial sum of slip across all slip systems
                                                     !! - **n**: Hardening exponent
 
-        inputs = [Input(to_c_string('crss0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
-                  Input(to_c_string('gamma0',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)), &
-                  Input(to_c_string('n',NAME_LEN), INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
+        inputs = [Input('crss0', type=INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
+                  Input('gamma0', type=INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)), &
+                  Input('n', type=INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
     end function
 
     !> See [[ConstitutiveModel:init]]
