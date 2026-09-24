@@ -36,6 +36,8 @@ By default, the project is configured to build a highly optimized release config
     cmake -B build -DCMAKE_BUILD_TYPE=[release/debug]
     cmake --build build --parallel --target install
 
+**NOTE:** Due to a gfortran bug (confirmed as of GCC 16.2.1), the allocatable components of structure constructors used inside an array constructor, e.g. `list = [list, T("name")]`, are never freed. *libCrysP* uses this pattern to describe its models, so a gfortran build leaks memory on every such call. gfortran's run-time memory leaks are collected under meta-bug [PR 86754](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86754); as of September 2026 this particular case does not appear to have a report of its own. Only build with ifx if you want to use *libCrysP* in a long-running process such as a web service.
+
 # Unit tests
 The *test* directory contains unit tests for the library, driven by CTest. Each test is a stand-alone Fortran program built alongside the library (disable with `-DCRYSP_BUILD_TESTS=OFF`). Once a build directory is configured, build and run them with:
 
