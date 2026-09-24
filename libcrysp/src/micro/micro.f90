@@ -10,7 +10,7 @@
 
 module micro
     use base_defs
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
     use conversions, only: int_to_str
     use crysp_status

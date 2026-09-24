@@ -1,5 +1,5 @@
 module crysp_input
-    use crysp_serialization
+    use crysp_parameters
 
     implicit none
 
@@ -8,7 +8,7 @@ module crysp_input
     !> Possible types of user input.
     !>
     !> Input types describe the kind of data expected, i.e. how a UI should go about collecting the data.
-    !> Each input type has a particular type signature in terms of Parameter types (see [[crysp_serializaton]]).
+    !> Each input type has a particular type signature in terms of Parameter types (see [[crysp_parameters]]).
     !> This signature is added as a comment after each input type.
     !> A model providing an input parameter of a certain input type expects the UI to return a value corresponding to the linked
     !> parameter type. Note that for non-scalar parameter types, the shape of the parameter type is specified as well.

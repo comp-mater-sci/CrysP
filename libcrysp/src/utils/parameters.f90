@@ -3,9 +3,23 @@ module crysp_parameters
     implicit none
 
     private
-    public:: Parameter, assignment(=), serialize
+    public:: TYPE_INTEGER, &
+             TYPE_REAL, &
+             TYPE_STRING, &
+             Parameter, &
+             assignment(=), &
+             serialize, &
+             type_of, &
+             shape_of
 
     character(*), parameter:: MOD_NAME = 'parameters'
+
+    !> Element types a parameter can hold. The rank is reported separately, by `shape_of`.
+    enum, bind(C)
+        enumerator:: TYPE_INTEGER   !! integer
+        enumerator:: TYPE_REAL      !! real(DP)
+        enumerator:: TYPE_STRING    !! character(*)
+    end enum
 
     !> Type-safe container for a value of any supported type and rank.
     !>
@@ -35,6 +49,33 @@ module crysp_parameters
     end interface
 
 contains
+
+    !> Element type of the stored value, as one of the `TYPE_*` enumerators above.
+    pure function type_of(param) result(t)
+        type(Parameter), intent(in):: param
+        integer:: t
+
+        select type (buffer => param%buffer)
+            type is (integer)
+                t = TYPE_INTEGER
+            type is (real(DP))
+                t = TYPE_REAL
+            type is (character(*))
+                t = TYPE_STRING
+            class default
+                error stop 'parameters::type_of: Parameter holds an unsupported type'
+        end select
+    end function
+
+    !> Extents of the stored value, as stored: scalars and strings (1,1), arrays (n,1), matrices (m,n).
+    !>
+    !> Useful for allocating a receiving buffer of the right size before reading the value.
+    pure function shape_of(param) result(s)
+        type(Parameter), intent(in):: param
+        integer, dimension(2):: s
+
+        s = shape(param%buffer)
+    end function
 
     subroutine int_to_param(param, data)
         type(Parameter), intent(out):: param

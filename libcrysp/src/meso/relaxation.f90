@@ -2,7 +2,7 @@ module relaxation_module
     use base_defs
     use math_utils
     use conversions
-    use crysp_serialization
+    use crysp_parameters
     implicit none
     private
 

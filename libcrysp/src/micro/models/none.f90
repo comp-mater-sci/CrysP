@@ -3,7 +3,7 @@ module none
     use crysp_status
     use constitutive_model
     use crysp_grain
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
     use crysp_model
 

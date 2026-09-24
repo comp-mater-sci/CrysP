@@ -2,8 +2,7 @@ module constitutive_model
     use base_defs
     use math_utils
     use conversions
-    use crysp_serialization
-    use, intrinsic:: iso_c_binding, only: C_INT
+    use crysp_parameters
     use crysp_model
     use crysp_status
     implicit none
@@ -147,13 +146,13 @@ contains
         class(ConstitutiveModel), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        integer(C_INT), dimension(2):: s
+        integer, dimension(2):: s
 
-        call shape_of(params(1), s)
+        s = shape_of(params(1))
         if (allocated(this%taylor_coeffs)) deallocate(this%taylor_coeffs)
         allocate(this%taylor_coeffs(s(1), s(2)))
         this%taylor_coeffs = params(1)
-        call shape_of(params(2), s)
+        s = shape_of(params(2))
         if (allocated(this%spin_coeffs)) deallocate(this%spin_coeffs)
         allocate(this%spin_coeffs(s(1), s(2)))
         this%spin_coeffs = params(2)
@@ -180,9 +179,9 @@ contains
         class(HardeningState), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        integer(C_INT), dimension(2):: s
+        integer, dimension(2):: s
 
-        call shape_of(params(1), s)
+        s = shape_of(params(1))
         if (allocated(this%crss)) deallocate(this%crss)
         allocate(this%crss(s(1), s(2)))
         this%crss = params(1)

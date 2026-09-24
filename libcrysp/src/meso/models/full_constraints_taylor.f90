@@ -13,7 +13,7 @@ module full_constraints_taylor
     use simplex
     use crysp_meso_model
     use crysp_model
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
 
     implicit none

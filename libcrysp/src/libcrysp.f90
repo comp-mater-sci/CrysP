@@ -22,7 +22,7 @@ module libcrysp
     use crysp_status
     use crysp_grain
     use incrementation
-    use crysp_serialization
+    use crysp_parameters
     use crysp_material
 
     implicit none
@@ -238,11 +238,11 @@ contains
 
     !> Rebuild a material from its serialized state.
     !>
-    !> Reading consumes the parameters, see [[crysp_serialization]].
-    !>
     !> @warning
-    !> The parameters are not validated: a list that was not produced by [[crysp_serialize_material]] is undefined behavior. See
-    !> the note in [[crysp_serialization]].
+    !> The parameters are not validated as a whole, so pass only a list produced by [[crysp_serialize_material]]. The `deserialize`
+    !> bindings are subroutines and cannot report failure. A parameter whose type or shape does not match what the reader expects
+    !> terminates the program, because it is read through a defined assignment and there is no room for a [[crysp_status:Status]]
+    !> in one. A list that is wrong but happens to fit, including one with an unknown model ID, is not detected.
     !> @endwarning
     function crysp_deserialize_material(params, mat) bind(C) result(stat)
         type(Parameter), dimension(:), intent(in):: params !! Serialized material state.

@@ -4,7 +4,7 @@ module swift
     use base_defs
     use constitutive_model
     use crysp_status
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
     use conversions
     use crysp_model

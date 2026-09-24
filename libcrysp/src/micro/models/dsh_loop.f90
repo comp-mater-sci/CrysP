@@ -5,7 +5,7 @@ module dsh_loop
     use crysp_model
     use slip_systems
     use constitutive_model
-    use crysp_serialization
+    use crysp_parameters
 
     implicit none
 

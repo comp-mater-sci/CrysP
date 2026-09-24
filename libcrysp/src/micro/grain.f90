@@ -2,7 +2,7 @@ module crysp_grain
     use conversions
     use crysp_status
     use constitutive_model
-    use crysp_serialization
+    use crysp_parameters
     use iso_c_binding
 
     implicit none

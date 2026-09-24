@@ -18,7 +18,7 @@ module dsh
     use crysp_status
     use slip_systems
     use conversions
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
 
     implicit none

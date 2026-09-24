@@ -7,7 +7,7 @@ module crysp_cluster
     use base_defs
     use crysp_grain
     use constitutive_model
-    use crysp_serialization
+    use crysp_parameters
     implicit none
 
     private

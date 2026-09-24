@@ -30,7 +30,7 @@ program test_material_roundtrip
     use meso, only: MESO_MODEL_ALAMEL, MESO_MODEL_FCTAYLOR
     use crysp_material, only: TexturePoint
     use crysp_model, only: ModelDescriptor
-    use crysp_serialization
+    use crysp_parameters
     use testing
 
     implicit none

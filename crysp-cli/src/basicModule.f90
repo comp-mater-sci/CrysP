@@ -5,7 +5,7 @@ module dmcBasicModule
     use base_defs
     use micro
     use meso
-    use crysp_serialization
+    use crysp_parameters
     use logging
     use libcrysp
     use file_io

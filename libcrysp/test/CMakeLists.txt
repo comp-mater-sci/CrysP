@@ -37,5 +37,5 @@ crysp_add_test(test_rotations)
 # Judge it on its output instead: any failed check prints "FAILED", and the abort must have reported the mismatch.
 set_tests_properties(test_parameter PROPERTIES
     FAIL_REGULAR_EXPRESSION "FAILED"
-    PASS_REGULAR_EXPRESSION "serialization::parameter_to_real_matrix"
+    PASS_REGULAR_EXPRESSION "parameters::param_to_real_matrix"
 )

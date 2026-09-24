@@ -1,29 +1,29 @@
-!> Round-trip every value type supported by crysp_serialization through a Parameter.
+!> Round-trip every value type supported by crysp_parameters through a Parameter.
 !>
 !> Covers both ways of creating a parameter (assignment and the `serialize` function family), the `type_of` and `shape_of`
-!> queries, and reading the value back via assignment. The `serialize` family is tested in both of its flavours: the assumed-shape
-!> `_desc` forms used from Fortran, and the explicit-extent forms that C callers reach with a bare pointer plus its extents.
+!> queries, and reading the value back via assignment. Also covers the edge cases and usage patterns that have tripped up a
+!> compiler before: empty arrays, array constructors of `serialize` results, and copies of parameters. The C-facing conversion
+!> lives in the C layer and is not tested here.
 !>
 !> Ends with a negative test: reading a matrix parameter into a destination of the wrong shape must abort through `error stop`.
 !> Since that terminates the program, it runs last, after the summary. CTest therefore judges this test on its output rather
 !> than its exit status (see CMakeLists.txt): any "FAILED" line fails it, and the stop message is required for it to pass.
 program test_parameter
-    use iso_c_binding
     use base_defs, only: DP
-    use crysp_serialization
+    use crysp_parameters
     use testing
 
     implicit none
 
     call test_integer()
     call test_int_array()
-    call test_int_array_explicit()
     call test_real()
     call test_real_array()
-    call test_real_array_explicit()
     call test_real_matrix()
-    call test_real_matrix_explicit()
     call test_string()
+    call test_read_does_not_consume()
+    call test_copy_is_deep()
+    call test_array_constructor()
 
     call finish()
 
@@ -35,12 +35,10 @@ contains
     subroutine test_integer()
         type(Parameter):: p, q
         integer:: out
-        integer(C_INT), dimension(2):: s
 
         p = 42
-        call check_equal(int(type_of(p)), TYPE_INTEGER, 'integer: type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [1, 0], 'integer: shape_of reports a single element')
+        call check_equal(type_of(p), TYPE_INTEGER, 'integer: type_of')
+        call check_equal(shape_of(p), [1, 1], 'integer: shape_of reports a single element')
         out = p
         call check_equal(out, 42, 'integer: roundtrip via assignment')
 
@@ -50,61 +48,48 @@ contains
     end subroutine
 
     subroutine test_int_array()
-        type(Parameter):: p, q
+        type(Parameter):: p, q, r, t
         integer, dimension(5):: in = [3, 1, 4, 1, 5]
         integer, dimension(5):: out
+        integer, dimension(1):: single
         integer, dimension(:), allocatable:: dyn
-        integer(C_INT), dimension(2):: s
+        integer, dimension(2):: s
 
         p = in
-        call check_equal(int(type_of(p)), TYPE_INT_ARRAY, 'int array: type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [5, 0], 'int array: shape_of')
+        call check_equal(type_of(p), TYPE_INTEGER, 'int array: type_of')
+        call check_equal(shape_of(p), [5, 1], 'int array: shape_of')
         out = 0
         out = p
         call check_equal(out, in, 'int array: roundtrip via assignment')
 
         ! Typical consumer pattern: query the shape, allocate, then read.
         q = serialize(in(2:4))
-        call shape_of(q, s)
+        s = shape_of(q)
         allocate(dyn(s(1)))
         dyn = q
         call check_equal(dyn, [1, 4, 1], 'int array: roundtrip via serialize() into allocated buffer')
-    end subroutine
 
-    !> The explicit-extent counterpart of test_int_array, which is how C callers build an int array parameter.
-    !>
-    !> The buffer passed in is longer than `len` asks for, so the test fails if the extent argument is ignored in favour of the
-    !> size of the actual argument. A C caller relies on exactly that when it serializes a slice of a bigger allocation.
-    subroutine test_int_array_explicit()
-        type(Parameter):: p, q
-        integer(C_INT), dimension(5):: buffer = [3, 1, 4, 1, 5]
-        integer, dimension(:), allocatable:: out
-        integer(C_INT), dimension(2):: s
-        integer(C_INT), dimension(3):: c_out
+        ! GFortran loses the dynamic type of an empty array allocated with source=, see the note on Parameter.
+        r = serialize([integer::])
+        call check_equal(shape_of(r), [0, 1], 'int array: empty shape preserved')
+        deallocate(dyn)
+        allocate(dyn(0))
+        dyn = r
+        call check_equal(size(dyn), 0, 'int array: empty roundtrip')
 
-        p = serialize(buffer, 3)
-        call check_equal(int(type_of(p)), TYPE_INT_ARRAY, 'int array (explicit len): type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [3, 0], 'int array (explicit len): len argument sets the size, not the buffer')
-        allocate(out(s(1)))
-        out = p
-        call check_equal(out, [3, 1, 4], 'int array (explicit len): leading elements are the ones stored')
-
-        q = serialize(buffer, 3)
-        call deserialize_int_array(q, c_out, 3)
-        call check_equal(int(c_out), [3, 1, 4], 'int array (explicit len): roundtrip via deserialize_int_array')
+        ! Same extents as a scalar, but still an array.
+        t = serialize([9])
+        single = t
+        call check_equal(single(1), 9, 'int array: one-element roundtrip')
     end subroutine
 
     subroutine test_real()
         type(Parameter):: p, q
         real(DP):: out
-        integer(C_INT), dimension(2):: s
 
         p = 2.5_DP
-        call check_equal(int(type_of(p)), TYPE_REAL, 'real: type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [1, 0], 'real: shape_of reports a single element')
+        call check_equal(type_of(p), TYPE_REAL, 'real: type_of')
+        call check_equal(shape_of(p), [1, 1], 'real: shape_of reports a single element')
         out = p
         call check_equal(out, 2.5_DP, 'real: roundtrip via assignment')
 
@@ -114,53 +99,37 @@ contains
     end subroutine
 
     subroutine test_real_array()
-        type(Parameter):: p, q
+        type(Parameter):: p, q, r
         real(DP), dimension(3):: in = [1._DP, -2._DP, 0.125_DP]
         real(DP), dimension(3):: out
         real(DP), dimension(:), allocatable:: dyn
-        integer(C_INT), dimension(2):: s
+        integer, dimension(2):: s
 
         p = in
-        call check_equal(int(type_of(p)), TYPE_REAL_ARRAY, 'real array: type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [3, 0], 'real array: shape_of')
+        call check_equal(type_of(p), TYPE_REAL, 'real array: type_of')
+        call check_equal(shape_of(p), [3, 1], 'real array: shape_of')
         out = 0._DP
         out = p
         call check_equal(out, in, 'real array: roundtrip via assignment')
 
         q = serialize(in)
-        call shape_of(q, s)
+        s = shape_of(q)
         allocate(dyn(s(1)))
         dyn = q
         call check_equal(dyn, in, 'real array: roundtrip via serialize() into allocated buffer')
-    end subroutine
 
-    !> The explicit-extent counterpart of test_real_array. See test_int_array_explicit for why the buffer is oversized.
-    subroutine test_real_array_explicit()
-        type(Parameter):: p, q
-        real(C_DOUBLE), dimension(5):: buffer = [1._DP, -2._DP, 0.125_DP, 99._DP, 99._DP]
-        real(DP), dimension(:), allocatable:: out
-        integer(C_INT), dimension(2):: s
-        real(C_DOUBLE), dimension(3):: c_out
-
-        p = serialize(buffer, 3)
-        call check_equal(int(type_of(p)), TYPE_REAL_ARRAY, 'real array (explicit len): type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [3, 0], 'real array (explicit len): len argument sets the size, not the buffer')
-        allocate(out(s(1)))
-        out = p
-        call check_equal(out, buffer(1:3), 'real array (explicit len): leading elements are the ones stored')
-
-        q = serialize(buffer, 3)
-        call deserialize_real_array(q, c_out, 3)
-        call check_equal(real(c_out, DP), buffer(1:3), 'real array (explicit len): roundtrip via deserialize_real_array')
+        r = serialize([real(DP)::])
+        deallocate(dyn)
+        allocate(dyn(0))
+        dyn = r
+        call check_equal(size(dyn), 0, 'real array: empty roundtrip')
     end subroutine
 
     subroutine test_real_matrix()
         type(Parameter):: p, q, r
         real(DP), dimension(2,3):: in, out
         real(DP), dimension(:,:), allocatable:: dyn
-        integer(C_INT), dimension(2):: s
+        integer, dimension(2):: s
         integer:: i, j
 
         do j = 1, 3
@@ -170,71 +139,88 @@ contains
         end do
 
         p = in
-        call check_equal(int(type_of(p)), TYPE_REAL_MATRIX, 'real matrix: type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [2, 3], 'real matrix: shape_of preserves extent order')
+        call check_equal(type_of(p), TYPE_REAL, 'real matrix: type_of')
+        call check_equal(shape_of(p), [2, 3], 'real matrix: shape_of preserves extent order')
         out = 0._DP
         out = p
         call check_equal(out, in, 'real matrix: roundtrip via assignment')
 
         ! A receiving buffer of unknown shape is allocated from shape_of before reading.
         q = serialize(in)
-        call shape_of(q, s)
+        s = shape_of(q)
         allocate(dyn(s(1), s(2)))
         dyn = q
         call check_equal(dyn, in, 'real matrix: roundtrip into buffer allocated from shape_of')
 
         ! A zero-extent matrix must survive as well (models with no parameters may produce these).
         r = serialize(reshape([real(DP)::], [0, 4]))
-        call shape_of(r, s)
-        call check_equal(int(s), [0, 4], 'real matrix: zero-extent shape preserved')
-    end subroutine
-
-    !> The explicit-extent counterpart of test_real_matrix. See test_int_array_explicit for why the buffer is oversized.
-    !>
-    !> The buffer is read in element (column-major) order, so the first rows*cols elements are taken and cut into columns of
-    !> `rows`. A C caller hands over a bare pointer to that same element sequence; from Fortran the actual argument has to be a
-    !> matrix, since the generic `serialize` resolves on rank and would not match a flat array here.
-    subroutine test_real_matrix_explicit()
-        type(Parameter):: p, q
-        real(C_DOUBLE), dimension(2,4):: buffer = reshape([11._DP, 21._DP, 12._DP, 22._DP, 13._DP, 23._DP, 99._DP, 99._DP], [2, 4])
-        real(DP), dimension(:,:), allocatable:: out
-        integer(C_INT), dimension(2):: s
-        real(C_DOUBLE), dimension(2,3):: c_out
-
-        p = serialize(buffer, 2, 3)
-        call check_equal(int(type_of(p)), TYPE_REAL_MATRIX, 'real matrix (explicit extents): type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [2, 3], 'real matrix (explicit extents): extent arguments set the shape')
-        allocate(out(s(1), s(2)))
-        out = p
-        call check_equal(out, buffer(:,1:3), 'real matrix (explicit extents): buffer is cut into columns')
-
-        q = serialize(buffer, 2, 3)
-        call deserialize_real_matrix(q, c_out, 2, 3)
-        call check_equal(real(c_out, DP), buffer(:,1:3), 'real matrix (explicit extents): roundtrip via deserialize_real_matrix')
+        s = shape_of(r)
+        call check_equal(s, [0, 4], 'real matrix: zero-extent shape preserved')
+        deallocate(dyn)
+        allocate(dyn(s(1), s(2)))
+        dyn = r
+        call check_equal(size(dyn), 0, 'real matrix: zero-extent roundtrip')
     end subroutine
 
     subroutine test_string()
-        type(Parameter):: p, q, r
+        type(Parameter):: p, q
         character(:), allocatable:: out
-        integer(C_INT), dimension(2):: s
-        character(kind=C_CHAR), dimension(10):: c_out
 
         p = 'Boundaries'
-        call check_equal(int(type_of(p)), TYPE_STRING, 'string: type_of')
-        call shape_of(p, s)
-        call check_equal(int(s), [10, 0], 'string: shape_of is the length')
+        call check_equal(type_of(p), TYPE_STRING, 'string: type_of')
+        call check_equal(shape_of(p), [1, 1], 'string: shape_of reports a single element')
         out = p
         call check_equal(out, 'Boundaries', 'string: roundtrip via assignment')
 
         q = serialize('')
+        out = 'x'
         out = q
         call check_equal(len(out), 0, 'string: empty string roundtrip')
+    end subroutine
 
-        r = serialize('Boundaries')
-        call deserialize_string(r, c_out, 10)
-        call check(all(c_out == transfer('Boundaries', c_out)), 'string: roundtrip via deserialize_string')
+    !> Reading a parameter leaves it intact, so it can be read again.
+    subroutine test_read_does_not_consume()
+        type(Parameter):: p
+        real(DP), dimension(2):: first, second
+
+        p = serialize([1._DP, 2._DP])
+        first = p
+        second = p
+        call check_equal(second, first, 'read: a second read yields the same value')
+    end subroutine
+
+    !> Copying a parameter copies its value: overwriting the source afterwards leaves the copy untouched.
+    subroutine test_copy_is_deep()
+        type(Parameter):: p, q
+        real(DP), dimension(2,2):: in = reshape([1._DP, 2._DP, 3._DP, 4._DP], [2, 2])
+        real(DP), dimension(2,2):: out
+
+        p = in
+        q = p
+        p = serialize(0._DP)
+        out = q
+        call check_equal(out, in, 'copy: survives overwriting the source')
+    end subroutine
+
+    !> IFX as of 2026.1.1.19 duplicated an element in an array constructor of Value-based serialize() results. Guards against a
+    !> regression now that the storage is different.
+    subroutine test_array_constructor()
+        type(Parameter), dimension(:), allocatable:: params
+        integer:: a
+        integer, dimension(2):: b
+        real(DP):: c
+        character(:), allocatable:: d
+
+        params = [serialize(1), serialize([2, 3]), serialize(4._DP), serialize('five')]
+        call check_equal(size(params), 4, 'array constructor: size')
+        a = params(1)
+        b = params(2)
+        c = params(3)
+        d = params(4)
+        call check_equal(a, 1, 'array constructor: integer')
+        call check_equal(b, [2, 3], 'array constructor: int array')
+        call check_equal(c, 4._DP, 'array constructor: real')
+        call check_equal(d, 'five', 'array constructor: string')
     end subroutine
 
     !> Negative test. Expected to end the program via `error stop`; reaching the print means the check was skipped.

@@ -1,5 +1,5 @@
 module crysp_material
-    use crysp_serialization
+    use crysp_parameters
     use constitutive_model
     use crysp_meso_model
     use crysp_cluster

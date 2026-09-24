@@ -1,7 +1,7 @@
 module crysp_isotropic_state
     use base_defs
     use crysp_status
-    use crysp_serialization
+    use crysp_parameters
     use crysp_grain
     use constitutive_model
 
