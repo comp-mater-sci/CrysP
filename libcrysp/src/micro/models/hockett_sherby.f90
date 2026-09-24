@@ -22,10 +22,7 @@ module hockett_sherby
         real(DP):: b        !! Hardening exponent
         real(DP):: n        !! Hardening exponent on slip
     contains
-        procedure, nopass:: get_name => hs_get_name
-        procedure, nopass:: get_description => hs_get_description
-        procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_input => hs_get_input             !! Inherited from [[ConstitutiveModel]]
+        procedure:: describe => hs_describe
         procedure:: init                    => hs_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                  => hs_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => hs_make_state
@@ -37,39 +34,50 @@ module hockett_sherby
 
 contains
 
-    pure function hs_get_name() result(name)
-        character(:), allocatable:: name
+    function hs_describe(this) result(desc)
+        class(ConstitutiveModelHockettSherby), intent(in):: this
+        type(ModelDescriptor):: desc
 
-        name = "Hockett-Sherby"
-    end function
-
-    pure function hs_get_description() result(description)
-        character(:), allocatable:: description
-        description = "Hockett-Sherby hardening law"
-    end function
-
-    pure function hs_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        allocate(signature(4), source=INPUT_REAL)
-    end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    function hs_get_input() result(inputs)
-        type(Input), dimension(:), allocatable:: inputs    !! - **tau_0**: Initial critical resoved shear stress
-                                                        !! - **tau_sat**: Final critical resolved shear stress
-                                                        !! - **b**: Hardening exponent
-                                                        !! - **n**: Hardening exponent on slip
-
-        inputs = [Input('tau_0', type=INPUT_REAL, lower_bound=serialize(0._C_DOUBLE)),   &
-                  Input('tau_sat', type=INPUT_REAL, lower_bound=serialize("tau_0"), lower_bound_inclusive=.true.), &
-                  Input('b', type=INPUT_REAL),       &
-                  Input('n', type=INPUT_REAL)]
+        desc = this%ConstitutiveModel%describe()
+        desc%name = "Hockett-Sherby"
+        desc%description = "Hockett-Sherby hardening law"
+        desc%inputs = [Input('tau_0', &
+                            "Initial critical resolved shear stress on all slip systems", &
+                            INPUT_REAL, &
+                            lower_bound=serialize(0._C_DOUBLE)),   &
+                       Input('tau_sat', &
+                             "Maximum critical resolved shear stress on all slip systems", &
+                             INPUT_REAL, &
+                             lower_bound=serialize("tau_0"), &
+                             lower_bound_inclusive=.true.), &
+                       Input('b', &
+                             "Hardening exponent", &
+                             INPUT_REAL),       &
+                       Input('n', &
+                             "Hardening exponent on slip", &
+                             INPUT_REAL)]
+        desc%model_state = [desc%model_state, &
+                            StateDescriptor("tau_0", &
+                                            "Initial critical resolved shear stress on all slip systems", &
+                                            TYPE_REAL), &
+                            StateDescriptor("tau_sat", &
+                                            "Maximum critical resolved shear stress on all slip systems", &
+                                            TYPE_REAL), &
+                            StateDescriptor("b", &
+                                            "Hardening exponent", &
+                                            TYPE_REAL), &
+                            StateDescriptor("n", &
+                                            "Hardening exponent on slip", &
+                                            TYPE_REAL)]
+        desc%element_state = [desc%element_state, &
+                              StateDescriptor("Total slip", &
+                                              "Sum of total slip across all slip systems", &
+                                              TYPE_REAL)]
     end function
 
     !> See [[ConstitutiveModel:init]]
     subroutine hs_init(this, miller_indices, params)
-        class(ConstitutiveModelHockettSherby), intent(out):: this
+        class(ConstitutiveModelHockettSherby), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 
@@ -140,7 +148,7 @@ contains
     end function
 
     subroutine hs_deserialize(this, params)
-        class(ConstitutiveModelHockettSherby), target, intent(out):: this
+        class(ConstitutiveModelHockettSherby), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset

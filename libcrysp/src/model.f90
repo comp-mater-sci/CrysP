@@ -6,16 +6,11 @@ module crysp_model
     !> Base type for all models (micro-, meso- and macro-scopic).
     !>
     !> @note
-    !> This type is deliberately NOT abstract, even though its @c get_name / @c get_description operations only make sense when
-    !> overridden by a concrete model. This is because subclasses call their parent's non-deferred procedures via
-    !> `this%Model%...` (and transitively `this%ConstitutiveModel%...`), and the Fortran standard only allows such a type-bound
-    !> procedure reference if the parent part-name is not of abstract type (F2018 19.4.5: if the data-ref preceding the procedure
-    !> name is of abstract type it must be polymorphic, which an inherited-component reference is not).
-    !> The default implementations below therefore terminate with an error if ever invoked on an unextended instance.
-    !>
-    !> These defaults are among the few places in libCrysP that still terminate rather than return a [[crysp_status:Status]],
-    !> because each is a function whose result is the object itself, so there is no room for a status. `get_name` and `get_description` are moreover `pure`, which rules out `intent(out)` subroutines. None of
-    !> them sits on a failure path a caller can reach: they are only ever dispatched on concrete models.
+    !> This type is deliberately NOT abstract, even though @c describe only yields a complete descriptor when extended by a
+    !> concrete model. This is because subclasses call their parent's procedures via `this%Model%...` (and transitively
+    !> `this%ConstitutiveModel%...`), and the Fortran standard only allows such a type-bound procedure reference if the parent
+    !> part-name is not of abstract type (F2018 19.4.5: if the data-ref preceding the procedure name is of abstract type it must
+    !> be polymorphic, which an inherited-component reference is not).
     !> @endnote
     type, extends(State):: Model
         integer:: id
@@ -37,24 +32,30 @@ module crysp_model
         character(:), allocatable:: name
         character(:), allocatable:: description
         type(Input), dimension(:), allocatable:: Inputs
-        type(StateDescriptor), dimension(:), allocatable:: model_state_fields
-        type(StateDescriptor), dimension(:), allocatable:: element_state_fields
+        type(StateDescriptor), dimension(:), allocatable:: model_state
+        type(StateDescriptor), dimension(:), allocatable:: element_state
     end type
 
 contains
 
-    pure function describe() result(desc)
+    !> Base of the descriptor chain. The state lists are allocated empty so that every level below can append to them
+    !> unconditionally, without having to know whether it is the first one to contribute. The inputs are allocated empty so that
+    !> models without parameters report zero inputs rather than an unallocated list.
+    function model_describe(this) result(desc)
+        class(Model), intent(in):: this
         type(ModelDescriptor):: desc
 
         desc%id = this%id
+        allocate(desc%inputs(0))
+        allocate(desc%model_state(0))
+        allocate(desc%element_state(0))
     end function
 
-    !> The base model contributes exactly one serialized field: its ID.
     pure function model_size(this) result(size)
         class(Model), intent(in):: this
         integer:: size
 
-        size = 1
+        size = 0
     end function
 
     function model_serialize(this) result(params)
@@ -62,14 +63,10 @@ contains
         type(Parameter), dimension(:), allocatable:: params
 
         allocate(params(this%size()))
-
-        params(1) = this%id
     end function
 
     subroutine model_deserialize(this, params)
-        class(Model), target, intent(out):: this
+        class(Model), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
-
-        this%id = params(1)
     end subroutine
 end module

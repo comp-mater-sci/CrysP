@@ -21,10 +21,7 @@ module swift
         real(DP):: gamma0 !! Initial sum of slip across all slip systems
         real(DP):: n      !! Exponent
     contains
-        procedure, nopass:: get_name       => swift_get_name
-        procedure, nopass:: get_description => swift_get_description
-        procedure, nopass:: get_signature  => swift_get_signature      !! Inherited from [[ConstitutiveModel]]
-        procedure, nopass:: get_input       => swift_get_input       !! Inherited from [[ConstitutiveModel]]
+        procedure:: describe => swift_describe
         procedure:: init                   => swift_init                !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => swift_make_state
@@ -36,39 +33,45 @@ module swift
 
 contains
 
+    function swift_describe(this) result(desc)
+        class(ConstitutiveModelSwift), intent(in):: this
+        type(ModelDescriptor):: desc
 
-    pure function swift_get_name() result(name)
-        character(:), allocatable:: name
+        desc = this%ConstitutiveModel%describe()
+        desc%name = "Swift"
+        desc%description = "Swift hardening model."
+        desc%inputs = [Input('crss0', &
+                             "Critical resolved shear stress on all slip systems in undeformed state.", &
+                             INPUT_REAL, &
+                             lower_bound = serialize(0._C_DOUBLE)),  &
+                       Input('gamma0', &
+                              "Pre-existing accumulated slip over all slip systems", &
+                              INPUT_REAL, &
+                              lower_bound = serialize(0._C_DOUBLE)), &
+                       Input('n', &
+                             "Hardening exponent", &
+                             INPUT_REAL, &
+                             lower_bound = serialize(0._C_DOUBLE))]
+        desc%model_state = [desc%model_state, &
+                            StateDescriptor("k", &
+                                            "Scaling factor", &
+                                            TYPE_REAL), &
+                            StateDescriptor("gammma_0", &
+                                            "Pre-existing accumulated slip over all slip systems", &
+                                            TYPE_REAL), &
+                            StateDescriptor("n", &
+                                            "Hardening exponent", &
+                                            TYPE_REAL)]
+        desc%element_state = [desc%element_state, &
+                              StateDescriptor("Total slip", &
+                                              "Sum of total slip across all slip systems", &
+                                              TYPE_REAL)]
 
-        name = "Swift"
-    end function
-
-    pure function swift_get_description() result(description)
-        character(:), allocatable:: description
-
-        description = "Swift hardening model."
-    end function
-
-    pure function swift_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        allocate(signature(3), source=INPUT_REAL)
-    end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    function swift_get_input() result(inputs)
-        type(Input), allocatable:: inputs(:)    !! - **crss0**: Initial critical resoved shear stress
-                                                    !! - **gamma0**: Initial sum of slip across all slip systems
-                                                    !! - **n**: Hardening exponent
-
-        inputs = [Input('crss0', type=INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)),  &
-                  Input('gamma0', type=INPUT_REAL, lower_bound = serialize(0._C_DOUBLE)), &
-                  Input('n', type=INPUT_REAL, lower_bound = serialize(0._C_DOUBLE))]
     end function
 
     !> See [[ConstitutiveModel:init]]
     subroutine swift_init(this, miller_indices, params)
-        class(ConstitutiveModelSwift), intent(out):: this
+        class(ConstitutiveModelSwift), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 
@@ -140,7 +143,7 @@ contains
     end function
 
     subroutine swift_deserialize(this, params)
-        class(ConstitutiveModelSwift), target, intent(out):: this
+        class(ConstitutiveModelSwift), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset

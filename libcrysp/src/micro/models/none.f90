@@ -15,23 +15,19 @@ module none
     !> @Brief Hardening model representing no hardening.
     type, extends(ConstitutiveModel):: ConstitutiveModelNone
     contains
-        procedure, nopass:: get_name        => none_get_name
-        procedure, nopass:: get_description => none_get_description
+        procedure:: describe => none_describe
         procedure:: init_hardening_state    => none_init_hardening_state
     end type
 
 contains
 
-    pure function none_get_name() result(name)
-        character(:), allocatable:: name
+    function none_describe(this) result(desc)
+        class(ConstitutiveModelNone), intent(in):: this
+        type(ModelDescriptor):: desc
 
-        name = "No Hardening"
-    end function
-
-    pure function none_get_description() result(description)
-        character(:), allocatable:: description
-
-        description = "Critical resolved shear stress on all slip systems is kept constant at 1."
+        desc = this%ConstitutiveModel%describe()
+        desc%name = "No hardening"
+        desc%description = "Critical resolved shear stress on all slip systems is kept constant at 1."
     end function
 
     subroutine none_init_hardening_state(this, state)

@@ -34,7 +34,6 @@ module crysp_input
         character(:), allocatable:: description                !! Description of the parameter
         integer:: type                                         !! Type of the parameter. Must exist in enum list at the
                                                                !! top of this module
-        logical:: optional = .false.                           !! Indicate if the parameter is optional
         type(Parameter):: lower_bound = Parameter(C_NULL_PTR)  !! Lower bound. May be a numerical value or the name of another parameter.
         logical:: lower_bound_inclusive = .false.              !! Ignored if lower_bound is unset
         type(Parameter):: upper_bound = Parameter(C_NULL_PTR)  !! Upper bound. May be a numerical value or the name of another parameter.

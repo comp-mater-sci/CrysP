@@ -64,7 +64,7 @@ contains
     end function
 
     subroutine isotropic_state_deserialize(this, params)
-        class(IsotropicState), target, intent(out):: this
+        class(IsotropicState), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         call this%HardeningState%deserialize(params)

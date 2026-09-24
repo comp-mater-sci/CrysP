@@ -16,6 +16,7 @@ module micro
     use crysp_status
     use constitutive_model
     use crysp_grain
+    use crysp_model
 
     implicit none
 
@@ -169,21 +170,25 @@ contains
 
     module procedure micro_get_signature
         class(ConstitutiveModel), allocatable:: dummy_instance
+        type(ModelDescriptor):: desc
 
         stat = micro_get_model(model_id, dummy_instance)
         if (failed(stat)) return
 
-        signature = dummy_instance%get_signature()
+        desc = dummy_instance%describe()
+        signature = desc%inputs%type
     end procedure
 
     !> See interface documentation
     module procedure micro_get_input
         class(ConstitutiveModel), allocatable:: dummy_instance
+        type(ModelDescriptor):: desc
 
         stat = micro_get_model(model_id, dummy_instance)
         if (failed(stat)) return
 
-        inputs = dummy_instance%get_input()
+        desc = dummy_instance%describe()
+        inputs = desc%inputs
     end procedure
 
     !> See interface documentation
@@ -194,6 +199,7 @@ contains
         integer, allocatable:: miller_indices(:,:,:)
         class(HardeningState), allocatable:: initial_state
         type(Phase), pointer:: phase_ptr
+        type(ModelDescriptor):: desc
 
 
         !First determine the total number of grains so we  can allocate the return array.
@@ -210,10 +216,9 @@ contains
             stat = get_miller_indices(deformation_mechanisms(i), miller_indices)
             if (failed(stat)) return
 
-            n_params = size(phase_ptr%model%get_signature())
+            desc = phase_ptr%model%describe()
+            n_params = size(desc%inputs)
             call phases(i)%model%init(miller_indices, hardening_parameters(offset_params+1:offset_params+n_params))
-            !Every model's init takes `this` as intent(out) and therefore clears the ID stamped by micro_get_model.
-            phases(i)%model%id = hardening_model_ids(i)
             offset_params = offset_params + n_params
             initial_state = phases(i)%model%make_hardening_state()
 

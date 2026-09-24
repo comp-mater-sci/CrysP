@@ -130,7 +130,7 @@ contains
     !> The model IDs embedded in the list originate from whatever the caller handed back, so an unknown one is reported rather than
     !> fatal.
     subroutine material_deserialize(this, params)
-        class(Material), target, intent(out):: this
+        class(Material), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: i, &
@@ -154,6 +154,7 @@ contains
         !Phases
         n_phases = params(offset+1)
         offset = offset + 1
+        if (allocated(this%phases)) deallocate(this%phases)
         allocate(this%phases(n_phases))
         do i=1,n_phases
             model_id = params(offset+1)
@@ -168,6 +169,7 @@ contains
         !Clusters
         n_clusters = params(offset+1)
         offset = offset + 1
+        if (allocated(this%clusters)) deallocate(this%clusters)
         allocate(this%clusters(n_clusters), mold=this%meso_model%make_cluster())
         do i=1,n_clusters
             call this%clusters(i)%deserialize(params(offset+1:), this%phases)

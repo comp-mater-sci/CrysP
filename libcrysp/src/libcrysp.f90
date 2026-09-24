@@ -73,7 +73,7 @@ module libcrysp
     type, bind(C):: ModelDescriptorCompat
         integer(C_INT):: id                                   !! ID identifying this model in the call it was obtained from.
         character(kind=C_CHAR), dimension(NAME_LEN):: name    !! Short name of the model. NUL-terminated.
-        character(kind=C_CHAR), dimension(DESCRIPTION_LEN):: description !! What the model does. NUL-terminated.
+        character(kind=C_CHAR), dimension(DESC_LEN):: description !! What the model does. NUL-terminated.
         integer(C_INT):: n_inputs                             !! Number of consecutive inputs belonging to this model.
     end type
 
@@ -94,7 +94,7 @@ contains
                   n_models
         integer, dimension(:), allocatable:: ids
         class(MesoModel), allocatable:: model
-        type(Input), dimension(:), allocatable:: model_inputs
+        type(ModelDescriptor):: desc
 
         ids = meso_get_model_ids()
         n_models = size(ids)
@@ -106,14 +106,14 @@ contains
             stat = meso_get_model(ids(i), model)
             if (failed(stat)) return
 
-            !Count and data must come from the same call: get_signature() describes the serialized parameters, not the inputs.
-            model_inputs = model%get_input()
+            !Count and data must come from the same descriptor, so that n_inputs always matches what was appended.
+            desc = model%describe()
 
-            model_descs(i) = ModelDescriptorCompat(int(ids(i), C_INT), &
-                                                   to_c_string(model%get_name(), NAME_LEN), &
-                                                   !to_c_string(model%get_description(), DESCRIPTION_LEN), &
-                                                   int(size(model_inputs), C_INT))
-            inputs = [inputs, model_inputs]
+            model_descs(i) = ModelDescriptorCompat(int(desc%id, C_INT), &
+                                                   to_c_string(desc%name, NAME_LEN), &
+                                                   to_c_string(desc%description, DESC_LEN), &
+                                                   int(size(desc%inputs), C_INT))
+            inputs = [inputs, desc%inputs]
         end do
     end function
 
@@ -132,7 +132,7 @@ contains
                   n_models
         integer, dimension(:), allocatable:: ids
         class(ConstitutiveModel), allocatable:: model
-        type(Input), dimension(:), allocatable:: model_inputs
+        type(ModelDescriptor):: desc
 
         ids = micro_get_model_ids()
         n_models = size(ids)
@@ -144,14 +144,14 @@ contains
             stat = micro_get_model(ids(i), model)
             if (failed(stat)) return
 
-            !Count and data must come from the same call: get_signature() describes the serialized parameters, not the inputs.
-            model_inputs = model%get_input()
+            !Count and data must come from the same descriptor, so that n_inputs always matches what was appended.
+            desc = model%describe()
 
-            model_descs(i) = ModelDescriptorCompat(int(ids(i), C_INT), &
-                                                   to_c_string(model%get_name(), NAME_LEN), &
-                                                   !to_c_string(model%get_description(), DESCRIPTION_LEN), &
-                                                   int(size(model_inputs), C_INT))
-            inputs = [inputs, model_inputs]
+            model_descs(i) = ModelDescriptorCompat(int(desc%id, C_INT), &
+                                                   to_c_string(desc%name, NAME_LEN), &
+                                                   to_c_string(desc%description, DESC_LEN), &
+                                                   int(size(desc%inputs), C_INT))
+            inputs = [inputs, desc%inputs]
         end do
     end function
 

@@ -12,6 +12,7 @@ module full_constraints_taylor
     use micro
     use simplex
     use crysp_meso_model
+    use crysp_model
     use crysp_serialization
     use crysp_input
 
@@ -38,8 +39,7 @@ module full_constraints_taylor
     !> Model for full constraints Taylor simulations.
     type, extends(MesoModel):: TaylorModel
     contains
-        procedure, nopass:: get_name => fctaylor_get_name
-        procedure, nopass:: get_description => fctaylor_get_description
+        procedure:: describe => fctaylor_describe
         procedure, nopass:: make_cluster => fctaylor_make_cluster
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
@@ -49,16 +49,14 @@ module full_constraints_taylor
 
 contains
 
-    pure function fctaylor_get_name() result(name)
-        character(:), allocatable:: name
+    !> The model takes no inputs and carries no state of its own, so it only names itself.
+    function fctaylor_describe(this) result(desc)
+        class(TaylorModel), intent(in):: this
+        type(ModelDescriptor):: desc
 
-        name = "Full-Constraints Taylor"
-    end function
-
-    pure function fctaylor_get_description() result(description)
-        character(:), allocatable:: description
-
-        description = "Each grain is forced to deform exactly like the material as a whole."
+        desc = this%MesoModel%Model%describe()
+        desc%name = "Full-Constraints Taylor"
+        desc%description = "Each grain is forced to deform exactly like the material as a whole."
     end function
 
     function fctaylor_make_cluster() result(clstr)

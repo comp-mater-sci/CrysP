@@ -71,7 +71,7 @@ contains
     !>
     !> Initializes taylor and spin coefficients and allocates memory for the CRSS.
     subroutine cm_init(this, miller_indices, params)
-        class(ConstitutiveModel), intent(out):: this
+        class(ConstitutiveModel), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices              !! Miller indices of all the slip systems.
         !> The params argument is assumed-shape because gfortran cannot statically resolve a call to the type-bound
         !> procedure get_signature() inside an array-specifier when the call is dynamically dispatched on a polymorphic object.
@@ -84,6 +84,10 @@ contains
 
         n_systems = size(miller_indices, 3)
 
+        !`this` is intent(inout) so that init preserves the ID stamped by the factory; the components it rebuilds must
+        !therefore be released explicitly rather than by the intent(out) that used to do it.
+        if (allocated(this%taylor_coeffs)) deallocate(this%taylor_coeffs)
+        if (allocated(this%spin_coeffs)) deallocate(this%spin_coeffs)
         allocate(this%taylor_coeffs(5, n_systems))
         allocate(this%spin_coeffs(3, n_systems))
 
@@ -124,45 +128,36 @@ contains
         class(ConstitutiveModel), intent(in):: this
         integer:: size
 
-        size = this%Model%size() + 3
+        size = 3
     end function
 
     function cm_serialize(this) result(params)
         class(ConstitutiveModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
-        integer:: offset
-        type(Parameter), dimension(:), allocatable:: base
-
         allocate(params(this%size()))
 
-        base = this%Model%serialize()
-        offset = size(base)
-        params(:offset) = base
-
         !Assigned one by one: an array constructor of serialize() results yields a duplicated element with IFX as of 2026.1.1.19
-        params(offset+1) = this%taylor_coeffs
-        params(offset+2) = this%spin_coeffs
-        params(offset+3) = this%basis
+        params(1) = this%taylor_coeffs
+        params(2) = this%spin_coeffs
+        params(3) = this%basis
     end function
 
     subroutine cm_deserialize(this, params)
-        class(ConstitutiveModel), target, intent(out):: this
+        class(ConstitutiveModel), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        integer:: offset
         integer(C_INT), dimension(2):: s
 
-        call this%Model%deserialize(params)
-        offset = this%Model%size()
-
-        call shape_of(params(offset+1), s)
+        call shape_of(params(1), s)
+        if (allocated(this%taylor_coeffs)) deallocate(this%taylor_coeffs)
         allocate(this%taylor_coeffs(s(1), s(2)))
-        this%taylor_coeffs = params(offset+1)
-        call shape_of(params(offset+2), s)
+        this%taylor_coeffs = params(1)
+        call shape_of(params(2), s)
+        if (allocated(this%spin_coeffs)) deallocate(this%spin_coeffs)
         allocate(this%spin_coeffs(s(1), s(2)))
-        this%spin_coeffs = params(offset+2)
-        this%basis = params(offset+3)
+        this%spin_coeffs = params(2)
+        this%basis = params(3)
     end subroutine
 
     pure function hs_size(this) result(size)
@@ -182,22 +177,36 @@ contains
     end function
 
     subroutine hs_deserialize(this, params)
-        class(HardeningState), target, intent(out):: this
+        class(HardeningState), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer(C_INT), dimension(2):: s
 
         call shape_of(params(1), s)
+        if (allocated(this%crss)) deallocate(this%crss)
         allocate(this%crss(s(1), s(2)))
         this%crss = params(1)
     end subroutine
 
-    function describe(this) result(desc)
+    function cm_describe(this) result(desc)
         class(ConstitutiveModel), intent(in):: this
         type(ModelDescriptor):: desc
 
         desc = this%Model%describe()
-        desc%element_state_fields = [StateDescriptor("Critical resolved shear stress", "Resolved shear stress at which yielding
-        occurs for each slip system, in both positive and negative directions.", TYPE_REAL_MATRIX)]
+        desc%model_state = [desc%model_state, &
+                            StateDescriptor("Taylor coefficients", &
+                                            "Normalized symmetric part of the schmidt matrix of the slip systems", &
+                                            TYPE_REAL_MATRIX), &
+                            StateDescriptor("Spin coefficients", &
+                                            "Normalized antisymmetric part of the schmidt matrix of the slip systems", &
+                                            TYPE_REAL_MATRIX), &
+                            StateDescriptor("Basis", &
+                                            "Indices of 5 arbitrary linearly independent columns in the taylor coefficient matrix.", &
+                                            TYPE_INT_ARRAY)]
+        desc%element_state = [desc%element_state, &
+                              StateDescriptor("Critical resolved shear stress", &
+                                              "Resolved shear stress at which yielding occurs for each slip system, &
+                                              &in both positive and negative directions.", &
+                                              TYPE_REAL_MATRIX)]
     end function
 end module

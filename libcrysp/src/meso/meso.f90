@@ -14,6 +14,7 @@ module meso
     use crysp_cluster
     use crysp_meso_model
     use crysp_grain
+    use crysp_model
     use crysp_serialization
     use crysp_input
     use crysp_status
@@ -119,12 +120,14 @@ contains
     !> See interface definition in meso module.
     module procedure meso_get_input
         class(MesoModel), allocatable:: m
+        type(ModelDescriptor):: desc
 
         !We must get an instance of the model if we want to exploit polymorphism in Fortran.
         stat = meso_get_model(model_id, m)
         if (failed(stat)) return
 
-        inputs = m%get_input()
+        desc = m%describe()
+        inputs = desc%inputs
     end procedure
 
     !> See interface definition in meso module.
