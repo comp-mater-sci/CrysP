@@ -6,7 +6,6 @@ module crysp_material
     use meso
     use micro
     use crysp_status
-    use iso_c_binding
 
     implicit none
 

@@ -1,5 +1,4 @@
 module crysp_parameters
-    use iso_c_binding
     use base_defs
     implicit none
 

@@ -1,6 +1,7 @@
 !> All conversions used in VEF.
 
 module conversions
+    use, intrinsic:: iso_c_binding, only: C_CHAR, C_NULL_CHAR
     use math_utils
 
     implicit none

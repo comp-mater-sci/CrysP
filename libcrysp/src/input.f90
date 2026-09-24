@@ -1,5 +1,4 @@
 module crysp_input
-    use iso_c_binding, only: C_NULL_PTR
     use crysp_serialization
 
     implicit none
@@ -34,10 +33,10 @@ module crysp_input
         character(:), allocatable:: description                !! Description of the parameter
         integer:: type                                         !! Type of the parameter. Must exist in enum list at the
                                                                !! top of this module
-        type(Parameter):: lower_bound = Parameter(C_NULL_PTR)  !! Lower bound. May be a numerical value or the name of another parameter.
+        type(Parameter):: lower_bound                          !! Lower bound. May be a numerical value or the name of another parameter.
         logical:: lower_bound_inclusive = .false.              !! Ignored if lower_bound is unset
-        type(Parameter):: upper_bound = Parameter(C_NULL_PTR)  !! Upper bound. May be a numerical value or the name of another parameter.
+        type(Parameter):: upper_bound                          !! Upper bound. May be a numerical value or the name of another parameter.
         logical:: upper_bound_inclusive = .false.              !! Ignored if upper_bound is unset
-        type(Parameter):: default_value = Parameter(C_NULL_PTR)!! Value to use when the caller supplies none.
+        type(Parameter):: default_value                        !! Value to use when the caller supplies none.
     end type
 end module
