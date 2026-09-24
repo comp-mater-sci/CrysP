@@ -3,6 +3,47 @@ module crysp_model
     use crysp_input
     implicit none
 
+    !> Interface implemented by every serializable type.
+    !>
+    !> @note
+    !> `serialize` returns an allocatable array rather than an explicit-shape result `dimension(this%size())`. With the latter,
+    !> the shape of the result is a specification expression that the *caller* evaluates, and IFX (as of 2026.1) evaluates
+    !> `this%size()` there using the declared rather than the dynamic type of `this`. A call through a polymorphic object then
+    !> yields an array of the parent type's size, silently truncating the state. Letting the callee allocate the result avoids any
+    !> dependence on how the compiler resolves the spec expression, and also avoids walking the state tree twice per call.
+    !> @endnote
+    type, abstract:: State
+    contains
+        procedure(state_get_size), deferred:: size
+        procedure(state_serialize), deferred:: serialize
+        procedure(state_deserialize), deferred:: deserialize
+    end type
+
+    abstract interface
+        pure function state_get_size(this) result(size)
+            import State
+
+            class(State), intent(in):: this
+            integer:: size
+        end function
+        function state_serialize(this) result(params)
+            import State
+            import Parameter
+
+            class(State), target, intent(in):: this
+            type(Parameter), dimension(:), allocatable:: params !! Allocated to this%size() by the callee.
+        end function
+        subroutine state_deserialize(this, params)
+            import State
+            import Parameter
+
+            class(State), target, intent(inout):: this
+            type(Parameter), dimension(:), intent(in):: params
+        end subroutine
+    end interface
+
+
+
     !> Base type for all models (micro-, meso- and macro-scopic).
     !>
     !> @note
