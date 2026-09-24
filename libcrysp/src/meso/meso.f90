@@ -32,16 +32,10 @@ module meso
         enumerator::  MESO_MODEL_ALAMEL         = 2 !! Advanced LAMEL model.
     end enum
 
-    interface
+    !> All supported mesoscopic models. Must list every enumerator above.
+    integer, dimension(*), parameter:: SUPPORTED_MESO_MODELS = [MESO_MODEL_FCTAYLOR, MESO_MODEL_ALAMEL]
 
-        !> Gets the parameters corresponding to a certain mesoscopic model
-        !>
-        !> The ID comes from the caller, so an unknown one is reported as `CRYSP_ERR_VAL` rather than terminating.
-        module function meso_get_input(model_id, inputs) result(stat)
-            integer, intent(in):: model_id                         !! ID of the model for which to return the parameters.
-            type(Input), dimension(:), allocatable, intent(out):: inputs !! The list of parameters for the specified model.
-            type(Status):: stat                                    !! `CRYSP_OK`, or `CRYSP_ERR_VAL` if the model ID is unknown.
-        end function
+    interface
 
         !> Initialize the mesoscopic level of the simulation.
         !>
@@ -74,10 +68,6 @@ module meso
             class(MesoModel), allocatable, intent(out):: model
             type(Status):: stat
         end function
-
-        module pure function meso_get_model_ids() result(ids)
-            integer, dimension(:), allocatable:: ids
-        end function
     end interface
 end module
 
@@ -95,11 +85,6 @@ submodule(meso) meso_imp
 
 contains
 
-    !> Return a list of IDs of all the supported mesoscopic models
-    module procedure meso_get_model_ids
-        ids = [MESO_MODEL_FCTAYLOR, MESO_MODEL_ALAMEL]
-    end procedure
-
     !> Returns an instance of a mesoscopic model with the provided ID.
     !>
     !> Avoids duplication of the hard-coded link between model IDs and their types.
@@ -115,19 +100,6 @@ contains
         end select
 
         model%id = id
-    end procedure
-
-    !> See interface definition in meso module.
-    module procedure meso_get_input
-        class(MesoModel), allocatable:: m
-        type(ModelDescriptor):: desc
-
-        !We must get an instance of the model if we want to exploit polymorphism in Fortran.
-        stat = meso_get_model(model_id, m)
-        if (failed(stat)) return
-
-        desc = m%describe()
-        inputs = desc%inputs
     end procedure
 
     !> See interface definition in meso module.

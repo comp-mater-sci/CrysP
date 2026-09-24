@@ -90,20 +90,15 @@ contains
         type(Input), dimension(:), allocatable, intent(out):: inputs                !! Inputs of all models, concatenated.
         type(Status):: stat                                                         !! Return status. Should always be OK
 
-        integer:: i, &
-                  n_models
-        integer, dimension(:), allocatable:: ids
+        integer:: i
         class(MesoModel), allocatable:: model
         type(ModelDescriptor):: desc
 
-        ids = meso_get_model_ids()
-        n_models = size(ids)
-
-        allocate(model_descs(n_models))
+        allocate(model_descs(size(SUPPORTED_MESO_MODELS)))
         allocate(inputs(0))
 
-        do i = 1, n_models
-            stat = meso_get_model(ids(i), model)
+        do i = 1, size(SUPPORTED_MESO_MODELS)
+            stat = meso_get_model(SUPPORTED_MESO_MODELS(i), model)
             if (failed(stat)) return
 
             !Count and data must come from the same descriptor, so that n_inputs always matches what was appended.
@@ -128,20 +123,15 @@ contains
         type(Input), dimension(:), allocatable, intent(out):: inputs                !! Inputs of all models, concatenated.
         type(Status):: stat                                                         !! Return status. Should always be OK
 
-        integer:: i, &
-                  n_models
-        integer, dimension(:), allocatable:: ids
+        integer:: i
         class(ConstitutiveModel), allocatable:: model
         type(ModelDescriptor):: desc
 
-        ids = micro_get_model_ids()
-        n_models = size(ids)
-
-        allocate(model_descs(n_models))
+        allocate(model_descs(size(SUPPORTED_HARDENING_MODELS)))
         allocate(inputs(0))
 
-        do i = 1, n_models
-            stat = micro_get_model(ids(i), model)
+        do i = 1, size(SUPPORTED_HARDENING_MODELS)
+            stat = micro_get_model(SUPPORTED_HARDENING_MODELS(i), model)
             if (failed(stat)) return
 
             !Count and data must come from the same descriptor, so that n_inputs always matches what was appended.

@@ -23,12 +23,13 @@ program test_material_roundtrip
                         StrainIncrementData
     use crysp_status, only: Status, failed
     use conversions, only: from_c_string
-    use micro, only: micro_get_signature, &
+    use micro, only: micro_get_model, ConstitutiveModel, &
                      HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, HARDENING_SWIFT, &
                      HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP, &
                      SLIP_SYSTEMS_FCC, SLIP_SYSTEMS_BCC24, SLIP_SYSTEMS_BCC48
     use meso, only: MESO_MODEL_ALAMEL, MESO_MODEL_FCTAYLOR
     use crysp_material, only: TexturePoint
+    use crysp_model, only: ModelDescriptor
     use crysp_serialization
     use testing
 
@@ -213,7 +214,9 @@ contains
         real(DP), dimension(2, 2):: boundaries
         character(8):: id_str
         integer:: i, j, offset, n_params
-        integer, dimension(:), allocatable:: signature
+        integer, dimension(size(MODEL_IDS)):: n_inputs
+        class(ConstitutiveModel), allocatable:: model
+        type(ModelDescriptor):: desc
         type(Status):: stat
 
         !Flatten the per-phase input data. The orientations are grouped per phase, in phase order, matching the grain ordering
@@ -224,20 +227,22 @@ contains
         orientations = reshape(deg_to_rad(ORIENTATIONS_DEG), [3, GRAINS_PER_PHASE*size(MODEL_IDS)])
 
         !Concatenate the hardening parameters of all phases, in phase order.
-        n_params = 0
+        n_inputs = 0
         do i = 1, size(MODEL_IDS)
-            stat = micro_get_signature(MODEL_IDS(i), signature)
-            call check_ok(stat, 'test setup: signature lookup')
-            n_params = n_params + size(signature)
+            write(id_str, '(I0)') MODEL_IDS(i)
+            stat = micro_get_model(MODEL_IDS(i), model)
+            call check_ok(stat, 'test setup: model lookup for model ' // trim(id_str))
+            if (failed(stat)) cycle
+            desc = model%describe()
+            n_inputs(i) = size(desc%inputs)
         end do
+        n_params = sum(n_inputs)
         allocate(hardening_params(n_params))
         offset = 0
         do i = 1, size(MODEL_IDS)
             values = model_parameters(MODEL_IDS(i))
             write(id_str, '(I0)') MODEL_IDS(i)
-            stat = micro_get_signature(MODEL_IDS(i), signature)
-            call check_ok(stat, 'test setup: signature lookup for model ' // trim(id_str))
-            call check_equal(size(values), size(signature), &
+            call check_equal(size(values), n_inputs(i), &
                              'test setup: parameter count for constitutive model ' // trim(id_str))
             do j = 1, size(values)
                 offset = offset + 1

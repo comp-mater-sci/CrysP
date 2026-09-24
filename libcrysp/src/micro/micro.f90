@@ -38,6 +38,11 @@ module micro
         enumerator:: HARDENING_DSH_LOOP         = 13 !! Variant of DSH hardening using loop dislocations.
     end enum
 
+    !> All supported hardening models. Must list every enumerator above.
+    integer, dimension(*), parameter:: SUPPORTED_HARDENING_MODELS = [HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, &
+                                                                     HARDENING_SWIFT, HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, &
+                                                                     HARDENING_DSH_LOOP]
+
     !> Supported deformation mechanisms (i.e. slip system sets).
     enum, bind(C)
         enumerator:: SLIP_SYSTEMS_FCC   !! Face-Centered Cubic.
@@ -46,22 +51,6 @@ module micro
     end enum
 
     interface
-        module function micro_get_signature(model_id, signature) result(stat)
-            integer, intent(in):: model_id
-            integer, dimension(:), allocatable, intent(out):: signature
-            type(Status):: stat
-        end function
-
-        !> Returns the parameter list for a particular hardening model.
-        !>
-        !> The parameters are used to initialize the hardening model.
-        !> The ID comes from the caller, so an unknown one is reported as `CRYSP_ERR_TYPE` rather than terminating.
-        module function micro_get_input(model_id, inputs) result(stat)
-            integer, intent(in)::                model_id  !! ID of the hardening model. Must exist in the list above.
-            type(Input), allocatable, intent(out):: inputs(:) !! List of parameters for the hardening model corresponding to the provided ID.
-            type(Status):: stat                            !! `CRYSP_OK`, or `CRYSP_ERR_TYPE` if the model ID is unknown.
-        end function
-
         !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
         !>
         !> For each provided phase descriptor, a constitutive model is initialized. For each of the orientations in each of
@@ -84,11 +73,6 @@ module micro
             class(ConstitutiveModel), allocatable, intent(out):: model
             type(Status):: stat
         end function
-        !> Return a list of IDs of all the supported hardening models.
-        module pure function micro_get_model_ids() result(ids)
-            integer, dimension(:), allocatable:: ids !! List of supported hardening model IDs.
-        end function
-
     end interface
 end module
 
@@ -110,12 +94,6 @@ submodule(micro) micro_imp
     character(*), parameter:: MOD_NAME = 'micro'             !! Module name. Simplifies logging.
 
 contains
-
-    !> Return a list of IDs of all the supported hardening models.
-    module procedure micro_get_model_ids
-        ids = [HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, HARDENING_SWIFT, &
-               HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP]
-    end procedure
 
     !> Retrieve an unitialized instance of a given hardening model.
     !>
@@ -167,29 +145,6 @@ contains
                 stat = fail(MOD_NAME, 'get_miller_indices', CRYSP_ERR_VAL, 'Invalid slip system set: ' // int_to_str(deformation_mechanism))
         end select
     end function
-
-    module procedure micro_get_signature
-        class(ConstitutiveModel), allocatable:: dummy_instance
-        type(ModelDescriptor):: desc
-
-        stat = micro_get_model(model_id, dummy_instance)
-        if (failed(stat)) return
-
-        desc = dummy_instance%describe()
-        signature = desc%inputs%type
-    end procedure
-
-    !> See interface documentation
-    module procedure micro_get_input
-        class(ConstitutiveModel), allocatable:: dummy_instance
-        type(ModelDescriptor):: desc
-
-        stat = micro_get_model(model_id, dummy_instance)
-        if (failed(stat)) return
-
-        desc = dummy_instance%describe()
-        inputs = desc%inputs
-    end procedure
 
     !> See interface documentation
     module procedure micro_init
