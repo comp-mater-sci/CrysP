@@ -43,15 +43,15 @@ contains
         desc%inputs = [Input('crss0', &
                              "Critical resolved shear stress on all slip systems in undeformed state.", &
                              INPUT_REAL, &
-                             lower_bound = serialize(0._C_DOUBLE)),  &
+                             lower_bound = serialize(0._DP)),  &
                        Input('gamma0', &
                               "Pre-existing accumulated slip over all slip systems", &
                               INPUT_REAL, &
-                              lower_bound = serialize(0._C_DOUBLE)), &
+                              lower_bound = serialize(0._DP)), &
                        Input('n', &
                              "Hardening exponent", &
                              INPUT_REAL, &
-                             lower_bound = serialize(0._C_DOUBLE))]
+                             lower_bound = serialize(0._DP))]
         desc%model_state = [desc%model_state, &
                             StateDescriptor("k", &
                                             "Scaling factor", &

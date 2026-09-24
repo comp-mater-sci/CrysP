@@ -49,7 +49,7 @@ contains
         desc%inputs = [Input("Initial CRSS", &
                              "Critical resolved shear stress on all slip systems before deformation", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
+                             lower_bound=serialize(0._DP), &
                              upper_bound=serialize("TIIIS")), &
                        Input("Stage 1 saturation CRSS", &
                              "Maximum critical resolved shear stress on the slip systems in the first hardening stage.", &
@@ -66,7 +66,7 @@ contains
                        Input('Transition hardening rate', &
                              "Hardening rate at which to transition between stage 1 and stage 2.", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
+                             lower_bound=serialize(0._DP), &
                              upper_bound=serialize("THIII1"))]
        desc%model_state = [desc%model_state, &
                            StateDescriptor("Transition slip", &

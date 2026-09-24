@@ -44,7 +44,7 @@ contains
         desc%inputs = [Input('tau_0', &
                             "Initial critical resolved shear stress on all slip systems", &
                             INPUT_REAL, &
-                            lower_bound=serialize(0._C_DOUBLE)),   &
+                            lower_bound=serialize(0._DP)),   &
                        Input('tau_sat', &
                              "Maximum critical resolved shear stress on all slip systems", &
                              INPUT_REAL, &

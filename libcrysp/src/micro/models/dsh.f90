@@ -106,83 +106,83 @@ contains
         desc%inputs = [Input('b', &
                              "Magnitude of the Burgers vector [m]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E-8_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E-8_DP)), &
                        Input('G', &
                              "Shear modulus [MPa]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(1.E4_C_DOUBLE), &
-                             upper_bound=serialize(5.E5_C_DOUBLE)), &
+                             lower_bound=serialize(1.E4_DP), &
+                             upper_bound=serialize(5.E5_DP)), &
                        Input('alfa', &
                              "Dislocation interaction parameter", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(5._C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(5._DP)), &
                        Input('f', &
                              "Volume fraction of cell block boundaries", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1._C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1._DP)), &
                        Input('tau0', &
                              "Initial critical resolved shear stress on all slip systems [MPa]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E4_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E4_DP)), &
                        Input('I', &
                              "Immobilization coefficient of cell boundaries", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(10._C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(10._DP)), &
                        Input('R', &
                              "Recovery coefficient of cell boundaries [m]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(10._C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(10._DP)), &
                        Input('Iwd', &
                              "Immobilization coefficient of cell block boundaries", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(10._C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(10._DP)), &
                        Input('Rwd', &
                              "Recovery coefficient of cell block boundaries [m]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E-6_DP)), &
                        Input('Rncg', &
                              "Recovery coefficient of old cell block boundaries and their polarity [m]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E-6_DP)), &
                        Input('beta1', &
                              "1st coefficient of micro shear band cut-through of old cell block boundaries", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E-6_DP)), &
                        Input('beta2', &
                              "2nd coefficient of micro shear band cut-through of old cell block boundaries", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E-6_DP)), &
                        Input('Iwp', &
                              "Immobilization coefficient of the polarity of cell block boundaries", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E-6_DP)), &
                        Input('Rwp', &
                              "Recovery coefficient of the polarity of cell block boundaries [m]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(1.E-6_DP)), &
                        Input('Rrev', &
                              "Recovery coefficient of cell block boundary polarity during Bauschinger [m]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(100._C_DOUBLE)), &
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(100._DP)), &
                        Input('R2', &
                              "Recovery coefficient of cell boundaries due to reversal polarity flux [m]", &
                              INPUT_REAL, &
-                             lower_bound=serialize(0._C_DOUBLE), &
-                             upper_bound=serialize(100._C_DOUBLE))]
+                             lower_bound=serialize(0._DP), &
+                             upper_bound=serialize(100._DP))]
 
         !Mirrors dsh_serialize, in the same order.
         desc%model_state = [desc%model_state, &
