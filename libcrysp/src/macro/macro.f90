@@ -1,6 +1,6 @@
 !> Top-level module of the macro layer
 !>
-!> Assimilates all the logic from the underlying layers and performs operattions on the mat as a whole.
+!> Assimilates all the logic from the underlying layers and performs operattions on the material as a whole.
 !> @note
 !> This module can be seen as the Fortran interface of libcrysp. If you wish to embed libcrysp into another Fortran project, it may
 !> be more convenient to compile libcrysp without the top-level libcrysp module and interface with the library through this module.

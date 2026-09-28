@@ -1,7 +1,7 @@
-!> Top-level AlTay Module
+!> Top-level libCrysP Module
 !>
 !> Provides inerface to callers and formats data to be used in underlying modules.
-!> Only module in AlTay where all procedures are guaranteed to sanitize their input.
+!> Only module in libCrysP where all procedures are guaranteed to sanitize their input.
 module libcrysp
     use iso_c_binding
     use base_defs
@@ -23,10 +23,10 @@ module libcrysp
 
 contains
 
-    !> Initialize a new mat state.
+    !> Initialize a new material state.
     !>
     !> Initializes all data structures associated to a meterial state and assembles them into a Material object.
-    !> An initialized Material object is needed for all other calls to AlTay
+    !> An initialized Material object is needed for all other calls to libCrysP
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
     subroutine crysp_new_material(meso_model_id, meso_params, phase_descriptors, mat)
         integer, intent(in):: meso_model_id
@@ -40,7 +40,7 @@ contains
         call meso_init(meso_model_id, grains_, meso_params, mat%meso_model, mat%clusters)
     end subroutine
 
-    !> Run the AlTay for the set of steps
+    !> Apply a strain-driven deformation to a material
     subroutine crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)
         type(Material), target, intent(inout):: mat
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
@@ -57,6 +57,7 @@ contains
         call macro_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments)
     end subroutine
 
+    !> Apply a stress-driven deformtation to a material.
     subroutine crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments)
         type(Material), target, intent(inout):: mat
         real(DP), dimension(5), intent(in):: target_stress_mode

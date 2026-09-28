@@ -25,7 +25,7 @@ contains
     !> Convert a generic HardeningState to a pointer to a IsotropicState object
     !>
     !> Closest Fortran comes to type casting
-    !> If the provided state is not of type swift_state, the program crashes.
+    !> If the provided state is not of type IsotropicState, the program crashes.
     function to_isotropic_state(state) result(isotropic_state_ptr)
         class(HardeningState), target, intent(in):: state   !! HardeningState to be converted.
         type(IsotropicState), pointer:: isotropic_state_ptr !! Pointer of type IsotropicState to the HardeningState

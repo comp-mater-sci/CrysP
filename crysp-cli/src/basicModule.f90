@@ -34,7 +34,7 @@ module dmcBasicModule
 
 contains
 
-    !> read output and AlTay configuration sections
+    !> General intialization shared between all modules.
     subroutine BasicModule_initialize(this, cnfunit)
         class(BasicModule), intent(inout):: this
         integer, intent(in):: cnfunit
