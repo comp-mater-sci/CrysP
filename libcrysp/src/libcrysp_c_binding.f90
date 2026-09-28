@@ -17,37 +17,6 @@ module libcrysp_c_binding
              crysp_simulate_stress_mode_c, &
              crysp_simulate_strain_mode_c
 
-    !> C-compatible counterpart of [[crysp_status:Status]], returned by value by every entry point below.
-    !>
-    !> `code` is `CRYSP_OK` on success. The three buffers are NUL-terminated C strings, truncated to fit, and all-NUL when `code` is
-    !> `CRYSP_OK`.
-    !>
-    !> @note
-    !> Returned by value, so keep it small.
-    !> @endnote
-    type, bind(C):: Status_C
-        integer(C_INT)::         code                = CRYSP_OK    !! One of the status codes in [[crysp_status]].
-        character(kind=C_CHAR):: mod_name(NAME_LEN)  = C_NULL_CHAR !! Module in which the failure was raised.
-        character(kind=C_CHAR):: proc_name(NAME_LEN) = C_NULL_CHAR !! Routine in which the failure was raised.
-        character(kind=C_CHAR):: message(MSG_LEN)    = C_NULL_CHAR !! Human-readable description of the failure.
-    end type
-
-    !> C-compatible counterpart of [[crysp_parameters:Parameter]].
-    !>
-    !> `data` points to the elements in column-major order: `extents(1)*extents(2)` values of `int` (`TYPE_INTEGER`) or `double`
-    !> (`TYPE_REAL`). Scalars have extents (1,1), arrays (n,1) and matrices (m,n). A string (`TYPE_STRING`, rank 0) is
-    !> `extents(1)` characters. A parameter that was never set has rank -1 and a null `data`, as does any parameter without
-    !> elements.
-    !>
-    !> A `Parameter_C` produced by libCrysP owns its `data`, malloc'ed so that C can release it with `free()`. Strings produced by
-    !> libCrysP are NUL-terminated for convenience, but the terminator is not counted in `extents` and is not required on input.
-    !> Converting from C copies the data, so the C caller keeps ownership of what it passed in.
-    type, bind(C):: Parameter_C
-        integer(C_INT):: type
-        integer(C_INT):: rank
-        integer(C_INT), dimension(2):: extents !! A pointer allocated and freed based on the value of rank would be more idiomatic but is not worth the malloc/free overhead.
-        type(C_PTR):: data
-    end type
 
     type, bind(C):: StrainIncrement_C
         real(C_DOUBLE):: duration
@@ -100,18 +69,10 @@ module libcrysp_c_binding
         type(C_PTR):: element_state
     end type
 
-    interface
-        !> Lists referenced through a `C_PTR` are malloc'ed, so that C can release them with `free()`.
-        function malloc(size) bind(C, name='malloc') result(ptr)
-            import C_SIZE_T, C_PTR
-            integer(C_SIZE_T), value:: size
-            type(C_PTR):: ptr
-        end function
-    end interface
-
-    interface assignment(=)
-        module procedure parameter_to_c, parameter_from_c
-    end interface
+    type, bind(C):: ModelData_C
+        integer(C_INT):: id
+        type(C_PTR):: parameters
+    end type
 
 contains
 
@@ -122,7 +83,7 @@ contains
 
         type(ModelDescriptor), dimension(:), allocatable:: model_descs_
 
-        stat = status_to_c(crysp_get_meso_models(model_descs_))
+        stat = crysp_get_meso_models(model_descs_)
         if (stat%code /= CRYSP_OK) return
 
         model_descs = to_model_descriptor_c(model_descs_)
@@ -135,7 +96,7 @@ contains
 
         type(ModelDescriptor), dimension(:), allocatable:: model_descs_
 
-        stat = status_to_c(crysp_get_micro_models(model_descs_))
+        stat = crysp_get_micro_models(model_descs_)
         if (stat%code /= CRYSP_OK) return
 
         model_descs = to_model_descriptor_c(model_descs_)
@@ -160,9 +121,9 @@ contains
         type(MaterialHandle), intent(out):: mat
         type(Status_C):: stat
 
-        stat = status_to_c(crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, &
-                                              parameters_from_c(hardening_params), meso_model_id, &
-                                              parameters_from_c(meso_params), mat))
+        stat = crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, &
+                                  parameters_from_c(hardening_params), meso_model_id, &
+                                  parameters_from_c(meso_params), mat)
     end function
 
     !> C binding of [[libcrysp:crysp_destroy_material]].
@@ -181,7 +142,7 @@ contains
         integer:: i
         type(Parameter), dimension(:), allocatable:: params_
 
-        stat = status_to_c(crysp_serialize_material(mat, params_))
+        stat = crysp_serialize_material(mat, params_)
         if (stat%code /= CRYSP_OK) return
 
         allocate(params(size(params_)))
@@ -196,7 +157,7 @@ contains
         type(MaterialHandle), intent(out):: mat
         type(Status_C):: stat
 
-        stat = status_to_c(crysp_deserialize_material(parameters_from_c(params), mat))
+        stat = crysp_deserialize_material(parameters_from_c(params), mat)
     end function
 
     !> C binding of [[libcrysp:crysp_get_texture]].
@@ -205,7 +166,7 @@ contains
         type(TexturePoint), dimension(:), allocatable, intent(out):: texture
         type(Status_C):: stat
 
-        stat = status_to_c(crysp_get_texture(mat, texture))
+        stat = crysp_get_texture(mat, texture)
     end function
 
     !> C binding of [[libcrysp:crysp_strain_driven_deformation]].
@@ -218,7 +179,7 @@ contains
         type(TexturePoint), dimension(:,:), allocatable, intent(out):: textures
         type(Status_C):: stat
 
-        stat = status_to_c(crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments, textures))
+        stat = crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments, textures)
     end function
 
     !> C binding of [[libcrysp:crysp_stress_driven_deformation]].
@@ -232,8 +193,8 @@ contains
         type(TexturePoint), dimension(:,:), allocatable, intent(out):: textures
         type(Status_C):: stat
 
-        stat = status_to_c(crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, &
-                                                           strain_increments, textures))
+        stat = crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, &
+                                               strain_increments, textures)
     end function
 
     !> C binding of [[libcrysp:crysp_simulate_stress_mode]].
@@ -246,7 +207,7 @@ contains
         real(C_DOUBLE), dimension(5), intent(out):: residual
         type(Status_C):: stat
 
-        stat = status_to_c(crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual))
+        stat = crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual)
     end function
 
     !> C binding of [[libcrysp:crysp_simulate_strain_mode]].
@@ -256,32 +217,9 @@ contains
         real(C_DOUBLE), dimension(5), intent(out):: stress
         type(Status_C):: stat
 
-        stat = status_to_c(crysp_simulate_strain_mode(mat, strain_mode, stress))
+        stat = crysp_simulate_strain_mode(mat, strain_mode, stress)
     end function
 
-    !> Convert a status to its C-compatible counterpart.
-    function status_to_c(stat) result(stat_c)
-        type(Status), intent(in):: stat
-        type(Status_C):: stat_c
-
-        stat_c%code = int(stat%code, C_INT)
-        if (allocated(stat%mod_name)) call to_c_chars(stat%mod_name, stat_c%mod_name)
-        if (allocated(stat%proc_name)) call to_c_chars(stat%proc_name, stat_c%proc_name)
-        if (allocated(stat%message)) call to_c_chars(stat%message, stat_c%message)
-    end function
-
-    !> Copy a string into a fixed-size C buffer, truncated to fit. The rest of the buffer is NUL, so it is always NUL-terminated.
-    pure subroutine to_c_chars(str, chars)
-        character(*), intent(in):: str
-        character(kind=C_CHAR), dimension(:), intent(out):: chars
-
-        integer:: i
-
-        chars = C_NULL_CHAR
-        do i = 1, min(len(str), size(chars) - 1)
-            chars(i) = str(i:i)
-        end do
-    end subroutine
 
     !> Convert a list of C-compatible parameters to parameters. The data is copied: see [[parameter_from_c]].
     function parameters_from_c(params_c) result(params)
@@ -302,8 +240,8 @@ contains
         type(ModelDescriptor_C):: desc_c
 
         desc_c%id = int(desc%id, C_INT)
-        call to_c_chars(desc%name, desc_c%name)
-        call to_c_chars(desc%description, desc_c%description)
+        desc_c%name = string_to_chars(desc%name, size(desc_c%name))
+        desc_c%description = string_to_chars(desc%description, size(desc_c%description))
         desc_c%n_inputs = int(size(desc%inputs), C_INT)
         desc_c%inputs = to_inputs_c(desc%inputs)
         desc_c%n_model_state = int(size(desc%model_state), C_INT)
@@ -330,8 +268,8 @@ contains
         call c_f_pointer(ptr, inputs_c, [size(inputs)])
         do i = 1, size(inputs)
             associate (input_ => inputs(i), input_c => inputs_c(i))
-                call to_c_chars(input_%name, input_c%name)
-                call to_c_chars(input_%description, input_c%description)
+                input_c%name = string_to_chars(input_%name, size(input_c%name))
+                input_c%description = string_to_chars(input_%description, size(input_c%description))
                 input_c%type = int(input_%type, C_INT)
                 input_c%lower_bound = input_%lower_bound
                 input_c%lower_bound_inclusive = logical(input_%lower_bound_inclusive, C_BOOL)
@@ -357,169 +295,10 @@ contains
         ptr = malloc(int(size(states), C_SIZE_T) * c_sizeof(mold))
         call c_f_pointer(ptr, states_c, [size(states)])
         do i = 1, size(states)
-            call to_c_chars(states(i)%name, states_c(i)%name)
-            call to_c_chars(states(i)%description, states_c(i)%description)
+            states_c(i)%name = string_to_chars(states(i)%name, size(states_c(i)%name))
+            states_c(i)%description = string_to_chars(states(i)%description, size(states_c(i)%description))
             states_c(i)%type = int(states(i)%type, C_INT)
         end do
     end function
 
-    !> Convert a parameter to its C-compatible counterpart. The caller takes ownership of `param_c%data`.
-    subroutine parameter_to_c(param_c, param)
-        type(Parameter_C), intent(out):: param_c
-        type(Parameter), intent(in):: param
-
-        param_c%rank = param%rank
-        param_c%data = C_NULL_PTR
-        if (param%rank < 0) then
-            param_c%type = -1
-            param_c%extents = 0
-            return
-        end if
-
-        param_c%type = type_of(param)
-        param_c%extents = shape_of(param)
-
-        select type (buffer => param%buffer)
-            type is (integer)
-                call ints_to_c(buffer)
-            type is (real(DP))
-                call reals_to_c(buffer)
-            type is (character(*))
-                call string_to_c(buffer(1,1))
-        end select
-
-    contains
-
-        subroutine ints_to_c(buffer)
-            integer, dimension(:,:), intent(in):: buffer
-
-            integer(C_INT):: mold
-            integer(C_INT), dimension(:,:), pointer:: ints
-
-            if (size(buffer) == 0) return
-            param_c%data = malloc(int(size(buffer), C_SIZE_T) * c_sizeof(mold))
-            call c_f_pointer(param_c%data, ints, shape(buffer))
-            ints = int(buffer, C_INT)
-        end subroutine
-
-        subroutine reals_to_c(buffer)
-            real(DP), dimension(:,:), intent(in):: buffer
-
-            real(C_DOUBLE):: mold
-            real(C_DOUBLE), dimension(:,:), pointer:: reals
-
-            if (size(buffer) == 0) return
-            param_c%data = malloc(int(size(buffer), C_SIZE_T) * c_sizeof(mold))
-            call c_f_pointer(param_c%data, reals, shape(buffer))
-            reals = real(buffer, C_DOUBLE)
-        end subroutine
-
-        subroutine string_to_c(str)
-            character(*), intent(in):: str
-
-            character(C_CHAR), dimension(:), pointer:: chars
-            integer:: i, n
-
-            n = len(str)
-            param_c%extents = [n, 1]
-            param_c%data = malloc(int(n + 1, C_SIZE_T))
-            call c_f_pointer(param_c%data, chars, [n + 1])
-            do i = 1, n
-                chars(i) = str(i:i)
-            end do
-            chars(n + 1) = C_NULL_CHAR
-        end subroutine
-    end subroutine
-
-    !> Convert a C-compatible parameter to a parameter. The data is copied: `param_c` is left untouched and still owned by C.
-    !>
-    !> Terminates the program if `param_c` does not describe a value a [[crysp_parameters:Parameter]] can hold, for the same reason
-    !> the readers in [[crysp_parameters]] do: a defined assignment has no room for a [[crysp_status:Status]].
-    subroutine parameter_from_c(param, param_c)
-        type(Parameter), intent(out):: param
-        type(Parameter_C), intent(in):: param_c
-
-        if (param_c%rank < 0) return
-        if (any(param_c%extents < 0)) error stop 'libcrysp_c_binding::parameter_from_c: Negative extent'
-
-        select case (param_c%type)
-            case (TYPE_INTEGER)
-                call check_extents(1)
-                call ints_from_c()
-            case (TYPE_REAL)
-                call check_extents(2)
-                call reals_from_c()
-            case (TYPE_STRING)
-                if (param_c%rank /= 0) error stop 'libcrysp_c_binding::parameter_from_c: A string must have rank 0'
-                call string_from_c()
-            case default
-                error stop 'libcrysp_c_binding::parameter_from_c: Unknown parameter type'
-        end select
-    contains
-        !> Check that the rank of a numerical parameter is at most `max_rank` and consistent with its extents.
-        subroutine check_extents(max_rank)
-            integer, intent(in):: max_rank
-            if (param_c%rank > max_rank) error stop 'libcrysp_c_binding::parameter_from_c: Rank not supported for this type'
-            select case (param_c%rank)
-                case (0)
-                    if (any(param_c%extents /= 1)) &
-                        error stop 'libcrysp_c_binding::parameter_from_c: A scalar must have extents (1,1)'
-                case (1)
-                    if (param_c%extents(2) /= 1) &
-                        error stop 'libcrysp_c_binding::parameter_from_c: An array must have extents (n,1)'
-            end select
-        end subroutine
-        !> c_f_pointer cannot be given a null pointer, which C may pass for an empty array, hence the local empty buffers below.
-        subroutine ints_from_c()
-            integer(C_INT), dimension(:,:), pointer:: ints
-            integer(C_INT), dimension(:,:), allocatable, target:: empty
-
-            if (product(param_c%extents) == 0) then
-                allocate(empty(param_c%extents(1), param_c%extents(2)))
-                ints => empty
-            else
-                call c_f_pointer(param_c%data, ints, param_c%extents)
-            end if
-            select case (param_c%rank)
-                case (0)
-                    param = int(ints(1,1))
-                case (1)
-                    param = int(ints(:,1))
-            end select
-        end subroutine
-        subroutine reals_from_c()
-            real(C_DOUBLE), dimension(:,:), pointer:: reals
-            real(C_DOUBLE), dimension(:,:), allocatable, target:: empty
-
-            if (product(param_c%extents) == 0) then
-                allocate(empty(param_c%extents(1), param_c%extents(2)))
-                reals => empty
-            else
-                call c_f_pointer(param_c%data, reals, param_c%extents)
-            end if
-            select case (param_c%rank)
-                case (0)
-                    param = real(reals(1,1), DP)
-                case (1)
-                    param = real(reals(:,1), DP)
-                case (2)
-                    param = real(reals, DP)
-            end select
-        end subroutine
-        subroutine string_from_c()
-            character(C_CHAR), dimension(:), pointer:: chars
-            character(:), allocatable:: str
-            integer:: i, n
-
-            n = param_c%extents(1)
-            allocate(character(n):: str)
-            if (n > 0) then
-                call c_f_pointer(param_c%data, chars, [n])
-                do i = 1, n
-                    str(i:i) = chars(i)
-                end do
-            end if
-            param = str
-        end subroutine
-    end subroutine
 end module

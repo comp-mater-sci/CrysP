@@ -1,6 +1,7 @@
 !> This module contains the most basic definitions used by almost any other module in the project.
 module base_defs
     use, intrinsic:: iso_fortran_env, only: output_unit
+    use iso_c_binding
 
     implicit none
 
@@ -23,4 +24,20 @@ module base_defs
         enumerator:: VEF_FAIL    !! No errors occured, but the routine did not accomplish its main goal.
         enumerator:: VEF_ERROR   !! Errors occured during exection.
     end enum
+
+    interface
+        !> Lists referenced through a `C_PTR` are malloc'ed, so that C can release them with `free()`.
+        function malloc(size) bind(C, name='malloc') result(ptr)
+            import C_SIZE_T, C_PTR
+            integer(C_SIZE_T), value:: size
+            type(C_PTR):: ptr
+        end function
+
+        subroutine free(ptr) bind(C, name='free')
+            import C_PTR
+            type(C_PTR), value:: ptr
+        end subroutine
+    end interface
+
+
 end module

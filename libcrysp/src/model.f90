@@ -77,6 +77,11 @@ module crysp_model
         type(StateDescriptor), dimension(:), allocatable:: element_state
     end type
 
+    type:: ModelData
+        integer:: id
+        type(Parameter), dimension(:), allocatable:: parameters
+    end type
+
 contains
 
     !> Base of the descriptor chain. The state lists are allocated empty so that every level below can append to them

@@ -32,7 +32,7 @@ contains
     !> phase.
     function material_get_texture(this) result(texture)
         class(Material), target, intent(in):: this
-        type(TexturePoint), dimension(:), allocatable:: texture
+        integer, dimension(:,:), allocatable:: texture
 
         integer:: i, j, n
 
@@ -40,14 +40,14 @@ contains
         do i = 1, size(this%clusters)
             n = n + size(this%clusters(i)%grains)
         end do
-        allocate(texture(n))
+        allocate(texture(3,n))
 
         !Clusters hold the grains in the order in which they were supplied.
         n = 0
         do i = 1, size(this%clusters)
             associate (grains => this%clusters(i)%grains)
                 do j = 1, size(grains)
-                    texture(n+j) = grains(j)%to_texture_point(this%phases)
+                    texture(:,n+j) = int(rad_to_deg(rotatation_matrix_to_euler_angles(grains(j)%orientation)))
                 end do
                 n = n + size(grains)
             end associate

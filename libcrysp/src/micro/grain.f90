@@ -34,12 +34,6 @@ module crysp_grain
         procedure:: to_texture_point => grain_to_texture_point
     end type grain
 
-    !> Orientation of a single grain.
-    type, bind(C):: TexturePoint
-        real(C_FLOAT), dimension(3):: euler_angles !! Euler angle triplet in Bunge convention, in radians.
-        integer(C_INT):: phase_id                  !! Index of the grain's phase in the phase list of the material.
-    end type
-
 contains
 
     !Initialize grain.
@@ -136,24 +130,4 @@ contains
 
         call this%hardening_state%deserialize(params(4:))
     end subroutine
-
-    !> Get the orientation of a grain as a texture point.
-    function grain_to_texture_point(this, phases) result(point)
-        class(Grain), intent(in):: this
-        type(Phase), dimension(:), target, intent(in):: phases !! Phases of the material the grain belongs to.
-        type(TexturePoint):: point
-
-        integer:: i
-
-        do i=1,size(phases)
-            if (c_associated(c_loc(phases(i)), c_loc(this%phase))) then
-                point%phase_id = i
-                exit
-            end if
-        end do
-
-        !A grain orientation is a proper rotation by construction, so the cheap conversion applies: it is called once per grain
-        !per increment when textures are snapshotted, where the polar decomposition would dominate the cost.
-        point%euler_angles = real(rotation_matrix_to_euler_angles(this%orientation), C_FLOAT)
-    end function
 end module

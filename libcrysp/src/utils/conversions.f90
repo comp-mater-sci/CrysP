@@ -2,13 +2,13 @@
 
 module conversions
     use math_utils
+    use iso_c_binding
 
     implicit none
     public
 
 
     interface
-
         !> Convert an integer to a string
         module pure function int_to_str(int) result(string)
             integer, intent(in):: int
@@ -164,7 +164,6 @@ module conversions
             real(DP), dimension(3,3):: strain
         end function
 
-
         !> Calculate true strain from a given stretch tensor
         !>
         !> Useful when we know the velocity gradient is purely deviatoric because there U = V = F
@@ -191,6 +190,23 @@ module conversions
             real(DP)::                             von_mises_true_strain !! Von mises equivalent strain of the input.
         end function
 
+        !> Copy a string into a fixed-size C buffer of `length` characters.
+        !>
+        !> The string is truncated to `length - 1` characters if needed. The rest of the buffer is NUL, so the result is always
+        !> NUL-terminated.
+        module pure function string_to_chars(string, length) result(chars)
+            character(*), intent(in):: string
+            integer, intent(in):: length                      !! Size of the buffer, including the NUL terminator. Must be positive.
+            character(kind=C_CHAR), dimension(length):: chars
+        end function
+
+        !> Recover a string from a C buffer.
+        !>
+        !> The string ends at the first NUL. If the buffer contains none, the whole buffer is used.
+        module pure function chars_to_string(chars) result(string)
+            character(kind=C_CHAR), dimension(:), intent(in):: chars
+            character(:), allocatable:: string
+        end function
     end interface
 end module
 
@@ -426,5 +442,26 @@ contains
 
     module procedure deformation_gradient_to_von_mises_true_strain
         von_mises_true_strain = strain_tensor_to_von_mises(deformation_gradient_to_true_strain(deformation_gradient))
+    end procedure
+
+    module procedure string_to_chars
+        integer:: i
+
+        chars = C_NULL_CHAR
+        do i = 1, min(len(string), length - 1)
+            chars(i) = string(i:i)
+        end do
+    end procedure
+
+    module procedure chars_to_string
+        integer:: i, n
+
+        n = findloc(chars, C_NULL_CHAR, 1) - 1
+        if (n < 0) n = size(chars)
+
+        allocate(character(n):: string)
+        do i = 1, n
+            string(i:i) = chars(i)
+        end do
     end procedure
 end submodule

@@ -1,5 +1,6 @@
 module crysp_parameters
     use base_defs
+    use iso_c_binding
     implicit none
 
     private
@@ -7,6 +8,7 @@ module crysp_parameters
              TYPE_REAL, &
              TYPE_STRING, &
              Parameter, &
+             Parameter_C, &
              assignment(=), &
              serialize, &
              type_of, &
@@ -39,9 +41,28 @@ module crysp_parameters
         class(*), dimension(:,:), allocatable:: buffer
     end type
 
+    !> C-compatible counterpart of [[crysp_parameters:Parameter]].
+    !>
+    !> `data` points to the elements in column-major order: `extents(1)*extents(2)` values of `int` (`TYPE_INTEGER`) or `double`
+    !> (`TYPE_REAL`). Scalars have extents (1,1), arrays (n,1) and matrices (m,n). A string (`TYPE_STRING`, rank 0) is
+    !> `extents(1)` characters. A parameter that was never set has rank -1 and a null `data`, as does any parameter without
+    !> elements.
+    !>
+    !> A `Parameter_C` produced by libCrysP owns its `data`, malloc'ed so that C can release it with `free()`. Strings produced by
+    !> libCrysP are NUL-terminated for convenience, but the terminator is not counted in `extents` and is not required on input.
+    !> Converting from C copies the data, so the C caller keeps ownership of what it passed in.
+    type, bind(C):: Parameter_C
+        integer(C_INT):: type
+        integer(C_INT):: rank
+        integer(C_INT), dimension(2):: extents !! A pointer allocated and freed based on the value of rank would be more idiomatic but is not worth the malloc/free overhead.
+        type(C_PTR):: data
+    end type
+
+
     interface assignment(=)
         module procedure int_to_param, int_array_to_param, real_to_param, real_array_to_param, real_matrix_to_param, string_to_param, &
-                         param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, param_to_string
+                         param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, param_to_string, &
+                         parameter_to_c, parameter_from_c
     end interface
 
     interface serialize
@@ -252,4 +273,164 @@ contains
 
         param = data
     end function
+
+    !> Convert a parameter to its C-compatible counterpart. The caller takes ownership of `param_c%data`.
+    subroutine parameter_to_c(param_c, param)
+        type(Parameter_C), intent(out):: param_c
+        type(Parameter), intent(in):: param
+
+        param_c%rank = param%rank
+        param_c%data = C_NULL_PTR
+        if (param%rank < 0) then
+            param_c%type = -1
+            param_c%extents = 0
+            return
+        end if
+
+        param_c%type = type_of(param)
+        param_c%extents = shape_of(param)
+
+        select type (buffer => param%buffer)
+            type is (integer)
+                call ints_to_c(buffer)
+            type is (real(DP))
+                call reals_to_c(buffer)
+            type is (character(*))
+                call string_to_c(buffer(1,1))
+        end select
+
+    contains
+
+        subroutine ints_to_c(buffer)
+            integer, dimension(:,:), intent(in):: buffer
+
+            integer(C_INT):: mold
+            integer(C_INT), dimension(:,:), pointer:: ints
+
+            if (size(buffer) == 0) return
+            param_c%data = malloc(int(size(buffer), C_SIZE_T) * c_sizeof(mold))
+            call c_f_pointer(param_c%data, ints, shape(buffer))
+            ints = int(buffer, C_INT)
+        end subroutine
+
+        subroutine reals_to_c(buffer)
+            real(DP), dimension(:,:), intent(in):: buffer
+
+            real(C_DOUBLE):: mold
+            real(C_DOUBLE), dimension(:,:), pointer:: reals
+
+            if (size(buffer) == 0) return
+            param_c%data = malloc(int(size(buffer), C_SIZE_T) * c_sizeof(mold))
+            call c_f_pointer(param_c%data, reals, shape(buffer))
+            reals = real(buffer, C_DOUBLE)
+        end subroutine
+
+        subroutine string_to_c(str)
+            character(*), intent(in):: str
+
+            character(C_CHAR), dimension(:), pointer:: chars
+            integer:: i, n
+
+            n = len(str)
+            param_c%extents = [n, 1]
+            param_c%data = malloc(int(n + 1, C_SIZE_T))
+            call c_f_pointer(param_c%data, chars, [n + 1])
+            do i = 1, n
+                chars(i) = str(i:i)
+            end do
+            chars(n + 1) = C_NULL_CHAR
+        end subroutine
+    end subroutine
+
+    !> Convert a C-compatible parameter to a parameter. The data is copied: `param_c` is left untouched and still owned by C.
+    !>
+    !> Terminates the program if `param_c` does not describe a value a [[crysp_parameters:Parameter]] can hold, for the same reason
+    !> the readers in [[crysp_parameters]] do: a defined assignment has no room for a [[crysp_status:Status]].
+    subroutine parameter_from_c(param, param_c)
+        type(Parameter), intent(out):: param
+        type(Parameter_C), intent(in):: param_c
+
+        if (param_c%rank < 0) return
+        if (any(param_c%extents < 0)) error stop 'crysp_parameters::parameter_from_c: Negative extent'
+
+        select case (param_c%type)
+            case (TYPE_INTEGER)
+                call check_extents(1)
+                call ints_from_c()
+            case (TYPE_REAL)
+                call check_extents(2)
+                call reals_from_c()
+            case (TYPE_STRING)
+                if (param_c%rank /= 0) error stop 'crysp_parameters::parameter_from_c: A string must have rank 0'
+                call string_from_c()
+            case default
+                error stop 'crysp_parameters::parameter_from_c: Unknown parameter type'
+        end select
+    contains
+        !> Check that the rank of a numerical parameter is at most `max_rank` and consistent with its extents.
+        subroutine check_extents(max_rank)
+            integer, intent(in):: max_rank
+            if (param_c%rank > max_rank) error stop 'crysp_parameters::parameter_from_c: Rank not supported for this type'
+            select case (param_c%rank)
+                case (0)
+                    if (any(param_c%extents /= 1)) &
+                        error stop 'crysp_parameters::parameter_from_c: A scalar must have extents (1,1)'
+                case (1)
+                    if (param_c%extents(2) /= 1) &
+                        error stop 'crysp_parameters::parameter_from_c: An array must have extents (n,1)'
+            end select
+        end subroutine
+        !> c_f_pointer cannot be given a null pointer, which C may pass for an empty array, hence the local empty buffers below.
+        subroutine ints_from_c()
+            integer(C_INT), dimension(:,:), pointer:: ints
+            integer(C_INT), dimension(:,:), allocatable, target:: empty
+
+            if (product(param_c%extents) == 0) then
+                allocate(empty(param_c%extents(1), param_c%extents(2)))
+                ints => empty
+            else
+                call c_f_pointer(param_c%data, ints, param_c%extents)
+            end if
+            select case (param_c%rank)
+                case (0)
+                    param = int(ints(1,1))
+                case (1)
+                    param = int(ints(:,1))
+            end select
+        end subroutine
+        subroutine reals_from_c()
+            real(C_DOUBLE), dimension(:,:), pointer:: reals
+            real(C_DOUBLE), dimension(:,:), allocatable, target:: empty
+
+            if (product(param_c%extents) == 0) then
+                allocate(empty(param_c%extents(1), param_c%extents(2)))
+                reals => empty
+            else
+                call c_f_pointer(param_c%data, reals, param_c%extents)
+            end if
+            select case (param_c%rank)
+                case (0)
+                    param = real(reals(1,1), DP)
+                case (1)
+                    param = real(reals(:,1), DP)
+                case (2)
+                    param = real(reals, DP)
+            end select
+        end subroutine
+        subroutine string_from_c()
+            character(C_CHAR), dimension(:), pointer:: chars
+            character(:), allocatable:: str
+            integer:: i, n
+
+            n = param_c%extents(1)
+            allocate(character(n):: str)
+            if (n > 0) then
+                call c_f_pointer(param_c%data, chars, [n])
+                do i = 1, n
+                    str(i:i) = chars(i)
+                end do
+            end if
+            param = str
+        end subroutine
+    end subroutine
 end module
