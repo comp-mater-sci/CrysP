@@ -1,20 +1,39 @@
+#include <assert.h>
 #include <mkl.h>
 #include <math.h>
+#include <stdio.h>
 
 /*
  * This library calculates finds the strain mode corresponding to a given imposed stress state using a trust-region method. This library is implemented in C because it relies on Intel MKL and the Fortran interface for the specific MKL procedures used contains bugs (as of 2025.0.1).
  *
  */
 
-//Status code of crysp_status (src/utils/status.f90) for success. Keep it in sync.
+//C view of crysp_status::Status_C (src/utils/status.f90), with NAME_LEN/MSG_LEN from src/utils/base_defs.f90 and only the status codes
+//used here. Keep them in sync: the struct is passed by value across the language boundary, so any mismatch corrupts it silently.
+#define CRYSP_NAME_LEN 56
+#define CRYSP_MSG_LEN  128
+
 enum
 {
-    CRYSP_OK = 0
+    CRYSP_OK  = 0,  // Successful execution.
+    CRYSP_ERR = -1  // General error
 };
 
-//Alternate implementation of get_stress_state for easy C interop. Returns a status code; on failure the solver must abort and hand
-//the code back to Fortran, which keeps the details of the failure itself.
-extern int get_stress(const void* clusters, const double* strain_mode, double* stress_state);
+//Outcome of an operation that may fail. The name and message buffers are NUL-terminated and all-NUL when code is CRYSP_OK.
+typedef struct
+{
+    int  code;                      // One of the status codes above.
+    char mod_name[CRYSP_NAME_LEN];  // Module in which the failure was raised.
+    char proc_name[CRYSP_NAME_LEN]; // Routine in which the failure was raised.
+    char message[CRYSP_MSG_LEN];    // Human-readable description of the failure.
+} crysp_status;
+
+static_assert(sizeof(crysp_status) == sizeof(int) + 2*CRYSP_NAME_LEN + CRYSP_MSG_LEN, "crysp_status must not contain padding");
+
+//Alternate implementation of get_stress_state for easy C interop. On failure the solver must abort and hand the status back to Fortran.
+extern crysp_status get_stress(const void* clusters, const double* strain_mode, double* stress_state);
+
+static const char MOD_NAME[] = "trust_region";
 
 const MKL_INT DIM = 5;      //Dimensionality of the problem.
 const double TOL = 1.0e-9;  //Tolerance on internal calculations.
@@ -36,11 +55,25 @@ inline void normalize(double* stress_state)
         stress_state[i] /= norm;
 }
 
-//Wrapper for get_stress_state specifically for use from calc_jacobi to avoid code duplication.
-inline int altay_wrapper_jacobi(const void* clusters, const double* strain_rate, double* stress_mode)
+//Build a failed status for an MKL routine that did not return TR_SUCCESS. All strings are truncated to fit and unused characters are NUL.
+static crysp_status mkl_failure(const char* proc_name, const char* mkl_routine, MKL_INT mkl_code)
 {
-    int stat = get_stress(clusters, strain_rate, stress_mode);
-    if (stat != CRYSP_OK) return stat;
+    const char* reason = mkl_code == TR_INVALID_OPTION ? "invalid option"
+                       : mkl_code == TR_OUT_OF_MEMORY  ? "out of memory"
+                       :                                 "unknown error";
+
+    crysp_status stat = {.code = CRYSP_ERR};
+    snprintf(stat.mod_name, sizeof stat.mod_name, "%s", MOD_NAME);
+    snprintf(stat.proc_name, sizeof stat.proc_name, "%s", proc_name);
+    snprintf(stat.message, sizeof stat.message, "MKL %s failed: %s (code %d)", mkl_routine, reason, (int)mkl_code);
+    return stat;
+}
+
+//Wrapper for get_stress_state specifically for use from calc_jacobi to avoid code duplication.
+inline crysp_status altay_wrapper_jacobi(const void* clusters, const double* strain_rate, double* stress_mode)
+{
+    crysp_status stat = get_stress(clusters, strain_rate, stress_mode);
+    if (stat.code != CRYSP_OK) return stat;
     normalize(stress_mode);
 
     //Multiply by -1 because the jacobi of the minimization algorithm is
@@ -53,9 +86,10 @@ inline int altay_wrapper_jacobi(const void* clusters, const double* strain_rate,
 }
 
 //Calculate the jacobi of AlTay using the finite difference algorithm from MKL. The finite difference interval is provided by the caller. This procedure may recursively call itself with a larger interval. Strain rate and jacobi are both of size DIM. Note that jacobi is stored column major.
-int jacobi_helper(const void* clusters, const double* strain_rate, double* jacobi, const double interval)
+crysp_status jacobi_helper(const void* clusters, const double* strain_rate, double* jacobi, const double interval)
 {
-    int stat = CRYSP_OK;
+    const char PROC_NAME[] = "jacobi_helper";
+    crysp_status stat = {.code = CRYSP_OK};
 
     _JACOBIMATRIX_HANDLE_t handle;
     double strain_rate_buffer[DIM];
@@ -64,7 +98,7 @@ int jacobi_helper(const void* clusters, const double* strain_rate, double* jacob
 
     //See MKL documentation for details.
     MKL_INT mkl_code = djacobi_init(&handle, &DIM, &DIM, strain_rate_buffer, jacobi, &interval);
-    if (mkl_code != TR_SUCCESS) return (int)mkl_code;
+    if (mkl_code != TR_SUCCESS) return mkl_failure(PROC_NAME, "djacobi_init", mkl_code);
 
     //Every failure below breaks out of the loop so the handle is always released.
     double f1[DIM], f2[DIM];
@@ -74,7 +108,7 @@ int jacobi_helper(const void* clusters, const double* strain_rate, double* jacob
         mkl_code = djacobi_solve(&handle, f1, f2, &rci_req);
         if (mkl_code != TR_SUCCESS)
         {
-            stat = (int)mkl_code;
+            stat = mkl_failure(PROC_NAME, "djacobi_solve", mkl_code);
             break;
         }
 
@@ -82,13 +116,13 @@ int jacobi_helper(const void* clusters, const double* strain_rate, double* jacob
             stat = altay_wrapper_jacobi(clusters, strain_rate_buffer, f1);
         else if (rci_req == 2)
             stat = altay_wrapper_jacobi(clusters, strain_rate_buffer, f2);
-        if (stat != CRYSP_OK) break;
+        if (stat.code != CRYSP_OK) break;
     } while (rci_req > 0);
 
     //Report the first failure, but always release the handle.
     mkl_code = djacobi_delete(&handle);
-    if (stat != CRYSP_OK) return stat;
-    if (mkl_code != TR_SUCCESS) return (int)mkl_code;
+    if (stat.code != CRYSP_OK) return stat;
+    if (mkl_code != TR_SUCCESS) return mkl_failure(PROC_NAME, "djacobi_delete", mkl_code);
 
     //If the Jacobi contains 0-columns the solution of the minimization problem will not be unique and the trust region algorithm will fail. Because get_stress_state is 'jagged' in nature it is likely that increasing the finite difference interval fixes this problem.
     for (int i=0;i<DIM;i++)
@@ -101,17 +135,18 @@ int jacobi_helper(const void* clusters, const double* strain_rate, double* jacob
 }
 
 //Calculate the Jacobi. Strain_mode had dimension DIM and jacobi DIM*DIM.
-int calc_jacobi(const void* clusters, const double* strain_mode, double* jacobi)
+crysp_status calc_jacobi(const void* clusters, const double* strain_mode, double* jacobi)
 {
     //Starting interval of 0.02 was experimentally determined to be optimal.
     return jacobi_helper(clusters, strain_mode, jacobi, 0.02);
 }
 
 //Calculate the strain mode corresponding as closely as possible to the imposed stress state. All inputs and outputs must be initialized externally and are of dimension DIM, except for jacobi, which is of dimension DIM*DIM.
-//Returns CRYSP_OK, the code returned by get_stress if it failed, or the error code of the MKL routine that failed.
-int trust_region_solve(const void* clusters, const double* target_stress_mode, double* strain_mode, double* stress, double* residual)
+//Returns an OK status, the status returned by get_stress if it failed, or a CRYSP_ERR status describing the MKL routine that failed.
+crysp_status trust_region_solve(const void* clusters, const double* target_stress_mode, double* strain_mode, double* stress, double* residual)
 {
-    int stat = CRYSP_OK;
+    const char PROC_NAME[] = "trust_region_solve";
+    crysp_status stat = {.code = CRYSP_OK};
 
     _TRNSPBC_HANDLE_t handle;
 
@@ -129,7 +164,7 @@ int trust_region_solve(const void* clusters, const double* target_stress_mode, d
 
     //See MKL documentation for details.
     MKL_INT mkl_code = dtrnlspbc_init(&handle, &DIM, &DIM, strain_mode, LOWER_BOUND, UPPER_BOUND, EPS, &ITER1, &ITER2, &INITIAL_TRUST_REGION);
-    if (mkl_code != TR_SUCCESS) return (int)mkl_code;
+    if (mkl_code != TR_SUCCESS) return mkl_failure(PROC_NAME, "dtrnlspbc_init", mkl_code);
 
     //Every failure below breaks out of the loop so the handle and MKL buffers are always released.
     MKL_INT rci_req = 0;
@@ -138,14 +173,14 @@ int trust_region_solve(const void* clusters, const double* target_stress_mode, d
         mkl_code = dtrnlspbc_solve(&handle, residual, &jacobi[0][0], &rci_req);
         if (mkl_code != TR_SUCCESS)
         {
-            stat = (int)mkl_code;
+            stat = mkl_failure(PROC_NAME, "dtrnlspbc_solve", mkl_code);
             break;
         }
 
         if (rci_req == 1)
         {
             stat = get_stress(clusters, strain_mode, stress);
-            if (stat != CRYSP_OK) break;
+            if (stat.code != CRYSP_OK) break;
 
             double stress_mode[DIM];
             for (int i=0;i<DIM;i++)
@@ -157,15 +192,15 @@ int trust_region_solve(const void* clusters, const double* target_stress_mode, d
         else if (rci_req == 2)
         {
             stat = calc_jacobi(clusters, strain_mode, &jacobi[0][0]);
-            if (stat != CRYSP_OK) break;
+            if (stat.code != CRYSP_OK) break;
         }
     }
 
     //Report the first failure, but always release the handle and MKL buffers.
     mkl_code = dtrnlspbc_delete(&handle);
     MKL_Free_Buffers();
-    if (stat != CRYSP_OK) return stat;
-    if (mkl_code != TR_SUCCESS) return (int)mkl_code;
+    if (stat.code != CRYSP_OK) return stat;
+    if (mkl_code != TR_SUCCESS) return mkl_failure(PROC_NAME, "dtrnlspbc_delete", mkl_code);
 
     normalize(strain_mode); // The trust region algorithm may deviate from unit length.
     return stat;
