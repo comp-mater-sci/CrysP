@@ -5,9 +5,9 @@
 !>
 !> Every entry point returns a [[crysp_status:Status]] by value and never terminates the process: libCrysP may be embedded in a
 !> long-lived host such as a web server, where a bad request must not take the host down with it. A caller checks `stat%code`
-!> against `CRYSP_OK` and, on failure, reads the NUL-terminated `mod_name`, `proc_name` and `message` buffers for the detail.
+!> against `CRYSP_OK` and, on failure, reads `mod_name`, `proc_name` and `message` for the detail.
 !>
-!> The interface is the same for Fortran and C callers. A material lives in libCrysP's memory and is referred to by a
+!> This is the Fortran interface. C callers use the wrappers in [[libcrysp_c_binding]]. A material lives in libCrysP's memory and is referred to by a
 !> [[MaterialHandle]]: it is created by [[crysp_new_material]] or [[crysp_deserialize_material]], and must be released with
 !> [[crysp_destroy_material]]. The contents of a material are private to libCrysP. What callers need from it is exposed through
 !> dedicated calls, such as [[crysp_get_texture]]. A material only needs to be serialized to move it out of the process, e.g. to
@@ -29,11 +29,7 @@ module libcrysp
 
     public
     private:: dereference_material, &
-             split_strain_increments, &
-             c_malloc, &
-             to_model_descriptor_c, &
-             to_inputs_c, &
-             to_state_descriptors_c
+             split_strain_increments
 
     character(*), parameter, private:: MOD_NAME = 'crysp'
 
@@ -69,57 +65,13 @@ module libcrysp
         integer(C_INT):: n_strain_increments !! Number of consecutive strain increments belonging to this stress increment.
     end type
 
-    type, bind(C):: Input_C
-        character(C_CHAR), dimension(NAME_LEN):: name
-        character(C_CHAR), dimension(DESC_LEN):: description
-        integer(C_INT):: type
-        type(Parameter):: lower_bound
-        logical(C_BOOL):: lower_bound_inclusive
-        type(Parameter):: upper_bound
-        logical(C_BOOL):: upper_bound_inclusive
-        type(Parameter):: default_value
-    end type
-
-    type, bind(C):: StateDescriptor_C
-        character(C_CHAR), dimension(NAME_LEN):: name
-        character(C_CHAR), dimension(DESC_LEN):: description
-        integer(C_INT):: type
-    end type
-
-    !> General information about a model supported by libCrysP, as reported to callers.
-    !>
-    !> The C-compatible counterpart of [[crysp_model:ModelDescriptor]]. Each list is a malloc'ed array of `n_...` elements, or
-    !> null if it is empty, and is released by the caller with `free()`. The bounds and default value of each input are owned by
-    !> the caller as well, and every non-null one must be released with [[parameter_destroy]].
-    type, bind(C):: ModelDescriptor_C
-        integer(C_INT):: id
-        character(C_CHAR), dimension(NAME_LEN):: name
-        character(C_CHAR), dimension(DESC_LEN):: description
-        integer(C_INT):: n_inputs
-        type(C_PTR):: inputs
-        integer(C_INT):: n_model_state
-        type(C_PTR):: model_state
-        integer(C_INT):: n_element_state
-        type(C_PTR):: element_state
-    end type
-
-    interface
-        !> Lists referenced through a `C_PTR` are malloc'ed, so that C can release them with `free()`.
-        function c_malloc(size) bind(C, name='malloc') result(ptr)
-            import C_SIZE_T, C_PTR
-            integer(C_SIZE_T), value:: size
-            type(C_PTR):: ptr
-        end function
-    end interface
-
 contains
 
     !> List the mesoscopic models libCrysP supports.
     !>
-    !> One descriptor per model. The IDs are those accepted as `meso_model_id` by [[crysp_new_material]]. See [[ModelDescriptor_C]] for
-    !> what the caller has to release.
-    function crysp_get_meso_models(model_descs) bind(C) result(stat)
-        type(ModelDescriptor_C), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported meso model
+    !> One descriptor per model. The IDs are those accepted as `meso_model_id` by [[crysp_new_material]].
+    function crysp_get_meso_models(model_descs) result(stat)
+        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs   !! Descriptor for each supported meso model
         type(Status):: stat                                                           !! Return status. Should always be OK
 
         integer:: i
@@ -131,16 +83,15 @@ contains
             stat = meso_get_model(SUPPORTED_MESO_MODELS(i), model)
             if (failed(stat)) return
 
-            model_descs(i) = to_model_descriptor_c(model%describe())
+            model_descs(i) = model%describe()
         end do
     end function
 
     !> List the microscopic (hardening) models libCrysP supports.
     !>
-    !> One descriptor per model. The IDs are those accepted as `hardening_model_ids` by [[crysp_new_material]]. See [[ModelDescriptor_C]] for
-    !> what the caller has to release.
-    function crysp_get_micro_models(model_descs) bind(C) result(stat)
-        type(ModelDescriptor_C), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported micro model
+    !> One descriptor per model. The IDs are those accepted as `hardening_model_ids` by [[crysp_new_material]].
+    function crysp_get_micro_models(model_descs) result(stat)
+        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs   !! Descriptor for each supported micro model
         type(Status):: stat                                                           !! Return status. Should always be OK
 
         integer:: i
@@ -152,7 +103,7 @@ contains
             stat = micro_get_model(SUPPORTED_HARDENING_MODELS(i), model)
             if (failed(stat)) return
 
-            model_descs(i) = to_model_descriptor_c(model%describe())
+            model_descs(i) = model%describe()
         end do
     end function
 
@@ -161,13 +112,7 @@ contains
     !> Initializes all data structures associated to a material state and assembles them into a Material object.
     !> An initialized Material object is needed for all other calls to libCrysP
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
-    !>
-    !> @note
-    !> The arrays sized by `phase_sizes` are assumed-size rather than explicit-shape. IFX (as of 2026.1) evaluates specification
-    !> expressions of a `bind(C)` procedure before its assumed-shape dummies are set up, so any expression involving `phase_sizes`
-    !> there reads an undefined descriptor.
-    !> @endnote
-    function crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, meso_model_id, meso_params, mat) bind(C) result(stat)
+    function crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, meso_model_id, meso_params, mat) result(stat)
         integer(C_INT), dimension(:), intent(in):: phase_sizes !! Amount of grains belonging to each phase.
         real(C_DOUBLE), dimension(3,*), intent(in)::           orientations !! List of Euler angle triplets in bunge convention representing all grains.
         integer(C_INT), dimension(*), intent(in)::                 deformation_mechanisms !! ID of slip system family to use for each phase. Must
@@ -206,7 +151,7 @@ contains
     !> Release a material.
     !>
     !> The handle is null afterwards. Destroying a null handle does nothing.
-    subroutine crysp_destroy_material(mat) bind(C)
+    subroutine crysp_destroy_material(mat)
         type(MaterialHandle), intent(inout):: mat
 
         type(Material), pointer:: mat_
@@ -222,7 +167,7 @@ contains
     !>
     !> Serializing moves the material into the parameters: it is destroyed and the handle is null afterwards. To keep using it,
     !> restore it with [[crysp_deserialize_material]].
-    function crysp_serialize_material(mat, params) bind(C) result(stat)
+    function crysp_serialize_material(mat, params) result(stat)
         type(MaterialHandle), intent(inout):: mat
         type(Parameter), dimension(:), allocatable, intent(out):: params !! The serialized material state.
         type(Status):: stat                                              !! `CRYSP_OK`, or `CRYSP_ERR_ARG` for a null handle.
@@ -244,7 +189,7 @@ contains
     !> terminates the program, because it is read through a defined assignment and there is no room for a [[crysp_status:Status]]
     !> in one. A list that is wrong but happens to fit, including one with an unknown model ID, is not detected.
     !> @endwarning
-    function crysp_deserialize_material(params, mat) bind(C) result(stat)
+    function crysp_deserialize_material(params, mat) result(stat)
         type(Parameter), dimension(:), intent(in):: params !! Serialized material state.
         type(MaterialHandle), intent(out):: mat            !! The restored material.
         type(Status):: stat                                !! `CRYSP_OK`.
@@ -261,7 +206,7 @@ contains
     !> One texture point per grain, in the order in which the grains were passed to [[crysp_new_material]], i.e. grouped by phase.
     !> The Euler angles have the convention and units of the orientations passed there. The phase ID is the index of the grain's phase
     !> in `phase_sizes`.
-    function crysp_get_texture(mat, texture) bind(C) result(stat)
+    function crysp_get_texture(mat, texture) result(stat)
         type(MaterialHandle), intent(in):: mat
         type(TexturePoint), dimension(:), allocatable, intent(out):: texture !! One texture point per grain.
         type(Status):: stat                                                  !! `CRYSP_OK`, or `CRYSP_ERR_ARG` for a null handle.
@@ -280,7 +225,7 @@ contains
     !> The velocity gradient must not contain a volumetric component (sum(trace) == )
     !> The velocity gradient is applied until a given von-mises equivalent true strain is reached.
     !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
-    function crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments, textures) bind(C) result(stat)
+    function crysp_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments, textures) result(stat)
         type(MaterialHandle), intent(in):: mat
         real(C_DOUBLE), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(C_DOUBLE), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
@@ -323,7 +268,7 @@ contains
     !> between the requested stress mode and the actually applied stress mode is expected.
     !> The incrementation process is iterative, so a deviation of the target strain level in the order of 10^-9 is expected.
     function crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments, &
-                                             textures) bind(C) result(stat)
+                                             textures) result(stat)
         type(MaterialHandle), intent(in):: mat                                            !! Initialized material
         real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode                     !! Norm must be 1
         real(C_DOUBLE), intent(in):: target_vm_strain                                     !! Target true von mises strain
@@ -403,7 +348,7 @@ contains
     !> Uses iterative search to find an accurate match for the strain mode and stress state corresponding to the desired stress mode.
     !> An accurate initial guess for the strain mode should be provided to improve convergence and performance. The residual of the search is returned to provide
     !> an estimation of search accuracy.
-    function crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual) bind(C) result(stat)
+    function crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual) result(stat)
         type(MaterialHandle), intent(in):: mat                          !! Material state.
         real(C_DOUBLE), dimension(5), intent(in)::  target_stress_mode   !! Intended stress mode
         real(C_DOUBLE), dimension(5), intent(inout):: strain_mode !! On entry, contains an initial guess of the strain mode matching the
@@ -429,7 +374,7 @@ contains
     end function
 
     !> Calculate stress state corresponding to a given strain mode.
-    function crysp_simulate_strain_mode(mat, strain_mode, stress) bind(C) result(stat)
+    function crysp_simulate_strain_mode(mat, strain_mode, stress) result(stat)
         type(MaterialHandle), intent(in):: mat                          !! Material state
         real(C_DOUBLE), dimension(5), intent(in)::    strain_mode !! Deviatoric strain mode
         real(C_DOUBLE), dimension(5), intent(out)::   stress      !! Stress state corresponding to the strain mode.
@@ -458,70 +403,5 @@ contains
         end if
 
         call c_f_pointer(mat%ptr, mat_)
-    end function
-
-    !> Convert a model descriptor to its C-compatible counterpart. See [[ModelDescriptor_C]] for who owns what.
-    function to_model_descriptor_c(desc) result(desc_c)
-        type(ModelDescriptor), intent(in):: desc
-        type(ModelDescriptor_C):: desc_c
-
-        desc_c = ModelDescriptor_C(int(desc%id, C_INT), &
-                                   to_c_string(desc%name, NAME_LEN), &
-                                   to_c_string(desc%description, DESC_LEN), &
-                                   int(size(desc%inputs), C_INT), &
-                                   to_inputs_c(desc%inputs), &
-                                   int(size(desc%model_state), C_INT), &
-                                   to_state_descriptors_c(desc%model_state), &
-                                   int(size(desc%element_state), C_INT), &
-                                   to_state_descriptors_c(desc%element_state))
-    end function
-
-    !> Copy a list of inputs into a malloc'ed array of their C-compatible counterparts. Null if the list is empty.
-    !>
-    !> The bounds and default values are not copied but handed over: the result owns them.
-    function to_inputs_c(inputs) result(ptr)
-        type(Input), dimension(:), intent(in):: inputs
-        type(C_PTR):: ptr
-
-        integer:: i
-        type(Input_C):: mold
-        type(Input_C), dimension(:), pointer:: inputs_c
-
-        ptr = C_NULL_PTR
-        if (size(inputs) == 0) return
-
-        ptr = c_malloc(int(size(inputs), C_SIZE_T) * c_sizeof(mold))
-        call c_f_pointer(ptr, inputs_c, [size(inputs)])
-        do i = 1, size(inputs)
-            inputs_c(i) = Input_C(to_c_string(inputs(i)%name, NAME_LEN), &
-                                  to_c_string(inputs(i)%description, DESC_LEN), &
-                                  int(inputs(i)%type, C_INT), &
-                                  inputs(i)%lower_bound, &
-                                  logical(inputs(i)%lower_bound_inclusive, C_BOOL), &
-                                  inputs(i)%upper_bound, &
-                                  logical(inputs(i)%upper_bound_inclusive, C_BOOL), &
-                                  inputs(i)%default_value)
-        end do
-    end function
-
-    !> Copy a list of state descriptors into a malloc'ed array of their C-compatible counterparts. Null if the list is empty.
-    function to_state_descriptors_c(states) result(ptr)
-        type(StateDescriptor), dimension(:), intent(in):: states
-        type(C_PTR):: ptr
-
-        integer:: i
-        type(StateDescriptor_C):: mold
-        type(StateDescriptor_C), dimension(:), pointer:: states_c
-
-        ptr = C_NULL_PTR
-        if (size(states) == 0) return
-
-        ptr = c_malloc(int(size(states), C_SIZE_T) * c_sizeof(mold))
-        call c_f_pointer(ptr, states_c, [size(states)])
-        do i = 1, size(states)
-            states_c(i) = StateDescriptor_C(to_c_string(states(i)%name, NAME_LEN), &
-                                            to_c_string(states(i)%description, DESC_LEN), &
-                                            int(states(i)%type, C_INT))
-        end do
     end function
 end module

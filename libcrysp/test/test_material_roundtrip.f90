@@ -22,7 +22,6 @@ program test_material_roundtrip
                         crysp_deserialize_material, crysp_get_texture, crysp_strain_driven_deformation, crysp_simulate_strain_mode, &
                         StrainIncrementData
     use crysp_status, only: Status, failed
-    use conversions, only: from_c_string
     use micro, only: micro_get_model, ConstitutiveModel, &
                      HARDENING_NONE, HARDENING_VOCE, HARDENING_HOCKETT_SHERBY, HARDENING_SWIFT, &
                      HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP, &
@@ -272,8 +271,8 @@ contains
         character(*), intent(in):: message
 
         call check(.not. failed(stat), message)
-        if (failed(stat)) print '(A,I0,6A)', '          code ', stat%code, ' in ', from_c_string(stat%mod_name), ', ', &
-                                 from_c_string(stat%proc_name), ': ', from_c_string(stat%message)
+        if (failed(stat)) print '(A,I0,6A)', '          code ', stat%code, ' in ', stat%mod_name, ', ', &
+                                 stat%proc_name, ': ', stat%message
     end subroutine
 
     !> Initialization parameters per model, in signature order. Values taken from the integration test configuration.

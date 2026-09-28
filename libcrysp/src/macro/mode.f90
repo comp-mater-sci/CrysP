@@ -25,17 +25,18 @@ module mode
     type:: Wrapper
         class(MesoModel), pointer:: model
         class(Cluster), dimension(:), pointer:: clusters
+        type(Status):: stat !! Failure raised inside [[get_stress]], which C only sees the code of.
     end type
 
     !> Interface of the trust region solver in C.
     !>
-    !> Needed because Fortran bindings for MKL are broken. MKL error codes are translated into a [[crysp_status:Status]] on the C side;
-    !> a failure reported by [[get_stress]] aborts the solver and is returned unchanged.
+    !> Needed because Fortran bindings for MKL are broken. Returns `CRYSP_OK`, the code of a failure reported by [[get_stress]], which
+    !> aborts the solver, or the error code of the MKL routine that failed.
     interface
-        function trust_region_solve(clusters_ptr, target_stress_mode, strain_mode, stress, residual) bind(C) result(stat)
+        function trust_region_solve(clusters_ptr, target_stress_mode, strain_mode, stress, residual) bind(C) result(code)
             import C_DOUBLE, &
-                   C_PTR, &
-                   Status
+                   C_INT, &
+                   C_PTR
 
             type(C_PTR)::                     clusters_ptr       !! Pointer to the wrapper of the clusters so the callback in
                                                                  !! Fortran can calculate the stress state
@@ -45,7 +46,7 @@ module mode
             real(C_DOUBLE), dimension(5)::    stress             !! Actuall stress state found. Normalizing it should yield
                                                                  !! something very close, but not identical to the target stress mode.
             real(C_DOUBLE), dimension(5)::    residual           !! Residual of the optimization
-            type(Status)::                    stat
+            integer(C_INT)::                  code
         end function
     end interface
 
@@ -53,12 +54,13 @@ contains
 
     !> Calculate the stress state for a given strain rate
     !>
-    !> Designed as a callback for the trust region optimization in C, which aborts as soon as a failure is returned.
-    function get_stress(wrapper_ptr, strain_rate, stress) bind(C) result(stat)
+    !> Designed as a callback for the trust region optimization in C, which aborts as soon as a failure is returned. The failure
+    !> itself is kept in the wrapper.
+    function get_stress(wrapper_ptr, strain_rate, stress) bind(C) result(code)
         type(C_PTR), intent(in):: wrapper_ptr          !! C pointer to the clusters wrapper object needed for simulation.
         real(C_DOUBLE), dimension(5), intent(in):: strain_rate  !! Strain rate for which to calculate the stress state.
         real(C_DOUBLE), dimension(5):: stress                   !! Stress state for the provided strain rate.
-        type(Status):: stat                                     !! `CRYSP_OK`, or the failure reported by the simulation.
+        integer(C_INT):: code                                   !! `CRYSP_OK`, or the code of the failure reported by the simulation.
 
         type(Wrapper), pointer:: wrap
         class(MesoModel), pointer:: model
@@ -68,7 +70,8 @@ contains
 
         clusters => wrap%clusters
         model => wrap%model
-        stat = simulate_strain_mode(model, clusters, strain_rate, stress)
+        wrap%stat = simulate_strain_mode(model, clusters, strain_rate, stress)
+        code = wrap%stat%code
     end function
 
     !> Calculate the stress state corresponding to a given strain mode.
@@ -147,10 +150,37 @@ contains
                                                                        !! if the MKL trust region solver itself failed.
 
         type(Wrapper), target:: wrap
+        integer:: code
 
         wrap%model => model
         wrap%clusters => clusters
 
-        stat = trust_region_solve(c_loc(wrap), stress_mode, strain_mode, stress, residual)
+        code = trust_region_solve(c_loc(wrap), stress_mode, strain_mode, stress, residual)
+        if (code == CRYSP_OK) return
+
+        if (failed(wrap%stat)) then
+            stat = wrap%stat
+        else
+            stat = fail(MOD_NAME, 'simulate_stress_mode', CRYSP_ERR, mkl_error_message(code))
+        end if
+    end function
+
+    !> Describe an error code returned by the MKL trust region routines used in trust_region.c.
+    function mkl_error_message(code) result(message)
+        integer, intent(in):: code
+        character(:), allocatable:: message
+
+        !Error codes from mkl_rci.h.
+        integer, parameter:: TR_INVALID_OPTION = 1502, &
+                             TR_OUT_OF_MEMORY  = 1503
+
+        select case (code)
+            case (TR_INVALID_OPTION)
+                message = 'MKL trust region solver failed: invalid option (code ' // int_to_str(code) // ').'
+            case (TR_OUT_OF_MEMORY)
+                message = 'MKL trust region solver failed: out of memory (code ' // int_to_str(code) // ').'
+            case default
+                message = 'MKL trust region solver failed with unknown code ' // int_to_str(code) // '.'
+        end select
     end function
 end module

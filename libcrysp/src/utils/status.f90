@@ -4,9 +4,7 @@
 !> therefore never take the host process down with it. Every operation that can fail returns a [[Status]] describing what happened
 !> instead of terminating, and the caller decides what to do about it.
 module crysp_status
-    use iso_c_binding
     use base_defs
-    use conversions, only: to_c_string
 
     implicit none
 
@@ -30,26 +28,21 @@ module crysp_status
     !> Outcome of an operation that may fail.
     !>
     !> `code` is `CRYSP_OK` on success. Any oof the CRYSP_ERR... error enums above on failure.
-    !> The three name buffers are NUL-terminated C strings. they are all-NUL when `code` is `CRYSP_OK`.
+    !> The strings are unallocated when `code` is `CRYSP_OK`, and all allocated on a failure built by [[fail]].
     !>
     !> @note
-    !> Default-initialized to indicate success.
+    !> Default-initialized to indicate success. C callers get a [[libcrysp_c_binding:Status_C]] instead.
     !> @endnote
-    !> @warning
-    !> Mirrored as `crysp_status` in src/macro/trust_region.c, together with `NAME_LEN`/`MSG_LEN` and the codes it uses. Keep them in sync.
-    !> @endwarning
-    type, bind(C):: Status
-        integer(C_INT)::         code                = CRYSP_OK    !! One of the status codes above.
-        character(kind=C_CHAR):: mod_name(NAME_LEN)  = C_NULL_CHAR !! Module in which the failure was raised.
-        character(kind=C_CHAR):: proc_name(NAME_LEN) = C_NULL_CHAR !! Routine in which the failure was raised.
-        character(kind=C_CHAR):: message(MSG_LEN)    = C_NULL_CHAR !! Human-readable description of the failure.
+    type:: Status
+        integer::                   code = CRYSP_OK !! One of the status codes above.
+        character(:), allocatable:: mod_name        !! Module in which the failure was raised.
+        character(:), allocatable:: proc_name       !! Routine in which the failure was raised.
+        character(:), allocatable:: message         !! Human-readable description of the failure. Empty if none was given.
     end type
 
 contains
 
     !> Build a failed [[Status]].
-    !>
-    !> Names and message are truncated to the capacity of their buffer and always NUL-terminated.
     pure function fail(mod_name, proc_name, code, message) result(stat)
         character(*), intent(in)::           mod_name  !! Module raising the failure.
         character(*), intent(in)::           proc_name !! Routine raising the failure.
@@ -58,9 +51,10 @@ contains
         type(Status):: stat
 
         stat%code = code
-        stat%mod_name = to_c_string(mod_name, NAME_LEN)
-        stat%proc_name = to_c_string(proc_name, NAME_LEN)
-        if (present(message)) stat%message = to_c_string(message, MSG_LEN)
+        stat%mod_name = mod_name
+        stat%proc_name = proc_name
+        stat%message = ''
+        if (present(message)) stat%message = message
     end function
 
     !> Did an operation fail?
