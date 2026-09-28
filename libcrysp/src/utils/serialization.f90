@@ -58,12 +58,16 @@ module crysp_serialization
     end type
 
     abstract interface
+        !> Get the amount of Parameters needed to serialize the current object.
+        !>
+        !> Note that for many objects, this is only known at runtime due to e.g. varying-size list members.
         pure function state_get_size(this) result(size)
             import State
 
             class(State), intent(in):: this
             integer:: size
         end function
+        !> Transform a state into a list of parameters
         pure function state_serialize(this) result(params)
             import State
             import Parameter
@@ -71,6 +75,7 @@ module crysp_serialization
             class(State), target, intent(in):: this
             type(Parameter), dimension(:), allocatable:: params !! Allocated to this%size() by the callee.
         end function
+        !> Transform a list of parameters into an object of State (sub)type
         subroutine state_deserialize(this, params)
             import State
             import Parameter
