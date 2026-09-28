@@ -30,51 +30,28 @@ module crysp_cluster
         procedure:: deserialize => cluster_deserialize
     end type
 
+    type, bind(C):: Cluster_C
+        integer(C_INT):: n_grains
+        type(C_PTR):: grains      !! n_grains * type(Grain_C)
+        real(C_DOUBLE):: weight
+    end type
+
+    interface assignment(=)
+        module procedure cluster_to_c, cluster_from_c
+    end interface
+
 contains
 
-    function cluster_serialize(this, phases) result(params)
-        class(Cluster), target, intent(in):: this
-        type(Phase), dimension(:), target, intent(in):: phases
-        type(Parameter), dimension(:), allocatable:: params
+    subroutine cluster_to_c(clstr_c, clstr)
+        type(Cluster_C), intent(out):: clstr_c
+        type(Cluster), intent(in):: clstr
 
-        integer:: i, &
-                  offset, &
-                  size_grain
-        type(Parameter), dimension(:), allocatable:: grain
-
-        allocate(params(this%size()))
-
-        params(1) = size(this%grains)
-        offset = 1
-        do i=1,size(this%grains)
-            grain = this%grains(i)%serialize(phases)
-            size_grain = size(grain)
-            params(offset+1:offset+size_grain) = grain
-            offset = offset + size_grain
-        end do
-        params(offset+1) = this%weight
-    end function
-
-    subroutine cluster_deserialize(this, params, phases)
-        class(Cluster), target, intent(out):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Phase), dimension(:), target, intent(in):: phases
-
-        integer:: i, &
-                  offset, &
-                  size_grain, &
-                  n_grains
-
-        n_grains = params(1)
-        allocate(this%grains(n_grains))
-
-        offset=1
-        do i=1,n_grains
-            call this%grains(i)%deserialize(params(offset+1:), phases)
-
-            offset = offset + this%grains(i)%size()
-        end do
-
-        this%weight = params(offset+1)
     end subroutine
+
+    subroutine cluster_from_c(clstr, clstr_c)
+        type(Cluster), intent(out):: clstr
+        type(Cluster_C), intent(in):: clstr_c
+
+    end subroutine
+
 end module

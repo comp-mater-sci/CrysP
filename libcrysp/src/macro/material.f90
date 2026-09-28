@@ -22,11 +22,10 @@ module crysp_material
     type, bind(C):: Material_C
         type(ModelData_C):: meso_model
         integer(C_INT):: n_phases
-        type(C_PTR):: phases  !! n_phases * type(ConstitutiveModel_C)
+        type(C_PTR):: phases  !! n_phases * type(Phase_C)
         integer(C_INT):: n_clusters
         type(C_PTR):: clusters  !! n_clusters * type(Cluster_C)
     end type
-
 
 contains
 
