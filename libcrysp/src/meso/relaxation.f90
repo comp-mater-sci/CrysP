@@ -23,7 +23,6 @@ module relaxation_module
                                                                     !cluster type
         real(DP), dimension(6):: spin_coeffs  ! Defined in this way to be consistent with taylor_coeffs
     contains
-        procedure:: size => relaxation_size
         procedure:: init => relaxation_init
         procedure:: update => relaxation_update
         procedure:: serialize => relaxation_serialize
@@ -33,13 +32,6 @@ module relaxation_module
     public:: Relaxation
 
 contains
-
-    pure function relaxation_size(this) result(size)
-        class(Relaxation), intent(in):: this
-        integer:: size
-
-        size = 3
-    end function
 
     subroutine relaxation_init(this, type)
         class(Relaxation), target, intent(inout):: this

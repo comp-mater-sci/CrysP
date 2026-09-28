@@ -61,6 +61,14 @@ module micro
         real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
     end type
 
+    !> C-compatible counterpart of [[PhaseData]]. `orientations` holds the Euler angle triplets one after the other.
+    type, bind(C):: PhaseData_C
+        type(ModelData_C):: model
+        integer(C_INT):: deformation_mechanism
+        integer(C_INT):: n_orientations
+        type(C_PTR):: orientations  !! n_orientations * real(C_DOUBLE) * 3
+    end type
+
     interface
         !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
         !>
@@ -79,6 +87,19 @@ module micro
             class(ConstitutiveModel), allocatable, intent(out):: model
             type(Status):: stat
         end function
+    end interface
+
+    interface assignment(=)
+        !> Convert C-compatible phase data to phase data.
+        !>
+        !> The model data is converted and freed as described in
+        !> [[crysp_model:model_data_from_c]]. The orientations are copied and then freed, so `phase_data_c%orientations` must have been
+        !> malloc'ed and is dangling afterwards.
+        !> `phase_data_c` is assumed to be well-formed: it is not validated here.
+        module subroutine phase_data_from_c(phase_data, phase_data_c)
+            type(PhaseData), intent(out):: phase_data
+            type(PhaseData_C), intent(in):: phase_data_c
+        end subroutine
     end interface
 end module
 
@@ -189,5 +210,17 @@ contains
                 j = j+1
             end do
         end do
+    end procedure
+
+    !> See interface documentation
+    module procedure phase_data_from_c
+        real(C_DOUBLE), dimension(:,:), pointer:: orientations
+
+        phase_data%model = phase_data_c%model
+        phase_data%deformation_mechanism = int(phase_data_c%deformation_mechanism)
+
+        call c_f_pointer(phase_data_c%orientations, orientations, [3, int(phase_data_c%n_orientations)])
+        phase_data%orientations = real(orientations, DP)
+        call free(phase_data_c%orientations)
     end procedure
 end submodule

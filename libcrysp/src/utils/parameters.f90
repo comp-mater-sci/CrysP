@@ -50,7 +50,7 @@ module crysp_parameters
     !>
     !> A `Parameter_C` produced by libCrysP owns its `data`, malloc'ed so that C can release it with `free()`. Strings produced by
     !> libCrysP are NUL-terminated for convenience, but the terminator is not counted in `extents` and is not required on input.
-    !> Converting from C copies the data, so the C caller keeps ownership of what it passed in.
+    !> Converting from C copies the data and then frees it, so a C caller must pass malloc'ed data and not touch it afterwards.
     type, bind(C):: Parameter_C
         integer(C_INT):: type
         integer(C_INT):: rank
@@ -342,55 +342,30 @@ contains
         end subroutine
     end subroutine
 
-    !> Convert a C-compatible parameter to a parameter. The data is copied: `param_c` is left untouched and still owned by C.
+    !> Convert a C-compatible parameter to a parameter. The data is copied and then freed, so `param_c%data` must have been
+    !> malloc'ed and is dangling afterwards.
     !>
-    !> Terminates the program if `param_c` does not describe a value a [[crysp_parameters:Parameter]] can hold, for the same reason
-    !> the readers in [[crysp_parameters]] do: a defined assignment has no room for a [[crysp_status:Status]].
+    !> `param_c` is assumed to be well-formed: it is not validated here.
     subroutine parameter_from_c(param, param_c)
         type(Parameter), intent(out):: param
         type(Parameter_C), intent(in):: param_c
 
         if (param_c%rank < 0) return
-        if (any(param_c%extents < 0)) error stop 'crysp_parameters::parameter_from_c: Negative extent'
 
         select case (param_c%type)
             case (TYPE_INTEGER)
-                call check_extents(1)
                 call ints_from_c()
             case (TYPE_REAL)
-                call check_extents(2)
                 call reals_from_c()
             case (TYPE_STRING)
-                if (param_c%rank /= 0) error stop 'crysp_parameters::parameter_from_c: A string must have rank 0'
                 call string_from_c()
-            case default
-                error stop 'crysp_parameters::parameter_from_c: Unknown parameter type'
         end select
+        call free(param_c%data)
     contains
-        !> Check that the rank of a numerical parameter is at most `max_rank` and consistent with its extents.
-        subroutine check_extents(max_rank)
-            integer, intent(in):: max_rank
-            if (param_c%rank > max_rank) error stop 'crysp_parameters::parameter_from_c: Rank not supported for this type'
-            select case (param_c%rank)
-                case (0)
-                    if (any(param_c%extents /= 1)) &
-                        error stop 'crysp_parameters::parameter_from_c: A scalar must have extents (1,1)'
-                case (1)
-                    if (param_c%extents(2) /= 1) &
-                        error stop 'crysp_parameters::parameter_from_c: An array must have extents (n,1)'
-            end select
-        end subroutine
-        !> c_f_pointer cannot be given a null pointer, which C may pass for an empty array, hence the local empty buffers below.
         subroutine ints_from_c()
             integer(C_INT), dimension(:,:), pointer:: ints
-            integer(C_INT), dimension(:,:), allocatable, target:: empty
 
-            if (product(param_c%extents) == 0) then
-                allocate(empty(param_c%extents(1), param_c%extents(2)))
-                ints => empty
-            else
-                call c_f_pointer(param_c%data, ints, param_c%extents)
-            end if
+            call c_f_pointer(param_c%data, ints, param_c%extents)
             select case (param_c%rank)
                 case (0)
                     param = int(ints(1,1))
@@ -400,14 +375,8 @@ contains
         end subroutine
         subroutine reals_from_c()
             real(C_DOUBLE), dimension(:,:), pointer:: reals
-            real(C_DOUBLE), dimension(:,:), allocatable, target:: empty
 
-            if (product(param_c%extents) == 0) then
-                allocate(empty(param_c%extents(1), param_c%extents(2)))
-                reals => empty
-            else
-                call c_f_pointer(param_c%data, reals, param_c%extents)
-            end if
+            call c_f_pointer(param_c%data, reals, param_c%extents)
             select case (param_c%rank)
                 case (0)
                     param = real(reals(1,1), DP)
@@ -424,12 +393,10 @@ contains
 
             n = param_c%extents(1)
             allocate(character(n):: str)
-            if (n > 0) then
-                call c_f_pointer(param_c%data, chars, [n])
-                do i = 1, n
-                    str(i:i) = chars(i)
-                end do
-            end if
+            call c_f_pointer(param_c%data, chars, [n])
+            do i = 1, n
+                str(i:i) = chars(i)
+            end do
             param = str
         end subroutine
     end subroutine

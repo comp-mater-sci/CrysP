@@ -30,7 +30,6 @@ module full_constraints_taylor
         integer, dimension(5):: ind_basis_systems
         real(DP), dimension(5, 5):: inverse_basis
     contains
-        procedure:: size => taylor_cluster_size
         procedure:: serialize => taylor_cluster_serialize
         procedure:: deserialize => taylor_cluster_deserialize
     end type
@@ -217,13 +216,6 @@ contains
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
         real(DP), intent(in):: time                              !! Duration of the time step.
     end subroutine
-
-    pure function taylor_cluster_size(this) result(size)
-        class(TaylorCluster), intent(in):: this
-        integer:: size
-
-        size = this%Cluster%size() + 2
-    end function
 
     function taylor_cluster_serialize(this, phases) result(params)
         class(TaylorCluster), target, intent(in):: this

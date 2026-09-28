@@ -50,7 +50,6 @@ module dsh
         type(CBBtype), dimension(6):: CBB
         integer, dimension(2)      :: ActiveCBB = 0
     contains
-        procedure:: size => dsh_state_size
         procedure:: serialize => dsh_state_serialize
         procedure:: deserialize => dsh_state_deserialize
     end type
@@ -85,7 +84,6 @@ module dsh
         procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
         procedure, nopass:: make_hardening_state => dsh_make_state
         procedure:: init_hardening_state => dsh_init_state
-        procedure:: size => dsh_size
         procedure:: serialize  => dsh_serialize
         procedure:: deserialize => dsh_deserialize
         procedure:: describe => dsh_describe
@@ -374,13 +372,6 @@ contains
         end select
     end subroutine
 
-    pure function dsh_size(this) result(size)
-        class(ConstitutiveModelDSH), intent(in):: this
-        integer:: size
-
-        size = this%ConstitutiveModel%size() + 22
-    end function
-
     !> See cm_deform
     function dsh_deform(this, state, time, slip_rates) result(stat)
         class(ConstitutiveModelDSH), intent(inout)                  :: this
@@ -630,13 +621,6 @@ contains
         this%effslashb     = params(offset+21)
         this%alfa_G_b_eff  = params(offset+22)
     end subroutine
-
-    pure function dsh_state_size(this) result(size)
-        class(DSHState), intent(in):: this
-        integer:: size
-
-        size = this%HardeningState%size() + 32
-    end function
 
     function dsh_state_serialize(this) result(params)
         class(DSHState), target, intent(in):: this

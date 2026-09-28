@@ -14,67 +14,22 @@ module crysp_material
              TexturePoint
 
     type, extends(State):: Material
-          class(MesoModel), allocatable:: meso_model   !! Global state of the meso model
-          type(Phase), dimension(:), allocatable:: phases           !! State associated to all grains of a particular phase
-          class(Cluster), dimension(:), allocatable:: clusters      !! State associated to individual clusters. Contains state of each grain.
-    contains
-        procedure:: size => material_size
-        procedure:: serialize => material_serialize
-        procedure:: deserialize => material_deserialize
-        procedure:: get_texture => material_get_texture
+        class(MesoModel), allocatable:: meso_model   !! Global state of the meso model
+        type(Phase), dimension(:), allocatable:: phases           !! State associated to all grains of a particular phase
+        class(Cluster), dimension(:), allocatable:: clusters      !! State associated to individual clusters. Contains state of each grain.
     end type
+
+    type, bind(C):: Material_C
+        type(ModelData_C):: meso_model
+        integer(C_INT):: n_phases
+        type(C_PTR):: phases  !! n_phases * type(ConstitutiveModel_C)
+        integer(C_INT):: n_clusters
+        type(C_PTR):: clusters  !! n_clusters * type(Cluster_C)
+    end type
+
 
 contains
 
-    !> Get the current texture of a material.
-    !>
-    !> One texture point per grain, in the order in which the grains were supplied when the material was created, i.e. grouped by
-    !> phase.
-    function material_get_texture(this) result(texture)
-        class(Material), target, intent(in):: this
-        integer, dimension(:,:), allocatable:: texture
-
-        integer:: i, j, n
-
-        n = 0
-        do i = 1, size(this%clusters)
-            n = n + size(this%clusters(i)%grains)
-        end do
-        allocate(texture(3,n))
-
-        !Clusters hold the grains in the order in which they were supplied.
-        n = 0
-        do i = 1, size(this%clusters)
-            associate (grains => this%clusters(i)%grains)
-                do j = 1, size(grains)
-                    texture(:,n+j) = int(rad_to_deg(rotatation_matrix_to_euler_angles(grains(j)%orientation)))
-                end do
-                n = n + size(grains)
-            end associate
-        end do
-    end function
-
-    pure function material_size(this) result(s)
-        class(Material), intent(in):: this
-        integer:: s
-
-        integer:: i, &
-                  n_phases, &
-                  n_clusters
-
-        n_phases = size(this%phases)
-        n_clusters = size(this%clusters)
-
-        s = 3 + this%meso_model%size()
-
-        do i=1,n_phases
-            s = s + 1 + this%phases(i)%model%size()
-        end do
-
-        do i=1,n_clusters
-            s = s + this%clusters(i)%size()
-        end do
-    end function
 
     function material_serialize(this) result(params)
         class(Material), target, intent(in):: this

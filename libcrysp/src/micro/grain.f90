@@ -28,7 +28,6 @@ module crysp_grain
     contains
         procedure:: init   => grain_init
         procedure:: deform => grain_deform
-        procedure:: size => grain_get_size
         procedure:: serialize => grain_serialize
         procedure:: deserialize => grain_deserialize
         procedure:: to_texture_point => grain_to_texture_point
@@ -85,13 +84,6 @@ contains
         this%stress_increment = norm2(stress_new-stress) / norm2(stress)
     end function
 
-
-    pure function grain_get_size(this) result(size)
-        class(Grain), intent(in):: this
-        integer:: size
-
-        size = 3 + this%hardening_state%size()
-    end function
 
     function grain_serialize(this, phases) result(params)
         class(Grain), target, intent(in):: this

@@ -26,25 +26,11 @@ module crysp_cluster
         type(Grain), dimension(:), allocatable:: grains !! List of grains making up this cluster.
         real(DP):: weight !! Measure of importance of the cluster with respect to the whole microstructure
     contains
-        procedure:: size => cluster_size
         procedure:: serialize => cluster_serialize
         procedure:: deserialize => cluster_deserialize
     end type
 
 contains
-
-    pure function cluster_size(this) result(n)
-        class(Cluster), intent(in):: this
-        integer:: n
-
-        integer:: i
-
-        n = 1
-        do i=1,size(this%grains)
-            n = n + this%grains(i)%size()
-        end do
-        n = n + 1
-    end function
 
     function cluster_serialize(this, phases) result(params)
         class(Cluster), target, intent(in):: this

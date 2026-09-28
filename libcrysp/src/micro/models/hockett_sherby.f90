@@ -27,7 +27,6 @@ module hockett_sherby
         procedure:: deform                  => hs_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => hs_make_state
         procedure:: init_hardening_state => hs_init_state
-        procedure:: size => hs_size
         procedure:: serialize => hs_serialize
         procedure:: deserialize => hs_deserialize
     end type
@@ -120,13 +119,6 @@ contains
         call this%ConstitutiveModel%init_hardening_state(state)
         state%crss = this%tau_0
     end subroutine
-
-    pure function hs_size(this) result(size)
-        class(ConstitutiveModelHockettSherby), intent(in):: this
-        integer:: size
-
-        size = this%ConstitutiveModel%size() + 4
-    end function
 
     function hs_serialize(this) result(params)
         class(ConstitutiveModelHockettSherby), target, intent(in):: this

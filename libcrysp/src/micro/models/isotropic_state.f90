@@ -17,7 +17,6 @@ module crysp_isotropic_state
     type, extends(HardeningState):: IsotropicState
         real(DP):: total_slip = 0._DP !! Sum of all the slip on all the slip systems of the grain.
     contains
-        procedure:: size => isotropic_state_size
         procedure:: serialize => isotropic_state_serialize
         procedure:: deserialize => isotropic_state_deserialize
     end type
@@ -41,13 +40,6 @@ contains
                 isotropic_state_ptr => null()
                 stat = fail(MOD_NAME, 'to_isotropic_state', CRYSP_ERR_TYPE, 'Hardening state is not an IsotropicState')
         end select
-    end function
-
-    pure function isotropic_state_size(this) result(size)
-        class(IsotropicState), intent(in):: this
-        integer:: size
-
-        size = this%HardeningState%size() + 1
     end function
 
     function isotropic_state_serialize(this) result(params)

@@ -26,7 +26,6 @@ module swift
         procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => swift_make_state
         procedure:: init_hardening_state => swift_init_state
-        procedure:: size => swift_size
         procedure:: serialize => swift_serialize
         procedure:: deserialize => swift_deserialize
     end type
@@ -116,13 +115,6 @@ contains
         call this%ConstitutiveModel%init_hardening_state(state)
         state%crss = this%k * (this%gamma0**this%n)
     end subroutine
-
-    pure function swift_size(this) result(size)
-        class(ConstitutiveModelSwift), intent(in):: this
-        integer:: size
-
-        size = this%ConstitutiveModel%size() + 3
-    end function
 
     function swift_serialize(this) result(params)
         class(ConstitutiveModelSwift), target, intent(in):: this

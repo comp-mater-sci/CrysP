@@ -34,7 +34,6 @@ module alamel
         type(Relaxation), dimension(2):: relaxations                !! ALAMEL clusters contain 2 relaxations which act as slip
                                                                     !! systems with 0 critical resolved shear stress.
     contains
-        procedure:: size => alamel_cluster_size
         procedure:: serialize => alamel_cluster_serialize
         procedure:: deserialize => alamel_cluster_deserialize
     end type
@@ -49,7 +48,6 @@ module alamel
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
         procedure:: update                 => alamel_update                 !! Inherited from [[MesoModel]]
-        procedure:: size => alamel_model_size
         procedure:: serialize => alamel_serialize
         procedure:: deserialize => alamel_deserialize
     end type
@@ -497,13 +495,6 @@ contains
         end do
     end subroutine
 
-    pure function alamel_model_size(this) result(size)
-        class(AlamelModel), intent(in):: this
-        integer:: size
-
-        size = 1
-    end function
-
     function alamel_serialize(this) result(params)
         class(AlamelModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
@@ -519,13 +510,6 @@ contains
 
         this%deformation_gradient = params(1)
     end subroutine
-
-    pure function alamel_cluster_size(this) result(size)
-        class(AlamelCluster), intent(in):: this
-        integer:: size
-
-        size = this%Cluster%size() + 9
-    end function
 
     function alamel_cluster_serialize(this, phases) result(params)
         class(AlamelCluster), target, intent(in):: this

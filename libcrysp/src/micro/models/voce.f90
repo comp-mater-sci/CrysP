@@ -32,7 +32,6 @@ module voce
         procedure:: deform                  => voce_deform                  !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => voce_make_state
         procedure:: init_hardening_state => voce_init_state
-        procedure:: size => voce_size
         procedure:: serialize => voce_serialize
         procedure:: deserialize => voce_deserialize
     end type
@@ -162,13 +161,6 @@ contains
         call this%ConstitutiveModel%init_hardening_state(state)
         state%crss = this%stages(1)%T1
     end subroutine
-
-    pure function voce_size(this) result(size)
-        class(ConstitutiveModelVoce), intent(in):: this
-        integer:: size
-
-        size = this%ConstitutiveModel%size() + 7
-    end function
 
     function voce_serialize(this) result(params)
         class(ConstitutiveModelVoce), target, intent(in):: this
