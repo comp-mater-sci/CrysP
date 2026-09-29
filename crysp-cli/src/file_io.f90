@@ -1,5 +1,4 @@
 module file_io
-    use crysp_material, only: TexturePoint
     use conversions
     use logging
 
@@ -314,13 +313,13 @@ contains
     subroutine write_texture_increment(file_handle, increment, texture)
         integer, intent(in):: file_handle
         integer, intent(in):: increment
-        type(TexturePoint), dimension(:), intent(in):: texture
+        integer, dimension(:,:), intent(in):: texture !! Euler angles in whole degrees, one column per grain.
 
         integer:: i, &
                   info
 
-        do i=1,size(texture)
-            write (file_handle, '(I0,",",3(G0,:,","))', iostat=info) increment, rad_to_deg(real(texture(i)%euler_angles, DP))
+        do i=1,size(texture, 2)
+            write (file_handle, '(I0,",",3(I0,:,","))', iostat=info) increment, texture(:,i)
             call handle_iostat('write_texture', info)
         end do
     end subroutine

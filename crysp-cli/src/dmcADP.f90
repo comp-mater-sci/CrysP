@@ -32,15 +32,14 @@ module dmcADP
     type:: StrainDrivenStep
         real(DP), dimension(3, 3):: velocity_gradient
         real(DP):: target_strain
-        type(StrainIncrementData), dimension(:), allocatable:: increments
-        type(TexturePoint), dimension(:,:), allocatable:: textures !! Texture after each increment, shaped (grains, increments).
+        type(StrainIncrement), dimension(:), allocatable:: increments
     end type
 
 contains
 
     !> Read configuration from IO unit (type-bound function)
     subroutine adp_initialize(this, cnfunit)
-        class(ADPModule), intent(inout)   :: this   !! passed implicitly
+        class(ADPModule), target, intent(inout):: this   !! passed implicitly
         integer, intent(in)              :: cnfunit !! IO input unit; pass explicitly
 
         character(*), parameter:: PROC_NAME = 'adp_initialize'
@@ -73,7 +72,7 @@ contains
 
     !> Run the simulation
     subroutine adp_run(this)
-        class(ADPModule), intent(inout)  :: this
+        class(ADPModule), target, intent(inout):: this
 
         integer:: i_step, i_inc, &
                   out_unit, texture_unit, &
@@ -95,20 +94,14 @@ contains
                 if (step%target_strain < TOLERANCE) then
                     allocate(step%increments(1))
                     call handle_crysp_status(crysp_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress))
-                    !StrainIncrementData is C-compatible and therefore has no default initialization.
-                    associate (inc => step%increments(1))
-                        inc%stress = deviatoric_to_tensor(dev_stress)
-                        inc%duration = 0._DP
-                        inc%deformation_gradient = UNIT_MATRIX_3X3
-                        inc%vm_strain = 0._DP
-                        inc%taylor_factor = 0._DP
-                    end associate
+                    !The other fields keep their default initialization: no duration, no deformation.
+                    step%increments(1)%stress = deviatoric_to_tensor(dev_stress)
                     n_incs = n_incs + 1
                 else
                     call handle_crysp_status(crysp_strain_driven_deformation(this%material, step%velocity_gradient, &
-                                                                              step%target_strain, step%increments, step%textures))
+                                                                              step%target_strain, step%increments))
                     n_incs = n_incs + size(step%increments)
-                    call write_texture_increment(texture_unit, n_incs, step%textures(:,size(step%increments)))
+                    call write_texture_increment(texture_unit, n_incs, step%increments(size(step%increments))%texture)
                 end if
 
                 do i_inc = 1, size(step%increments)

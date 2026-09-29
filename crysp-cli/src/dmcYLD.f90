@@ -32,7 +32,7 @@ module dmcYLD
 contains
 
     subroutine yld_initialize(this, cnfunit)
-        class(YLDModule), intent(inout):: this
+        class(YLDModule), target, intent(inout):: this
         integer, intent(in)::             cnfunit
 
         integer:: i
@@ -54,7 +54,7 @@ contains
     end subroutine
 
     subroutine yld_run(this)
-        class(YldModule), intent(inout):: this
+        class(YldModule), target, intent(inout):: this
 
         integer:: i, &
                   n_points, &

@@ -1,6 +1,5 @@
 program crysp
     use logging
-    use libcrysp, only: crysp_destroy_material
     use dmcBasicModule
     use dmcASR
     use dmcQRS
@@ -57,7 +56,7 @@ program crysp
     close(cnfunit)
 
     call the_module%run()
-    call crysp_destroy_material(the_module%material)
+    deallocate(the_module)
 
     write(display_unit, '(A, 1X, A, 1X, A)',advance='no') 'Execution of module', trim(moduleName), 'finished'
 end program
