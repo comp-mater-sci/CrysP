@@ -4,7 +4,7 @@ module dsh_loop
     use dsh
     use crysp_model
     use slip_systems
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_parameters
 
     implicit none

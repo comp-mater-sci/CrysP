@@ -13,9 +13,8 @@ set(CMAKE_Fortran_MODULE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
 
 add_library(crysp STATIC
     src/libcrysp.f90
-    src/libcrysp_c_binding.f90
-    src/model.f90
-    src/input.f90
+    src/utils/model.f90
+    src/utils/input.f90
     src/utils/base_defs.f90
     src/utils/math_utils.f90
     src/utils/conversions.f90
@@ -48,6 +47,11 @@ add_library(crysp STATIC
     src/micro/models/dsh_edge.f90
     src/micro/models/dsh_screw.f90
     src/micro/models/dsh_loop.f90
+    src/c_binding/utils_c.f90
+    src/c_binding/micro_c.f90
+    src/c_binding/meso_c.f90
+    src/c_binding/macro_c.f90
+    src/c_binding/libcrysp_c.f90
 )
 
 include(CMakePackageConfigHelpers)

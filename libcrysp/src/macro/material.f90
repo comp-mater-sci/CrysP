@@ -1,133 +1,51 @@
 module crysp_material
-    use crysp_parameters
-    use constitutive_model
-    use crysp_meso_model
-    use crysp_cluster
+    use base_defs
+    use conversions, only: rad_to_deg, rotation_matrix_to_euler_angles
+    use crysp_constitutive_model
     use meso
-    use micro
-    use crysp_status
 
     implicit none
 
     private
-    public:: Material, &
-             TexturePoint
+    public:: Material
 
-    type, extends(State):: Material
+    type:: Material
         class(MesoModel), allocatable:: meso_model   !! Global state of the meso model
         type(Phase), dimension(:), allocatable:: phases           !! State associated to all grains of a particular phase
         class(Cluster), dimension(:), allocatable:: clusters      !! State associated to individual clusters. Contains state of each grain.
-    end type
-
-    type, bind(C):: Material_C
-        type(ModelData_C):: meso_model
-        integer(C_INT):: n_phases
-        type(C_PTR):: phases  !! n_phases * type(Phase_C)
-        integer(C_INT):: n_clusters
-        type(C_PTR):: clusters  !! n_clusters * type(Cluster_C)
+    contains
+        procedure:: get_texture => material_get_texture
     end type
 
 contains
 
+    !> Get the current texture of a material.
+    !>
+    !> One column per grain, holding its Euler angles in Bunge convention, rounded to whole degrees. The grains are in the order in
+    !> which the clusters hold them, which is the order in which they were supplied when the material was created, i.e. grouped by
+    !> phase.
+    function material_get_texture(this) result(texture)
+        class(Material), intent(in):: this
+        integer, dimension(:,:), allocatable:: texture
 
-    function material_serialize(this) result(params)
-        class(Material), target, intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
+        integer:: i, j, n
 
-        integer:: i, &
-                  offset, &
-                  n_phases, &
-                  n_clusters, &
-                  s
-        type(Parameter), dimension(:), allocatable:: sub
+        n = 0
+        do i = 1, size(this%clusters)
+            n = n + size(this%clusters(i)%grains)
+        end do
+        allocate(texture(3,n))
 
-        allocate(params(this%size()))
-
-        !CP model
-        params(1) = this%meso_model%id
-        offset = 1
-        sub = this%meso_model%serialize()
-        s = size(sub)
-        params(offset+1:offset+s) = sub
-        offset=offset+s
-
-        !Phases
-        n_phases = size(this%phases)
-        params(offset+1) = n_phases
-        offset = offset+1
-        do i=1,n_phases
-            associate (m => this%phases(i)%model)
-                params(offset+1) = m%id
-                offset = offset+1
-                sub = m%serialize()
-                s = size(sub)
-                params(offset+1:offset+s) = sub
-                offset = offset + s
+        n = 0
+        do i = 1, size(this%clusters)
+            associate (grains => this%clusters(i)%grains)
+                do j = 1, size(grains)
+                    !A grain orientation is a proper rotation by construction, so the cheap conversion applies: this is called
+                    !once per grain per increment, where a polar decomposition would dominate the cost.
+                    texture(:,n+j) = nint(rad_to_deg(rotation_matrix_to_euler_angles(grains(j)%orientation)))
+                end do
+                n = n + size(grains)
             end associate
         end do
-
-        !Clusters
-        n_clusters = size(this%clusters)
-        params(offset+1) = n_clusters
-        offset = offset+1
-        do i=1,n_clusters
-            sub = this%clusters(i)%serialize(this%phases)
-            s = size(sub)
-            params(offset+1:offset+s) = sub
-            offset = offset+s
-        end do
     end function
-
-    !> Rebuild a material from a serialized parameter list.
-    !>
-    !> The model IDs embedded in the list originate from whatever the caller handed back, so an unknown one is reported rather than
-    !> fatal.
-    subroutine material_deserialize(this, params)
-        class(Material), target, intent(inout):: this
-        type(Parameter), dimension(:), intent(in):: params
-
-        integer:: i, &
-                  offset, &
-                  n_phases, &
-                  n_clusters, &
-                  model_id
-        type(Status):: stat
-
-        !An unknown model ID is not reported yet, so the status of the model lookups below is ignored.
-
-        !CP model
-        model_id = params(1)
-        stat = meso_get_model(model_id, this%meso_model)
-
-        offset = 1
-        call this%meso_model%deserialize(params(offset+1:))
-
-        offset = offset + this%meso_model%size()
-
-        !Phases
-        n_phases = params(offset+1)
-        offset = offset + 1
-        if (allocated(this%phases)) deallocate(this%phases)
-        allocate(this%phases(n_phases))
-        do i=1,n_phases
-            model_id = params(offset+1)
-            offset = offset + 1
-            stat = micro_get_model(model_id, this%phases(i)%model)
-
-            call this%phases(i)%model%deserialize(params(offset+1:))
-
-            offset = offset + this%phases(i)%model%size()
-        end do
-
-        !Clusters
-        n_clusters = params(offset+1)
-        offset = offset + 1
-        if (allocated(this%clusters)) deallocate(this%clusters)
-        allocate(this%clusters(n_clusters), mold=this%meso_model%make_cluster())
-        do i=1,n_clusters
-            call this%clusters(i)%deserialize(params(offset+1:), this%phases)
-
-            offset = offset + this%clusters(i)%size()
-        end do
-    end subroutine
 end module

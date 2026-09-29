@@ -1,7 +1,7 @@
 module none
     use base_defs
     use crysp_status
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_grain
     use crysp_parameters
     use crysp_input

@@ -6,8 +6,9 @@
 module crysp_cluster
     use base_defs
     use crysp_grain
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_parameters
+    use crysp_model
     implicit none
 
     private
@@ -22,7 +23,7 @@ module crysp_cluster
     !> clusters call their parent's procedures via `this%Cluster%...`, and the Fortran standard only permits such a type-bound
     !> procedure reference when the parent part-name is not of abstract type (F2018 19.4.5).
     !> @endnote
-    type:: Cluster
+    type, extends(State):: Cluster
         type(Grain), dimension(:), allocatable:: grains !! List of grains making up this cluster.
         real(DP):: weight !! Measure of importance of the cluster with respect to the whole microstructure
     contains
@@ -30,28 +31,22 @@ module crysp_cluster
         procedure:: deserialize => cluster_deserialize
     end type
 
-    type, bind(C):: Cluster_C
-        integer(C_INT):: n_grains
-        type(C_PTR):: grains      !! n_grains * type(Grain_C)
-        real(C_DOUBLE):: weight
-    end type
-
-    interface assignment(=)
-        module procedure cluster_to_c, cluster_from_c
-    end interface
-
 contains
 
-    subroutine cluster_to_c(clstr_c, clstr)
-        type(Cluster_C), intent(out):: clstr_c
-        type(Cluster), intent(in):: clstr
+    !> Base of the serialization chain for clusters. Serialization only covers state added by concrete clusters; the grains and
+    !> weight are common to all clusters, so there is nothing to serialize here.
+    !>
+    !> The result is allocated empty rather than left unallocated so that extensions can append to it unconditionally.
+    function cluster_serialize(this) result(params)
+        class(Cluster), target, intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
 
+        allocate(params(0))
+    end function
+
+    !> Counterpart of [[cluster_serialize]]: there is nothing to restore here.
+    subroutine cluster_deserialize(this, params)
+        class(Cluster), target, intent(inout):: this
+        type(Parameter), dimension(:), intent(in):: params
     end subroutine
-
-    subroutine cluster_from_c(clstr, clstr_c)
-        type(Cluster), intent(out):: clstr
-        type(Cluster_C), intent(in):: clstr_c
-
-    end subroutine
-
 end module

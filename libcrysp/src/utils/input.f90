@@ -1,6 +1,5 @@
 module crysp_input
     use base_defs
-    use conversions, only: string_to_chars
     use crysp_parameters
 
     implicit none
@@ -15,8 +14,8 @@ module crysp_input
     !> A model providing an input parameter of a certain input type expects the UI to return a value corresponding to the linked
     !> parameter type. Note that for non-scalar parameter types, the shape of the parameter type is specified as well.
     enum, bind(C)
-        enumerator:: INPUT_REAL         !! TYPE_REAL
-        enumerator:: INPUT_ANGLES_LIST  !! TYPE_REAL_MATRIX(2,*)
+        enumerator:: INPUT_REAL         !! TYPE_REAL, rank 0
+        enumerator:: INPUT_ANGLES_LIST  !! TYPE_REAL, rank 2, shape (2,*)
     end enum
 
     !> Descriptor of an input field requested from the user.
@@ -41,40 +40,4 @@ module crysp_input
         logical:: upper_bound_inclusive = .false.              !! Ignored if upper_bound is unset
         type(Parameter):: default_value                        !! Value to use when the caller supplies none.
     end type
-
-    !> C-compatible counterpart of [[Input]].
-    type, bind(C):: Input_C
-        character(C_CHAR), dimension(NAME_LEN):: name
-        character(C_CHAR), dimension(DESC_LEN):: description
-        integer(C_INT):: type
-        type(Parameter_C):: lower_bound
-        logical(C_BOOL):: lower_bound_inclusive
-        type(Parameter_C):: upper_bound
-        logical(C_BOOL):: upper_bound_inclusive
-        type(Parameter_C):: default_value
-    end type
-
-    interface assignment(=)
-        module procedure input_to_c
-    end interface
-
-contains
-
-    !> Convert an input to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of the data of the bounds and default value.
-    !> String inputs are truncted to fit
-    subroutine input_to_c(inp_c, inp)
-        type(Input_C), intent(out):: inp_c
-        type(Input), intent(in):: inp
-
-        inp_c%name = string_to_chars(inp%name, size(inp_c%name))
-        inp_c%description = string_to_chars(inp%description, size(inp_c%description))
-        inp_c%type = int(inp%type, C_INT)
-        inp_c%lower_bound = inp%lower_bound
-        inp_c%lower_bound_inclusive = logical(inp%lower_bound_inclusive, C_BOOL)
-        inp_c%upper_bound = inp%upper_bound
-        inp_c%upper_bound_inclusive = logical(inp%upper_bound_inclusive, C_BOOL)
-        inp_c%default_value = inp%default_value
-    end subroutine
 end module

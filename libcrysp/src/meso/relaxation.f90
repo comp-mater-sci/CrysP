@@ -3,6 +3,7 @@ module relaxation_module
     use math_utils
     use conversions
     use crysp_parameters
+    use crysp_model
     implicit none
     private
 
@@ -63,7 +64,7 @@ contains
         class(Relaxation), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
-        allocate(params(this%size()))
+        allocate(params(3))
 
         params(1) = this%type
         params(2) = this%taylor_coeffs

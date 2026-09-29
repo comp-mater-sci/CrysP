@@ -104,6 +104,6 @@ contains
         stat = meso_get_model(model_data%id, model)
         if (failed(stat)) return
 
-        call model%init(grains, model_data%params, clusters)
+        call model%init(grains, model_data%parameters, clusters)
     end procedure
 end submodule

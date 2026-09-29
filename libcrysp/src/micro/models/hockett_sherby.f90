@@ -2,7 +2,7 @@
 
 module hockett_sherby
     use base_defs
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_status
     use crysp_parameters
     use crysp_input
@@ -14,6 +14,8 @@ module hockett_sherby
 
     private
     public:: ConstitutiveModelHockettSherby
+
+    integer, parameter:: STATE_SIZE = 4
 
     !> Classic isotropic Hockett-Sherby hardening model.
     type, extends(ConstitutiveModel):: ConstitutiveModelHockettSherby
@@ -58,20 +60,20 @@ contains
         desc%model_state = [desc%model_state, &
                             StateDescriptor("tau_0", &
                                             "Initial critical resolved shear stress on all slip systems", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("tau_sat", &
                                             "Maximum critical resolved shear stress on all slip systems", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("b", &
                                             "Hardening exponent", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("n", &
                                             "Hardening exponent on slip", &
-                                            TYPE_REAL)]
+                                            TYPE_REAL, 0)]
         desc%element_state = [desc%element_state, &
                               StateDescriptor("Total slip", &
                                               "Sum of total slip across all slip systems", &
-                                              TYPE_REAL)]
+                                              TYPE_REAL, 0)]
     end function
 
     !> See [[ConstitutiveModel:init]]
@@ -127,10 +129,10 @@ contains
         integer:: offset
         type(Parameter), dimension(:), allocatable:: base
 
-        allocate(params(this%size()))
-
         base = this%ConstitutiveModel%serialize()
         offset = size(base)
+
+        allocate(params(offset+STATE_SIZE))
         params(:offset) = base
 
         params(offset+1) = this%tau_0
@@ -145,9 +147,8 @@ contains
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params)
-
-        offset = this%ConstitutiveModel%size()
+        offset = size(params)-STATE_SIZE
+        call this%ConstitutiveModel%deserialize(params(:offset))
 
         this%tau_0 = params(offset+1)
         this%tau_sat = params(offset+2)

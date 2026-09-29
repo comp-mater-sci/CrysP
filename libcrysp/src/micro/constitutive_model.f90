@@ -1,4 +1,4 @@
-module constitutive_model
+module crysp_constitutive_model
     use base_defs
     use math_utils
     use conversions
@@ -9,11 +9,8 @@ module constitutive_model
 
     private
     public:: ConstitutiveModel, &
-             Phase_C, &
              HardeningState, &
-             HardeningState_C, &
-             Phase, &
-             assignment(=)
+             Phase
 
     character(*), parameter:: MOD_NAME = 'constitutive_model'
 
@@ -30,18 +27,6 @@ module constitutive_model
     contains
         procedure:: serialize => hard_stat_serialize
         procedure:: deserialize => hard_stat_deserialize
-    end type
-
-    !> C-compatible counterpart of [[HardeningState]].
-    !>
-    !> `crss` holds the columns of its Fortran counterpart one after the other. `params` holds the state added by the concrete
-    !> hardening state, as produced by its `serialize`. A `HardeningState_C` produced by libCrysP owns `crss`, `params` and the
-    !> data of each parameter, malloc'ed so that C can release them with `free()`.
-    type, bind(C):: HardeningState_C
-        integer(C_INT):: n_systems
-        type(C_PTR):: crss     !! n_systems * 2 * double
-        integer(C_INT):: n_params
-        type(C_PTR):: params !! n_params * type(Parameter_C)
     end type
 
     !> Base constitutive model
@@ -63,22 +48,7 @@ module constitutive_model
         procedure, nopass:: make_hardening_state => cm_make_hardening_state
         procedure:: init => cm_init
         procedure:: init_hardening_state => cm_init_hardening_state
-        procedure:: serialize => cm_serialize
-        procedure:: deserialize => cm_deserialize
         procedure:: describe => cm_describe
-    end type
-
-    !> C-compatible counterpart of [[ConstitutiveModel]].
-    !>
-    !> `hardening_state` holds the model ID and the state specific to the concrete model, see [[crysp_model:ModelData_C]].
-    !> The coefficient matrices hold the columns of their Fortran counterparts one after the other. A `Phase_C`
-    !> produced by libCrysP owns all of its pointers, malloc'ed so that C can release them with `free()`.
-    type, bind(C):: Phase_C
-        type(ModelData_C):: hardening_state
-        integer(C_INT):: n_systems
-        type(C_PTR):: taylor_coeffs !! n_systems * 5 * real(C_DOUBLE)
-        type(C_PTR):: spin_coeffs   !! n_systems * 3 * real(C_DOUBLE)
-        integer(C_INT), dimension(5):: basis
     end type
 
     !> Wrapper type for the constitutive model backing a phase.
@@ -90,123 +60,7 @@ module constitutive_model
         class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
     end type
 
-    interface assignment(=)
-        module procedure cm_to_c, cm_from_c, hard_stat_to_c, hard_stat_from_c
-    end interface
-
 contains
-
-    !> Convert a constitutive model to its C-compatible counterpart. The caller takes ownership of all pointers, see
-    !> [[Phase_C]].
-    !>
-    !> Not `pure`: the coefficients and the serialized state are malloc'ed.
-    subroutine cm_to_c(cm_c, cm)
-        type(Phase_C), intent(out):: cm_c
-        class(ConstitutiveModel), intent(in):: cm
-
-        integer:: n_systems
-        real(C_DOUBLE), dimension(:,:), pointer:: ptr
-
-        cm_c%hardening_state = ModelData(cm%id, cm%serialize())
-        n_systems = size(cm%taylor_coeffs,2)
-        cm_c%n_systems = int(n_systems, C_INT)
-        cm_c%taylor_coeffs = malloc(int(5 * n_systems, C_SIZE_T) * c_sizeof(0._C_DOUBLE))
-        call c_f_pointer(cm_c%taylor_coeffs, ptr, [5,n_systems])
-        ptr = real(cm%taylor_coeffs, C_DOUBLE)
-        cm_c%spin_coeffs = malloc(int(3 * n_systems, C_SIZE_T) * c_sizeof(0._C_DOUBLE))
-        call c_f_pointer(cm_c%spin_coeffs, ptr, [3,n_systems])
-        ptr = real(cm%spin_coeffs, C_DOUBLE)
-        cm_c%basis = int(cm%basis,C_INT)
-    end subroutine
-
-    !> Restore a constitutive model from its C-compatible counterpart.
-    !>
-    !> `cm` must already have the dynamic type matching `cm_c%hardening_state%id`, as allocated by [[micro:micro_get_model]]: the
-    !> ID is handled at factory level, and this module cannot reach the factory. `cm` is `intent(inout)` rather than
-    !> `intent(out)` so that the ID stamped by the factory survives.
-    !>
-    !> The coefficients and basis are copied from their own fields. The state specific to the concrete model is restored by
-    !> passing the parameters in `cm_c%hardening_state` to `deserialize`. Everything in `cm_c` is freed, so it must have been
-    !> malloc'ed and is dangling afterwards.
-    !>
-    !> `cm_c` is assumed to be well-formed: it is not validated here.
-    subroutine cm_from_c(cm, cm_c)
-        class(ConstitutiveModel), intent(inout):: cm
-        type(Phase_C), intent(in):: cm_c
-
-        real(C_DOUBLE), dimension(:,:), pointer:: ptr
-        type(ModelData):: model_data
-
-        call c_f_pointer(cm_c%taylor_coeffs, ptr, [5, int(cm_c%n_systems)])
-        cm%taylor_coeffs = real(ptr, DP)
-        call free(cm_c%taylor_coeffs)
-        call c_f_pointer(cm_c%spin_coeffs, ptr, [3, int(cm_c%n_systems)])
-        cm%spin_coeffs = real(ptr, DP)
-        call free(cm_c%spin_coeffs)
-        cm%basis = int(cm_c%basis)
-
-        model_data = cm_c%hardening_state
-        call cm%deserialize(model_data%parameters)
-    end subroutine
-
-    !> Convert a hardening state to its C-compatible counterpart. The caller takes ownership of all pointers, see
-    !> [[HardeningState_C]].
-    !>
-    !> Not `pure`: the CRSS and the parameters are malloc'ed.
-    subroutine hard_stat_to_c(hs_c, hs)
-        type(HardeningState_C), intent(out):: hs_c
-        class(HardeningState), intent(in):: hs
-
-        integer:: i, n_systems
-        real(C_DOUBLE), dimension(:,:), pointer:: crss
-        type(Parameter), dimension(:), allocatable:: params
-        type(Parameter_C):: mold
-        type(Parameter_C), dimension(:), pointer:: params_c
-
-        n_systems = size(hs%crss, 2)
-        hs_c%n_systems = int(n_systems, C_INT)
-        hs_c%crss = malloc(int(2 * n_systems, C_SIZE_T) * c_sizeof(0._C_DOUBLE))
-        call c_f_pointer(hs_c%crss, crss, [2, n_systems])
-        crss = real(hs%crss, C_DOUBLE)
-
-        params = hs%serialize()
-        hs_c%n_params = int(size(params), C_INT)
-        hs_c%params = malloc(int(size(params), C_SIZE_T) * c_sizeof(mold))
-        call c_f_pointer(hs_c%params, params_c, [size(params)])
-        do i = 1, size(params)
-            params_c(i) = params(i)
-        end do
-    end subroutine
-
-    !> Restore a hardening state from its C-compatible counterpart.
-    !>
-    !> `hs` must already have the dynamic type matching the state in `hs_c`, e.g. as created by the model's `make_hardening_state`:
-    !> the type is not recorded in `hs_c`. `hs` is `intent(inout)` so that its dynamic type is kept. The CRSS is copied and the
-    !> parameters are passed to `deserialize`. Everything in `hs_c` is then freed, so it must have been malloc'ed and is dangling
-    !> afterwards.
-    !>
-    !> `hs_c` is assumed to be well-formed: it is not validated here.
-    subroutine hard_stat_from_c(hs, hs_c)
-        class(HardeningState), intent(inout):: hs
-        type(HardeningState_C), intent(in):: hs_c
-
-        integer:: i
-        real(C_DOUBLE), dimension(:,:), pointer:: crss
-        type(Parameter), dimension(:), allocatable:: params
-        type(Parameter_C), dimension(:), pointer:: params_c
-
-        call c_f_pointer(hs_c%crss, crss, [2, int(hs_c%n_systems)])
-        hs%crss = real(crss, DP)
-        call free(hs_c%crss)
-
-        allocate(params(hs_c%n_params))
-        call c_f_pointer(hs_c%params, params_c, [int(hs_c%n_params)])
-        do i = 1, size(params)
-            params(i) = params_c(i)
-        end do
-        call free(hs_c%params)
-        call hs%deserialize(params)
-    end subroutine
 
     !> Base of the serialization chain for hardening states. Serialization only covers model-specific state, and the CRSS is
     !> common to all hardening states, so there is nothing to serialize here.

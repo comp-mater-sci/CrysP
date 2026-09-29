@@ -1,17 +1,14 @@
 module crysp_grain
     use conversions
     use crysp_status
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_parameters
     use iso_c_binding
 
     implicit none
 
     private
-    public:: Grain, &
-             Grain_C, &
-             TexturePoint, &
-             assignment(=)
+    public:: Grain
 
 
     !>Texture-related state variables for single grain
@@ -30,58 +27,8 @@ module crysp_grain
     contains
         procedure:: init   => grain_init
         procedure:: deform => grain_deform
-        procedure:: serialize => grain_serialize
-        procedure:: deserialize => grain_deserialize
-        procedure:: to_texture_point => grain_to_texture_point
     end type grain
-
-    !> C-compatible counterpart of [[Grain]].
-    !>
-    !> `phase` refers to the element of the material's C-side phase list that backs this grain, as [[Grain]] points to its
-    !> [[Phase]]. It does not own that element. The phase is resolved at material level, which holds both the Fortran and the C
-    !> phase list: the grain conversions below leave it to the material. `orientation` is the rotation matrix, not Euler angles.
-    type, bind(C):: Grain_C
-        type(C_PTR):: phase !! type(Phase_C). Resolved at material level.
-        real(C_DOUBLE), dimension(3,3):: orientation
-        real(C_DOUBLE):: stress_increment
-        type(HardeningState_C):: hardening_state
-    end type
-
-    interface assignment(=)
-        module procedure grain_to_c, grain_from_c
-    end interface
-
 contains
-
-    !> Convert a grain to its C-compatible counterpart. The caller takes ownership of the hardening state, see
-    !> [[constitutive_model:HardeningState_C]].
-    !>
-    !> The phase is resolved at material level, which holds both phase lists: `gr_c%phase` is left null here and must be set by
-    !> the material.
-    subroutine grain_to_c(gr_c, gr)
-        type(Grain_C), intent(out):: gr_c
-        type(Grain), intent(in):: gr
-
-        gr_c%phase = C_NULL_PTR !Resolved at material level.
-        gr_c%orientation = real(gr%orientation,C_DOUBLE)
-        gr_c%stress_increment = real(gr%stress_increment, C_DOUBLE)
-        gr_c%hardening_state = gr%hardening_state
-    end subroutine
-
-    !> Restore a grain from its C-compatible counterpart.
-    !>
-    !> The phase is resolved at material level.
-    !> state in `gr_c` is freed, see [[constitutive_model:hard_stat_from_c]].
-    !> `gr_c` is assumed to be well-formed: it is not validated here.
-    subroutine grain_from_c(gr, gr_c)
-        type(Grain), intent(inout):: gr
-        type(Grain_C), intent(in):: gr_c
-
-        gr%orientation = real(gr_c%orientation, DP)
-        gr%stress_increment = real(gr_c%stress_increment, DP)
-        gr%hardening_state = gr%phase%model%make_hardening_state()
-        gr%hardening_state = gr_c%hardening_state
-    end subroutine
 
     !Initialize grain.
     subroutine grain_init(this, orientation, phase_obj, state)

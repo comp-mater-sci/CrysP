@@ -7,6 +7,7 @@ module mode
     use omp_lib
     use meso
     use crysp_status
+    use crysp_utils_c, only: Status_C, assignment(=)
 
     implicit none
 
@@ -29,7 +30,7 @@ module mode
 
     !> Interface of the trust region solver in C.
     !>
-    !> Needed because Fortran bindings for MKL are broken. MKL error codes are translated into a [[crysp_status:Status_C]] on the C
+    !> Needed because Fortran bindings for MKL are broken. MKL error codes are translated into a [[crysp_utils_c:Status_C]] on the C
     !> side; a failure reported by [[get_stress]] aborts the solver and is returned unchanged.
     interface
         function trust_region_solve(clusters_ptr, target_stress_mode, strain_mode, stress, residual) bind(C) result(stat)

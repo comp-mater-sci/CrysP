@@ -11,7 +11,7 @@ module alamel
     use crysp_cluster
     use crysp_status
     use taylor_ambiguity
-    use micro
+    use crysp_micro
     use simplex
     use crysp_meso_model
     use crysp_model
@@ -24,6 +24,9 @@ module alamel
     public:: AlamelModel
 
     character(*), parameter:: MOD_NAME = 'alamel'   !! Module name for easy logging.
+
+    integer, parameter:: MODEL_STATE_SIZE = 1   !! deformation_gradient
+    integer, parameter:: CLUSTER_STATE_SIZE = 9 !! 3 own fields + 3 per relaxation, see [[relaxation_serialize]]
 
     !> Cluster used by the ALAMEL model.
     type, extends(Cluster):: AlamelCluster
@@ -75,7 +78,7 @@ contains
                             StateDescriptor("Deformation gradient", &
                                             "Current cluster shape at the start of the time step, taken to be identical " // &
                                             "for all clusters.", &
-                                            TYPE_REAL_MATRIX)]
+                                            TYPE_REAL, 2)]
     end function
 
     function alamel_make_cluster() result(clstr)
@@ -495,11 +498,12 @@ contains
         end do
     end subroutine
 
+    !> [[MesoModel]] is abstract and contributes no state, so there is no parent to serialize.
     function alamel_serialize(this) result(params)
         class(AlamelModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
-        allocate(params(this%size()))
+        allocate(params(MODEL_STATE_SIZE))
 
         params(1) = this%deformation_gradient
     end function
@@ -511,26 +515,24 @@ contains
         this%deformation_gradient = params(1)
     end subroutine
 
-    function alamel_cluster_serialize(this, phases) result(params)
+    function alamel_cluster_serialize(this) result(params)
         class(AlamelCluster), target, intent(in):: this
-        type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(:), allocatable:: params
 
-        integer:: base_size, &
-                  offset, &
+        integer:: offset, &
                   i
         type(Parameter), dimension(:), allocatable:: sub
 
-        allocate(params(this%size()))
+        sub = this%Cluster%serialize()
+        offset = size(sub)
 
-        sub = this%Cluster%serialize(phases)
-        base_size = size(sub)
-        params(:base_size) = sub
-        params(base_size+1) = this%ind_basis_systems
-        params(base_size+2) = this%initial_boundary_normal
-        params(base_size+3) = this%inverse_basis
+        allocate(params(offset+CLUSTER_STATE_SIZE))
+        params(:offset) = sub
 
-        offset = base_size + 3
+        params(offset+1) = this%ind_basis_systems
+        params(offset+2) = this%initial_boundary_normal
+        params(offset+3) = this%inverse_basis
+        offset = offset + 3
         do i=1,2
             sub = this%relaxations(i)%serialize()
             params(offset+1:offset+size(sub)) = sub
@@ -538,26 +540,22 @@ contains
         end do
     end function
 
-    subroutine alamel_cluster_deserialize(this, params, phases)
-        class(AlamelCluster), target, intent(out):: this
+    subroutine alamel_cluster_deserialize(this, params)
+        class(AlamelCluster), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
-        type(Phase), dimension(:), target, intent(in):: phases
 
-        integer:: base_size, &
-                  offset, &
+        integer:: offset, &
                   i
 
-        call this%Cluster%deserialize(params, phases)
+        offset = size(params)-CLUSTER_STATE_SIZE
+        call this%Cluster%deserialize(params(:offset))
 
-        base_size = this%Cluster%size()
-        this%ind_basis_systems = params(base_size+1)
-        this%initial_boundary_normal = params(base_size+2)
-        this%inverse_basis = params(base_size+3)
-
-        offset = base_size + 3
+        this%ind_basis_systems = params(offset+1)
+        this%initial_boundary_normal = params(offset+2)
+        this%inverse_basis = params(offset+3)
+        offset = offset + 3
         do i=1,2
             call this%relaxations(i)%deserialize(params(offset+1:offset+3))
-
             offset = offset + 3
         end do
     end subroutine

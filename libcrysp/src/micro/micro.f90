@@ -8,13 +8,13 @@
 !> needed for the interface defined here. Higher-level modules can query this module for all of the information they need regarding
 !> the supported constitutive  models, which parameters they use etc. In this way, no hard-coded information about the available models needs to be kept at all at higher levels.
 
-module micro
+module crysp_micro
     use base_defs
     use crysp_parameters
     use crysp_input
     use conversions, only: int_to_str
     use crysp_status
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_grain
     use crysp_model
 
@@ -61,26 +61,18 @@ module micro
         real(DP), dimension(:,:), allocatable:: orientations    !! List of Euler angle triplets in Bunge convention in the macroscopic frame representing grain orientations.
     end type
 
-    !> C-compatible counterpart of [[PhaseData]]. `orientations` holds the Euler angle triplets one after the other.
-    type, bind(C):: PhaseData_C
-        type(ModelData_C):: model
-        integer(C_INT):: deformation_mechanism
-        integer(C_INT):: n_orientations
-        type(C_PTR):: orientations  !! n_orientations * real(C_DOUBLE) * 3
-    end type
-
     interface
         !> Initialize the micro-level entities of the simulation: The constitutive models and the grains.
         !>
         !> For each provided phase descriptor, a constitutive model is initialized. For each of the orientations in each of
         !> the phase descriptors, a grain object is initialized which points to its constitutive model. All of the grains across all
         !> phases are assimilated as output.
-        module function  micro_init(phase_descriptors, phases, grains) result(stat)
+        module function micro_init(phase_data, phases, grains) result(stat)
             type(PhaseData), dimension(:), intent(in):: phase_data    !! Phase descriptors for each phase
             type(Phase), dimension(:), allocatable, target, intent(out):: phases
             type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
             type(Status):: stat
-        end subroutine
+        end function
 
         module function micro_get_model(id, model) result(stat)
             integer, intent(in):: id
@@ -89,25 +81,13 @@ module micro
         end function
     end interface
 
-    interface assignment(=)
-        !> Convert C-compatible phase data to phase data.
-        !>
-        !> The model data is converted and freed as described in
-        !> [[crysp_model:model_data_from_c]]. The orientations are copied and then freed, so `phase_data_c%orientations` must have been
-        !> malloc'ed and is dangling afterwards.
-        !> `phase_data_c` is assumed to be well-formed: it is not validated here.
-        module subroutine phase_data_from_c(phase_data, phase_data_c)
-            type(PhaseData), intent(out):: phase_data
-            type(PhaseData_C), intent(in):: phase_data_c
-        end subroutine
-    end interface
 end module
 
 !> Implementation of the interface declared in the micro module.
 !>
 !> Links the different deformation mechanism and hardening model IDs to specific constitutive models and keeps a reference to the
 !> models currently in use.
-submodule(micro) micro_imp
+submodule(crysp_micro) crysp_micro_imp
     use none
     use swift
     use hockett_sherby
@@ -197,30 +177,17 @@ contains
             if (failed(stat)) return
             stat = get_miller_indices(phase_data(i)%deformation_mechanism, miller_indices)
             if (failed(stat)) return
-            call phases(i)%model%init(miller_indices, phase_data(i)%)
             call phases(i)%model%init(miller_indices, phase_data(i)%model%parameters)
 
             initial_state = phases(i)%model%make_hardening_state()
             call phases(i)%model%init_hardening_state(initial_state)
 
-            do k = 1, size(phase_descriptors(i)%orientations, 2)
+            do k = 1, size(phase_data(i)%orientations, 2)
                 !assignment of orientation needed for gfortran
-                orientation = phase_descriptors(i)%orientations(:,k)
-                call grains(j)%init(orientation, phases(i)%model, initial_state)
+                orientation = phase_data(i)%orientations(:,k)
+                call grains(j)%init(orientation, phases(i), initial_state)
                 j = j+1
             end do
         end do
-    end procedure
-
-    !> See interface documentation
-    module procedure phase_data_from_c
-        real(C_DOUBLE), dimension(:,:), pointer:: orientations
-
-        phase_data%model = phase_data_c%model
-        phase_data%deformation_mechanism = int(phase_data_c%deformation_mechanism)
-
-        call c_f_pointer(phase_data_c%orientations, orientations, [3, int(phase_data_c%n_orientations)])
-        phase_data%orientations = real(orientations, DP)
-        call free(phase_data_c%orientations)
     end procedure
 end submodule

@@ -2,7 +2,7 @@
 
 module voce
     use base_defs, only: dp
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_status
     use crysp_parameters
     use crysp_input
@@ -14,6 +14,8 @@ module voce
 
     private
     public:: ConstitutiveModelVoce
+
+    integer, parameter:: STATE_SIZE = 7 !! transition_slip + 3 per stage
 
     !> Type wrapping parameters associated to a particular stage of the Voce hardening law.
     type:: Stage
@@ -70,29 +72,29 @@ contains
        desc%model_state = [desc%model_state, &
                            StateDescriptor("Transition slip", &
                                            "Total accumulated slip at which the hardening regime transitions between stage 1 and 2.", &
-                                           TYPE_REAL), &
+                                           TYPE_REAL, 0), &
                            StateDescriptor("Stage 1 saturation CRSS", &
                                            "Maximum critical resolved shear stress for all systems at stage 1.", &
-                                           TYPE_REAL), &
+                                           TYPE_REAL, 0), &
                            StateDescriptor("Stage 1 initial CRSS", &
                                            "Critcal resolved shear stress for all systems in undeformed state.", &
-                                           TYPE_REAL), &
+                                           TYPE_REAL, 0), &
                            StateDescriptor("Stage 1 initial hardening rate", &
                                            "Initial hardening rate for all systems.", &
-                                           TYPE_REAL), &
+                                           TYPE_REAL, 0), &
                            StateDescriptor("Stage 2 saturation CRSS", &
                                            "Maximum critical resolved shear stress for all systems.", &
-                                           TYPE_REAL), &
+                                           TYPE_REAL, 0), &
                            StateDescriptor("Stage 2 initial CRSS", &
                                            "Critcal resolved shear stress for all systems at the transition between stage 1 and 2.", &
-                                           TYPE_REAL), &
+                                           TYPE_REAL, 0), &
                            StateDescriptor("Stage 2 initial hardening rate", &
                                            "Hardening rate for all systems at the transition between stage 1 and 2.", &
-                                           TYPE_REAL)]
+                                           TYPE_REAL, 0)]
         desc%element_state = [desc%element_state, &
                               StateDescriptor("Total slip", &
                                               "Sum of total slip across all slip systems", &
-                                              TYPE_REAL)]
+                                              TYPE_REAL, 0)]
     end function
 
     !> See [[ConstitutiveModel:init]]
@@ -170,19 +172,19 @@ contains
                   offset
         type(Parameter), dimension(:), allocatable:: base
 
-        allocate(params(this%size()))
-
         base = this%ConstitutiveModel%serialize()
         offset = size(base)
+
+        allocate(params(offset+STATE_SIZE))
         params(:offset) = base
 
         params(offset+1) = this%transition_slip
         offset = offset+1
         do i=1,2
-            offset = offset + 3*(i-1)
             params(offset+1) = this%stages(i)%TS
             params(offset+2) = this%stages(i)%T1
             params(offset+3) = this%stages(i)%TH
+            offset = offset + 3
         end do
     end function
 
@@ -193,13 +195,11 @@ contains
         integer:: i, &
                   offset
 
-        call this%ConstitutiveModel%deserialize(params)
-
-        offset = this%ConstitutiveModel%size()
+        offset = size(params)-STATE_SIZE
+        call this%ConstitutiveModel%deserialize(params(:offset))
 
         this%transition_slip = params(offset+1)
         offset = offset+1
-
         do i=1,2
             this%stages(i)%TS = params(offset+1)
             this%stages(i)%T1 = params(offset+2)

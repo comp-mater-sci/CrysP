@@ -12,7 +12,7 @@ module libcrysp
     use conversions
     use macro
     use meso
-    use micro
+    use crysp_micro
     use crysp_status
     use crysp_grain
     use incrementation
@@ -72,16 +72,16 @@ contains
     !> Initializes all data structures associated to a material state and assembles them into a Material object.
     !> An initialized Material object is needed for all other calls to libCrysP
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
-    function crysp_new_material(meso_data, phase_data, material) result(stat)
+    function crysp_new_material(meso_data, phase_data, mat) result(stat)
         type(ModelData):: meso_data
         type(PhaseData), dimension(:), intent(in):: phase_data
-        type(Material), target, intent(out):: material
+        type(Material), target, intent(out):: mat
         type(Status):: stat
 
         type(Grain), allocatable:: grains_(:)
 
-        stat =  micro_init(phase_data, material%phases, grains_)
-        if (.not. failed(stat)) stat = meso_init(meso_data, grains_, material%meso_model, material%clusters)
+        stat =  micro_init(phase_data, mat%phases, grains_)
+        if (.not. failed(stat)) stat = meso_init(meso_data, grains_, mat%meso_model, mat%clusters)
     end function
 
 
@@ -134,7 +134,6 @@ contains
 
         character(*), parameter:: PROC_NAME = 'crysp_stress_driven_deformation'
 
-        integer:: i, offset
 
         if (abs(norm2(target_stress_mode) - 1._DP) > TOLERANCE) then
             stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_ARG, 'Norm of stress mode must be 1.')
@@ -181,6 +180,6 @@ contains
         real(DP), dimension(5), intent(out)::   stress      !! Stress state corresponding to the strain mode.
         type(Status):: stat                                       !! `CRYSP_OK`, or a failure raised during the simulation.
 
-        stat = macro_simulate_strain_mode(mat_, strain_mode, stress)
+        stat = macro_simulate_strain_mode(mat, strain_mode, stress)
     end function
 end module
