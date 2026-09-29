@@ -380,9 +380,9 @@ contains
 
         stat_c%code = int(stat%code, C_INT)
         if (stat%code /= CRYSP_OK) then
-            stat_c%mod_name = string_to_chars(stat%mod_name, size(stat_c%mod_name))
-            stat_c%proc_name = string_to_chars(stat%proc_name, size(stat_c%proc_name))
-            stat_c%message = string_to_chars(stat%message, size(stat_c%message))
+            stat_c%mod_name = string_to_chars(trim(stat%mod_name), size(stat_c%mod_name))
+            stat_c%proc_name = string_to_chars(trim(stat%proc_name), size(stat_c%proc_name))
+            stat_c%message = string_to_chars(trim(stat%message), size(stat_c%message))
         end if
     end subroutine
 

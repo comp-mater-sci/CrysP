@@ -49,6 +49,6 @@ contains
     module procedure handle_crysp_status
         if (.not. failed(stat)) return
 
-        call log_error(stat%mod_name, stat%proc_name, stat%code, stat%message)
+        call log_error(trim(stat%mod_name), trim(stat%proc_name), stat%code, trim(stat%message))
     end procedure
 end submodule log_imp

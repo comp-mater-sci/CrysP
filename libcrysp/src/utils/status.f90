@@ -27,17 +27,30 @@ module crysp_status
 
     !> Outcome of an operation that may fail.
     !>
-    !> `code` is `CRYSP_OK` on success. Any oof the CRYSP_ERR... error enums above on failure.
-    !> The strings are unallocated when `code` is `CRYSP_OK`, and all allocated on a failure built by [[fail]].
+    !> `code` is `CRYSP_OK` on success. Any of the CRYSP_ERR... error enums above on failure.
+    !> The strings are blank when `code` is `CRYSP_OK`. On failure they are blank-padded, and truncated to fit: trim them before
+    !> use.
     !>
     !> @note
     !> Default-initialized to indicate success. C callers get a [[crysp_utils_c:Status_C]] instead.
     !> @endnote
+    !>
+    !> @note
+    !> The strings are fixed-length because for a type with allocatable components, IFX (as of 2026.1)
+    !> emits static descriptors for each result and temporary, which every thread rewrites on every call.
+    !> tears the components down at runtime, even when they are unallocated.
+    !> This causes heavy contention in the main OMP simulation loops.
+    !> @endnote
+    !>
+    !> @note
+    !> The type is 244 bytes. Keep it under 256: GFortran copies function results above a threshold measured between 212 and 260
+    !> bytes, which would add a full copy of the struct on the success path of every propagating frame.
+    !> @endnote
     type:: Status
-        integer::                   code = CRYSP_OK !! One of the status codes above.
-        character(:), allocatable:: mod_name        !! Module in which the failure was raised.
-        character(:), allocatable:: proc_name       !! Routine in which the failure was raised.
-        character(:), allocatable:: message         !! Human-readable description of the failure. Empty if none was given.
+        integer::              code = CRYSP_OK   !! One of the status codes above.
+        character(NAME_LEN):: mod_name = ''      !! Module in which the failure was raised.
+        character(NAME_LEN):: proc_name = ''     !! Routine in which the failure was raised.
+        character(MSG_LEN)::  message = ''       !! Human-readable description of the failure. Blank if none was given.
     end type
 
 contains
@@ -53,7 +66,6 @@ contains
         stat%code = code
         stat%mod_name = mod_name
         stat%proc_name = proc_name
-        stat%message = ''
         if (present(message)) stat%message = message
     end function
 

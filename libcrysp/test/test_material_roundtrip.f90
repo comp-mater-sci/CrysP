@@ -299,8 +299,8 @@ contains
         character(*), intent(in):: message
 
         call check(.not. failed(stat), message)
-        if (failed(stat)) print '(A,I0,6A)', '          code ', stat%code, ' in ', stat%mod_name, ', ', &
-                                 stat%proc_name, ': ', stat%message
+        if (failed(stat)) print '(A,I0,6A)', '          code ', stat%code, ' in ', trim(stat%mod_name), ', ', &
+                                 trim(stat%proc_name), ': ', trim(stat%message)
     end subroutine
 
     !> Initialization parameters per model, in signature order. Values taken from the integration test configuration.
