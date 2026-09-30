@@ -56,23 +56,6 @@ enum {
     CRYSP_INPUT_ANGLES_LIST = 1  /* CRYSP_TYPE_REAL, rank 2, shape (2,n). */
 };
 
-/* Mesoscopic models. */
-enum {
-    CRYSP_MESO_MODEL_FCTAYLOR = 1, /* Full-Constraints Taylor. */
-    CRYSP_MESO_MODEL_ALAMEL   = 2  /* Advanced LAMEL. */
-};
-
-/* Hardening models. */
-enum {
-    CRYSP_HARDENING_NONE           = 0,  /* No hardening. */
-    CRYSP_HARDENING_VOCE           = 1,  /* Isotropic Voce hardening. */
-    CRYSP_HARDENING_HOCKETT_SHERBY = 2,  /* Isotropic Hockett-Sherby hardening. */
-    CRYSP_HARDENING_SWIFT          = 3,  /* Isotropic Swift hardening. */
-    CRYSP_HARDENING_DSH_EDGE       = 11, /* Dislocation-based hardening, edge dislocations. */
-    CRYSP_HARDENING_DSH_SCREW      = 12, /* Dislocation-based hardening, screw dislocations. */
-    CRYSP_HARDENING_DSH_LOOP       = 13  /* Dislocation-based hardening, dislocation loops. */
-};
-
 /* Deformation mechanisms (slip system sets). */
 enum {
     CRYSP_SLIP_SYSTEMS_FCC   = 0, /* Face-Centered Cubic. */
@@ -212,7 +195,7 @@ typedef struct {
     CryspStrainIncrement *strain_increments;  /* List of n_strain_increments. */
 } CryspStressIncrement;
 
-/* Describe the available meso or micro (hardening) models as a list of *n_models descriptors. */
+/* Describe the available meso or micro (hardening) models as a list of *n_models descriptors, including their IDs. */
 CryspStatus crysp_get_meso_models(int *n_models, CryspModelDescriptor **model_descs);
 CryspStatus crysp_get_micro_models(int *n_models, CryspModelDescriptor **model_descs);
 
