@@ -287,13 +287,17 @@ contains
     !> Convert an input to its C-compatible counterpart.
     !>
     !> The caller takes ownership of the data of the bounds and default value.
-    !> String inputs are truncted to fit
+    !> Strings are truncated to fit. An input without a description gets an empty one.
     subroutine input_to_c(inp_c, inp)
         type(Input_C), intent(out):: inp_c
         type(Input), intent(in):: inp
 
         inp_c%name = string_to_chars(inp%name, size(inp_c%name))
-        inp_c%description = string_to_chars(inp%description, size(inp_c%description))
+        if (allocated(inp%description)) then
+            inp_c%description = string_to_chars(inp%description, size(inp_c%description))
+        else
+            inp_c%description = C_NULL_CHAR
+        end if
         inp_c%type = int(inp%type, C_INT)
         inp_c%lower_bound = inp%lower_bound
         inp_c%lower_bound_inclusive = logical(inp%lower_bound_inclusive, C_BOOL)
