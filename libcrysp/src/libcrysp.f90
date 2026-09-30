@@ -3,7 +3,7 @@
 !> Provides interface to callers and formats data to be used in underlying modules.
 !> Only module in libcrysp where all procedures are guaranteed to sanitize their input.
 !>
-!> Every entry point returns a [[crysp_status:Status]] by value and never terminates the process: libCrysP may be embedded in a
+!> Every entry point that can fail returns a [[crysp_status:Status]] by value and never terminates the process: libCrysP may be embedded in a
 !> long-lived host such as a web server, where a bad request must not take the host down with it. A caller checks `stat%code`
 !> against `CRYSP_OK` and, on failure, reads `mod_name`, `proc_name` and `message` for the detail.
 module libcrysp
@@ -27,12 +27,11 @@ module libcrysp
 
 contains
 
-    !> List the slip system sets libCrysP supports
+    !> List the slip system sets libCrysP supports.
     !>
     !> The IDs are those accepted as `deformation_mechanism` by [[crysp_new_material]].
-    function crysp_get_slip_systems(slip_system_descs) result(stat)
-        type(SlipSystemDescriptor), dimension(:), allocatable, intent(out):: slip_system_descs
-        type(Status):: stat
+    function crysp_get_slip_systems() result(slip_system_descs)
+        type(SlipSystemDescriptor), dimension(:), allocatable:: slip_system_descs !! Descriptor for each supported slip system set
 
         slip_system_descs = micro_get_slip_systems()
     end function
@@ -40,39 +39,35 @@ contains
     !> List the mesoscopic models libCrysP supports.
     !>
     !> The IDs are those accepted as `meso_model_id` by [[crysp_new_material]].
-    function crysp_get_meso_models(model_descs) result(stat)
-        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs   !! Descriptor for each supported meso model
-        type(Status):: stat                                                           !! Return status. Should always be OK
+    function crysp_get_meso_models() result(model_descs)
+        type(ModelDescriptor), dimension(:), allocatable:: model_descs   !! Descriptor for each supported meso model
 
         integer:: i
+        type(Status):: stat
         class(MesoModel), allocatable:: model
 
         allocate(model_descs(size(SUPPORTED_MESO_MODELS)))
 
         do i = 1, size(SUPPORTED_MESO_MODELS)
             stat = meso_get_model(SUPPORTED_MESO_MODELS(i), model)
-            if (failed(stat)) return
-
             model_descs(i) = model%describe()
         end do
     end function
 
     !> List the microscopic (hardening) models libCrysP supports.
     !>
-    !> One descriptor per model. The IDs are those accepted as `hardening_model_ids` by [[crysp_new_material]].
-    function crysp_get_micro_models(model_descs) result(stat)
-        type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs   !! Descriptor for each supported micro model
-        type(Status):: stat                                                           !! Return status. Should always be OK
+    !> The IDs are those accepted as `hardening_model_ids` by [[crysp_new_material]].
+    function crysp_get_micro_models() result(model_descs)
+        type(ModelDescriptor), dimension(:), allocatable:: model_descs   !! Descriptor for each supported micro model
 
         integer:: i
+        type(Status):: stat
         class(ConstitutiveModel), allocatable:: model
 
         allocate(model_descs(size(SUPPORTED_HARDENING_MODELS)))
 
         do i = 1, size(SUPPORTED_HARDENING_MODELS)
             stat = micro_get_model(SUPPORTED_HARDENING_MODELS(i), model)
-            if (failed(stat)) return
-
             model_descs(i) = model%describe()
         end do
     end function
@@ -93,7 +88,6 @@ contains
         stat =  micro_init(phase_data, mat%phases, grains_)
         if (.not. failed(stat)) stat = meso_init(meso_data, grains_, mat%meso_model, mat%clusters)
     end function
-
 
     !> Deform a material according to a prescribed velocity gradient.
     !>

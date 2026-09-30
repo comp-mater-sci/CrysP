@@ -199,11 +199,11 @@ typedef struct {
  * Describe the available slip system sets as a list of *n_systems descriptors, including their IDs. The descriptors own nothing,
  * so the list is released with free() alone.
  */
-CryspStatus crysp_get_slip_systems(int *n_systems, CryspSlipSystemDescriptor **slip_system_descs);
+void crysp_get_slip_systems(int *n_systems, CryspSlipSystemDescriptor **descs);
 
 /* Describe the available meso or micro (hardening) models as a list of *n_models descriptors, including their IDs. */
-CryspStatus crysp_get_meso_models(int *n_models, CryspModelDescriptor **model_descs);
-CryspStatus crysp_get_micro_models(int *n_models, CryspModelDescriptor **model_descs);
+void crysp_get_meso_models(int *n_models, CryspModelDescriptor **model_descs);
+void crysp_get_micro_models(int *n_models, CryspModelDescriptor **model_descs);
 
 /* Create a material from a meso model and n_phases phases. On failure, *mat is undefined and must not be destroyed. */
 CryspStatus crysp_new_material(const CryspModelData *meso_model_data, int n_phases, const CryspPhaseData *phase_data, CryspMaterial *mat);

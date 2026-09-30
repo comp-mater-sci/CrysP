@@ -65,11 +65,11 @@ static int terminated(const char *buffer, size_t size) {
 static int alamel = -1, voce = -1, dsh_edge = -1;
 static int fcc = -1, bcc24 = -1;
 
-static int find_model(CryspStatus (*get)(int *, CryspModelDescriptor **), const char *name) {
+static int find_model(void (*get)(int *, CryspModelDescriptor **), const char *name) {
     int n = 0, id = -1;
     CryspModelDescriptor *descs = NULL;
 
-    if (!check_ok(get(&n, &descs), "listing models")) return -1;
+    get(&n, &descs);
     for (int i = 0; i < n; i++) {
         if (strcmp(descs[i].name, name) == 0) id = descs[i].id;
         crysp_destroy_model_descriptor(&descs[i]);
@@ -83,7 +83,7 @@ static int find_slip_systems(const char *name) {
     int n = 0, id = -1;
     CryspSlipSystemDescriptor *descs = NULL;
 
-    if (!check_ok(crysp_get_slip_systems(&n, &descs), "listing slip systems")) return -1;
+    crysp_get_slip_systems(&n, &descs);
     for (int i = 0; i < n; i++)
         if (strcmp(descs[i].name, name) == 0) id = descs[i].id;
     free(descs);
@@ -239,7 +239,7 @@ static void test_slip_systems(void) {
     int n = -1;
     CryspSlipSystemDescriptor *descs = NULL;
 
-    if (!check_ok(crysp_get_slip_systems(&n, &descs), "crysp_get_slip_systems")) return;
+    crysp_get_slip_systems(&n, &descs);
     check(n == 3, "slip systems: expected 3 sets, got %d", n);
     for (int i = 0; i < n; i++)
         check(terminated(descs[i].name, CRYSP_NAME_LEN) && terminated(descs[i].description, CRYSP_DESC_LEN),
@@ -251,38 +251,36 @@ static void test_model_descriptors(void) {
     int n = -1;
     CryspModelDescriptor *descs = NULL;
 
-    if (check_ok(crysp_get_meso_models(&n, &descs), "crysp_get_meso_models")) {
-        for (int i = 0; i < n; i++) {
-            check(terminated(descs[i].name, CRYSP_NAME_LEN) && terminated(descs[i].description, CRYSP_DESC_LEN),
-                  "meso model %d: strings are NUL-terminated", descs[i].id);
-            crysp_destroy_model_descriptor(&descs[i]);
-        }
-        free(descs);
+    crysp_get_meso_models(&n, &descs);
+    for (int i = 0; i < n; i++) {
+        check(terminated(descs[i].name, CRYSP_NAME_LEN) && terminated(descs[i].description, CRYSP_DESC_LEN),
+              "meso model %d: strings are NUL-terminated", descs[i].id);
+        crysp_destroy_model_descriptor(&descs[i]);
     }
+    free(descs);
 
-    if (check_ok(crysp_get_micro_models(&n, &descs), "crysp_get_micro_models")) {
-        for (int i = 0; i < n; i++) {
-            CryspModelDescriptor *d = &descs[i];
-            for (int j = 0; j < d->n_inputs; j++)
-                check(terminated(d->inputs[j].name, CRYSP_NAME_LEN) && terminated(d->inputs[j].description, CRYSP_DESC_LEN),
-                      "micro model %d, input %d: strings are NUL-terminated", d->id, j);
-            if (d->id != voce || !check(d->n_inputs == 5, "Voce: expected 5 inputs, got %d", d->n_inputs)) continue;
+    crysp_get_micro_models(&n, &descs);
+    for (int i = 0; i < n; i++) {
+        CryspModelDescriptor *d = &descs[i];
+        for (int j = 0; j < d->n_inputs; j++)
+            check(terminated(d->inputs[j].name, CRYSP_NAME_LEN) && terminated(d->inputs[j].description, CRYSP_DESC_LEN),
+                  "micro model %d, input %d: strings are NUL-terminated", d->id, j);
+        if (d->id != voce || !check(d->n_inputs == 5, "Voce: expected 5 inputs, got %d", d->n_inputs)) continue;
 
-            /* One input of each kind of parameter: a real bound, a string bound and an unset default. */
-            CryspInput *crss = &d->inputs[0];
-            check(strcmp(crss->name, "Initial CRSS") == 0, "Voce: first input is 'Initial CRSS', got '%s'", crss->name);
-            check(crss->lower_bound.type == CRYSP_TYPE_REAL && crss->lower_bound.rank == 0 &&
-                      *(double *)crss->lower_bound.data == 0.,
-                  "Voce: 'Initial CRSS' has lower bound 0");
-            check(crss->upper_bound.type == CRYSP_TYPE_STRING && crss->upper_bound.extents[0] == 5 &&
-                      strcmp(crss->upper_bound.data, "TIIIS") == 0,
-                  "Voce: 'Initial CRSS' is bounded above by the NUL-terminated input name 'TIIIS'");
-            check(crss->default_value.rank == -1 && crss->default_value.data == NULL, "Voce: 'Initial CRSS' has no default");
-            check(d->inputs[3].description[0] == '\0', "Voce: an input without a description gets an empty one");
-        }
-        for (int i = 0; i < n; i++) crysp_destroy_model_descriptor(&descs[i]);
-        free(descs);
+        /* One input of each kind of parameter: a real bound, a string bound and an unset default. */
+        CryspInput *crss = &d->inputs[0];
+        check(strcmp(crss->name, "Initial CRSS") == 0, "Voce: first input is 'Initial CRSS', got '%s'", crss->name);
+        check(crss->lower_bound.type == CRYSP_TYPE_REAL && crss->lower_bound.rank == 0 &&
+                  *(double *)crss->lower_bound.data == 0.,
+              "Voce: 'Initial CRSS' has lower bound 0");
+        check(crss->upper_bound.type == CRYSP_TYPE_STRING && crss->upper_bound.extents[0] == 5 &&
+                  strcmp(crss->upper_bound.data, "TIIIS") == 0,
+              "Voce: 'Initial CRSS' is bounded above by the NUL-terminated input name 'TIIIS'");
+        check(crss->default_value.rank == -1 && crss->default_value.data == NULL, "Voce: 'Initial CRSS' has no default");
+        check(d->inputs[3].description[0] == '\0', "Voce: an input without a description gets an empty one");
     }
+    for (int i = 0; i < n; i++) crysp_destroy_model_descriptor(&descs[i]);
+    free(descs);
 }
 
 static void test_new_material(void) {
