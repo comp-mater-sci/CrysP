@@ -3,7 +3,7 @@ module dsh_edge
     use math_utils
     use dsh
     use slip_systems
-    use grain_module
+    use crysp_grain
     use constitutive_model
     use crysp_serialization
 
@@ -38,12 +38,11 @@ contains
                        "This variant of the model considers only edge dislocations."
     end function
 
-    function dsh_edge_init(this, miller_indices, params) result(initial_state)
-        class(ConstitutiveModelDSHEdge), intent(inout):: this
+    subroutine dsh_edge_init(this, miller_indices, params)
+        class(ConstitutiveModelDSHEdge), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
 
-        initial_state = this%init_common(miller_indices, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
-    end function
+        call this%init_common(miller_indices, params, transpose(matmul(CBBNORMAL, normalize(BCC24(:,2, :)))))
+    end subroutine
 end module

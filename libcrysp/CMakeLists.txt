@@ -20,6 +20,7 @@ add_library(crysp STATIC
     src/utils/conversions.f90
     src/utils/logging.f90
     src/utils/serialization.f90
+    src/macro/material.f90
     src/macro/trust_region.c
     src/macro/macro.f90
     src/macro/deformation.f90
@@ -37,6 +38,7 @@ add_library(crysp STATIC
     src/micro/slip_systems.f90
     src/micro/micro.f90
     src/micro/constitutive_model.f90
+    src/micro/models/isotropic_state.f90
     src/micro/models/none.f90
     src/micro/models/swift.f90
     src/micro/models/voce.f90
@@ -48,6 +50,13 @@ add_library(crysp STATIC
 )
 
 include(CMakePackageConfigHelpers)
+
+# Unit tests (run with `ctest --test-dir build --output-on-failure`).
+option(CRYSP_BUILD_TESTS "Build the libCrysP unit tests" ON)
+if(CRYSP_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test)
+endif()
 
 # This tells CMake exactly where the headers are depending on how it's consumed
 target_include_directories(crysp PUBLIC

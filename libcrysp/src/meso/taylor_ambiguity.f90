@@ -16,7 +16,7 @@ module taylor_ambiguity
     use base_defs
     use math_utils
     use logging
-    use grain_module
+    use crysp_grain
 
     implicit none
 
@@ -35,8 +35,8 @@ contains
     !> stress exceeds the critical resolved shear stress. From this we can determine if Taylor ambiguity is occuring.
     subroutine assess_slip_system_activity(grain_, rss, slip_rates, n_active, ind_overstressed)
         class(Grain), intent(in):: grain_                                                 !! Grain suffering from Taylor ambiguity.
-        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: rss        !! The resolved shear stress on each of the slip systems of the grain (as calculated by simplex)
-        real(DP), dimension(size(grain_%model%taylor_coeffs, 2)), intent(in):: slip_rates !! Slip rates for each slip system (as calculated by simplex).
+        real(DP), dimension(size(grain_%phase%model%taylor_coeffs, 2)), intent(in):: rss        !! The resolved shear stress on each of the slip systems of the grain (as calculated by simplex)
+        real(DP), dimension(size(grain_%phase%model%taylor_coeffs, 2)), intent(in):: slip_rates !! Slip rates for each slip system (as calculated by simplex).
         integer, intent(out):: n_active                                                   !! The number of active systems (with nonzero slip rate)
         integer, dimension(:), allocatable, intent(out):: ind_overstressed                !! If taylor ambiguity is occurring, contains the
                                                                                           !! indices of the overstressed slip systems (rss >= crss). Otherwise it is returned unallocated.
@@ -53,9 +53,9 @@ contains
         !resolving it
         n_overstressed = 0
         n_active = 0
-        do i = 1, size(grain_%model%taylor_coeffs, 2)
+        do i = 1, size(grain_%phase%model%taylor_coeffs, 2)
             !Overstress is the difference between the resolved shear stress and critical resolved shear stress on a system.
-            overstress = merge(rss(i)-grain_%state%crss(1, i), -rss(i)-grain_%state%crss(2, i), rss(i)>0._DP)
+            overstress = merge(rss(i)-grain_%hardening_state%crss(1, i), -rss(i)-grain_%hardening_state%crss(2, i), rss(i)>0._DP)
             !Overstress should never exceed 0 because then the solution found by simplex is not optimal.
             if (abs(overstress) < TOLERANCE) then
                 n_overstressed = n_overstressed+1

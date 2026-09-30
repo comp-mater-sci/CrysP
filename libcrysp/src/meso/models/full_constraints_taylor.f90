@@ -6,7 +6,7 @@ module full_constraints_taylor
     use base_defs
     use math_utils
     use conversions
-    use cluster_module
+    use crysp_cluster
     use logging
     use taylor_ambiguity
     use micro
@@ -28,18 +28,23 @@ module full_constraints_taylor
     type, extends(Cluster):: TaylorCluster
         integer, dimension(5):: ind_basis_systems
         real(DP), dimension(5, 5):: inverse_basis
+    contains
+        procedure:: size => taylor_cluster_size
+        procedure:: serialize => taylor_cluster_serialize
+        procedure:: deserialize => taylor_cluster_deserialize
     end type
+
 
     !> Model for full constraints Taylor simulations.
     type, extends(MesoModel):: TaylorModel
     contains
         procedure, nopass:: get_name => fctaylor_get_name
         procedure, nopass:: get_description => fctaylor_get_description
-        procedure, nopass:: get_signature => fctaylor_get_signature
-        procedure, nopass:: get_input => fctaylor_get_input
+        procedure, nopass:: make_cluster => fctaylor_make_cluster
         procedure:: init       => fctaylor_init       !! Inherited from [[MesoModel]]
         procedure:: get_stress => fctaylor_get_stress !! Inherited from [[MesoModel]]
         procedure:: apply_step => fctaylor_deform     !! Inherited from [[MesoModel]]
+        procedure:: update => fctaylor_update
     end type
 
 contains
@@ -56,16 +61,10 @@ contains
         description = "Each grain is forced to deform exactly like the material as a whole."
     end function
 
-    pure function fctaylor_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
+    function fctaylor_make_cluster() result(clstr)
+        class(Cluster), allocatable:: clstr
 
-        allocate(signature(0))
-    end function
-
-    pure function fctaylor_get_input() result(inputs)
-         type(Input), dimension(:), allocatable:: inputs
-
-         allocate(inputs(0))
+        allocate(TaylorCluster:: clstr)
     end function
 
     !> Convert the type of a provided generic cluster to TaylorCluster
@@ -94,7 +93,7 @@ contains
         type(Parameter), dimension(:), intent(in):: params
         class(Cluster), dimension(:), allocatable, intent(out):: clusters
 
-        real(DP), dimension(5, size(grains(1)%model%taylor_coeffs, 2)):: taylor_coeffs
+        real(DP), dimension(:,:), allocatable:: taylor_coeffs
         integer:: i
 
         allocate(TaylorCluster:: clusters(size(grains)))
@@ -105,8 +104,9 @@ contains
                 do i = 1, size(clusters)
                     clusters(i)%grains = [grains(i)]
                     clusters(i)%weight = 1._DP
-                    clusters(i)%ind_basis_systems = grains(1)%model%basis
-                    taylor_coeffs = clusters(i)%grains(1)%model%taylor_coeffs
+                    !Per grain: phases may differ in slip system set, so neither the basis nor the number of systems is shared.
+                    clusters(i)%ind_basis_systems = grains(i)%phase%model%basis
+                    taylor_coeffs = grains(i)%phase%model%taylor_coeffs
                     clusters(i)%inverse_basis = invert(taylor_coeffs(:,clusters(i)%ind_basis_systems))
                 end do
         end select
@@ -119,7 +119,7 @@ contains
         real(DP), dimension(3, 3), intent(in):: v_grad
         real(DP), dimension(3, 3):: stress
 
-        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%phase%model%taylor_coeffs, 2)):: slip_rates, &
                                                                      rss
         real(DP), dimension(5):: stress_cluster
         type(TaylorCluster), pointer:: cluster_ptr
@@ -127,9 +127,9 @@ contains
         cluster_ptr => to_taylor_cluster(cluster_)
 
         associate (grain_ => cluster_ptr%grains(1))
-            call simplex_solve(grain_%model%taylor_coeffs, &
+            call simplex_solve(grain_%phase%model%taylor_coeffs, &
                                tensor_to_deviatoric(v_grad .toframe. grain_%orientation), &
-                               grain_%state%crss, &
+                               grain_%hardening_state%crss, &
                                cluster_ptr%inverse_basis, &
                                cluster_ptr%ind_basis_systems, &
                                slip_rates, &
@@ -150,7 +150,7 @@ contains
 
         integer::                   n_systems, &
                                     n_active_simplex
-        real(DP), dimension(size(cluster_%grains(1)%model%taylor_coeffs, 2)):: slip_rates, &
+        real(DP), dimension(size(cluster_%grains(1)%phase%model%taylor_coeffs, 2)):: slip_rates, &
                                                                                rss
         real(DP):: stress_cluster(5), &
                    imposed_strain_rate(5), &
@@ -163,13 +163,13 @@ contains
 
         associate(grain_=>cluster_ptr%grains(1))
 
-            n_systems = size(grain_%model%taylor_coeffs, 2)
+            n_systems = size(grain_%phase%model%taylor_coeffs, 2)
 
             imposed_strain_rate = tensor_to_deviatoric(velocity_gradient .toframe. grain_%orientation)
 
-            call simplex_solve(grain_%model%taylor_coeffs, &
+            call simplex_solve(grain_%phase%model%taylor_coeffs, &
                                imposed_strain_rate, &
-                               grain_%state%crss, &
+                               grain_%hardening_state%crss, &
                                cluster_ptr%inverse_basis, &
                                cluster_ptr%ind_basis_systems, &
                                slip_rates, &
@@ -184,7 +184,7 @@ contains
                 slip_rates = resolve_taylor_ambiguity(ind_active_slip_systems, &
                     rss(ind_active_slip_systems), &
                     imposed_strain_rate, &
-                    grain_%model%taylor_coeffs, &
+                    grain_%phase%model%taylor_coeffs, &
                     n_active_simplex)
             end if
 
@@ -193,4 +193,54 @@ contains
             call grain_%deform(velocity_gradient, time, slip_rates, stress)
         end associate
     end subroutine
+
+    !> Update the model state
+    !>
+    !> Nothing to do for this model. Must implement procedure anyway because the base class defining it is abstract.
+    subroutine fctaylor_update(this, velocity_gradient, time)
+        class(TaylorModel), intent(inout):: this  !! Model instance
+        real(DP), dimension(3,3), intent(in):: velocity_gradient !! Velocity gradient during the time step. Assumed constant.
+        real(DP), intent(in):: time                              !! Duration of the time step.
+    end subroutine
+
+
+    pure function taylor_cluster_size(this) result(size)
+        class(TaylorCluster), intent(in):: this
+        integer:: size
+
+        size = this%Cluster%size() + 2
+    end function
+
+    pure function taylor_cluster_serialize(this, phases) result(params)
+        class(TaylorCluster), target, intent(in):: this
+        type(Phase), dimension(:), target, intent(in):: phases
+        type(Parameter), dimension(:), allocatable:: params
+
+        integer:: base_size
+        type(Parameter), dimension(:), allocatable:: base
+
+        allocate(params(this%size()))
+
+        base = this%Cluster%serialize(phases)
+        base_size = size(base)
+        params(:base_size) = base
+        params(base_size+1) = this%ind_basis_systems
+        params(base_size+2) = this%inverse_basis
+    end function
+
+    subroutine taylor_cluster_deserialize(this, params, phases)
+        class(TaylorCluster), target, intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Phase), dimension(:), target, intent(in):: phases
+
+        integer:: base_size
+
+        call this%Cluster%deserialize(params, phases)
+        base_size = this%Cluster%size()
+        this%ind_basis_systems = params(base_size+1)
+        this%inverse_basis = params(base_size+2)
+    end subroutine
+
+
+
 end module

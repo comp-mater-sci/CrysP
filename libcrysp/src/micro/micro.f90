@@ -14,7 +14,7 @@ module micro
     use crysp_input
     use logging
     use constitutive_model
-    use grain_module
+    use crysp_grain
 
     implicit none
 
@@ -42,12 +42,6 @@ module micro
         enumerator:: SLIP_SYSTEMS_BCC24 !! Body-Centered Cubic excluding the 123-planes.
         enumerator:: SLIP_SYSTEMS_BCC48 !! Body-Centered Cubic including the 123-planes.
     end enum
-
-    !> Wrapper type for constitutive model. Needed because different phases may be backed by different subtypes of ConstitutiveModel
-    !and Fortran semantics require lists to be of homogeneous type.
-    type:: Phase
-        class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
-    end type
 
     !> High-level description of a phase. Used for passing phase information to and from higher-level program units. Necessary
     !> because much of the phase description may vary in size between phases so using regular arrays is inconvenient/inefficient/unsafe.
@@ -85,6 +79,16 @@ module micro
             type(Phase), dimension(:), allocatable, target, intent(out):: phases
             type(Grain), dimension(:), allocatable, intent(out):: grains !! List of initialized grain objects.
         end subroutine
+
+        module function micro_get_model(id) result(model)
+            integer, intent(in):: id
+            class(ConstitutiveModel), allocatable:: model
+        end function
+        module pure function micro_get_model_id(model) result(id)
+            class(ConstitutiveModel), intent(in):: model
+            integer:: id
+        end function
+
     end interface
 end module
 
@@ -93,6 +97,13 @@ end module
 !> Links the different deformation mechanism and hardening model IDs to specific constitutive models and keeps a reference to the
 !> models currently in use.
 submodule(micro) micro_imp
+    use none
+    use swift
+    use hockett_sherby
+    use voce
+    use dsh_edge
+    use dsh_screw
+    use dsh_loop
 
     implicit none
 
@@ -100,41 +111,48 @@ submodule(micro) micro_imp
 
 contains
 
-    !> Brief Retrieve an unitialized instance of a given hardening model.
+    !> Retrieve an unitialized instance of a given hardening model.
     !>
     !> Workaround to be able to call type-bound overriden procedures.
     !> If an invalid model ID is provided, this routine crashes the program.
-    function get_model_instance(model_id) result(instance)
-        use none
-        use swift
-        use hockett_sherby
-        use voce
-        use dsh_edge
-        use dsh_screw
-        use dsh_loop
-
-        integer, intent(in):: model_id                           !! ID of the hardening model. Must be contained in the enum above.
-        class(ConstitutiveModel), allocatable, target:: instance !! Uninitialized instance of the requested hardening model.
-
-        select case(model_id)
-            case(HARDENING_NONE)
-                allocate(ConstitutiveModelNone:: instance)
-            case(HARDENING_VOCE)
-                allocate(ConstitutiveModelVoce:: instance)
-            case(HARDENING_HOCKETT_SHERBY)
-                allocate(ConstitutiveModelHockettSherby:: instance)
-            case(HARDENING_SWIFT)
-                allocate(ConstitutiveModelSwift:: instance)
-            case(HARDENING_DSH_EDGE)
-                allocate(ConstitutiveModelDSHEdge:: instance)
-            case(HARDENING_DSH_SCREW)
-                allocate(ConstitutiveModelDSHScrew:: instance)
-            case(HARDENING_DSH_LOOP)
-                allocate(ConstitutiveModelDSHLoop:: instance)
+    module procedure micro_get_model
+        select case(id)
+            case (HARDENING_NONE)
+                allocate(ConstitutiveModelNone:: model)
+            case (HARDENING_VOCE)
+                allocate(ConstitutiveModelVoce:: model)
+            case (HARDENING_HOCKETT_SHERBY)
+                allocate(ConstitutiveModelHockettSherby:: model)
+            case (HARDENING_SWIFT)
+                allocate(ConstitutiveModelSwift:: model)
+            case (HARDENING_DSH_EDGE)
+                allocate(ConstitutiveModelDSHEdge:: model)
+            case (HARDENING_DSH_SCREW)
+                allocate(ConstitutiveModelDSHScrew:: model)
+            case (HARDENING_DSH_LOOP)
+                allocate(ConstitutiveModelDSHLoop:: model)
             case default
-                call log_error(MOD_NAME, 'get_model_instance', ERR_VAL, 'Invalid hardening model ID')
+                call log_error(MOD_NAME, 'get_model', ERR_TYPE, 'Invalid hardening model ID')
         end select
-    end function
+    end procedure
+    module procedure micro_get_model_id
+        select type(model)
+            type is (ConstitutiveModelNone)
+                id = HARDENING_NONE
+            type is (ConstitutiveModelVoce)
+                id = HARDENING_VOCE
+            type is (ConstitutiveModelHockettSherby)
+                id = HARDENING_HOCKETT_SHERBY
+            type is (ConstitutiveModelSwift)
+                id = HARDENING_SWIFT
+            type is (ConstitutiveModelDSHEdge)
+                id = HARDENING_DSH_EDGE
+            type is (ConstitutiveModelDSHScrew)
+                id = HARDENING_DSH_SCREW
+            type is (ConstitutiveModelDSHLoop)
+                id = HARDENING_DSH_LOOP
+        end select
+    end procedure
 
     !> Get the list of miller indices associated to ta given deformation mechanism.
     !>
@@ -160,7 +178,7 @@ contains
     module procedure micro_get_signature
         class(ConstitutiveModel), allocatable:: dummy_instance
 
-        dummy_instance = get_model_instance(model_id)
+        dummy_instance = micro_get_model(model_id)
         signature = dummy_instance%get_signature()
     end procedure
 
@@ -168,7 +186,7 @@ contains
     module procedure micro_get_input
         class(ConstitutiveModel), allocatable:: dummy_instance
 
-        dummy_instance = get_model_instance(model_id)
+        dummy_instance = micro_get_model(model_id)
         inputs = dummy_instance%get_input()
     end procedure
 
@@ -192,14 +210,16 @@ contains
         j = 1
         do i = 1, size(phases)
             phase_ptr => phases(i)  ! Gfortran crashes when directly assigning into phases array
-            phase_ptr%model = get_model_instance(phase_descriptors(i)%model_id)
+            phase_ptr%model = micro_get_model(phase_descriptors(i)%model_id)
             miller_indices = get_miller_indices(phase_descriptors(i)%deformation_mechanism)
-            initial_state = phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
+            call phases(i)%model%init(miller_indices, phase_descriptors(i)%parameters)
+            initial_state = phases(i)%model%make_hardening_state()
+            call phases(i)%model%init_hardening_state(initial_state)
 
             do k = 1, size(phase_descriptors(i)%orientations, 2)
                 !assignment of orientation needed for gfortran
                 orientation = phase_descriptors(i)%orientations(:,k)
-                call grains(j)%init(orientation, phases(i)%model, initial_state)
+                call grains(j)%init(orientation, phases(i), initial_state)
                 j = j+1
             end do
         end do

@@ -1,23 +1,19 @@
-!> Implementation of the isotropic phenomenological SWIFT hardening law.
+!> Implementation of the isotropic phenomenological Hockett-Sherby hardening law.
 
 module hockett_sherby
     use base_defs
     use constitutive_model
     use logging
-    use grain_module
     use crysp_serialization
     use crysp_input
     use conversions
+    use crysp_model
+    use crysp_isotropic_state
 
     implicit none
 
     private
     public:: ConstitutiveModelHockettSherby
-
-    !> Grain-specific hardening state data needed by the Hockett-Sherby hardening law.
-    type, extends(HardeningState):: HockettSherbyState
-        real(DP):: total_slip = 0._DP           !! Sum of all the slip on all the slip systems of the grain.
-    end type
 
     !> Classic isotropic Hockett-Sherby hardening model.
     type, extends(ConstitutiveModel):: ConstitutiveModelHockettSherby
@@ -28,10 +24,15 @@ module hockett_sherby
     contains
         procedure, nopass:: get_name => hs_get_name
         procedure, nopass:: get_description => hs_get_description
-        procedure, nopass:: get_signature  => hs_get_signature    !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: get_signature  => hs_get_signature      !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: get_input => hs_get_input             !! Inherited from [[ConstitutiveModel]]
-        procedure:: init                   => hs_init             !! Inherited from [[ConstitutiveModel]]
-        procedure:: deform                 => hs_deform           !! Inherited from [[ConstitutiveModel]]
+        procedure:: init                    => hs_init                !! Inherited from [[ConstitutiveModel]]
+        procedure:: deform                  => hs_deform              !! Inherited from [[ConstitutiveModel]]
+        procedure, nopass:: make_hardening_state => hs_make_state
+        procedure:: init_hardening_state => hs_init_state
+        procedure:: size => hs_size
+        procedure:: serialize => hs_serialize
+        procedure:: deserialize => hs_deserialize
     end type
 
 contains
@@ -66,39 +67,19 @@ contains
                   Input(to_c_string('n',NAME_LEN), INPUT_REAL)]
     end function
 
-    !> Convert a generic HardeningState to a pointer to a HockettSherbyState object
-    !>
-    !> Closest Fortran comes to type casting
-    !> If the provided state is not of type HockettSherbyState, the program crashes.
-    function to_hockett_sherby_state(state) result(hockett_sherby_state_ptr)
-        class(HardeningState), target, intent(in):: state   !! HardeningState to be converted. Must be of type SwiftState
-        type(HockettSherbyState), pointer:: hockett_sherby_state_ptr         !! Pointer of type SwiftState to the HardeningState
-
-        select type (state)
-            type is (HockettSherbyState)
-                hockett_sherby_state_ptr => state
-            class default
-                call log_error(ERR_TYPE)
-        end select
-    end function
-
     !> See [[ConstitutiveModel:init]]
-    function hs_init(this, miller_indices, params) result(initial_state)
-        class(ConstitutiveModelHockettSherby),   intent(inout):: this
+    subroutine hs_init(this, miller_indices, params)
+        class(ConstitutiveModelHockettSherby), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
 
-        allocate(HockettSherbyState:: initial_state)
-        call this%base_init(miller_indices, initial_state)
+        call this%ConstitutiveModel%init(miller_indices, params)
 
         this%tau_0 =   params(1)
         this%tau_sat = params(2)
         this%b =       params(3)
         this%n =       params(4)
-
-        initial_state%crss = this%tau_0
-    end function
+    end subroutine
 
     !> See [[ConstitutiveModel:deform]]
     subroutine hs_deform(this, state, time, slip_rates)
@@ -107,11 +88,66 @@ contains
         real(DP), intent(in)::                                       time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
 
-        type(HockettSherbyState), pointer:: state_ptr
+        type(IsotropicState), pointer:: state_ptr
 
-        state_ptr => to_hockett_sherby_state(state)
+        state_ptr => to_isotropic_state(state)
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
 
         state_ptr%crss = this%tau_sat - (this%tau_sat - this%tau_0) * exp(-this%b*state_ptr%total_slip**this%n)
+    end subroutine
+
+    function hs_make_state() result(state)
+        class(HardeningState), allocatable:: state
+
+        allocate(IsotropicState::state)
+    end function
+
+    subroutine hs_init_state(this, state)
+        class(ConstitutiveModelHockettSherby), intent(in):: this
+        class(HardeningState), intent(out):: state
+
+        call this%ConstitutiveModel%init_hardening_state(state)
+        state%crss = this%tau_0
+    end subroutine
+
+    pure function hs_size(this) result(size)
+        class(ConstitutiveModelHockettSherby), intent(in):: this
+        integer:: size
+
+        size = this%ConstitutiveModel%size() + 4
+    end function
+
+    pure function hs_serialize(this) result(params)
+        class(ConstitutiveModelHockettSherby), target, intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        integer:: offset
+        type(Parameter), dimension(:), allocatable:: base
+
+        allocate(params(this%size()))
+
+        base = this%ConstitutiveModel%serialize()
+        offset = size(base)
+        params(:offset) = base
+
+        params(offset+1) = this%tau_0
+        params(offset+2) = this%tau_sat
+        params(offset+3) = this%b
+        params(offset+4) = this%n
+    end function
+
+    subroutine hs_deserialize(this, params)
+        class(ConstitutiveModelHockettSherby), target, intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+
+        integer:: offset
+
+        call this%ConstitutiveModel%deserialize(params)
+        offset = this%ConstitutiveModel%size()
+
+        this%tau_0 = params(offset+1)
+        this%tau_sat = params(offset+2)
+        this%b = params(offset+3)
+        this%n = params(offset+4)
     end subroutine
 end module hockett_sherby

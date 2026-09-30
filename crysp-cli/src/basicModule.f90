@@ -26,7 +26,7 @@ module dmcBasicModule
     !>       `this%ParentClassName%method()`
     type:: BasicModule
           character(:), allocatable:: output_prefix
-          type(MaterialState)::   material
+          type(Material)::   material
     contains
           procedure:: initialize =>  BasicModule_initialize
           procedure:: run => BasicModule_run
@@ -34,7 +34,7 @@ module dmcBasicModule
 
 contains
 
-    !> read output and AlTay configuration sections
+    !> General intialization shared between all modules.
     subroutine BasicModule_initialize(this, cnfunit)
         class(BasicModule), intent(inout):: this
         integer, intent(in):: cnfunit

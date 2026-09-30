@@ -11,9 +11,9 @@
 
 module meso
     use base_defs
-    use cluster_module
+    use crysp_cluster
     use crysp_meso_model
-    use grain_module
+    use crysp_grain
     use crysp_serialization
     use crysp_input
 
@@ -63,6 +63,15 @@ module meso
             class(Cluster), dimension(:), allocatable, intent(out):: clusters !! Initialized clusters which form the unit of
                                                                               !! simulation at the mesoscopic level.
         end subroutine
+
+        module function meso_get_model(id) result(model)
+            integer, intent(in):: id
+            class(MesoModel), allocatable:: model
+        end function
+        module pure function meso_get_model_id(model) result(id)
+            class(MesoModel), intent(in):: model
+            integer:: id
+        end function
     end interface
 end module
 
@@ -89,32 +98,37 @@ contains
     !> Returns an instance of a mesoscopic model with the provided ID.
     !>
     !> Avoids duplication of the hard-coded link between model IDs and their types.
-    function get_model_instance(id) result(m)
-        integer, intent(in):: id            !! Numerical ID of the model. Must be contained in MESO_MODELS enum.
-        class(MesoModel), allocatable:: m   !! The model instance
-
+    module procedure meso_get_model
         select case (id)
             case (MESO_MODEL_FCTaylor)
-                allocate(TaylorModel:: m)
+                allocate(TaylorModel:: model)
             case (MESO_MODEL_ALAMEL)
-                allocate(AlamelModel:: m)
+                allocate(AlamelModel:: model)
             case default
                 call log_error("Meso", "get_model_instance", ERR_VAL, "Invalid model ID")
         end select
-    end function
+    end procedure
+    module procedure meso_get_model_id
+        select type (model)
+            type is (TaylorModel)
+                id = MESO_MODEL_FCTAYLOR
+            type is (AlamelModel)
+                id = MESO_MODEL_ALAMEL
+        end select
+    end procedure
 
     !> See interface definition in meso module.
     module procedure meso_get_input
         class(MesoModel), allocatable:: m
 
         !We must get an instance of the model if we want to exploit polymorphism in Fortran.
-        m = get_model_instance(model_id)
+        m = meso_get_model(model_id)
         inputs = m%get_input()
     end procedure
 
     !> See interface definition in meso module.
     module procedure meso_init
-        model = get_model_instance(model_id)
+        model = meso_get_model(model_id)
         call model%init(grains, params, clusters)
     end procedure
 end submodule

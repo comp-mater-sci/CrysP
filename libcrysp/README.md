@@ -36,5 +36,16 @@ By default, the project is configured to build a highly optimized release config
     cmake -B build -DCMAKE_BUILD_TYPE=[release/debug]
     cmake --build build --parallel --target install
 
+# Unit tests
+The *test* directory contains unit tests for the library, driven by CTest. Each test is a stand-alone Fortran program built alongside the library (disable with `-DCRYSP_BUILD_TESTS=OFF`). Once a build directory is configured, build and run them with:
+
+    test/test.sh [build_dir] [ctest options]
+
+The build directory defaults to *build*; any further arguments go to ctest (e.g. `-V` for full output, `-R material` to select tests). Equivalent to `cmake --build build && ctest --test-dir build --output-on-failure`.
+
+A debug build additionally enables the compiler's runtime checks (bounds, shape, uninitialized use), which makes it the preferred configuration for tracking down a failing test. To add a test, create `test/<name>.f90` using the assertions from `test/testing.f90` and register it with `crysp_add_test(<name>)` in `test/CMakeLists.txt`.
+
+Note that these are unit tests of the library only; the end-to-end integration tests comparing simulation output to reference results live in the [top-level test directory](../test).
+
 # Contributing
 Refer to the [top-level README file](../README.md).

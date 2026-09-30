@@ -2,6 +2,7 @@ module relaxation_module
     use base_defs
     use math_utils
     use conversions
+    use crysp_serialization
 
     implicit none
     private
@@ -17,19 +18,29 @@ module relaxation_module
     !Relaxation is only defined at cluster level even though its components are associated to individual grains because defining it
     !at grain level would require extending the grain type for different mesoscopic models, which would clash with possible
     !extensions of the grain type for microscopic models.
-    type:: Relaxation
+    type, extends(State):: Relaxation
         integer:: type    !< Type of the relaxation (see paper Van Houtte et. al.)
         real(DP), dimension(10):: taylor_coeffs  ! Defined in this way due to the structure of taylor_coeffs in
                                                                     !cluster type
         real(DP), dimension(6):: spin_coeffs  ! Defined in this way to be consistent with taylor_coeffs
     contains
+        procedure:: size => relaxation_size
         procedure:: init => relaxation_init
         procedure:: update => relaxation_update
+        procedure:: serialize => relaxation_serialize
+        procedure:: deserialize => relaxation_deserialize
     end type
 
     public:: Relaxation
 
 contains
+
+    pure function relaxation_size(this) result(size)
+        class(Relaxation), intent(in):: this
+        integer:: size
+
+        size = 3
+    end function
 
     subroutine relaxation_init(this, type)
         class(Relaxation), target, intent(inout):: this
@@ -56,6 +67,26 @@ contains
             this%taylor_coeffs(5*(i-1)+1:5*i) = tensor_to_deviatoric(relaxation_crystal_frame)
         end do
     end subroutine
-end module relaxation_module
+
+    pure function relaxation_serialize(this) result(params)
+        class(Relaxation), target, intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(this%size()))
+
+        params(1) = this%type
+        params(2) = this%taylor_coeffs
+        params(3) = this%spin_coeffs
+    end function
+
+    subroutine relaxation_deserialize(this, params)
+        class(Relaxation), target, intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+
+        this%type = params(1)
+        this%taylor_coeffs = params(2)
+        this%spin_coeffs = params(3)
+    end subroutine
+end module
 
 

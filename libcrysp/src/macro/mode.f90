@@ -5,7 +5,7 @@ module mode
     use iso_c_binding
     use base_defs
     use conversions
-    use cluster_module
+    use crysp_cluster
     use omp_lib
     use meso
     use logging

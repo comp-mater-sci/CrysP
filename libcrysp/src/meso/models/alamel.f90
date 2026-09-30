@@ -6,9 +6,9 @@
 module alamel
     use base_defs
     use conversions
-    use grain_module
+    use crysp_grain
     use relaxation_module
-    use cluster_module
+    use crysp_cluster
     use logging
     use taylor_ambiguity
     use micro
@@ -32,6 +32,10 @@ module alamel
                                                                     !! systems. Buffering this quantity greatly improves the performance.
         type(Relaxation), dimension(2):: relaxations                !! ALAMEL clusters contain 2 relaxations which act as slip
                                                                     !! systems with 0 critical resolved shear stress.
+    contains
+        procedure:: size => alamel_cluster_size
+        procedure:: serialize => alamel_cluster_serialize
+        procedure:: deserialize => alamel_cluster_deserialize
     end type
 
     !> Implementation of the ALAMEL model
@@ -42,10 +46,14 @@ module alamel
         procedure, nopass:: get_description => alamel_get_description
         procedure, nopass:: get_signature  => alamel_get_signature
         procedure, nopass:: get_input => alamel_get_input         !! Inherited from [[MesoModel]]
+        procedure, nopass:: make_cluster => alamel_make_cluster
         procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
         procedure:: apply_step             => alamel_deform                 !! Inherited from [[MesoModel]]
         procedure:: update                 => alamel_update                 !! Inherited from [[MesoModel]]
+        procedure:: size => alamel_model_size
+        procedure:: serialize => alamel_serialize
+        procedure:: deserialize => alamel_deserialize
     end type
 
 contains
@@ -80,6 +88,12 @@ contains
         inputs = [Input(to_c_string("Boundaries",NAME_LEN), INPUT_ANGLES_LIST)]
     end function
 
+    function alamel_make_cluster() result(clstr)
+        class(Cluster), allocatable:: clstr
+
+        allocate(AlamelCluster:: clstr)
+    end function
+
     !> Convert the type of a provided generic cluster to AlamelCluster
     !>
     !> This is the closest Fortran can get to proper type casting.
@@ -110,7 +124,7 @@ contains
                   n_systems_first_grain
         real(DP), dimension(:,:), allocatable:: boundaries
 
-        boundaries = params(1)
+        boundaries = deserialize_real_matrix(params(1))
 
         this%deformation_gradient = UNIT_MATRIX_3X3
 
@@ -123,9 +137,9 @@ contains
             do i = 1, size(clusters)
                 clusters(i)%grains = grains(2*(i-1)+1:2*i)
                 clusters(i)%initial_boundary_normal = spherical_to_cartesian(boundaries(:,j))
-                n_systems_first_grain = size(clusters(i)%grains(1)%model%taylor_coeffs, 2)
+                n_systems_first_grain = size(clusters(i)%grains(1)%phase%model%taylor_coeffs, 2)
                 do k = 1, 2
-                    ind_basis_systems_grain = clusters(i)%grains(k)%model%basis
+                    ind_basis_systems_grain = clusters(i)%grains(k)%phase%model%basis
                     clusters(i)%ind_basis_systems((k-1)*5+1:k*5) = ind_basis_systems_grain + (k-1)*n_systems_first_grain
                     call clusters(i)%relaxations(k)%init(k)
                 end do
@@ -147,7 +161,7 @@ contains
         integer:: i
 
         do i = 1, size(cluster_%grains)
-            n_systems(i) = size(cluster_%grains(i)%state%crss, 2)
+            n_systems(i) = size(cluster_%grains(i)%hardening_state%crss, 2)
         end do
     end function
 
@@ -158,7 +172,7 @@ contains
         class(Cluster), intent(in):: cluster_
         integer:: n_systems
 
-        n_systems = size(cluster_%grains(1)%model%taylor_coeffs, 2) + size(cluster_%grains(2)%model%taylor_coeffs, 2) + 2
+        n_systems = size(cluster_%grains(1)%phase%model%taylor_coeffs, 2) + size(cluster_%grains(2)%phase%model%taylor_coeffs, 2) + 2
     end function
 
 
@@ -201,10 +215,10 @@ contains
 
         n_systems = get_n_systems(alamel_cluster)
 
-        coeffs(1:5, 1:n_systems(1))                 = alamel_cluster%grains(1)%model%taylor_coeffs
+        coeffs(1:5, 1:n_systems(1))                 = alamel_cluster%grains(1)%phase%model%taylor_coeffs
         coeffs(6:10, 1:n_systems(1))                = 0._DP
         coeffs(1:5, n_systems(1)+1:sum(n_systems))  = 0._DP
-        coeffs(6:10, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%model%taylor_coeffs
+        coeffs(6:10, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%phase%model%taylor_coeffs
         coeffs(:,sum(n_systems)+1)                  = alamel_cluster%relaxations(1)%taylor_coeffs
         coeffs(:,sum(n_systems)+2)                  = alamel_cluster%relaxations(2)%taylor_coeffs
     end function
@@ -218,8 +232,8 @@ contains
 
         n_systems = get_n_systems(alamel_cluster)
 
-        crss(:,1:n_systems(1)) = alamel_cluster%grains(1)%state%crss
-        crss(:, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%state%crss
+        crss(:,1:n_systems(1)) = alamel_cluster%grains(1)%hardening_state%crss
+        crss(:, n_systems(1)+1:sum(n_systems)) = alamel_cluster%grains(2)%hardening_state%crss
         crss(:, sum(n_systems)+1:) = 0._DP
     end function
 
@@ -337,7 +351,7 @@ contains
                     slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
                         rss(ind_overstressed_slip_systems+offset_systems), &
                         strain_grain, &
-                        grain_%model%taylor_coeffs, &
+                        grain_%phase%model%taylor_coeffs, &
                         n_active_simplex)
                 end if
 
@@ -412,11 +426,11 @@ contains
         do i = 1, 10
             ind_basis_system = alamel_cluster%ind_basis_systems(i)
             if (ind_basis_system <= n_systems(1)) then
-                basis(1:5, i) = alamel_cluster%grains(1)%model%taylor_coeffs(:,ind_basis_system)
+                basis(1:5, i) = alamel_cluster%grains(1)%phase%model%taylor_coeffs(:,ind_basis_system)
                 basis(6:10, i) = 0._DP
             else if (ind_basis_system <= sum(n_systems)) then
                 basis(1:5, i) = 0._DP
-                basis(6:10, i) = alamel_cluster%grains(2)%model%taylor_coeffs(:,ind_basis_system-n_systems(1))
+                basis(6:10, i) = alamel_cluster%grains(2)%phase%model%taylor_coeffs(:,ind_basis_system-n_systems(1))
             else
                 basis(:,i) = alamel_cluster%relaxations(ind_basis_system-sum(n_systems))%taylor_coeffs
             end if
@@ -468,6 +482,85 @@ contains
                 new_vec = matmul(alamel_cluster%inverse_basis, basis(:,i))
                 call update_inverse_basis(alamel_cluster%inverse_basis, new_vec, i, dummy)
             end if
+        end do
+    end subroutine
+
+    pure function alamel_model_size(this) result(size)
+        class(AlamelModel), intent(in):: this
+        integer:: size
+
+        size = 1
+    end function
+
+    pure function alamel_serialize(this) result(params)
+        class(AlamelModel), target, intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(this%size()))
+
+        params(1) = this%deformation_gradient
+    end function
+
+    subroutine alamel_deserialize(this, params)
+        class(AlamelModel), target, intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+
+        this%deformation_gradient = params(1)
+    end subroutine
+
+    pure function alamel_cluster_size(this) result(size)
+        class(AlamelCluster), intent(in):: this
+        integer:: size
+
+        size = this%Cluster%size() + 9
+    end function
+
+    pure function alamel_cluster_serialize(this, phases) result(params)
+        class(AlamelCluster), target, intent(in):: this
+        type(Phase), dimension(:), target, intent(in):: phases
+        type(Parameter), dimension(:), allocatable:: params
+
+        integer:: base_size, &
+                  offset, &
+                  i
+        type(Parameter), dimension(:), allocatable:: sub
+
+        allocate(params(this%size()))
+
+        sub = this%Cluster%serialize(phases)
+        base_size = size(sub)
+        params(:base_size) = sub
+        params(base_size+1) = this%ind_basis_systems
+        params(base_size+2) = this%initial_boundary_normal
+        params(base_size+3) = this%inverse_basis
+
+        offset = base_size + 3
+        do i=1,2
+            sub = this%relaxations(i)%serialize()
+            params(offset+1:offset+size(sub)) = sub
+            offset = offset + size(sub)
+        end do
+    end function
+
+    subroutine alamel_cluster_deserialize(this, params, phases)
+        class(AlamelCluster), target, intent(out):: this
+        type(Parameter), dimension(:), intent(in):: params
+        type(Phase), dimension(:), target, intent(in):: phases
+
+        integer:: base_size, &
+                  offset, &
+                  i
+
+        call this%Cluster%deserialize(params, phases)
+        base_size = this%Cluster%size()
+        this%ind_basis_systems = params(base_size+1)
+        this%initial_boundary_normal = params(base_size+2)
+        this%inverse_basis = params(base_size+3)
+
+        offset = base_size + 3
+        do i=1,2
+            call this%relaxations(i)%deserialize(params(offset+1:offset+3))
+            offset = offset + 3
         end do
     end subroutine
 end module

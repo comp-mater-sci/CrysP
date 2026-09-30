@@ -35,11 +35,10 @@ contains
                        "This variant of the model assumes slip is carried by dislocation loops with equal slip realized by edge and screw segments."
     end function
 
-    function dsh_loop_init(this, miller_indices, params) result(initial_state)
-        class(ConstitutiveModelDSHLoop), intent(inout):: this
+    subroutine dsh_loop_init(this, miller_indices, params)
+        class(ConstitutiveModelDSHLoop), intent(out):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
-        class(HardeningState), allocatable:: initial_state
 
         integer:: s, i
         real(DP):: normdir(24, 3), &
@@ -60,6 +59,6 @@ contains
             end do
         end do
 
-        initial_state = this%init_common(miller_indices, params, eff)
-    end function
+        call this%init_common(miller_indices, params, eff)
+    end subroutine
 end module
