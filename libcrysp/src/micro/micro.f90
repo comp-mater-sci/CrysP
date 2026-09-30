@@ -53,6 +53,12 @@ module crysp_micro
         enumerator:: SLIP_SYSTEMS_BCC48 !! Body-Centered Cubic including the 123-planes.
     end enum
 
+    type:: SlipSystemDescriptor
+        integer:: id
+        character(:), allocatable:: name
+        character(:), allocatable:: description
+    end type
+
     !> High-level description of a phase. Used for passing phase information to and from higher-level program units. Necessary
     !> because much of the phase description may vary in size between phases so using regular arrays is inconvenient/inefficient/unsafe.
     type:: PhaseData
@@ -79,6 +85,10 @@ module crysp_micro
             class(ConstitutiveModel), allocatable, intent(out):: model
             type(Status):: stat
         end function
+
+        module function micro_get_slip_systems() result(systems)
+            type(SlipSystemDescriptor), dimension(:), allocatable:: systems
+        end function
     end interface
 
 end module
@@ -101,6 +111,18 @@ submodule(crysp_micro) crysp_micro_imp
     character(*), parameter:: MOD_NAME = 'micro'             !! Module name. Simplifies logging.
 
 contains
+
+    module procedure micro_get_slip_systems
+        systems = [SlipSystemDescriptor(SLIP_SYSTEMS_FCC, &
+                                        "FCC", &
+                                        "Face-centered cubic"), &
+                   SlipSystemDescriptor(SLIP_SYSTEMS_BCC24, &
+                                        "BCC24", &
+                                        "Body-centered cubic, excluding 123-planes"), &
+                   SlipSystemDescriptor(SLIP_SYSTEMS_BCC48, &
+                                        "BCC48", &
+                                        "Body-centered cubic, including 123-planes")]
+    end procedure
 
     !> Retrieve an unitialized instance of a given hardening model.
     !>

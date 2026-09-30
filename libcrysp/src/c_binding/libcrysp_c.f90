@@ -6,12 +6,14 @@ module libcrysp_c_binding
     use iso_c_binding
     use libcrysp
     use crysp_utils_c
+    use crysp_micro_c
     use crysp_macro_c
 
     implicit none
 
     private
-    public:: crysp_get_meso_models_c, &
+    public:: crysp_get_slip_systems_c, &
+             crysp_get_meso_models_c, &
              crysp_get_micro_models_c, &
              crysp_new_material_c, &
              crysp_strain_driven_deformation_c, &
@@ -20,6 +22,30 @@ module libcrysp_c_binding
              crysp_simulate_strain_mode_c
 
 contains
+
+    !> C binding of [[libcrysp:crysp_get_slip_systems]].
+    function crysp_get_slip_systems_c(n_systems, descs) bind(C, name='crysp_get_slip_systems') result(stat)
+        integer(C_INT), intent(out):: n_systems
+        type(C_PTR), intent(out):: descs !! n_systems * type(SlipSystemDescriptor_C)
+        type(Status_C):: stat
+
+        integer:: i
+        type(SlipSystemDescriptor), dimension(:), allocatable:: descs_
+        type(SlipSystemDescriptor_C):: mold
+        type(SlipSystemDescriptor_C), dimension(:), pointer:: descs_ptr
+
+        n_systems = 0
+        descs = C_NULL_PTR
+
+        stat = crysp_get_slip_systems(descs_)
+
+        n_systems = int(size(descs_), C_INT)
+        descs = malloc(int(size(descs_), C_SIZE_T) * c_sizeof(mold))
+        call c_f_pointer(descs, descs_ptr, [size(descs_)])
+        do i = 1, size(descs_)
+            descs_ptr(i) = descs_(i)
+        end do
+    end function
 
     !> C binding of [[libcrysp:crysp_get_meso_models]].
     function crysp_get_meso_models_c(n_models, model_descs) bind(C, name='crysp_get_meso_models') result(stat)

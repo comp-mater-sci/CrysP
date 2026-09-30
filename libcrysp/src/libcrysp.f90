@@ -27,9 +27,19 @@ module libcrysp
 
 contains
 
+    !> List the slip system sets libCrysP supports
+    !>
+    !> The IDs are those accepted as `deformation_mechanism` by [[crysp_new_material]].
+    function crysp_get_slip_systems(slip_system_descs) result(stat)
+        type(SlipSystemDescriptor), dimension(:), allocatable, intent(out):: slip_system_descs
+        type(Status):: stat
+
+        slip_system_descs = micro_get_slip_systems()
+    end function
+
     !> List the mesoscopic models libCrysP supports.
     !>
-    !> One descriptor per model. The IDs are those accepted as `meso_model_id` by [[crysp_new_material]].
+    !> The IDs are those accepted as `meso_model_id` by [[crysp_new_material]].
     function crysp_get_meso_models(model_descs) result(stat)
         type(ModelDescriptor), dimension(:), allocatable, intent(out):: model_descs   !! Descriptor for each supported meso model
         type(Status):: stat                                                           !! Return status. Should always be OK

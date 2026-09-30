@@ -56,13 +56,6 @@ enum {
     CRYSP_INPUT_ANGLES_LIST = 1  /* CRYSP_TYPE_REAL, rank 2, shape (2,n). */
 };
 
-/* Deformation mechanisms (slip system sets). */
-enum {
-    CRYSP_SLIP_SYSTEMS_FCC   = 0, /* Face-Centered Cubic. */
-    CRYSP_SLIP_SYSTEMS_BCC24 = 1, /* Body-Centered Cubic excluding the 123-planes. */
-    CRYSP_SLIP_SYSTEMS_BCC48 = 2  /* Body-Centered Cubic including the 123-planes. */
-};
-
 /*
  * Outcome of an entry point, returned by value. code is CRYSP_OK on success. The strings are NUL-terminated and empty on success.
  */
@@ -118,6 +111,13 @@ typedef struct {
     CryspStateDescriptor *element_state;   /* List of n_element_state. */
 } CryspModelDescriptor;
 
+/* Description of a set of slip systems. */
+typedef struct {
+    int  id;
+    char name[CRYSP_NAME_LEN];
+    char description[CRYSP_DESC_LEN];
+} CryspSlipSystemDescriptor;
+
 /* A model ID with its parameters: the inputs of a new model, or the state of an existing one. */
 typedef struct {
     int             id;
@@ -128,7 +128,7 @@ typedef struct {
 /* Everything needed to create a phase. */
 typedef struct {
     CryspModelData model;                 /* Hardening model and its inputs. */
-    int            deformation_mechanism; /* One of CRYSP_SLIP_SYSTEMS_*. */
+    int            deformation_mechanism; /* ID of a slip system set, see crysp_get_slip_systems(). */
     int            n_orientations;
     double        *orientations;          /* 3 x n_orientations: Euler angles. */
 } CryspPhaseData;
@@ -194,6 +194,12 @@ typedef struct {
     int                   n_strain_increments;
     CryspStrainIncrement *strain_increments;  /* List of n_strain_increments. */
 } CryspStressIncrement;
+
+/*
+ * Describe the available slip system sets as a list of *n_systems descriptors, including their IDs. The descriptors own nothing,
+ * so the list is released with free() alone.
+ */
+CryspStatus crysp_get_slip_systems(int *n_systems, CryspSlipSystemDescriptor **slip_system_descs);
 
 /* Describe the available meso or micro (hardening) models as a list of *n_models descriptors, including their IDs. */
 CryspStatus crysp_get_meso_models(int *n_models, CryspModelDescriptor **model_descs);

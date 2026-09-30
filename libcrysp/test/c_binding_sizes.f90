@@ -10,7 +10,7 @@ subroutine crysp_test_sizes(sizes) bind(C, name='crysp_test_sizes')
 
     implicit none
 
-    integer(C_SIZE_T), dimension(14), intent(out):: sizes
+    integer(C_SIZE_T), dimension(15), intent(out):: sizes
 
     type(Status_C):: stat
     type(Parameter_C):: param
@@ -26,8 +26,9 @@ subroutine crysp_test_sizes(sizes) bind(C, name='crysp_test_sizes')
     type(Material_C):: mat
     type(StrainIncrement_C):: strain_inc
     type(StressIncrement_C):: stress_inc
+    type(SlipSystemDescriptor_C):: slip_desc
 
     sizes = [c_sizeof(stat), c_sizeof(param), c_sizeof(inp), c_sizeof(state_desc), c_sizeof(model_desc), &
              c_sizeof(model_data), c_sizeof(phase_data), c_sizeof(cm), c_sizeof(hard_stat), c_sizeof(gr), c_sizeof(clstr), &
-             c_sizeof(mat), c_sizeof(strain_inc), c_sizeof(stress_inc)]
+             c_sizeof(mat), c_sizeof(strain_inc), c_sizeof(stress_inc), c_sizeof(slip_desc)]
 end subroutine
