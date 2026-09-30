@@ -1,3 +1,7 @@
+!> C binding of the libCrysP entry points.
+!>
+!> Thin wrappers that convert their arguments and call the Fortran counterparts in [[libcrysp]], which documents what they do.
+!> The C-specific contract (ownership, allocation conventions, ...) is documented in `src/c_binding/libcrysp.h`.
 module libcrysp_c_binding
     use iso_c_binding
     use libcrysp
@@ -18,9 +22,6 @@ module libcrysp_c_binding
 contains
 
     !> C binding of [[libcrysp:crysp_get_meso_models]].
-    !>
-    !> Ownership of allocated buffers is passed to caller: destroy each descriptor with `crysp_destroy_model_descriptor`, then
-    !> `free()` the list.
     function crysp_get_meso_models_c(n_models, model_descs) bind(C, name='crysp_get_meso_models') result(stat)
         integer(C_INT), intent(out):: n_models
         type(C_PTR), intent(out):: model_descs !! n_models * type(ModelDescriptor_C)
@@ -45,9 +46,6 @@ contains
     end function
 
     !> C binding of [[libcrysp:crysp_get_micro_models]].
-    !>
-    !> Ownership of allocated buffers is passed to caller: destroy each descriptor with `crysp_destroy_model_descriptor`, then
-    !> `free()` the list.
     function crysp_get_micro_models_c(n_models, model_descs) bind(C, name='crysp_get_micro_models') result(stat)
         integer(C_INT), intent(out):: n_models
         type(C_PTR), intent(out):: model_descs !! n_models * type(ModelDescriptor_C)
@@ -72,10 +70,6 @@ contains
     end function
 
     !> C binding of [[libcrysp:crysp_new_material]].
-    !>
-    !> `meso_model_data` and `phase_data` are not modified and remain owned by the caller, who may allocate them however it likes.
-    !> On success, ownership of all allocated buffers in `mat` is passed to the caller, who releases them with
-    !> `crysp_destroy_material`. On failure, `mat` is undefined and must not be freed.
     function crysp_new_material_c(meso_model_data, n_phases, phase_data, mat) bind(C, name='crysp_new_material') result(stat)
         type(ModelData_C), intent(in):: meso_model_data
         integer(C_INT), value, intent(in):: n_phases
@@ -99,12 +93,6 @@ contains
     end function
 
     !> C binding of [[libcrysp:crysp_strain_driven_deformation]].
-    !>
-    !> `mat` is replaced by the deformed material: all allocated buffers it held on entry are freed, and ownership of the new ones
-    !> is passed to the caller, see [[Material_C]]. This also happens on failure, where `mat` holds the state reached when the
-    !> failure occurred, so the caller always owns a valid material.
-    !> On success, `incs` is a malloc'ed array of `n_incs` increments whose buffers are owned by the caller: destroy each
-    !> increment with `crysp_destroy_strain_increment`, then `free()` the list. On failure, `n_incs` is 0 and `incs` is null.
     function crysp_strain_driven_deformation_c(mat, velocity_gradient, target_vm_strain, n_incs, incs) &
             bind(C, name='crysp_strain_driven_deformation') result(stat)
         type(Material_C), intent(inout):: mat
@@ -138,12 +126,6 @@ contains
     end function
 
     !> C binding of [[libcrysp:crysp_stress_driven_deformation]].
-    !>
-    !> `mat` is replaced by the deformed material: all allocated buffers it held on entry are freed, and ownership of the new ones
-    !> is passed to the caller, see [[Material_C]]. This also happens on failure, where `mat` holds the state reached when the
-    !> failure occurred, so the caller always owns a valid material.
-    !> On success, `incs` is a malloc'ed array of `n_incs` increments whose buffers are owned by the caller: destroy each
-    !> increment with `crysp_destroy_stress_increment`, then `free()` the list. On failure, `n_incs` is 0 and `incs` is null.
     function crysp_stress_driven_deformation_c(mat, target_stress_mode, target_vm_strain, n_incs, incs) &
             bind(C, name='crysp_stress_driven_deformation') result(stat)
         type(Material_C), intent(inout):: mat
@@ -177,13 +159,9 @@ contains
     end function
 
     !> C binding of [[libcrysp:crysp_simulate_stress_mode]].
-    !>
-    !> `mat` is replaced by the material after the simulation: all allocated buffers it held on entry are freed, and ownership of
-    !> the new ones is passed to the caller, see [[Material_C]]. This also happens on failure, so the caller always owns a valid
-    !> material.
     function crysp_simulate_stress_mode_c(mat, target_stress_mode, strain_mode, stress, residual) &
             bind(C, name='crysp_simulate_stress_mode') result(stat)
-        type(Material_C), intent(inout):: mat
+        type(Material_C), intent(in):: mat
         real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode
         real(C_DOUBLE), dimension(5), intent(inout):: strain_mode
         real(C_DOUBLE), dimension(5), intent(out):: stress
@@ -193,18 +171,12 @@ contains
         type(Material), target:: mat_fort
 
         mat_fort = mat
-        call destroy(mat)
         stat = crysp_simulate_stress_mode(mat_fort, target_stress_mode, strain_mode, stress, residual)
-        mat = mat_fort
     end function
 
     !> C binding of [[libcrysp:crysp_simulate_strain_mode]].
-    !>
-    !> `mat` is replaced by the material after the simulation: all allocated buffers it held on entry are freed, and ownership of
-    !> the new ones is passed to the caller, see [[Material_C]]. This also happens on failure, so the caller always owns a valid
-    !> material.
     function crysp_simulate_strain_mode_c(mat, strain_mode, stress) bind(C, name='crysp_simulate_strain_mode') result(stat)
-        type(Material_C), intent(inout):: mat
+        type(Material_C), intent(in):: mat
         real(C_DOUBLE), dimension(5), intent(in):: strain_mode
         real(C_DOUBLE), dimension(5), intent(out):: stress
         type(Status_C):: stat
@@ -212,8 +184,6 @@ contains
         type(Material), target:: mat_fort
 
         mat_fort = mat
-        call destroy(mat)
         stat = crysp_simulate_strain_mode(mat_fort, strain_mode, stress)
-        mat = mat_fort
     end function
 end module

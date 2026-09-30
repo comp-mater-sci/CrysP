@@ -1,6 +1,6 @@
 # Unit tests for libCrysP.
 #
-# Each test is a small stand-alone Fortran program linked against the library and registered with CTest. A test passes if the
+# Each test is a small stand-alone program (Fortran, or C for the C API) linked against the library and registered with CTest. A test passes if the
 # program exits with status 0 (see testing.f90). Run them with `ctest --test-dir build --output-on-failure` after building.
 #
 # Keeping one executable per test topic gives process isolation: libCrysP reports errors with `error stop`, so a failure in one
@@ -32,6 +32,20 @@ endfunction()
 crysp_add_test(test_parameter)
 crysp_add_test(test_material_roundtrip)
 crysp_add_test(test_rotations)
+
+# The C API test is a C program written against libcrysp.h. c_binding_sizes.f90 reports the sizes of the bind(C) types so that it
+# can check the header. It is linked by the Fortran compiler to bring in the Fortran runtime; ifx must be told main is not Fortran.
+add_executable(test_c_binding test_c_binding.c c_binding_sizes.f90)
+target_link_libraries(test_c_binding PRIVATE crysp)
+set_target_properties(test_c_binding PROPERTIES
+    LINKER_LANGUAGE Fortran
+    Fortran_MODULE_DIRECTORY ${TEST_MODULE_DIR}
+    LINK_FLAGS "${TEST_LINK_FLAGS}"
+)
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+    target_link_options(test_c_binding PRIVATE -nofor-main)
+endif()
+add_test(NAME test_c_binding COMMAND test_c_binding)
 
 # test_parameter deliberately ends by aborting (shape mismatch must be detected), so its exit status is always non-zero.
 # Judge it on its output instead: any failed check prints "FAILED", and the abort must have reported the mismatch.

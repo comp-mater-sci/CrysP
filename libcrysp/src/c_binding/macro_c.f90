@@ -15,11 +15,7 @@ module crysp_macro_c
 
     public
 
-
     !> C-compatible counterpart of [[Material]].
-    !>
-    !> The `phase` pointer of every grain in `clusters` points to an element of `phases`. A `Material_C` produced by libCrysP owns
-    !> all of its pointers, malloc'ed so that C can release them with `crysp_destroy_material`, see [[material_c_destroy]].
     type, bind(C):: Material_C
         type(ModelData_C):: meso_model
         integer(C_INT):: n_phases
@@ -28,8 +24,7 @@ module crysp_macro_c
         type(C_PTR):: clusters  !! n_clusters * type(Cluster_C)
     end type
 
-    !> C-compatible counterpart of [[StrainIncrement]]. Released with `crysp_destroy_strain_increment`, see
-    !> [[strain_increment_c_destroy]].
+    !> C-compatible counterpart of [[StrainIncrement]].
     type, bind(C):: StrainIncrement_C
         real(C_DOUBLE):: duration
         real(C_DOUBLE), dimension(3,3):: deformation_gradient
@@ -40,8 +35,7 @@ module crysp_macro_c
         type(C_PTR):: texture                   !! `3*n_grains` ints: the Euler angles of each grain in degrees.
     end type
 
-    !> C-compatible counterpart of [[StressIncrement]]. Released with `crysp_destroy_stress_increment`, see
-    !> [[stress_increment_c_destroy]].
+    !> C-compatible counterpart of [[StressIncrement]].
     type, bind(C):: StressIncrement_C
         real(C_DOUBLE), dimension(5):: strain_rate
         real(C_DOUBLE), dimension(5):: residual
@@ -49,6 +43,7 @@ module crysp_macro_c
         type(C_PTR):: strain_increments !! n_strain_increments * type(StrainIncrement_C)
     end type
 
+    !> See [[crysp_utils_c]].
     interface assignment(=)
         module procedure material_to_c, material_from_c, &
                          strain_increment_to_c, &
@@ -64,10 +59,8 @@ module crysp_macro_c
 
 contains
 
-    !> Convert a material to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of all pointers. The phase pointer of each grain is resolved to the element of `mat_c%phases`
-    !> that backs it.
+    !> Convert a material to its C-compatible counterpart, resolving the phase pointer of each grain to an element of
+    !> `mat_c%phases`.
     subroutine material_to_c(mat_c, mat)
         type(Material_C), intent(out):: mat_c
         type(Material), target, intent(in):: mat
@@ -110,10 +103,7 @@ contains
         end do
     end subroutine
 
-    !> Restore a material from its C-compatible counterpart.
-    !>
-    !> `mat_c` is not modified: its buffers remain owned by the caller, who releases them with [[material_c_destroy]].
-    !> `mat_c` is assumed to be well-formed: it is not validated here.
+    !> Restore a material from its C-compatible counterpart, resolving the phase of each grain.
     subroutine material_from_c(mat, mat_c)
         type(Material), target, intent(out):: mat
         type(Material_C), intent(in):: mat_c
@@ -156,9 +146,7 @@ contains
         end do
     end subroutine
 
-    !> Convert a strain increment to its C-compatible counterpart. The caller takes ownership of `inc_c%texture`.
-    !>
-    !> The caller takes ownership of `inc_c%strain_increments` of allocated buffers.
+    !> Convert a strain increment to its C-compatible counterpart.
     subroutine strain_increment_to_c(inc_c, inc)
         type(StrainIncrement_C), intent(out):: inc_c
         type(StrainIncrement), intent(in):: inc
@@ -181,8 +169,6 @@ contains
     end subroutine
 
     !> Convert a stress increment to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of `inc_c%strain_increments` of allocated buffers.
     subroutine stress_increment_to_c(inc_c, inc)
         type(StressIncrement_C), intent(out):: inc_c
         type(StressIncrement), intent(in):: inc

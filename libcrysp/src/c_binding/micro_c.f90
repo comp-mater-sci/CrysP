@@ -7,11 +7,8 @@ module crysp_micro_c
 
     implicit none
 
-    !> C-compatible counterpart of [[HardeningState]].
-    !>
-    !> `crss` holds the columns of its Fortran counterpart one after the other. `params` holds the state added by the concrete
-    !> hardening state, as produced by its `serialize`. A `HardeningState_C` produced by libCrysP owns `crss`, `params` and the
-    !> data of each parameter, malloc'ed so that they are released along with the owning [[crysp_macro_c:Material_C]].
+    !> C-compatible counterpart of [[HardeningState]]. `params` holds the state added by the concrete hardening state, as produced
+    !> by its `serialize`.
     type, bind(C):: HardeningState_C
         integer(C_INT):: n_systems
         type(C_PTR):: crss     !! n_systems * 2 * double
@@ -19,10 +16,8 @@ module crysp_micro_c
         type(C_PTR):: params !! n_params * type(Parameter_C)
     end type
 
-    !> C-compatible counterpart of [[Grain]].
-    !>
-    !> `phase` refers to the element of the material's C-side phase list that backs this grain, as [[Grain]] points to its
-    !> [[Phase]]. It does not own that element.
+    !> C-compatible counterpart of [[Grain]]. `phase` points into the material's C-side phase list, as [[Grain]] points to its
+    !> [[Phase]].
     type, bind(C):: Grain_C
         type(C_PTR):: phase !! type(ConstitutiveModel_C).
         real(C_DOUBLE), dimension(3,3):: orientation
@@ -30,7 +25,7 @@ module crysp_micro_c
         type(HardeningState_C):: hardening_state
     end type
 
-    !> C-compatible counterpart of [[PhaseData]]. `orientations` holds the Euler angle triplets one after the other.
+    !> C-compatible counterpart of [[PhaseData]].
     type, bind(C):: PhaseData_C
         type(ModelData_C):: model
         integer(C_INT):: deformation_mechanism
@@ -39,12 +34,8 @@ module crysp_micro_c
     end type
 
 
-    !> C-compatible counterpart of [[ConstitutiveModel]].
-    !>
-    !> `hardening_model_state` holds the model ID and the state specific to the concrete model, see [[crysp_model:ModelData_C]].
-    !> The coefficient matrices hold the columns of their Fortran counterparts one after the other. A `ConstitutiveModel_C`
-    !> produced by libCrysP owns all of its pointers, malloc'ed so that they are released along with the owning
-    !> [[crysp_macro_c:Material_C]].
+    !> C-compatible counterpart of [[ConstitutiveModel]]. `hardening_model_state` holds the model ID and the state specific to the
+    !> concrete model, as produced by its `serialize`.
     type, bind(C):: ConstitutiveModel_C
         type(ModelData_C):: hardening_model_state
         integer(C_INT):: n_systems
@@ -54,6 +45,7 @@ module crysp_micro_c
     end type
 
 
+    !> See [[crysp_utils_c]].
     interface assignment(=)
         module procedure phase_data_from_c, &
                          cm_to_c, cm_from_c, &
@@ -65,14 +57,12 @@ module crysp_micro_c
     interface destroy
         module procedure hard_stat_c_destroy, &
                          grain_c_destroy, &
+                         phase_data_c_destroy, &
                          cm_c_destroy
     end interface
 contains
 
-    !> Convert a grain to its C-compatible counterpart.
-
-    !> The caller takes ownership of the hardening state, see [[constitutive_model:HardeningState_C]].
-    !> The phase pointer must be resolved at material level
+    !> Convert a grain to its C-compatible counterpart. The phase pointer is left null: it is resolved at material level.
     subroutine grain_to_c(gr_c, gr)
         type(Grain_C), intent(out):: gr_c
         type(Grain), intent(in):: gr
@@ -83,10 +73,7 @@ contains
         gr_c%hardening_state = gr%hardening_state
     end subroutine
 
-    !> Restore a grain from its C-compatible counterpart.
-    !>
-    !> The phase is resolved at material level.
-    !> `gr_c` is assumed to be well-formed: it is not validated here.
+    !> Restore a grain from its C-compatible counterpart. Its phase must already be set: it is resolved at material level.
     subroutine grain_from_c(gr, gr_c)
         type(Grain), intent(inout):: gr
         type(Grain_C), intent(in):: gr_c
@@ -98,8 +85,6 @@ contains
     end subroutine
 
     !> Convert C-compatible phase data to phase data.
-    !>
-    !> `phase_data_c` is assumed to be well-formed: it is not validated here.
     subroutine phase_data_from_c(phase_data, phase_data_c)
         type(PhaseData), intent(out):: phase_data
         type(PhaseData_C), intent(in):: phase_data_c
@@ -113,8 +98,7 @@ contains
         phase_data%orientations = real(orientations, DP)
     end subroutine
 
-    !> Convert a constitutive model to its C-compatible counterpart. The caller takes ownership of all pointers, see
-    !> [[ConstitutiveModel_C]].
+    !> Convert a constitutive model to its C-compatible counterpart.
     !>
     !> Not `pure`: the coefficients and the serialized state are malloc'ed.
     subroutine cm_to_c(cm_c, cm)
@@ -137,8 +121,6 @@ contains
     end subroutine
 
     !> Restore a constitutive model from its C-compatible counterpart.
-    !>
-    !> `cm_c` is assumed to be well-formed: it is not validated here.
     subroutine cm_from_c(cm, cm_c)
         class(ConstitutiveModel), intent(inout):: cm
         type(ConstitutiveModel_C), intent(in):: cm_c
@@ -157,8 +139,6 @@ contains
     end subroutine
 
     !> Convert a hardening state to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of all pointers.
     subroutine hard_stat_to_c(hard_stat_c, hard_stat)
         type(HardeningState_C), intent(out):: hard_stat_c
         class(HardeningState), intent(in):: hard_stat
@@ -185,8 +165,6 @@ contains
     end subroutine
 
     !> Restore a hardening state from its C-compatible counterpart.
-    !>
-    !> `hard_stat_c` is assumed to be well-formed: it is not validated here.
     subroutine hard_stat_from_c(hard_stat, hard_stat_c)
         class(HardeningState), intent(inout):: hard_stat
         type(HardeningState_C), intent(in):: hard_stat_c
@@ -208,7 +186,7 @@ contains
     end subroutine
 
     !> Release the CRSS and the parameters of a C-compatible hardening state.
-    subroutine hard_stat_c_destroy(hard_stat_c)
+    subroutine hard_stat_c_destroy(hard_stat_c) bind(C, name='crysp_destroy_hardening_state')
         type(HardeningState_C), intent(in):: hard_stat_c
 
         integer:: i
@@ -222,16 +200,24 @@ contains
         call free(hard_stat_c%params)
     end subroutine
 
-    !> Release the hardening state of a C-compatible grain. The phase is not owned by the grain, so it is left alone.
-    subroutine grain_c_destroy(gr_c)
+    !> Release the hardening state of a C-compatible grain.
+    subroutine grain_c_destroy(gr_c) bind(C, name='crysp_destroy_grain')
         type(Grain_C), intent(in):: gr_c
 
         call hard_stat_c_destroy(gr_c%hardening_state)
     end subroutine
 
 
+    !> Release the model data and orientations of C-compatible phase data.
+    subroutine phase_data_c_destroy(phase_data_c) bind(C, name='crysp_destroy_phase_data')
+        type(PhaseData_C), intent(in):: phase_data_c
+
+        call model_data_c_destroy(phase_data_c%model)
+        call free(phase_data_c%orientations)
+    end subroutine
+
     !> Release the model state and coefficients of a C-compatible constitutive model.
-    subroutine cm_c_destroy(cm_c)
+    subroutine cm_c_destroy(cm_c) bind(C, name='crysp_destroy_constitutive_model')
         type(ConstitutiveModel_C), intent(in):: cm_c
 
         call model_data_c_destroy(cm_c%hardening_model_state)
