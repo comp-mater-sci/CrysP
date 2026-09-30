@@ -79,7 +79,7 @@ contains
                   n_incs
         real(DP):: v_grad_inc(3,3), &
                    taylor_factor, &
-                   dev_stress(5), &
+                   dev_stress(5,1), &
                    def_grad(3,3)
 
         !Open output files
@@ -93,9 +93,11 @@ contains
             associate(step => this%steps(i_step))
                 if (step%target_strain < TOLERANCE) then
                     allocate(step%increments(1))
-                    call handle_crysp_status(crysp_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress))
+                    call handle_crysp_status(crysp_simulate_strain_modes(this%material, &
+                                                                         reshape(tensor_to_deviatoric(step%velocity_gradient), [5,1]), &
+                                                                         dev_stress))
                     !The other fields keep their default initialization: no duration, no deformation.
-                    step%increments(1)%stress = deviatoric_to_tensor(dev_stress)
+                    step%increments(1)%stress = deviatoric_to_tensor(dev_stress(:,1))
                     n_incs = n_incs + 1
                 else
                     call handle_crysp_status(crysp_strain_driven_deformation(this%material, step%velocity_gradient, &

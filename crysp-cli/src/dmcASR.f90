@@ -67,7 +67,9 @@ contains
         integer:: i_step, i_stress, i_strain, &
                   out_unit, texture_unit, &
                   n_incs
-        real(DP):: dev_stress(5), &
+        real(DP):: dev_stress(5,1), &
+                   strain_mode(5,1), &
+                   residual(5,1), &
                    stress(6), &
                    target_dev_stress(5), &
                    def_grad(3,3), &
@@ -98,10 +100,11 @@ contains
                     associate (stress_inc => step%increments(1))
                         !The strain increment keeps its default initialization apart from the stress: no duration, no deformation.
                         allocate(stress_inc%strain_increments(1))
-                        stress_inc%strain_rate = target_dev_stress
-                        call handle_crysp_status(crysp_simulate_stress_mode(this%material, target_dev_stress, &
-                                                                            stress_inc%strain_rate, dev_stress, stress_inc%residual))
-                        stress_inc%strain_increments(1)%stress = deviatoric_to_tensor(dev_stress)
+                        call handle_crysp_status(crysp_simulate_stress_modes(this%material, reshape(target_dev_stress, [5,1]), &
+                                                                             strain_mode, dev_stress, residual))
+                        stress_inc%strain_rate = strain_mode(:,1)
+                        stress_inc%residual = residual(:,1)
+                        stress_inc%strain_increments(1)%stress = deviatoric_to_tensor(dev_stress(:,1))
                         n_incs = n_incs + 1
                     end associate
                 else

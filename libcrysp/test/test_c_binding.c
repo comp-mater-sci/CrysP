@@ -335,15 +335,41 @@ static void test_simulation(void) {
     double crss_before = hs->crss[0];
     double strain_mode[5] = {1., 0., 0., 0., 0.}, stress[5], stress_again[5];
 
-    if (check_ok(crysp_simulate_strain_mode(&mat, strain_mode, stress), "crysp_simulate_strain_mode") &&
-        check_ok(crysp_simulate_strain_mode(&mat, strain_mode, stress_again), "crysp_simulate_strain_mode (again)")) {
-        check(memcmp(stress, stress_again, sizeof stress) == 0, "simulate_strain_mode: nothing carried back between calls");
-        check(hs->crss[0] == crss_before, "simulate_strain_mode: the material is not modified");
+    if (check_ok(crysp_simulate_strain_modes(&mat, 1, strain_mode, stress), "crysp_simulate_strain_modes") &&
+        check_ok(crysp_simulate_strain_modes(&mat, 1, strain_mode, stress_again), "crysp_simulate_strain_modes (again)")) {
+        check(memcmp(stress, stress_again, sizeof stress) == 0, "simulate_strain_modes: nothing carried back between calls");
+        check(hs->crss[0] == crss_before, "simulate_strain_modes: the material is not modified");
     }
+
+    /* Two modes at once give the same result as each on its own: modes are 5 x n_modes, one after the other. */
+    double strain_modes[2][5] = {{0., 1., 0., 0., 0.}, {1., 0., 0., 0., 0.}}, stresses[2][5];
+    if (check_ok(crysp_simulate_strain_modes(&mat, 2, &strain_modes[0][0], &stresses[0][0]), "crysp_simulate_strain_modes (2 modes)"))
+        check(memcmp(stresses[1], stress, sizeof stress) == 0, "simulate_strain_modes: second of two modes matches a single call");
 
     double target[5], residual[5];
     unit(stress, target);
-    check_ok(crysp_simulate_stress_mode(&mat, target, strain_mode, stress, residual), "crysp_simulate_stress_mode");
+    check_ok(crysp_simulate_stress_modes(&mat, 1, target, strain_mode, stress, residual), "crysp_simulate_stress_modes");
+
+    double targets[2][5], found[2][5], residuals[2][5];
+    unit(stresses[0], targets[0]);
+    unit(stresses[1], targets[1]);
+    check_ok(crysp_simulate_stress_modes(&mat, 2, &targets[0][0], &found[0][0], &stresses[0][0], &residuals[0][0]),
+             "crysp_simulate_stress_modes (2 modes)");
+
+    /* Rejected before anything is simulated: the outputs are left alone. */
+    double untouched[5] = {7., 7., 7., 7., 7.}, out[5];
+    memcpy(out, untouched, sizeof out);
+    CryspStatus stat = crysp_simulate_strain_modes(&mat, -1, strain_mode, out);
+    check(stat.code == CRYSP_ERR_ARG, "simulate_strain_modes: negative n_modes: expected CRYSP_ERR_ARG, got %d", stat.code);
+    stat = crysp_simulate_stress_modes(&mat, -1, target, strain_mode, out, residual);
+    check(stat.code == CRYSP_ERR_ARG, "simulate_stress_modes: negative n_modes: expected CRYSP_ERR_ARG, got %d", stat.code);
+    targets[1][0] += 1.;
+    stat = crysp_simulate_stress_modes(&mat, 2, &targets[0][0], &found[0][0], &stresses[0][0], &residuals[0][0]);
+    check(stat.code == CRYSP_ERR_ARG, "simulate_stress_modes: non-unit mode: expected CRYSP_ERR_ARG, got %d", stat.code);
+    check(memcmp(out, untouched, sizeof out) == 0, "simulate_*_modes: outputs untouched on a rejected call");
+
+    stat = crysp_simulate_strain_modes(&mat, 0, NULL, NULL);
+    check(stat.code == CRYSP_ERR_ARG, "simulate_strain_modes: zero modes: expected CRYSP_ERR_ARG, got %d", stat.code);
     crysp_destroy_material(&mat);
 }
 
@@ -390,7 +416,7 @@ static void test_deformation(void) {
      * (0.6, -0.8, 0, 0, 0) fails in detect_taylor_ambiguity under gfortran, a core issue unrelated to the binding.
      */
     double strain_mode[5] = {1., 0., 0., 0., 0.}, stress[5], target[5];
-    if (!check_ok(crysp_simulate_strain_mode(&mat, strain_mode, stress), "crysp_simulate_strain_mode")) {
+    if (!check_ok(crysp_simulate_strain_modes(&mat, 1, strain_mode, stress), "crysp_simulate_strain_modes")) {
         crysp_destroy_material(&mat);
         return;
     }
