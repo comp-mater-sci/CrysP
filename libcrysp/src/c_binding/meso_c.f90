@@ -8,6 +8,11 @@ module crysp_meso_c
 
     public
 
+    !> C-compatible counterpart of [[Cluster]]. `state` holds the state added by the concrete cluster, as produced by its
+    !> `serialize`.
+    !>
+    !> A `Cluster_C` produced by libCrysP owns `grains`, `state` and everything they own, malloc'ed so that they are released along
+    !> with the owning [[crysp_macro_c:Material_C]]. It does not own the phases its grains point to.
     type, bind(C):: Cluster_C
         integer(C_INT):: n_grains
         type(C_PTR):: grains      !! n_grains * type(Grain_C)
@@ -18,6 +23,11 @@ module crysp_meso_c
 
     interface assignment(=)
         module procedure cluster_to_c, cluster_from_c
+    end interface
+
+    !> See [[crysp_utils_c:destroy]].
+    interface destroy
+        module procedure cluster_c_destroy
     end interface
 
 contains
@@ -62,7 +72,7 @@ contains
     !> Restore a cluster from its C-compatible counterpart.
     !>
     !> phases are resolved at material level, see [[grain_from_c]].
-    !> All allocated buffers on the C side are freed and the pointers are left dangling.
+    !> `clstr_c` is not modified: its buffers remain owned by the caller.
     !> `clstr_c` is assumed to be well-formed: it is not validated here.
     subroutine cluster_from_c(clstr, clstr_c)
         class(Cluster), intent(inout):: clstr
@@ -79,14 +89,33 @@ contains
         do i = 1, size(grains_ptr)
             clstr%grains(i) = grains_ptr(i)
         end do
-        call free(clstr_c%grains)
 
         allocate(state(clstr_c%n_state))
         call c_f_pointer(clstr_c%state, state_ptr, [int(clstr_c%n_state)])
         do i = 1, size(state)
             state(i) = state_ptr(i)
         end do
-        call free(clstr_c%state)
         call clstr%deserialize(state)
+    end subroutine
+
+    !> Release the grains and state of a C-compatible cluster, including everything each grain owns.
+    subroutine cluster_c_destroy(clstr_c)
+        type(Cluster_C), intent(in):: clstr_c
+
+        integer:: i
+        type(Grain_C), dimension(:), pointer:: grains_ptr
+        type(Parameter_C), dimension(:), pointer:: state_ptr
+
+        call c_f_pointer(clstr_c%grains, grains_ptr, [int(clstr_c%n_grains)])
+        do i = 1, size(grains_ptr)
+            call grain_c_destroy(grains_ptr(i))
+        end do
+        call free(clstr_c%grains)
+
+        call c_f_pointer(clstr_c%state, state_ptr, [int(clstr_c%n_state)])
+        do i = 1, size(state_ptr)
+            call parameter_c_destroy(state_ptr(i))
+        end do
+        call free(clstr_c%state)
     end subroutine
 end module

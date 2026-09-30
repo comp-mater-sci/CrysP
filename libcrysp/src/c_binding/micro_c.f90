@@ -11,7 +11,7 @@ module crysp_micro_c
     !>
     !> `crss` holds the columns of its Fortran counterpart one after the other. `params` holds the state added by the concrete
     !> hardening state, as produced by its `serialize`. A `HardeningState_C` produced by libCrysP owns `crss`, `params` and the
-    !> data of each parameter, malloc'ed so that C can release them with `free()`.
+    !> data of each parameter, malloc'ed so that they are released along with the owning [[crysp_macro_c:Material_C]].
     type, bind(C):: HardeningState_C
         integer(C_INT):: n_systems
         type(C_PTR):: crss     !! n_systems * 2 * double
@@ -43,7 +43,8 @@ module crysp_micro_c
     !>
     !> `hardening_model_state` holds the model ID and the state specific to the concrete model, see [[crysp_model:ModelData_C]].
     !> The coefficient matrices hold the columns of their Fortran counterparts one after the other. A `ConstitutiveModel_C`
-    !> produced by libCrysP owns all of its pointers, malloc'ed so that C can release them with `free()`.
+    !> produced by libCrysP owns all of its pointers, malloc'ed so that they are released along with the owning
+    !> [[crysp_macro_c:Material_C]].
     type, bind(C):: ConstitutiveModel_C
         type(ModelData_C):: hardening_model_state
         integer(C_INT):: n_systems
@@ -58,6 +59,13 @@ module crysp_micro_c
                          cm_to_c, cm_from_c, &
                          hard_stat_to_c, hard_stat_from_c, &
                          grain_to_c, grain_from_c
+    end interface
+
+    !> See [[crysp_utils_c:destroy]].
+    interface destroy
+        module procedure hard_stat_c_destroy, &
+                         grain_c_destroy, &
+                         cm_c_destroy
     end interface
 contains
 
@@ -78,7 +86,6 @@ contains
     !> Restore a grain from its C-compatible counterpart.
     !>
     !> The phase is resolved at material level.
-    !> state in `gr_c` is freed, see [[constitutive_model:hard_stat_from_c]].
     !> `gr_c` is assumed to be well-formed: it is not validated here.
     subroutine grain_from_c(gr, gr_c)
         type(Grain), intent(inout):: gr
@@ -92,7 +99,6 @@ contains
 
     !> Convert C-compatible phase data to phase data.
     !>
-    !> All allocated buffers are freed.
     !> `phase_data_c` is assumed to be well-formed: it is not validated here.
     subroutine phase_data_from_c(phase_data, phase_data_c)
         type(PhaseData), intent(out):: phase_data
@@ -105,7 +111,6 @@ contains
 
         call c_f_pointer(phase_data_c%orientations, orientations, [3, int(phase_data_c%n_orientations)])
         phase_data%orientations = real(orientations, DP)
-        call free(phase_data_c%orientations)
     end subroutine
 
     !> Convert a constitutive model to its C-compatible counterpart. The caller takes ownership of all pointers, see
@@ -133,7 +138,6 @@ contains
 
     !> Restore a constitutive model from its C-compatible counterpart.
     !>
-    !> All allocated buffers on the C side are freed and the pointers are left dangling.
     !> `cm_c` is assumed to be well-formed: it is not validated here.
     subroutine cm_from_c(cm, cm_c)
         class(ConstitutiveModel), intent(inout):: cm
@@ -144,10 +148,8 @@ contains
 
         call c_f_pointer(cm_c%taylor_coeffs, ptr, [5, int(cm_c%n_systems)])
         cm%taylor_coeffs = real(ptr, DP)
-        call free(cm_c%taylor_coeffs)
         call c_f_pointer(cm_c%spin_coeffs, ptr, [3, int(cm_c%n_systems)])
         cm%spin_coeffs = real(ptr, DP)
-        call free(cm_c%spin_coeffs)
         cm%basis = int(cm_c%basis)
 
         model_data = cm_c%hardening_model_state
@@ -184,7 +186,6 @@ contains
 
     !> Restore a hardening state from its C-compatible counterpart.
     !>
-    !> All allocated buffers on the C side are freed and the pointers are left dangling.
     !> `hard_stat_c` is assumed to be well-formed: it is not validated here.
     subroutine hard_stat_from_c(hard_stat, hard_stat_c)
         class(HardeningState), intent(inout):: hard_stat
@@ -197,14 +198,44 @@ contains
 
         call c_f_pointer(hard_stat_c%crss, crss, [2, int(hard_stat_c%n_systems)])
         hard_stat%crss = real(crss, DP)
-        call free(hard_stat_c%crss)
 
         allocate(params(hard_stat_c%n_params))
         call c_f_pointer(hard_stat_c%params, params_c, [int(hard_stat_c%n_params)])
         do i = 1, size(params)
             params(i) = params_c(i)
         end do
-        call free(hard_stat_c%params)
         call hard_stat%deserialize(params)
+    end subroutine
+
+    !> Release the CRSS and the parameters of a C-compatible hardening state.
+    subroutine hard_stat_c_destroy(hard_stat_c)
+        type(HardeningState_C), intent(in):: hard_stat_c
+
+        integer:: i
+        type(Parameter_C), dimension(:), pointer:: params
+
+        call free(hard_stat_c%crss)
+        call c_f_pointer(hard_stat_c%params, params, [int(hard_stat_c%n_params)])
+        do i = 1, size(params)
+            call parameter_c_destroy(params(i))
+        end do
+        call free(hard_stat_c%params)
+    end subroutine
+
+    !> Release the hardening state of a C-compatible grain. The phase is not owned by the grain, so it is left alone.
+    subroutine grain_c_destroy(gr_c)
+        type(Grain_C), intent(in):: gr_c
+
+        call hard_stat_c_destroy(gr_c%hardening_state)
+    end subroutine
+
+
+    !> Release the model state and coefficients of a C-compatible constitutive model.
+    subroutine cm_c_destroy(cm_c)
+        type(ConstitutiveModel_C), intent(in):: cm_c
+
+        call model_data_c_destroy(cm_c%hardening_model_state)
+        call free(cm_c%taylor_coeffs)
+        call free(cm_c%spin_coeffs)
     end subroutine
 end module
