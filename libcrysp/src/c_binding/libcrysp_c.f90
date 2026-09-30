@@ -124,9 +124,9 @@ contains
 
         mat_fort = mat
         stat = crysp_strain_driven_deformation(mat_fort, velocity_gradient, target_vm_strain, incs_fort)
+        mat = mat_fort
         if (stat%code /= CRYSP_OK) return
 
-        mat = mat_fort
         n_incs = int(size(incs_fort), C_INT)
         incs = malloc(int(size(incs_fort), C_SIZE_T) * c_sizeof(mold))
         call c_f_pointer(incs, incs_ptr, [size(incs_fort)])
