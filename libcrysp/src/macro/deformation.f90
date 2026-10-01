@@ -16,7 +16,7 @@ contains
         type(Material), target, intent(inout)::        mat
         real(DP), dimension(3,3), intent(in)::         velocity_gradient
         real(DP), intent(in)::                         target_vm_strain
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
+        type(Increment), dimension(:), allocatable, intent(out):: increments
         real(DP), dimension(5), intent(in), optional:: target_stress_mode
         type(Status):: stat                            !! `CRYSP_OK`, or the first failure reported by any cluster.
 
@@ -44,8 +44,9 @@ contains
                    stress_mode(5), &
                    max_stress_inc, &
                    inc_corr, &                   !Correction on the increment to get the desired accuarcy
-                   max_t_inc
-        type(StrainIncrementFactory):: incs
+                   max_t_inc, &
+                   residual(5)
+        type(IncrementFactory):: incs
 
         !Limit time increment so that maximum change in deformation gradient per time step is approx. ACCURACY
         !Since this should always be in the small strain regime, linear approximation will do.
@@ -125,22 +126,33 @@ contains
             taylor_factor = taylor_factor * t_inc / total_weight / vm_strain_inc
             cur_vm_strain = next_vm_strain
 
+            if (present(target_stress_mode)) then
+                stress_mode = tensor_to_deviatoric(homogenized_stress)
+                stress_mode = stress_mode / norm2(stress_mode)
+                residual = target_stress_mode - stress_mode
+            else
+                residual = 0._DP
+            end if
+
             !Fix minimum estimated remaining increment size to 0.1% because interval likely grows due to hardening
             !Add 1 for current increment. Also makes sure we always have positive padding.
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain) / max(.001_DP, vm_strain_inc * inc_corr)) + 1
-            call incs%add(StrainIncrement(t_inc, def_grad, cur_vm_strain, homogenized_stress, taylor_factor, mat%get_texture()), &
-                          prob_rem_incs)
+            call incs%add([Increment(velocity_gradient, &
+                                     residual, &
+                                     t_inc, &
+                                     def_grad, &
+                                     cur_vm_strain, &
+                                     homogenized_stress, &
+                                     taylor_factor, &
+                                     mat%get_texture())], &
+                           prob_rem_incs)
 
             !Force minimal amount of deformation before checking the stress mode because it is possible that the target stress mode
             !deviates quite a bit from the actual stress mode for the applied strain mode if the trust region solver gets stuck. In
             !that case, we want at least some deformation to happen so that the solver can recover.
             !After testing, the exit condition triggers roughly every 0.06 VM_strain in the non-degenerate case. This makes ACCURACY
             !a good bound.
-            if (present(target_stress_mode) .and. cur_vm_strain > ACCURACY) then
-                stress_mode = tensor_to_deviatoric(homogenized_stress)
-                stress_mode = stress_mode / norm2(stress_mode)
-                if (norm2(target_stress_mode - stress_mode) > ACCURACY) exit
-            end if
+            if (cur_vm_strain > ACCURACY .and. norm2(residual) > ACCURACY) exit
 
             t_inc = t_inc * inc_corr
         end do

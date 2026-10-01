@@ -24,8 +24,10 @@ module crysp_macro_c
         type(C_PTR):: clusters  !! n_clusters * type(Cluster_C)
     end type
 
-    !> C-compatible counterpart of [[StrainIncrement]].
-    type, bind(C):: StrainIncrement_C
+    !> C-compatible counterpart of [[Increment]].
+    type, bind(C):: Increment_C
+        real(C_DOUBLE), dimension(3,3):: velocity_gradient
+        real(C_DOUBLE), dimension(5):: residual
         real(C_DOUBLE):: duration
         real(C_DOUBLE), dimension(3,3):: deformation_gradient
         real(C_DOUBLE):: vm_strain
@@ -35,26 +37,16 @@ module crysp_macro_c
         type(C_PTR):: texture                   !! `3*n_grains` ints: the Euler angles of each grain in degrees.
     end type
 
-    !> C-compatible counterpart of [[StressIncrement]].
-    type, bind(C):: StressIncrement_C
-        real(C_DOUBLE), dimension(5):: strain_rate
-        real(C_DOUBLE), dimension(5):: residual
-        integer(C_INT):: n_strain_increments
-        type(C_PTR):: strain_increments !! n_strain_increments * type(StrainIncrement_C)
-    end type
-
     !> See [[crysp_utils_c]].
     interface assignment(=)
         module procedure material_to_c, material_from_c, &
-                         strain_increment_to_c, &
-                         stress_increment_to_c
+                         increment_to_c
     end interface
 
     !> See [[crysp_utils_c:destroy]].
     interface destroy
         module procedure material_c_destroy, &
-                         strain_increment_c_destroy, &
-                         stress_increment_c_destroy
+                         increment_c_destroy
     end interface
 
 contains
@@ -146,14 +138,16 @@ contains
         end do
     end subroutine
 
-    !> Convert a strain increment to its C-compatible counterpart.
-    subroutine strain_increment_to_c(inc_c, inc)
-        type(StrainIncrement_C), intent(out):: inc_c
-        type(StrainIncrement), intent(in):: inc
+    !> Convert an increment to its C-compatible counterpart.
+    subroutine increment_to_c(inc_c, inc)
+        type(Increment_C), intent(out):: inc_c
+        type(Increment), intent(in):: inc
 
         integer:: n_grains
         integer(C_INT), dimension(:,:), pointer:: texture
 
+        inc_c%velocity_gradient = real(inc%velocity_gradient, C_DOUBLE)
+        inc_c%residual = real(inc%residual, C_DOUBLE)
         inc_c%duration = real(inc%duration, C_DOUBLE)
         inc_c%deformation_gradient = real(inc%deformation_gradient, C_DOUBLE)
         inc_c%vm_strain = real(inc%vm_strain, C_DOUBLE)
@@ -166,28 +160,6 @@ contains
         inc_c%texture = malloc(int(3*n_grains, C_SIZE_T) * c_sizeof(1_C_INT))
         call c_f_pointer(inc_c%texture, texture, [3, n_grains])
         texture = int(inc%texture, C_INT)
-    end subroutine
-
-    !> Convert a stress increment to its C-compatible counterpart.
-    subroutine stress_increment_to_c(inc_c, inc)
-        type(StressIncrement_C), intent(out):: inc_c
-        type(StressIncrement), intent(in):: inc
-
-        integer:: i, n
-        type(StrainIncrement_C):: mold
-        type(StrainIncrement_C), dimension(:), pointer:: strain_increments
-
-        inc_c%strain_rate = real(inc%strain_rate, C_DOUBLE)
-        inc_c%residual = real(inc%residual, C_DOUBLE)
-
-        n = size(inc%strain_increments)
-        inc_c%n_strain_increments = int(n, C_INT)
-
-        inc_c%strain_increments = malloc(int(n, C_SIZE_T) * c_sizeof(mold))
-        call c_f_pointer(inc_c%strain_increments, strain_increments, [n])
-        do i = 1, n
-            strain_increments(i) = inc%strain_increments(i)
-        end do
     end subroutine
 
     !> Release the meso model state, phases and clusters of a C-compatible material, including everything they own.
@@ -213,24 +185,10 @@ contains
         call free(mat_c%phases)
     end subroutine
 
-    !> Release the texture of a C-compatible strain increment.
-    subroutine strain_increment_c_destroy(inc_c) bind(C, name='crysp_destroy_strain_increment')
-        type(StrainIncrement_C), intent(in):: inc_c
+    !> Release the texture of a C-compatible increment.
+    subroutine increment_c_destroy(inc_c) bind(C, name='crysp_destroy_increment')
+        type(Increment_C), intent(in):: inc_c
 
         call free(inc_c%texture)
-    end subroutine
-
-    !> Release the strain increments of a C-compatible stress increment, including the texture of each of them.
-    subroutine stress_increment_c_destroy(inc_c) bind(C, name='crysp_destroy_stress_increment')
-        type(StressIncrement_C), intent(in):: inc_c
-
-        integer:: i
-        type(StrainIncrement_C), dimension(:), pointer:: strain_increments
-
-        call c_f_pointer(inc_c%strain_increments, strain_increments, [int(inc_c%n_strain_increments)])
-        do i = 1, size(strain_increments)
-            call strain_increment_c_destroy(strain_increments(i))
-        end do
-        call free(inc_c%strain_increments)
     end subroutine
 end module

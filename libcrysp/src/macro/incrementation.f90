@@ -5,14 +5,14 @@ module incrementation
     implicit none
 
     private
-    public:: StrainIncrement, &
-             StressIncrement, &
-             StrainIncrementFactory, &
-             StressIncrementFactory
+    public:: Increment, &
+             IncrementFactory
 
     character(*), parameter:: MOD_NAME = 'incrementation'
 
-    type:: StrainIncrement
+    type:: Increment
+        real(DP), dimension(3,3):: velocity_gradient = 0._DP
+        real(DP), dimension(5):: residual = 0._DP     !! Deviation of stress mode from target stress mode, if applicable.
         real(DP):: duration = 0._DP
         real(DP), dimension(3,3):: deformation_gradient = UNIT_MATRIX_3X3 !! Technically redundant but saves a lot of computation
         real(DP):: vm_strain = 0._DP                           !! Von mises true strain. Technically redundant but saves a lot of computation
@@ -21,80 +21,40 @@ module incrementation
         integer, dimension(:,:), allocatable:: texture
     end type
 
-    type:: StressIncrement
-        real(DP), dimension(5):: strain_rate
-        real(DP), dimension(5):: residual
-        type(StrainIncrement), dimension(:), allocatable:: strain_increments
-    end type
-
-
-    type, abstract:: IncrementFactory
+    type:: IncrementFactory
         integer, private:: size = 0
-    end type
-
-    type, extends(IncrementFactory):: StrainIncrementFactory
-        type(StrainIncrement), dimension(:), allocatable, private:: increments
+        type(Increment), dimension(:), allocatable, private:: increments
     contains
-        procedure:: add => add_strain_increment
-        procedure:: get => get_strain_increments
-    end type
-
-    type, extends(IncrementFactory):: StressIncrementFactory
-        type(StressIncrement), dimension(:), allocatable, private:: increments
-    contains
-        procedure:: add => add_stress_increment
-        procedure:: get => get_stress_increments
+        procedure:: add => add_increments
+        procedure:: get => get_increments
     end type
 
 contains
 
-    subroutine add_strain_increment(this, increment, padding)
-        class(StrainIncrementFactory), intent(inout):: this
-        type(StrainIncrement), intent(in):: increment
+    subroutine add_increments(this, increments, padding)
+        class(IncrementFactory), intent(inout):: this
+        type(Increment), dimension(:), intent(in):: increments
         integer, intent(in):: padding
 
-        type(StrainIncrement), allocatable:: buffer(:)
+        integer:: n_new_incs
+        type(Increment), allocatable:: buffer(:)
 
+        n_new_incs = size(increments)
         if (this%size == 0) then
-            allocate(this%increments(padding))
-        else if (this%size == size(this%increments)) then
-            allocate(buffer(this%size+padding))
-            buffer(:this%size) = this%increments
+            allocate(this%increments(n_new_incs + padding))
+        else if (this%size + n_new_incs > size(this%increments)) then
+            allocate(buffer(this%size + n_new_incs + padding))
+            buffer(:this%size) = this%increments(:this%size)
             call move_alloc(buffer, this%increments)
         end if
 
-        this%size = this%size + 1
-        this%increments(this%size) = increment
-    end subroutine
-    subroutine add_stress_increment(this, increment, padding)
-        class(StressIncrementFactory), intent(inout):: this
-        type(StressIncrement), intent(in):: increment
-        integer, intent(in):: padding
-
-        type(StressIncrement), allocatable:: buffer(:)
-
-        if (this%size == 0) then
-            allocate(this%increments(padding))
-        else if (this%size == size(this%increments)) then
-            allocate(buffer(this%size+padding))
-            buffer(:this%size) = this%increments
-            call move_alloc(buffer, this%increments)
-        end if
-
-        this%size = this%size + 1
-        this%increments(this%size) = increment
+        this%increments(this%size+1:this%size + n_new_incs) = increments
+        this%size = this%size + n_new_incs
     end subroutine
 
-    function get_strain_increments(this) result(increments)
-        class(StrainIncrementFactory), intent(in):: this
-        type(StrainIncrement), dimension(this%size):: increments
-
-        increments = this%increments(:this%size)
-    end function
-
-    function get_stress_increments(this) result(increments)
-        class(StressIncrementFactory), intent(in):: this
-        type(StressIncrement), dimension(this%size):: increments
+    function get_increments(this) result(increments)
+        class(IncrementFactory), intent(in):: this
+        type(Increment), dimension(this%size):: increments
 
         increments = this%increments(:this%size)
     end function

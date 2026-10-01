@@ -101,9 +101,9 @@ contains
         type(Material), target, intent(inout):: mat
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(DP), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps
-                                                                                       !! that were applied. See
-                                                                                       !! [[StrainIncrementData]] for details.
+        type(Increment), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps
+                                                                             !! that were applied. See
+                                                                             !! [[Increment]] for details.
         type(Status):: stat                                                        !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected input,
                                                                                    !! or a failure raised during the simulation.
 
@@ -132,9 +132,9 @@ contains
         type(Material), target, intent(inout):: mat                                            !! Initialized material
         real(DP), dimension(5), intent(in):: target_stress_mode                     !! Norm must be 1
         real(DP), intent(in):: target_vm_strain                                     !! Target true von mises strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: increments !! Step-wise reporting of the mapping
-                                                                                          !! between requested stress mode and strain
-                                                                                          !! mode. See [[StressIncrementData]].
+        type(Increment), dimension(:), allocatable, intent(out):: increments !! Step-wise reporting of the mapping
+                                                                             !! between requested stress mode and strain
+                                                                             !! mode. See [[Increment]].
         type(Status):: stat                                                               !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected
                                                                                           !! input, or a simulation failure.
 

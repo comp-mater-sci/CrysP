@@ -115,14 +115,14 @@ contains
         real(C_DOUBLE), dimension(3,3), intent(in):: velocity_gradient
         real(C_DOUBLE), value, intent(in):: target_vm_strain
         integer(C_INT), intent(out):: n_incs
-        type(C_PTR), intent(out):: incs !! n_incs * type(StrainIncrement_C)
+        type(C_PTR), intent(out):: incs !! n_incs * type(Increment_C)
         type(Status_C):: stat
 
         integer:: i
         type(Material), target:: mat_fort
-        type(StrainIncrement), dimension(:), allocatable:: incs_fort
-        type(StrainIncrement_C):: mold
-        type(StrainIncrement_C), dimension(:), pointer:: incs_ptr
+        type(Increment), dimension(:), allocatable:: incs_fort
+        type(Increment_C):: mold
+        type(Increment_C), dimension(:), pointer:: incs_ptr
 
         n_incs = 0
         incs = C_NULL_PTR
@@ -148,14 +148,14 @@ contains
         real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode
         real(C_DOUBLE), value, intent(in):: target_vm_strain
         integer(C_INT), intent(out):: n_incs
-        type(C_PTR), intent(out):: incs !! n_incs * type(StressIncrement_C)
+        type(C_PTR), intent(out):: incs !! n_incs * type(Increment_C)
         type(Status_C):: stat
 
         integer:: i
         type(Material), target:: mat_fort
-        type(StressIncrement), dimension(:), allocatable:: incs_fort
-        type(StressIncrement_C):: mold
-        type(StressIncrement_C), dimension(:), pointer:: incs_ptr
+        type(Increment), dimension(:), allocatable:: incs_fort
+        type(Increment_C):: mold
+        type(Increment_C), dimension(:), pointer:: incs_ptr
 
         n_incs = 0
         incs = C_NULL_PTR

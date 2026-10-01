@@ -181,6 +181,8 @@ typedef struct {
 
 /* One increment of a deformation. */
 typedef struct {
+    double velocity_gradient[3][3];
+    double residual[5];
     double duration;
     double deformation_gradient[3][3];
     double vm_strain;
@@ -188,15 +190,7 @@ typedef struct {
     double taylor_factor;
     int    n_grains;
     int   *texture;                    /* 3 x n_grains: Euler angles in degrees. */
-} CryspStrainIncrement;
-
-/* One increment of a stress-driven deformation, made up of strain increments. */
-typedef struct {
-    double                strain_rate[5];
-    double                residual[5];
-    int                   n_strain_increments;
-    CryspStrainIncrement *strain_increments;  /* List of n_strain_increments. */
-} CryspStressIncrement;
+} CryspIncrement;
 
 /* *descs is a list of *n_systems descriptors. They own nothing, so the list is released with free() alone. */
 void crysp_get_slip_systems(int *n_systems, CryspSlipSystemDescriptor **descs);
@@ -214,9 +208,9 @@ CryspStatus crysp_new_material(const CryspModelData *meso_model_data, int n_phas
  * *mat is replaced by the deformed material, and what it owned on entry is destroyed. This also happens on failure, where *mat
  * holds the state reached when the failure occurred. *incs is a list of *n_incs increments, empty (NULL) on failure.
  */
-CryspStatus crysp_strain_driven_deformation(CryspMaterial *mat, double velocity_gradient[3][3], double target_vm_strain, int *n_incs, CryspStrainIncrement **incs);
+CryspStatus crysp_strain_driven_deformation(CryspMaterial *mat, double velocity_gradient[3][3], double target_vm_strain, int *n_incs, CryspIncrement **incs);
 CryspStatus crysp_stress_driven_deformation(CryspMaterial *mat, const double target_stress_mode[5], double target_vm_strain,
-                                            int *n_incs, CryspStressIncrement **incs);
+                                            int *n_incs, CryspIncrement **incs);
 
 /*
  * Mode arrays are 5 x n_modes. An n_modes below 1 is rejected with CRYSP_ERR_ARG. *mat is not modified.
@@ -236,8 +230,7 @@ void crysp_destroy_hardening_state(CryspHardeningState *hardening_state);
 void crysp_destroy_grain(CryspGrain *grain);
 void crysp_destroy_cluster(CryspCluster *cluster);
 void crysp_destroy_material(CryspMaterial *mat);
-void crysp_destroy_strain_increment(CryspStrainIncrement *inc);
-void crysp_destroy_stress_increment(CryspStressIncrement *inc);
+void crysp_destroy_increment(CryspIncrement *inc);
 
 #ifdef __cplusplus
 }

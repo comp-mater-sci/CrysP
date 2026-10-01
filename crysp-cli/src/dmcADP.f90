@@ -32,7 +32,7 @@ module dmcADP
     type:: StrainDrivenStep
         real(DP), dimension(3, 3):: velocity_gradient
         real(DP):: target_strain
-        type(StrainIncrement), dimension(:), allocatable:: increments
+        type(Increment), dimension(:), allocatable:: increments
     end type
 
 contains

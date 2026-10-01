@@ -21,7 +21,7 @@
 #define TARGET_VM_STRAIN 0.02
 
 /* Implemented in c_binding_sizes.f90. */
-void crysp_test_sizes(size_t sizes[15]);
+void crysp_test_sizes(size_t sizes[14]);
 
 static int n_checks = 0;
 static int n_failed = 0;
@@ -218,19 +218,18 @@ static CryspStatus new_material(int meso_model_id, CryspMaterial *mat) {
 /* ---- Tests. ---- */
 
 static void test_layout(void) {
-    static const char *FORTRAN_TYPES[15] = {"Status_C", "Parameter_C", "Input_C", "StateDescriptor_C", "ModelDescriptor_C",
+    static const char *FORTRAN_TYPES[14] = {"Status_C", "Parameter_C", "Input_C", "StateDescriptor_C", "ModelDescriptor_C",
                                             "ModelData_C", "PhaseData_C", "ConstitutiveModel_C", "HardeningState_C", "Grain_C",
-                                            "Cluster_C", "Material_C", "StrainIncrement_C", "StressIncrement_C",
-                                            "SlipSystemDescriptor_C"};
-    const size_t c_sizes[15] = {sizeof(CryspStatus), sizeof(CryspParameter), sizeof(CryspInput), sizeof(CryspStateDescriptor),
+                                            "Cluster_C", "Material_C", "Increment_C", "SlipSystemDescriptor_C"};
+    const size_t c_sizes[14] = {sizeof(CryspStatus), sizeof(CryspParameter), sizeof(CryspInput), sizeof(CryspStateDescriptor),
                                 sizeof(CryspModelDescriptor), sizeof(CryspModelData), sizeof(CryspPhaseData),
                                 sizeof(CryspConstitutiveModel), sizeof(CryspHardeningState), sizeof(CryspGrain),
-                                sizeof(CryspCluster), sizeof(CryspMaterial), sizeof(CryspStrainIncrement),
-                                sizeof(CryspStressIncrement), sizeof(CryspSlipSystemDescriptor)};
-    size_t fortran_sizes[15];
+                                sizeof(CryspCluster), sizeof(CryspMaterial), sizeof(CryspIncrement),
+                                sizeof(CryspSlipSystemDescriptor)};
+    size_t fortran_sizes[14];
 
     crysp_test_sizes(fortran_sizes);
-    for (int i = 0; i < 15; i++)
+    for (int i = 0; i < 14; i++)
         check(c_sizes[i] == fortran_sizes[i], "layout: size of %s is %zu in libcrysp.h but %zu in the library", FORTRAN_TYPES[i],
               c_sizes[i], fortran_sizes[i]);
 }
@@ -377,7 +376,7 @@ static void test_simulation(void) {
 static int deform(CryspMaterial *mat, const char *label, double *taylor_factor) {
     double v_grad[3][3] = {{1., 0., 0.}, {0., -1., 0.}, {0., 0., 0.}};
     int n_incs = -1;
-    CryspStrainIncrement *incs = NULL;
+    CryspIncrement *incs = NULL;
 
     if (!check_ok(crysp_strain_driven_deformation(mat, v_grad, TARGET_VM_STRAIN, &n_incs, &incs), label)) {
         check(n_incs == 0 && incs == NULL, "%s: no increments on failure", label);
@@ -387,7 +386,7 @@ static int deform(CryspMaterial *mat, const char *label, double *taylor_factor) 
         check(incs[n_incs - 1].n_grains == 2 * N_GRAINS, "%s: texture has one entry per grain", label);
         *taylor_factor = incs[n_incs - 1].taylor_factor;
     }
-    for (int i = 0; i < n_incs; i++) crysp_destroy_strain_increment(&incs[i]);
+    for (int i = 0; i < n_incs; i++) crysp_destroy_increment(&incs[i]);
     free(incs);
     return n_incs > 0;
 }
@@ -422,13 +421,15 @@ static void test_deformation(void) {
     }
     unit(stress, target);
     int n_incs = -1;
-    CryspStressIncrement *incs = NULL;
+    CryspIncrement *incs = NULL;
     if (check_ok(crysp_stress_driven_deformation(&mat, target, 1.5 * TARGET_VM_STRAIN, &n_incs, &incs),
                  "stress driven deformation")) {
-        int empty = 0;
-        for (int i = 0; i < n_incs; i++) empty += incs[i].n_strain_increments <= 0;
-        check(n_incs > 0 && empty == 0, "stress driven deformation: increments made of strain increments");
-        for (int i = 0; i < n_incs; i++) crysp_destroy_stress_increment(&incs[i]);
+        int no_texture = 0, decreasing = 0;
+        for (int i = 0; i < n_incs; i++) no_texture += incs[i].n_grains != 2 * N_GRAINS;
+        for (int i = 1; i < n_incs; i++) decreasing += incs[i].vm_strain < incs[i - 1].vm_strain;
+        check(n_incs > 0 && no_texture == 0, "stress driven deformation: every increment has a texture");
+        check(decreasing == 0, "stress driven deformation: the strain accumulates over all increments");
+        for (int i = 0; i < n_incs; i++) crysp_destroy_increment(&incs[i]);
         free(incs);
     }
     crysp_destroy_material(&mat);
