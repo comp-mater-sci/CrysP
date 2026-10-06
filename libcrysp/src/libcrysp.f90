@@ -25,7 +25,7 @@ contains
 
     !> Initialize a new material state.
     !>
-    !> Initializes all data structures associated to a meterial state and assembles them into a Material object.
+    !> Initializes all data structures associated to a material state and assembles them into a Material object.
     !> An initialized Material object is needed for all other calls to libCrysP
     !> Sanitization of the input parameters is propagated to lower-level initialization procedures
     subroutine crysp_new_material(phase_sizes, orientations, deformation_mechanisms, hardening_model_ids, hardening_params, meso_model_id, meso_params, mat) bind(C)
@@ -69,7 +69,6 @@ contains
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps that
                                                                                    !! were applied. See [[strainIncrement]] for
                                                                                    !! details.
-
         character(*), parameter:: PROC_NAME = 'crysp_strain_driven_deformation'
 
         type(Material), target:: mat_
@@ -102,7 +101,6 @@ contains
                                                                                           !! were applied. See [[strainIncrement]] for
                                                                                           !! details.
 
-
         character(*), parameter:: PROC_NAME = 'crysp_stress_driven_deformation'
 
         type(Material), target:: mat_
@@ -125,11 +123,11 @@ contains
     !> an estimation of search accuracy.
     subroutine crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual) bind(C)
         type(Parameter), dimension(:), allocatable, intent(inout):: mat !! Material state.
-        real(C_DOUBLE), dimension(5), intent(in)::  target_stress_mode   !! Intended stress mode
-        real(C_DOUBLE), dimension(5), intent(inout):: strain_mode !! On entry, contains an initial guess of the strain mode matching the
-                                                            !! target stress mode. On exit, contains the actual strain mode.
-        real(C_double), dimension(5), intent(out):: stress        !! Actual stress state found.
-        real(c_double), dimension(5), intent(out):: residual      !! Residual of the the search.
+        real(C_DOUBLE), dimension(5), intent(in)::  target_stress_mode  !! Intended stress mode
+        real(C_DOUBLE), dimension(5), intent(inout):: strain_mode       !! On entry, contains an initial guess of the strain mode matching the
+                                                                        !! target stress mode. On exit, contains the actual strain mode.
+        real(C_double), dimension(5), intent(out):: stress              !! Actual stress state found.
+        real(c_double), dimension(5), intent(out):: residual            !! Residual of the the search.
 
         character(*), parameter:: PROC_NAME = 'crysp_simulate_stress_mode'
 

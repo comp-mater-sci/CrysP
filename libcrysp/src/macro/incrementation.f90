@@ -98,9 +98,4 @@ contains
 
         increments = this%increments(:this%size)
     end function
-
-
-
 end module
-
-

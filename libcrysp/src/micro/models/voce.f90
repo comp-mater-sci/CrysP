@@ -62,7 +62,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    pure function voce_get_input() result(inputs)
+    function voce_get_input() result(inputs)
         type(Input), dimension(:), allocatable:: inputs !! - **TIII1**: Initial flow stress.
                                                         !! - **TIIIS**: Saturation flow stress for the first stage.
                                                         !! - **TIVS**: Saturation flow stress for the second stage.
@@ -147,7 +147,7 @@ contains
         size = this%ConstitutiveModel%size() + 7
     end function
 
-    pure function voce_serialize(this) result(params)
+    function voce_serialize(this) result(params)
         class(ConstitutiveModelVoce), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 

@@ -211,7 +211,7 @@ contains
         size = this%Cluster%size() + 2
     end function
 
-    pure function taylor_cluster_serialize(this, phases) result(params)
+    function taylor_cluster_serialize(this, phases) result(params)
         class(TaylorCluster), target, intent(in):: this
         type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(:), allocatable:: params

@@ -15,10 +15,14 @@ module crysp_serialization
              Parameter, &
              assignment(=), &
              serialize, &
-             typeof, &
+             type_of, &
              shape_of, &
              State, &
-             deserialize_real_matrix
+             parameter_destroy, &
+             deserialize_int_array, &
+             deserialize_real_array, &
+             deserialize_real_matrix, &
+             deserialize_string
 
     character(*), parameter:: MOD_NAME = 'serialization'
 
@@ -37,6 +41,16 @@ module crysp_serialization
     !> Opaque C-compatible wrapper for parameters.
     !>
     !> Needed because the internal representation uses polymorphism and is therefore not C-compatible.
+    !>
+    !> @note
+    !> `handle` deliberately has no `= C_NULL_PTR` default initializer, tempting though it is. GFortran rejects a dummy argument
+    !> that is both allocatable and of a default-initialized type inside a `bind(C)` procedure, for every intent ("Default-
+    !> initialized dummy argument with ALLOCATABLE attribute is not permitted in BIND(C) procedure"). The C entry points in
+    !> `libcrysp` pass the material state as exactly that shape, `type(Parameter), dimension(:), allocatable, intent(inout)`, so a
+    !> default here would break the C API under GFortran. The same rule is why the increment types carry no component defaults
+    !> either. A default-initialized type on its own is fine, and an allocatable `bind(C)` dummy on its own is fine; only the
+    !> combination is rejected. IFX (as of 2026.1) accepts it silently, so this does not surface unless GFortran is run.
+    !> @endnote
     type, bind(C):: Parameter
         type(C_PTR):: handle
     end type
@@ -67,8 +81,7 @@ module crysp_serialization
             class(State), intent(in):: this
             integer:: size
         end function
-        !> Transform a state into a list of parameters
-        pure function state_serialize(this) result(params)
+        function state_serialize(this) result(params)
             import State
             import Parameter
 
@@ -129,6 +142,11 @@ module crysp_serialization
 
     !> From within fortran, creating and destroying parameters is done using intrinsic assignment to/from the types described in the
     !> enum at the top of this module.
+    !>
+    !> Reading a parameter destroys it: a parameter is a one-shot container, and the assignment that reads it is also what frees it.
+    !> A parameter must therefore not be touched again after it has been read, by assignment or otherwise. Doing so dereferences a
+    !> freed handle and is not diagnosed. `parameter_destroy` is the C-side release and is not to be called from Fortran, where
+    !> reading is the only free operation.
     interface assignment(=)
         module procedure int_to_param, int_array_to_param, real_to_param, real_array_to_param, real_matrix_to_param, string_to_param, &
                          param_to_int, param_to_int_array, param_to_real, param_to_real_array, param_to_real_matrix, param_to_string
@@ -137,9 +155,13 @@ module crysp_serialization
     !> Convenience functions wrapping the setter subroutines above.
     !>
     !> Useful for creating anonymous Parameter instances not bound to a local variable.
-    !> No serialize_real_matrix due to IFX compiler bug as of 2026.1.1.19
+    !> Every array and matrix type comes in two flavours: one taking the extents explicitly, so that C callers can pass a plain
+    !> pointer plus its length, and a `_desc` one taking an assumed-shape argument for use from Fortran. The explicit-extent forms
+    !> were added to be able to serialize parameters from C without having to deal with the messy descriptors there.
     interface serialize
-        module procedure serialize_int, serialize_int_array, serialize_real, serialize_real_array, serialize_real_matrix, serialize_string
+        module procedure serialize_int, serialize_int_array, serialize_int_array_desc, &
+                         serialize_real, serialize_real_array, serialize_real_array_desc, serialize_real_matrix, serialize_real_matrix_desc, &
+                         serialize_string, serialize_string_desc
     end interface
 
 contains
@@ -147,7 +169,7 @@ contains
     !> Get the type of a parameter
     !>
     !> Returns one of the types declared in the enum at the top of this module.
-    function typeof(param) result(t)
+    function type_of(param) result(t) bind(C)
         type(Parameter), intent(in):: param
         integer(C_INT):: t
 
@@ -173,11 +195,12 @@ contains
 
     !> Get the shape of the value held by a parameter.
     !>
-    !> Returns a zero-size array for scalars, the string length for strings and the array shape otherwise.
+    !> The shape is always reported as two extents, so that the interface is interoperable with C. Matrices fill both; scalars
+    !> ([1, 0]), arrays ([size, 0]) and strings ([length, 0]) leave the second extent zero.
     !> Useful for allocating a receiving buffer of the right size before reading the value. Does not consume the parameter.
-    function shape_of(param) result(s)
+    subroutine shape_of(param,s) bind(C)
         type(Parameter), intent(in):: param
-        integer, dimension(:), allocatable:: s
+        integer(C_INT), dimension(2), intent(out):: s
 
         type(ParameterValue), pointer:: val
 
@@ -185,24 +208,42 @@ contains
 
         select type (value => val%value)
             type is (IntValue)
-                allocate(s(0))
+                s = [1,0]
             type is (IntArrayValue)
-                s = shape(value%buffer)
+                s = [size(value%buffer),0]
             type is (RealValue)
-                allocate(s(0))
+                s = [1,0]
             type is (RealArrayValue)
-                s = shape(value%buffer)
+                s = [size(value%buffer),0]
             type is (RealMatrixValue)
                 s = shape(value%buffer)
             type is (StringValue)
-                s = [len(value%buffer)]
+                s = [len(value%buffer),0]
             class default
                 call log_error(MOD_NAME, 'shape_of', ERR_TYPE, 'Unknown parameter type')
         end select
-    end function
+    end subroutine
+
+    subroutine parameter_destroy(param) bind(C)
+        type(Parameter), intent(inout):: param
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        deallocate(val)
+    end subroutine
 
     !> Initialize a parameter based on a Value object of any type.
-    pure function to_parameter(data) result(param)
+    !>
+    !> @note
+    !> Deliberately not `pure`, even though it reads like a constructor. It allocates a `ParameterValue` whose lifetime outlives
+    !> the call and hands back its address, which is a side effect however it is spelled. `pure` is also exactly the licence a
+    !> compiler needs to collapse two calls with identical arguments into one, and two `Parameter`s sharing one handle would
+    !> double-free on destruction. IFX 2026.1 does not currently do that, but nothing stops it from starting. Purity has to come
+    !> off the whole chain that reaches here, including the `state_serialize` binding and its implementations.
+    !> @endnote
+    function to_parameter(data) result(param)
         class(Value), intent(in):: data
         type(Parameter):: param
 
@@ -213,13 +254,13 @@ contains
         param%handle = c_loc(val)
     end function
 
-    pure subroutine int_to_param(param, data) bind(C)
+    subroutine int_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         integer(C_INT), intent(in):: data
 
         param = to_parameter(IntValue(data))
     end subroutine
-    pure subroutine int_array_to_param(param, data) bind(C)
+    subroutine int_array_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         integer(C_INT), dimension(:), intent(in):: data
 
@@ -229,13 +270,13 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end subroutine
-    pure subroutine real_to_param(param, data) bind(C)
+    subroutine real_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), intent(in):: data
 
         param = to_parameter(RealValue(data))
     end subroutine
-    pure subroutine real_array_to_param(param, data) bind(C)
+    subroutine real_array_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), dimension(:), intent(in):: data
 
@@ -245,7 +286,7 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end subroutine
-    pure subroutine real_matrix_to_param(param, data) bind(C)
+    subroutine real_matrix_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         real(C_DOUBLE), dimension(:,:), intent(in):: data
 
@@ -256,7 +297,7 @@ contains
         param = to_parameter(val)
     end subroutine
 
-    pure subroutine string_to_param(param, data) bind(C)
+    subroutine string_to_param(param, data) bind(C)
         type(Parameter), intent(out):: param
         character(kind=C_CHAR,len=*), intent(in):: data
 
@@ -372,15 +413,25 @@ contains
         deallocate(val)
     end subroutine
 
-    pure function serialize_int(data) result(param) bind(C)
+    function serialize_int(data) result(param) bind(C)
         integer(C_INT), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
 
+    function serialize_int_array(data, len) result(param) bind(C)
+        integer(C_INT), intent(in), value:: len
+        integer(C_INT), dimension(len), intent(in):: data
+        type(Parameter):: param
+
+        type(IntArrayValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_int_array(data) result(param) bind(C)
+    function serialize_int_array_desc(data) result(param) bind(C)
         integer(C_INT), dimension(:), intent(in):: data
         type(Parameter):: param
 
@@ -389,15 +440,16 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end function
-    pure function serialize_real(data) result(param) bind(C)
+    function serialize_real(data) result(param) bind(C)
         real(C_DOUBLE), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
-    !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_real_array(data) result(param) bind(C)
-        real(C_DOUBLE), dimension(:), intent(in):: data
+
+    function serialize_real_array(data, len) result(param) bind(C)
+        integer(C_INT), intent(in), value:: len
+        real(C_DOUBLE), dimension(len), intent(in):: data
         type(Parameter):: param
 
         type(RealArrayValue):: val
@@ -406,7 +458,32 @@ contains
         param = to_parameter(val)
     end function
     !!Longer notation due to bug in IFX as of 2026.1.1.19
-    pure function serialize_real_matrix(data) result(param) bind(C)
+    function serialize_real_array_desc(data) result(param) bind(C)
+        real(C_DOUBLE), dimension(:), intent(in):: data
+        type(Parameter):: param
+
+        type(RealArrayValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
+    !> Build a matrix parameter from a contiguous buffer.
+    !>
+    !> The buffer is read in Fortran (column-major) order, so a C caller laying out its data row by row must pass the extents of
+    !> the transposed matrix and transpose the result, or fill the buffer column by column.
+    function serialize_real_matrix(data, rows, cols) result(param) bind(C)
+        integer(C_INT), intent(in), value:: rows
+        integer(C_INT), intent(in), value:: cols
+        real(C_DOUBLE), dimension(rows,cols), intent(in):: data
+        type(Parameter):: param
+
+        type(RealMatrixValue):: val
+
+        val%buffer = data
+        param = to_parameter(val)
+    end function
+    !!Longer notation due to bug in IFX as of 2026.1.1.19
+    function serialize_real_matrix_desc(data) result(param) bind(C)
         real(C_DOUBLE), dimension(:,:), intent(in):: data
         type(Parameter):: param
 
@@ -415,16 +492,80 @@ contains
         val%buffer = data
         param = to_parameter(val)
     end function
-    pure function serialize_string(data) result(param) bind(C)
+    function serialize_string(data, len) result(param) bind(C)
+        integer(C_INT), intent(in), value:: len
+        character(kind=C_CHAR), dimension(len), intent(in):: data
+        type(Parameter):: param
+
+        character(len=len):: str
+        integer:: i
+
+        do i = 1, len
+            str(i:i) = data(i)
+        end do
+        param = str
+    end function
+    function serialize_string_desc(data) result(param) bind(C)
         character(kind=C_CHAR,len=*), intent(in):: data
         type(Parameter):: param
 
         param = data
     end function
 
-    function deserialize_real_matrix(param) result(data)
+    !> Deserialize an IntArray parameter into a caller-supplied buffer of `len` elements.
+    !>
+    !> The `deserialize_*` family is the counterpart of the `param_to_*` readers for C callers, which can pass a plain pointer plus
+    !> its extents instead of a descriptor. The extents are typically obtained from `shape_of` and must match those of the stored
+    !> value. Consumes the parameter.
+    subroutine deserialize_int_array(param, buffer, len) bind(C)
         type(Parameter), intent(in):: param
-        real(DP), dimension(:,:), allocatable:: data
+        integer(C_INT), intent(in), value:: len
+        integer(C_INT), dimension(len), intent(out):: buffer
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (IntArrayValue)
+                if (size(value%buffer) /= len) &
+                    call log_error(MOD_NAME, 'deserialize_int_array', ERR_DIMS, 'Parameter size does not match destination')
+                buffer = value%buffer
+            class default
+                call log_error(MOD_NAME, 'deserialize_int_array', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+    !> Deserialize a RealArray parameter into a caller-supplied buffer of `len` elements.
+    subroutine deserialize_real_array(param, buffer, len) bind(C)
+        type(Parameter), intent(in):: param
+        integer(C_INT), intent(in), value:: len
+        real(C_DOUBLE), dimension(len), intent(out):: buffer
+
+        type(ParameterValue), pointer:: val
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (RealArrayValue)
+                if (size(value%buffer) /= len) &
+                    call log_error(MOD_NAME, 'deserialize_real_array', ERR_DIMS, 'Parameter size does not match destination')
+                buffer = value%buffer
+            class default
+                call log_error(MOD_NAME, 'deserialize_real_array', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
+    !> Deserialize a RealMatrix parameter into a caller-supplied `rows` by `cols` buffer.
+    !>
+    !> The buffer is written in Fortran (column-major) order, mirroring `serialize_real_matrix`.
+    subroutine deserialize_real_matrix(param, buffer, rows, cols) bind(C)
+        type(Parameter), intent(in):: param
+        integer(C_INT), intent(in), value:: rows
+        integer(C_INT), intent(in), value:: cols
+        real(C_DOUBLE), dimension(rows,cols), intent(out):: buffer
 
         type(ParameterValue), pointer:: val
 
@@ -432,12 +573,39 @@ contains
 
         select type (value => val%value)
             type is (RealMatrixValue)
-                data = value%buffer
+                if (any(shape(value%buffer) /= [rows, cols])) &
+                    call log_error(MOD_NAME, 'deserialize_real_matrix', ERR_DIMS, 'Parameter shape does not match destination')
+                buffer = value%buffer
             class default
                 call log_error(MOD_NAME, 'deserialize_real_matrix', ERR_TYPE, 'Parameter is not of correct type')
         end select
 
         deallocate(val)
-    end function
+    end subroutine
+    !> Deserialize a String parameter into a caller-supplied buffer of `length` characters.
+    !>
+    !> Mirrors `serialize_string`: exactly `length` characters are written and no NUL terminator is appended.
+    subroutine deserialize_string(param, buffer, length) bind(C)
+        type(Parameter), intent(in):: param
+        integer(C_INT), intent(in), value:: length
+        character(kind=C_CHAR), dimension(length), intent(out):: buffer
 
+        type(ParameterValue), pointer:: val
+        integer:: i
+
+        call c_f_pointer(param%handle, val)
+
+        select type (value => val%value)
+            type is (StringValue)
+                if (len(value%buffer) /= length) &
+                    call log_error(MOD_NAME, 'deserialize_string', ERR_DIMS, 'Parameter length does not match destination')
+                do i = 1, length
+                    buffer(i) = value%buffer(i:i)
+                end do
+            class default
+                call log_error(MOD_NAME, 'deserialize_string', ERR_TYPE, 'Parameter is not of correct type')
+        end select
+
+        deallocate(val)
+    end subroutine
 end module

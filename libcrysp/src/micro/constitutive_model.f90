@@ -3,6 +3,7 @@ module constitutive_model
     use math_utils
     use conversions
     use crysp_serialization
+    use, intrinsic:: iso_c_binding, only: C_INT
     use crysp_model
     use logging
 
@@ -149,7 +150,7 @@ contains
         size = 3
     end function
 
-    pure function cm_serialize(this) result(params)
+    function cm_serialize(this) result(params)
         class(ConstitutiveModel), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
@@ -165,8 +166,14 @@ contains
         class(ConstitutiveModel), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        this%taylor_coeffs = deserialize_real_matrix(params(1))
-        this%spin_coeffs = deserialize_real_matrix(params(2))
+        integer(C_INT), dimension(2):: s
+
+        call shape_of(params(1), s)
+        allocate(this%taylor_coeffs(s(1), s(2)))
+        this%taylor_coeffs = params(1)
+        call shape_of(params(2), s)
+        allocate(this%spin_coeffs(s(1), s(2)))
+        this%spin_coeffs = params(2)
         this%basis = params(3)
     end subroutine
 
@@ -177,7 +184,7 @@ contains
         size = 1
     end function
 
-    pure function hs_serialize(this) result(params)
+    function hs_serialize(this) result(params)
         class(HardeningState), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
@@ -190,6 +197,10 @@ contains
         class(HardeningState), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        this%crss = deserialize_real_matrix(params(1))
+        integer(C_INT), dimension(2):: s
+
+        call shape_of(params(1), s)
+        allocate(this%crss(s(1), s(2)))
+        this%crss = params(1)
     end subroutine
 end module

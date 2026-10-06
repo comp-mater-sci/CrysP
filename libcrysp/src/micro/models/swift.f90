@@ -56,7 +56,7 @@ contains
     end function
 
     !> See [[ConstitutiveModel:get_parameters]]
-    pure function swift_get_input() result(inputs)
+    function swift_get_input() result(inputs)
         type(Input), allocatable:: inputs(:)    !! - **crss0**: Initial critical resoved shear stress
                                                     !! - **gamma0**: Initial sum of slip across all slip systems
                                                     !! - **n**: Hardening exponent
@@ -118,7 +118,7 @@ contains
         size = this%ConstitutiveModel%size() + 3
     end function
 
-    pure function swift_serialize(this) result(params)
+    function swift_serialize(this) result(params)
         class(ConstitutiveModelSwift), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
