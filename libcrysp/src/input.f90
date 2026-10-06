@@ -28,10 +28,10 @@ module crysp_input
                                                                           !! top of this module
         character(kind=C_CHAR), dimension(1024):: description           = ""      !! Description of the parameter
         logical(C_BOOL)                        :: optional              = .false. !! Indicate if the parameter is optional
-        type(Parameter)       :: lower_bound  !! Lower bound. May be a numerical value or the name of another parameter.
+        type(Parameter)       :: lower_bound  = Parameter(C_NULL_PTR)!! Lower bound. May be a numerical value or the name of another parameter.
         logical(C_BOOL)                        :: lower_bound_inclusive = .false. !! Ignored if lower_bound == ""
-        type(Parameter)       :: upper_bound   !! Upper bound. May be a numerical value or the name of another parameter.
+        type(Parameter)       :: upper_bound   = Parameter(C_NULL_PTR)!! Upper bound. May be a numerical value or the name of another parameter.
         logical(C_BOOL)                        :: upper_bound_inclusive = .false. !! Ignored if upper_bound == ""
-        type(Parameter):: default_value
+        type(Parameter):: default_value = Parameter(C_NULL_PTR)
     end type
 end module

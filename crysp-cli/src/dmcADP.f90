@@ -83,6 +83,7 @@ contains
                    taylor_factor, &
                    dev_stress(5), &
                    def_grad(3,3)
+        type(Material), target:: mat_
 
         !Open output files
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
@@ -96,12 +97,19 @@ contains
                 if (step%target_strain < TOLERANCE) then
                     allocate(step%increments(1))
                     call crysp_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress)
-                    step%increments(1)%stress = deviatoric_to_tensor(dev_stress)
+                    associate (inc => step%increments(1))
+                        inc%stress = deviatoric_to_tensor(dev_stress)
+                        inc%duration = 0._DP
+                        inc%deformation_gradient = UNIT_MATRIX_3X3
+                        inc%taylor_factor = 0._DP
+                    end associate
                     n_incs = n_incs + 1
                 else
                     call crysp_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments)
                     n_incs = n_incs + size(step%increments)
-                    call write_texture_increment(texture_unit, n_incs, this%material%clusters)
+                    call mat_%deserialize(this%material)
+                    call write_texture_increment(texture_unit, n_incs, mat_%clusters)
+                    this%material = mat_%serialize()
                 end if
 
                 do i_inc = 1, size(step%increments)

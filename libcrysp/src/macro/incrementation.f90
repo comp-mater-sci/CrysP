@@ -2,6 +2,7 @@ module incrementation
     use base_defs
     use logging
     use math_utils
+    use iso_c_binding
 
     implicit none
 
@@ -13,18 +14,18 @@ module incrementation
 
     character(*), parameter:: MOD_NAME = 'incrementation'
 
-    type:: StrainIncrement
-        real(DP):: duration = 0._DP
-        real(DP), dimension(3,3):: deformation_gradient = UNIT_MATRIX_3X3 !! Technically redundant but saves a lot of computation
-        real(DP):: vm_strain = 0._DP                           !! Von mises true strain. Technically redundant but saves a lot of computation
-        real(DP), dimension(3,3):: stress = 0._DP
-        real(DP):: taylor_factor = 0._DP
+    type, bind(C):: StrainIncrement
+        real(C_DOUBLE):: duration
+        real(C_DOUBLE), dimension(3,3):: deformation_gradient !! Technically redundant but saves a lot of computation
+        real(C_DOUBLE):: vm_strain                           !! Von mises true strain. Technically redundant but saves a lot of computation
+        real(C_DOUBLE), dimension(3,3):: stress
+        real(C_DOUBLE):: taylor_factor
     end type
 
-    type:: StressIncrement
-        real(DP), dimension(5):: strain_rate
-        real(DP), dimension(5):: residual
-        type(StrainIncrement), dimension(:), allocatable:: strain_increments
+    type, bind(C):: StressIncrement
+        real(C_DOUBLE), dimension(5):: strain_rate
+        real(C_DOUBLE), dimension(5):: residual
+        integer(C_INT):: n_strain_increments
     end type
 
     type, abstract:: IncrementFactory

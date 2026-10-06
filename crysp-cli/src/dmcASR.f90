@@ -28,7 +28,8 @@ module dmcASR
     type:: StressDrivenStep
         real(DP), dimension(6):: target_stress_mode
         real(DP):: target_vm_strain
-        type(StressIncrement), dimension(:), allocatable:: increments
+        type(StressIncrement), dimension(:), allocatable:: stress_increments
+        type(StrainIncrement), dimension(:), allocatable:: strain_increments
     end type
 
     type, extends(BasicModule):: ASRModule
@@ -70,7 +71,8 @@ contains
 
         integer:: i_step, i_stress, i_strain, &
                   out_unit, texture_unit, &
-                  n_incs
+                  n_incs, &
+                  offset
         real(DP):: dev_stress(5), &
                    stress(6), &
                    target_dev_stress(5), &
@@ -78,6 +80,7 @@ contains
                    hydro, &
                    dev, &
                    stress_scaling_factor
+        type(Material), target:: mat_
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
         texture_unit = open_texture_evolution_file(this%output_prefix)
@@ -98,28 +101,34 @@ contains
                 !Run deformation
                 target_dev_stress = target_dev_stress / norm2(target_dev_stress)
                 if (step%target_vm_strain < TOLERANCE) then
-                    allocate(step%increments(1))
-                    associate (inc => step%increments(1))
-                        allocate(inc%strain_increments(1))
-                        inc%strain_rate = target_dev_stress
-                        call crysp_simulate_stress_mode(this%material, target_dev_stress, inc%strain_rate, dev_stress, inc%residual)
-                        inc%strain_increments(1)%stress = deviatoric_to_tensor(dev_stress)
+                    allocate(step%stress_increments(1))
+                    allocate(step%strain_increments(1))
+                    associate (stress_inc => step%stress_increments(1), &
+                               strain_inc => step%strain_increments(1))
+                        stress_inc%strain_rate = target_dev_stress
+                        stress_inc%n_strain_increments = 1
+                        call crysp_simulate_stress_mode(this%material, target_dev_stress, stress_inc%strain_rate, dev_stress, stress_inc%residual)
+                        strain_inc%stress = deviatoric_to_tensor(dev_stress)
+                        strain_inc%deformation_gradient = UNIT_MATRIX_3X3
                         n_incs = n_incs + 1
                     end associate
                 else
-                    call crysp_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%increments)
+                    call crysp_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%stress_increments, step%strain_increments)
                     !Write new texture to file
-                    do i_stress = 1, size(step%increments)
-                        n_incs = n_incs + size(step%increments(i_stress)%strain_increments)
+                    do i_stress = 1, size(step%stress_increments)
+                        n_incs = n_incs + step%stress_increments(i_stress)%n_strain_increments
                     end do
-                    call write_texture_increment(texture_unit, n_incs, this%material%clusters)
+                    call mat_%deserialize(this%material)
+                    call write_texture_increment(texture_unit, n_incs, mat_%clusters)
+                    this%material = mat_%serialize()
                 end if
 
+                offset = 0
                 !Write increments to file
-                do i_stress = 1, size(step%increments)
-                    associate (stress_inc => step%increments(i_stress))
-                        do i_strain=1, size(stress_inc%strain_increments)
-                            associate (strain_inc => stress_inc%strain_increments(i_strain))
+                do i_stress = 1, size(step%stress_increments)
+                    associate (stress_inc => step%stress_increments(i_stress))
+                        do i_strain=offset+1, offset+stress_inc%n_strain_increments
+                            associate (strain_inc => step%strain_increments(i_strain))
                                 stress = tensor_to_unscaled_voigt(strain_inc%stress)
                                 stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress)
 
@@ -131,8 +140,8 @@ contains
                                                                        deviatoric_to_unscaled_voigt(stress_inc%strain_rate)])
                             end associate
                         end do
-                        !Value of i_strain is guaranteed by the standard
-                        def_grad = matmul(stress_inc%strain_increments(i_strain-1)%deformation_gradient, def_grad)
+                        offset = offset + stress_inc%n_strain_increments
+                        def_grad = matmul(step%strain_increments(offset)%deformation_gradient, def_grad)
                     end associate
                 end do
             end associate
