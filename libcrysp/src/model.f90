@@ -1,8 +1,6 @@
 module crysp_model
     use crysp_serialization
     use crysp_input
-    use logging
-
     implicit none
 
     !> Base type for all models (micro-, meso- and macro-scopic).
@@ -14,6 +12,10 @@ module crysp_model
     !> procedure reference if the parent part-name is not of abstract type (F2018 19.4.5: if the data-ref preceding the procedure
     !> name is of abstract type it must be polymorphic, which an inherited-component reference is not).
     !> The default implementations below therefore terminate with an error if ever invoked on an unextended instance.
+    !>
+    !> These defaults are among the few places in libCrysP that still terminate rather than return a [[crysp_status:Status]],
+    !> because each is a function whose result is the object itself, so there is no room for a status. `get_name` and `get_description` are moreover `pure`, which rules out `intent(out)` subroutines. None of
+    !> them sits on a failure path a caller can reach: they are only ever dispatched on concrete models.
     !> @endnote
     type, extends(State):: Model
     contains
@@ -32,7 +34,7 @@ contains
     pure function model_get_name_default() result(name)
         character(:), allocatable:: name
 
-        call log_error(ERR_TYPE)
+        error stop 'Model::get_name not overridden'
         name = ''
     end function
 
@@ -40,7 +42,7 @@ contains
     pure function model_get_description_default() result(description)
         character(:), allocatable:: description
 
-        call log_error(ERR_TYPE)
+        error stop 'Model::get_description not overridden'
         description = ''
     end function
 

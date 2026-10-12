@@ -1,8 +1,7 @@
 module simplex
     use base_defs
     use math_utils
-    use logging
-
+    use crysp_status
     implicit none
     private
 
@@ -61,7 +60,10 @@ contains
     !!
     !! @param[out] rss               real vector (n)
     !!                               The resolved shear stresses
-    recursive subroutine simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, n_retries)
+    !!
+    !! @return                       [[crysp_status:Status]]
+    !!                               `CRYSP_OK`, or a failure if the linear program is unbounded or the retry budget is exhausted.
+    recursive function simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, n_retries) result(stat)
         real(DP), intent(in)    ::  taylor_coeffs(:,:),                                 &
                                     strain(size(taylor_coeffs, 1)),                      &
                                     crss(2, size(taylor_coeffs, 2))
@@ -71,6 +73,7 @@ contains
         integer, intent(inout)  ::  basis_systems(size(taylor_coeffs, 1))
         real(DP), intent(inout) ::  inverse_basis(size(taylor_coeffs, 1), size(taylor_coeffs, 1))
         integer, intent(inout), optional:: n_retries
+        type(Status):: stat
 
         real(DP)                ::  new_basis_vector(size(taylor_coeffs, 1)),            &
                                     rss_basis(size(taylor_coeffs, 1)),                   &
@@ -86,7 +89,8 @@ contains
         if (.not. present(n_retries)) then
             retries = 0
         else if (n_retries > 50) then
-            call log_error(MOD_NAME, PROC_NAME, ERR, "Maximum number of recursive simplex calls exceeded.")
+            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR, "Maximum number of recursive simplex calls exceeded.")
+            return
         else
             retries = n_retries
         end if
@@ -134,8 +138,10 @@ contains
                     end if
                 end if
             end do
-            if (system_to_remove == 0) &
-                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'The solution is unbounded.')
+            if (system_to_remove == 0) then
+                stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'The solution is unbounded.')
+                return
+            end if
 
             bas(basis_systems(system_to_remove)) = .false.
             bas(most_overstressed_system) = .true.
@@ -153,7 +159,7 @@ contains
         end do
 
         if (iter > max_iters .or. (.not. rank_update)) then
-            !Solution was found or we are stuck in a loop and can not meanungfully improve the result.
+            !Solution was found or we are stuck in a loop and can not meaningfully improve the result.
             slip = 0._DP
             slip(basis_systems) = slip_basis
         else
@@ -162,9 +168,9 @@ contains
             !entirely and call simplex again.
             inverse_basis = invert(taylor_coeffs(:,basis_systems))
             retries = retries+1
-            call simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, retries)
+            stat = simplex_solve(taylor_coeffs, strain, crss, inverse_basis, basis_systems, slip, stress, rss, retries)
         end if
-    end subroutine simplex_solve
+    end function simplex_solve
 
     !>@brief Find the most overstressed system
     !!

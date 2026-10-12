@@ -1,5 +1,6 @@
 module none
     use base_defs
+    use crysp_status
     use constitutive_model
     use crysp_grain
     use crysp_serialization
@@ -16,8 +17,6 @@ module none
     contains
         procedure, nopass:: get_name        => none_get_name
         procedure, nopass:: get_description => none_get_description
-        procedure:: deform                  => none_deform
-        procedure, nopass:: make_hardening_state    => none_make_hardening_state
         procedure:: init_hardening_state    => none_init_hardening_state
     end type
 
@@ -33,20 +32,6 @@ contains
         character(:), allocatable:: description
 
         description = "Critical resolved shear stress on all slip systems is kept constant at 1."
-    end function
-
-    !> @Brief See hardening_model_deform
-    subroutine none_deform(this, state, time, slip_rates)
-        class(ConstitutiveModelNone), intent(inout):: this
-        class(HardeningState), target, intent(inout)      :: state
-        real(DP), intent(in)                    :: time
-        real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
-    end subroutine
-
-    function none_make_hardening_state() result(state)
-        class(HardeningState), allocatable:: state
-
-        allocate(state)
     end function
 
     subroutine none_init_hardening_state(this, state)

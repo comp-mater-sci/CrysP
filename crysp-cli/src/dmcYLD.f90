@@ -50,7 +50,7 @@ contains
         enddo
 
         if (abs(this%base(:,1) .dot. this%base(:,2)) > TOLERANCE) &
-            call log_error(MOD_NAME, 'yld)initialize', ERR_VAL, 'Base vectors must be orthogonal!')
+            call log_error(MOD_NAME, 'yld)initialize', CRYSP_ERR_VAL, 'Base vectors must be orthogonal!')
     end subroutine
 
     subroutine yld_run(this)
@@ -84,7 +84,7 @@ contains
             if (i==1 .or. this%angular_resolution > 0.1_DP) &
                 strain_mode = target_stress_mode
 
-            call crysp_simulate_stress_mode(this%material, target_stress_mode, strain_mode, dev_stress, residual)
+            call handle_crysp_status(crysp_simulate_stress_mode(this%material, target_stress_mode, strain_mode, dev_stress, residual))
 
             !Because the direcion remains identical, ||stress||/||dev(stress)|| == ||stress_mode||/||dev(stress_mode)||
             !Therefore, scaling ||dev_stress|| by ||stress_mode||/||dev(stress_mode)|| yields ||stress||.

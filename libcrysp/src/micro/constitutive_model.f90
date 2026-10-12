@@ -5,14 +5,15 @@ module constitutive_model
     use crysp_serialization
     use, intrinsic:: iso_c_binding, only: C_INT
     use crysp_model
-    use logging
-
+    use crysp_status
     implicit none
 
     private
     public:: ConstitutiveModel, &
              HardeningState, &
              Phase
+
+    character(*), parameter:: MOD_NAME = 'constitutive_model'
 
     !> Hardening state object specific to each grain.
     !>
@@ -32,21 +33,21 @@ module constitutive_model
 
     !> Base constitutive model
     !>
-    !> Each concrete constitutive model extends this model and implements @c deform and @c make_hardening_state.
+    !> Each concrete constitutive model extends this model and overrides @c deform and @c make_hardening_state where it has
+    !> hardening behaviour of its own. The defaults below describe a model without hardening: @c deform leaves the state untouched
+    !> and @c make_hardening_state creates a plain [[HardeningState]].
     !> @note
-    !> This type is deliberately NOT abstract (even though @c deform / @c make_hardening_state should always be overridden), because
-    !> concrete models call their parent's procedures via `this%ConstitutiveModel%...`, and the Fortran standard only permits such a
-    !> type-bound procedure reference when the parent part-name is not of abstract type (F2018 19.4.5: a data-ref of abstract type
-    !> preceding a procedure name must be polymorphic, which an inherited-component reference is not). The default implementations
-    !> below terminate with an error if invoked on an unextended instance.
+    !> This type is deliberately NOT abstract, because concrete models call their parent's procedures via
+    !> `this%ConstitutiveModel%...`, and the Fortran standard only permits such a type-bound procedure reference when the parent
+    !> part-name is not of abstract type (F2018 19.4.5).
     !> @endnote
     type, extends(Model):: ConstitutiveModel
         real(DP), dimension(:,:), allocatable:: taylor_coeffs  !! Taylor coefficients of the slip systems. I.e. the 5D vector representation of the symmetric component of the Schmidt matrix.
         real(DP), dimension(:,:), allocatable:: spin_coeffs    !! Spin coeffiecients of the slip systems. I.e. the 3D vector representation of the antisymmetric part of the Schmidt matrix.
         integer, dimension(5):: basis                          !! Indices of a set of independent columns of the Taylor coefficient matrix that form a basis in stress-strain space. Useful for many calculations.
     contains
-        procedure:: deform => cm_deform_default              !! Update the hardening state under a given deformation.
-        procedure, nopass:: make_hardening_state => cm_make_hardening_state_default
+        procedure:: deform => cm_deform             !! Update the hardening state under a given deformation.
+        procedure, nopass:: make_hardening_state => cm_make_hardening_state
         procedure:: init => cm_init
         procedure:: init_hardening_state => cm_init_hardening_state
         procedure:: size => cm_size
@@ -62,31 +63,6 @@ module constitutive_model
     type:: Phase
         class(ConstitutiveModel), allocatable:: model !! The constitutive model backing the phase
     end type
-
-    abstract interface
-
-        function cm_make_hardening_state() result(state)
-            import HardeningState
-
-            class(HardeningState), allocatable:: state
-        end function
-        !> Update the critical resolved shear stresses (CRSS) of a grain.
-        !>
-        !> Updates CRSS based on the slip rates provided by the caller, assuming these slip rates remain constant over the time
-        !> interval provided by the caller. May update internal grain state accordingly.
-        subroutine cm_deform(this, state, time, slip_rates)
-            import ConstitutiveModel, &
-                   HardeningState, &
-                   DP
-
-            class(ConstitutiveModel), intent(inout):: this
-            class(HardeningState), target, intent(inout):: state   !! Hardening state to update.
-            real(DP), intent(in)                :: time            !! Elapsed time since the last update of the hardening state of this grain.
-            real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates  !! Slip rates on each of the slip systems of the grain in the time
-                                                                                       !! interval since the last CRSS update for this grain. Size must equal
-                                                                                       !! the number of slip systems of the grain.
-        end subroutine
-    end interface
 
 contains
 
@@ -126,21 +102,21 @@ contains
         allocate(state%crss(2, size(this%taylor_coeffs, 2)))
     end subroutine
 
-    !> Default @c deform: should never be called on an unextended [[ConstitutiveModel]] instance.
-    subroutine cm_deform_default(this, state, time, slip_rates)
+    !> Default @c deform: no hardening, so the state is left untouched.
+    function cm_deform(this, state, time, slip_rates) result(stat)
         class(ConstitutiveModel), intent(inout):: this
         class(HardeningState), target, intent(inout):: state
         real(DP), intent(in)                :: time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
+        type(Status):: stat
 
-        call log_error('constitutive_model', 'cm_deform_default', ERR_TYPE, 'ConstitutiveModel::deform not overridden')
-    end subroutine
+    end function
 
-    !> Default @c make_hardening_state: see [[cm_deform_default]].
-    function cm_make_hardening_state_default() result(state)
+    !> Default @c make_hardening_state: a plain [[HardeningState]] holding only the CRSS.
+    function cm_make_hardening_state() result(state)
         class(HardeningState), allocatable:: state
 
-        call log_error(ERR_TYPE)
+        allocate(state)
     end function
 
     pure function cm_size(this) result(size)

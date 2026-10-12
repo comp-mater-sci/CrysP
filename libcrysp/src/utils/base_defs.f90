@@ -14,6 +14,7 @@ module base_defs
     integer, parameter:: DISPLAY_UNIT = output_unit        !! Identifier for stdout. Used in write statements.
     real(DP), parameter:: TOLERANCE  = 1.E-9_DP            !! Default tolerance on floating point calculations to compensate for inherent inaccuracy of floating point arithmetic,
     integer, parameter:: NAME_LEN = 32
+    integer, parameter:: MSG_LEN = 128
     integer, parameter:: DESCRIPTION_LEN = 1024
                                                            !! especially for multithreaded computations.
     real(DP), parameter:: ACCURACY = 1.E-2_DP              !! Accuracy on linear approximations.

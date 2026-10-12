@@ -5,6 +5,7 @@ module crysp_material
     use crysp_cluster
     use meso
     use micro
+    use crysp_status
     use iso_c_binding
 
     implicit none
@@ -94,6 +95,10 @@ contains
         end do
     end function
 
+    !> Rebuild a material from a serialized parameter list.
+    !>
+    !> The model IDs embedded in the list originate from whatever the caller handed back, so an unknown one is reported rather than
+    !> fatal.
     subroutine material_deserialize(this, params)
         class(Material), target, intent(out):: this
         type(Parameter), dimension(:), intent(in):: params
@@ -103,12 +108,17 @@ contains
                   n_phases, &
                   n_clusters, &
                   model_id
+        type(Status):: stat
+
+        !An unknown model ID is not reported yet, so the status of the model lookups below is ignored.
 
         !CP model
         model_id = params(1)
-        this%meso_model = meso_get_model(model_id)
+        stat = meso_get_model(model_id, this%meso_model)
+
         offset = 1
         call this%meso_model%deserialize(params(offset+1:))
+
         offset = offset + this%meso_model%size()
 
         !Phases
@@ -118,8 +128,10 @@ contains
         do i=1,n_phases
             model_id = params(offset+1)
             offset = offset + 1
-            this%phases(i)%model = micro_get_model(model_id)
+            stat = micro_get_model(model_id, this%phases(i)%model)
+
             call this%phases(i)%model%deserialize(params(offset+1:))
+
             offset = offset + this%phases(i)%model%size()
         end do
 
@@ -129,6 +141,7 @@ contains
         allocate(this%clusters(n_clusters), mold=this%meso_model%make_cluster())
         do i=1,n_clusters
             call this%clusters(i)%deserialize(params(offset+1:), this%phases)
+
             offset = offset + this%clusters(i)%size()
         end do
     end subroutine

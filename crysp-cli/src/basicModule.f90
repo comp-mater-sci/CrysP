@@ -50,6 +50,7 @@ contains
                   n_grains, &
                   i, &
                   n_params
+        integer, dimension(:), allocatable:: signature
         integer(C_INT):: phase_sizes(1)
         integer(C_INT), allocatable:: deformation_mechanisms(:), &
                                        hardening_model_ids(:)
@@ -75,7 +76,7 @@ contains
                 allocate(meso_params(1))
                 meso_params(1) = read_microstructure(microstructure_file_name)
             case default
-                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid mesoscopic model.')
+                call log_error(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Invalid mesoscopic model.')
         end select
 
         allocate(deformation_mechanisms(1))
@@ -88,12 +89,13 @@ contains
             case ('bcc48')
                 deformation_mechanisms(1) = SLIP_SYSTEMS_BCC48
             case default
-                call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Invalid slip system identifier')
+                call log_error(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Invalid slip system identifier')
         end select
 
         !Read hardening section
         call read_value(cnfunit, hardening_model_id)
-        n_params = size(micro_get_signature(hardening_model_id))
+        call handle_crysp_status(micro_get_signature(hardening_model_id, signature))
+        n_params = size(signature)
 
         !Hardening parameters must be provided in the order in which they are defined in the hardening models.
         if (n_params > 0) then
@@ -112,9 +114,9 @@ contains
         hardening_model_ids(1) = hardening_model_id
         phase_sizes(1) = n_grains
 
-        call crysp_new_material(phase_sizes, orientations, deformation_mechanisms, &
-                                hardening_model_ids, hardening_params, &
-                                meso_model_id, meso_params, this%material)
+        call handle_crysp_status(crysp_new_material(phase_sizes, orientations, deformation_mechanisms, &
+                                            hardening_model_ids, hardening_params, &
+                                            meso_model_id, meso_params, this%material))
     end subroutine
 
     subroutine BasicModule_run(this)

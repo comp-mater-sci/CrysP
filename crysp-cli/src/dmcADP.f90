@@ -63,11 +63,11 @@ contains
             associate (step => this%steps(i))
                 call read_value(cnfunit, step%velocity_gradient)
                 if (math_trace33(step%velocity_gradient) > TOLERANCE) &
-                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Volumetric deformation is not alowed.')
+                    call log_error(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Volumetric deformation is not alowed.')
 
                 call read_value(cnfunit, step%target_strain)
                 if (step%target_strain < 0._DP) &
-                    call log_error(MOD_NAME, PROC_NAME, ERR_VAL, 'Target strain must not be negative.')
+                    call log_error(MOD_NAME, PROC_NAME, CRYSP_ERR_VAL, 'Target strain must not be negative.')
             end associate
         end do
     end subroutine
@@ -96,7 +96,7 @@ contains
             associate(step => this%steps(i_step))
                 if (step%target_strain < TOLERANCE) then
                     allocate(step%increments(1))
-                    call crysp_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress)
+                    call handle_crysp_status(crysp_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress))
                     associate (inc => step%increments(1))
                         inc%stress = deviatoric_to_tensor(dev_stress)
                         inc%duration = 0._DP
@@ -105,7 +105,7 @@ contains
                     end associate
                     n_incs = n_incs + 1
                 else
-                    call crysp_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments)
+                    call handle_crysp_status(crysp_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments))
                     n_incs = n_incs + size(step%increments)
                     call mat_%deserialize(this%material)
                     call write_texture_increment(texture_unit, n_incs, mat_%clusters)

@@ -1,6 +1,5 @@
 module incrementation
     use base_defs
-    use logging
     use math_utils
     use iso_c_binding
 

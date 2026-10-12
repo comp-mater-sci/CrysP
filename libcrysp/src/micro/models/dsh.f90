@@ -14,7 +14,7 @@ module dsh
     use base_defs
     use math_utils
     use constitutive_model
-    use logging
+    use crysp_status
     use slip_systems
     use conversions
     use crysp_serialization
@@ -25,6 +25,8 @@ module dsh
     private
     public:: CBBNORMAL, &
              ConstitutiveModelDSH
+
+    character(*), parameter:: MOD_NAME = 'dsh'
 
     real(DP), parameter:: MINFRAC = 2.0D-5,   &     !! See B. Peeters: Multiscale modelling of the induced plastic anisotropy in IF steel during sheet forming (PhD thesis). NOTE original was 2.0D-3. Set to 2.0D-5 because the
                                                      !! original value was problematic for very small time increments
@@ -137,17 +139,20 @@ contains
 
     !> Convert a generic HardeningState to a pointer to a DSHState object
     !>
-    !> Closest Fortran comes to type casting
-    !> If the provided state is not of type dsh_state, the program crashes.
-    function to_dsh_state(state) result(dsh_state_ptr)
+    !> Closest Fortran comes to type casting.
+    !> A state of any other dynamic type is a defect in libCrysP rather than caller error, but is reported rather than fatal so that
+    !> an embedding host survives it.
+    function to_dsh_state(state, dsh_state_ptr) result(stat)
         class(HardeningState), target, intent(in):: state   !! HardeningState to be converted. Must have dynamic type DSHState.
-        type(DSHState), pointer:: dsh_state_ptr             !! Pointer of type DSHState to the HardeningState
+        type(DSHState), pointer, intent(out):: dsh_state_ptr !! Pointer of type DSHState to the HardeningState
+        type(Status):: stat                                 !! `CRYSP_OK`, or `CRYSP_ERR_TYPE` if the state is not a `DSHState`.
 
         select type (state)
             type is (DSHState)
                 dsh_state_ptr => state
             class default
-                call log_error(ERR_TYPE)
+                dsh_state_ptr => null()
+                stat = fail(MOD_NAME, 'to_dsh_state', CRYSP_ERR_TYPE, 'Hardening state is not a DSHState')
         end select
     end function
 
@@ -234,11 +239,12 @@ contains
     end function
 
     !> See cm_deform
-    subroutine dsh_deform(this, state, time, slip_rates)
+    function dsh_deform(this, state, time, slip_rates) result(stat)
         class(ConstitutiveModelDSH), intent(inout)                  :: this
         class(HardeningState), target, intent(inout)                :: state
         real(DP), intent(in)                                        :: time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in):: slip_rates
+        type(Status):: stat
 
         logical::  flux_reversal
         integer::  i, &
@@ -251,7 +257,8 @@ contains
                    sum_slip_rates_110(6)
         type(DSHState), pointer:: state_ptr  ! Pointer to grain_%hardening_state of type DSHState for easy access to DSH-specific fields
 
-        state_ptr => to_dsh_state(state)
+        stat = to_dsh_state(state, state_ptr)
+        if (failed(stat)) return
 
         !Calculate quantities of slip rates and slips
         !Identify currently generated and non-currently generated walls
@@ -353,7 +360,7 @@ contains
 
             res = (sign(1._DP, args(3)) * args(1)*sqrt(args(4)+abs(wp)) - args(2)*wp) * abs(args(3))
         end function
-    end subroutine
+    end function
 
     !> Returns RHO_b, the value of RHO at the end of an interval (a, b) for the following differential equation:
     !> d(RHO)/d(g) = 1/b * (II*sqrt(RHO) - RR*RHO)
@@ -454,6 +461,7 @@ contains
         integer:: offset
 
         call this%ConstitutiveModel%deserialize(params)
+
         offset = this%ConstitutiveModel%size()
 
         this%b       = params(offset+1)
@@ -522,6 +530,7 @@ contains
         integer:: i, offset
 
         call this%HardeningState%deserialize(params)
+
         offset = this%HardeningState%size()
 
         this%rhocb = params(offset+1)

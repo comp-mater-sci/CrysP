@@ -3,7 +3,7 @@
 module voce
     use base_defs, only: dp
     use constitutive_model
-    use logging
+    use crysp_status
     use crysp_serialization
     use crysp_input
     use conversions
@@ -106,16 +106,19 @@ contains
     end subroutine
 
     !> See [[ConstitutiveModel:deform]]
-    subroutine voce_deform(this, state, time, slip_rates)
+    function voce_deform(this, state, time, slip_rates) result(stat)
         class(ConstitutiveModelVoce),  intent(inout):: this
         class(HardeningState), target, intent(inout):: state
         real(DP),                      intent(in)::    time
         real(DP), dimension(size(this%taylor_coeffs, 2)), intent(in)::    slip_rates
+        type(Status):: stat
 
         type(Stage):: current_stage          !Current stage in the Voce hardening process
         type(IsotropicState), pointer:: state_ptr !Pointer to hardening_state of type VoceState for easy access to model-specific fields
 
-        state_ptr => to_isotropic_state(state)
+        stat = to_isotropic_state(state, state_ptr)
+        if (failed(stat)) return
+
 
         state_ptr%total_slip = state_ptr%total_slip+sum(abs(slip_rates)) * time
 
@@ -124,7 +127,7 @@ contains
                               state_ptr%total_slip <= this%transition_slip)
 
         state_ptr%crss = current_stage%TS - (current_stage%TS-current_stage%T1) * exp(-current_stage%TH*state_ptr%total_slip/current_stage%TS)
-    end subroutine
+    end function
 
     function voce_make_state() result(state)
         class(HardeningState), allocatable:: state
@@ -179,6 +182,7 @@ contains
                   offset
 
         call this%ConstitutiveModel%deserialize(params)
+
         offset = this%ConstitutiveModel%size()
 
         this%transition_slip = params(offset+1)

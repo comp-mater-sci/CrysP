@@ -33,8 +33,8 @@ crysp_add_test(test_parameter)
 crysp_add_test(test_material_roundtrip)
 
 # test_parameter deliberately ends by aborting (shape mismatch must be detected), so its exit status is always non-zero.
-# Judge it on its output instead: any failed check prints "FAILED", and the abort must have logged the exception.
+# Judge it on its output instead: any failed check prints "FAILED", and the abort must have reported the mismatch.
 set_tests_properties(test_parameter PROPERTIES
     FAIL_REGULAR_EXPRESSION "FAILED"
-    PASS_REGULAR_EXPRESSION "EXCEPTION serialization, parameter_to_real_matrix"
+    PASS_REGULAR_EXPRESSION "serialization::parameter_to_real_matrix"
 )

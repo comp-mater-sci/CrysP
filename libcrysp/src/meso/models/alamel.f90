@@ -9,7 +9,7 @@ module alamel
     use crysp_grain
     use relaxation_module
     use crysp_cluster
-    use logging
+    use crysp_status
     use taylor_ambiguity
     use micro
     use simplex
@@ -99,17 +99,19 @@ contains
     !>
     !> This is the closest Fortran can get to proper type casting.
     !> Useful for accessing AlamelCluster-specific fields without the boilerplate of type selection and error handling in each calling procedure.
-    !> If the input cluster is not an AlamelCluster, the routine crashes the program.
-    !> Otherwise, a pointer to this cluster of type AlamelCluster is returned.
-    function to_alamel_cluster(cluster_) result(ptr)
+    !> A cluster of any other dynamic type means the model and the cluster list disagree, which is a defect in libCrysP rather than
+    !> caller error. It is still reported rather than fatal, so that an embedding host survives it.
+    function to_alamel_cluster(cluster_, ptr) result(stat)
         class(Cluster), target, intent(in):: cluster_   !! Generic input cluster
-        type(AlamelCluster), pointer:: ptr              !! Pointer to input cluster of type AlamelCluster
+        type(AlamelCluster), pointer, intent(out):: ptr !! Pointer to input cluster of type AlamelCluster
+        type(Status):: stat                             !! `CRYSP_OK`, or `CRYSP_ERR_TYPE` if the cluster is not an `AlamelCluster`.
 
         select type (cluster_)
             type is (AlamelCluster)
                 ptr => cluster_
             class default
-                call log_error(MOD_NAME, 'to_alamel_cluster', ERR_TYPE)
+                ptr => null()
+                stat = fail(MOD_NAME, 'to_alamel_cluster', CRYSP_ERR_TYPE, 'Cluster is not an AlamelCluster')
         end select
     end function
 
@@ -242,28 +244,33 @@ contains
     end function
 
     !> See [[MesoModel:get_stress]]
-    function alamel_get_stress(this, cluster_, v_grad) result(stress)
+    function alamel_get_stress(this, cluster_, v_grad, stress) result(stat)
         class(AlamelModel), intent(in):: this
         class(Cluster), target, intent(inout):: cluster_
         real(DP), dimension(3, 3), intent(in):: v_grad
-        real(DP), dimension(3, 3):: stress
+        real(DP), dimension(3, 3), intent(out):: stress
+        type(Status):: stat
 
         real(DP), dimension(total_systems(cluster_)):: slip_rates, &
                                                        rss
         real(DP), dimension(10):: stress_cluster
         type(AlamelCluster), pointer:: cluster_ptr
 
-        !Convert to type AlamelCluster to gain access to model-specific fields
-        cluster_ptr => to_alamel_cluster(cluster_)
+        stress = 0._DP
 
-        call simplex_solve(get_taylor_coeffs(cluster_ptr), &
-                           calc_imposed_strain_rate(cluster_ptr, v_grad), &
-                           get_crss(cluster_ptr), &
-                           cluster_ptr%inverse_basis, &
-                           cluster_ptr%ind_basis_systems, &
-                           slip_rates, &
-                           stress_cluster, &
-                           rss)
+        !Convert to type AlamelCluster to gain access to model-specific fields
+        stat = to_alamel_cluster(cluster_, cluster_ptr)
+        if (failed(stat)) return
+
+        stat = simplex_solve(get_taylor_coeffs(cluster_ptr), &
+                             calc_imposed_strain_rate(cluster_ptr, v_grad), &
+                             get_crss(cluster_ptr), &
+                             cluster_ptr%inverse_basis, &
+                             cluster_ptr%ind_basis_systems, &
+                             slip_rates, &
+                             stress_cluster, &
+                             rss)
+        if (failed(stat)) return
 
         stress = homogenize_stress_state(cluster_ptr, stress_cluster)
     end function
@@ -279,13 +286,14 @@ contains
     end subroutine
 
     !> See [[MesoModel:apply_step]]
-    subroutine alamel_deform(this, cluster_, velocity_gradient, time, stress, slip)
+    function alamel_deform(this, cluster_, velocity_gradient, time, stress, slip) result(stat)
         class(AlamelModel), intent(in):: this
         class(Cluster), target,   intent(inout):: cluster_
         real(DP), dimension(3,3), intent(in):: velocity_gradient
         real(DP),                 intent(in):: time
         real(DP), dimension(3,3), intent(out):: stress
         real(DP),                 intent(out):: slip
+        type(Status):: stat
 
         real(DP):: strain_grain(5), &
                    strain_relaxations(5), &
@@ -311,7 +319,11 @@ contains
                                                        rss
         type(AlamelCluster), pointer:: cluster_ptr
 
-        cluster_ptr => to_alamel_cluster(cluster_)
+        stress = 0._DP
+        slip = 0._DP
+
+        stat = to_alamel_cluster(cluster_, cluster_ptr)
+        if (failed(stat)) return
 
         n_systems = get_n_systems(cluster_)
         offset_relaxations = sum(n_systems)
@@ -320,14 +332,15 @@ contains
 
         taylor_coeffs = get_taylor_coeffs(cluster_ptr)
 
-        call simplex_solve(taylor_coeffs, &
-                           imposed_strain_rate, &
-                           get_crss(cluster_ptr), &
-                           cluster_ptr%inverse_basis, &
-                           cluster_ptr%ind_basis_systems, &
-                           slip_rates, &
-                           stress_cluster, &
-                           rss)
+        stat = simplex_solve(taylor_coeffs, &
+                             imposed_strain_rate, &
+                             get_crss(cluster_ptr), &
+                             cluster_ptr%inverse_basis, &
+                             cluster_ptr%ind_basis_systems, &
+                             slip_rates, &
+                             stress_cluster, &
+                             rss)
+        if (failed(stat)) return
 
         stress = homogenize_stress_state(cluster_ptr, stress_cluster)
 
@@ -341,22 +354,25 @@ contains
                        slip_rates_relaxations=>slip_rates(offset_relaxations+1:), &
                        taylor_coeffs_relaxations=>taylor_coeffs(offset_grain+1:offset_grain+5, offset_relaxations+1:))
 
-                call  assess_slip_system_activity(cluster_ptr%grains(j), &
-                                                  rss(offset_systems+1:offset_systems+n_systems(j)), &
-                                                  slip_rates_grain, &
-                                                  n_active_simplex, &
-                                                  ind_overstressed_slip_systems)
+                stat = assess_slip_system_activity(cluster_ptr%grains(j), &
+                                                   rss(offset_systems+1:offset_systems+n_systems(j)), &
+                                                   slip_rates_grain, &
+                                                   n_active_simplex, &
+                                                   ind_overstressed_slip_systems)
+                if (failed(stat)) return
 
                 if (allocated(ind_overstressed_slip_systems)) then
                     !Determine strain absorbed by slip systems (imposed strain-relaxations)
                     strain_relaxations = matmul(taylor_coeffs_relaxations, slip_rates_relaxations)
                     strain_grain = imposed_strain_rate(offset_grain+1:offset_grain+5)-strain_relaxations
 
-                    slip_rates_grain = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
+                    stat = resolve_taylor_ambiguity(ind_overstressed_slip_systems, &
                         rss(ind_overstressed_slip_systems+offset_systems), &
                         strain_grain, &
                         grain_%phase%model%taylor_coeffs, &
-                        n_active_simplex)
+                        n_active_simplex, &
+                        slip_rates_grain)
+                    if (failed(stat)) return
                 end if
 
                 slip_grain = sum(abs(slip_rates_grain))
@@ -375,14 +391,15 @@ contains
                 v_grad_grain = velocity_gradient - v_grad_relax
                 stress_grain = deviatoric_to_tensor(stress_cluster(offset_grain+1:offset_grain+5)) .fromframe. grain_%orientation
 
-                call grain_%deform(v_grad_grain, time, slip_rates_grain, stress_grain)
+                stat = grain_%deform(v_grad_grain, time, slip_rates_grain, stress_grain)
+                if (failed(stat)) return
             end associate
         end do
 
         !Update cluster state to be consistent with the end of the time step.
         call update_relaxations(cluster_ptr, this%deformation_gradient)
         cluster_ptr%weight = cluster_weight(cluster_ptr, this%deformation_gradient)
-    end subroutine
+    end function
 
 
     !> Get the direction of a surface normal after application of a deformation gradient.
@@ -556,6 +573,7 @@ contains
                   i
 
         call this%Cluster%deserialize(params, phases)
+
         base_size = this%Cluster%size()
         this%ind_basis_systems = params(base_size+1)
         this%initial_boundary_normal = params(base_size+2)
@@ -564,6 +582,7 @@ contains
         offset = base_size + 3
         do i=1,2
             call this%relaxations(i)%deserialize(params(offset+1:offset+3))
+
             offset = offset + 3
         end do
     end subroutine

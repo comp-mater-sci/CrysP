@@ -118,7 +118,7 @@ contains
         msg = 'IO error with code ' // to_string(code) // '. Refer to Fortran IOSTAT documentation.'
         if (present(buffer)) &
             msg = msg // ' Read value: ' // trim(buffer)
-        call log_error(MOD_NAME, caller, ERR_IO, msg)
+        call log_error(MOD_NAME, caller, CRYSP_ERR_IO, msg)
     end subroutine
 
     !> Resolve symbolic name into an integer identifier.
