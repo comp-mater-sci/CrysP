@@ -5,9 +5,7 @@ module dmcADP
     use dmcBasicModule
     use file_io
     use libcrysp
-    use incrementation
     use logging
-    use libcrysp
 
     implicit none
 
@@ -34,7 +32,8 @@ module dmcADP
     type:: StrainDrivenStep
         real(DP), dimension(3, 3):: velocity_gradient
         real(DP):: target_strain
-        type(StrainIncrement), dimension(:), allocatable:: increments
+        type(StrainIncrementData), dimension(:), allocatable:: increments
+        type(TexturePoint), dimension(:,:), allocatable:: textures !! Texture after each increment, shaped (grains, increments).
     end type
 
 contains
@@ -83,7 +82,6 @@ contains
                    taylor_factor, &
                    dev_stress(5), &
                    def_grad(3,3)
-        type(Material), target:: mat_
 
         !Open output files
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
@@ -97,19 +95,20 @@ contains
                 if (step%target_strain < TOLERANCE) then
                     allocate(step%increments(1))
                     call handle_crysp_status(crysp_simulate_strain_mode(this%material, tensor_to_deviatoric(step%velocity_gradient), dev_stress))
+                    !StrainIncrementData is C-compatible and therefore has no default initialization.
                     associate (inc => step%increments(1))
                         inc%stress = deviatoric_to_tensor(dev_stress)
                         inc%duration = 0._DP
                         inc%deformation_gradient = UNIT_MATRIX_3X3
+                        inc%vm_strain = 0._DP
                         inc%taylor_factor = 0._DP
                     end associate
                     n_incs = n_incs + 1
                 else
-                    call handle_crysp_status(crysp_strain_driven_deformation(this%material, step%velocity_gradient, step%target_strain, step%increments))
+                    call handle_crysp_status(crysp_strain_driven_deformation(this%material, step%velocity_gradient, &
+                                                                              step%target_strain, step%increments, step%textures))
                     n_incs = n_incs + size(step%increments)
-                    call mat_%deserialize(this%material)
-                    call write_texture_increment(texture_unit, n_incs, mat_%clusters)
-                    this%material = mat_%serialize()
+                    call write_texture_increment(texture_unit, n_incs, step%textures(:,size(step%increments)))
                 end if
 
                 do i_inc = 1, size(step%increments)

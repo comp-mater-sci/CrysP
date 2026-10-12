@@ -52,16 +52,14 @@ contains
         stat = simulate_strain_mode(mat%meso_model, mat%clusters, strain_mode, stress)
     end function
 
-    function macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, stress_increments, strain_increments) result(stat)
+    function macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments) result(stat)
         type(Material), target, intent(inout):: mat
         real(DP), dimension(5), intent(in):: target_stress_mode
         real(DP), intent(in):: target_vm_strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: stress_increments
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: strain_increments
+        type(StressIncrement), dimension(:), allocatable, intent(out):: increments
         type(Status):: stat
 
-        integer:: prob_rem_incs, &
-                  n_incs_old
+        integer:: prob_rem_incs
         real(DP):: strain_rate(5), &
                    cur_vm_strain, &
                    next_vm_strain, &
@@ -69,9 +67,8 @@ contains
                    residual(5), &
                    def_grad(3,3)
 
-        type(StrainIncrement), allocatable:: strain_incs(:), &
-                                             strain_inc_buffer(:)
-        type(StressIncrementFactory):: stress_incs
+        type(StrainIncrement), allocatable:: strain_incs(:)
+        type(StressIncrementFactory):: incs
 
 
         cur_vm_strain = 0._DP
@@ -82,33 +79,22 @@ contains
             stat = simulate_stress_mode(mat%meso_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
             if (failed(stat)) return
 
-            stat = deform(mat%meso_model, &
-                          mat%clusters, &
+            stat = deform(mat, &
                           deviatoric_to_tensor(strain_rate), &
                           target_vm_strain - cur_vm_strain, &
                           strain_incs, &
                           target_stress_mode)
             if (failed(stat)) return
 
-            if (.not. allocated(strain_increments)) then
-                strain_increments = strain_incs
-            else
-                n_incs_old = size(strain_increments)
-                allocate(strain_inc_buffer(n_incs_old+size(strain_incs)))
-                strain_inc_buffer(:n_incs_old) = strain_increments
-                strain_inc_buffer(n_incs_old+1:) = strain_incs
-                call move_alloc(strain_inc_buffer, strain_increments)
-            end if
-
             def_grad = matmul(strain_incs(size(strain_incs))%deformation_gradient, def_grad)
             next_vm_strain = stretch_to_von_mises_true_strain(def_grad)
             !Add one for current increment and to make sure padding in incrementation is positive
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain)/(next_vm_strain - cur_vm_strain))
             cur_vm_strain = next_vm_strain
-            call stress_incs%add(StressIncrement(strain_rate, residual, size(strain_incs)), prob_rem_incs)
+            call incs%add(StressIncrement(strain_rate, residual, strain_incs), prob_rem_incs)
         end do
 
-        stress_increments = stress_incs%get()
+        increments = incs%get()
     end function
 
     function macro_strain_driven_deformation(mat, velocity_gradient, target_vm_strain, increments) result(stat)
@@ -118,6 +104,6 @@ contains
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
         type(Status):: stat
 
-        stat = deform(mat%meso_model, mat%clusters, velocity_gradient, target_vm_strain, increments)
+        stat = deform(mat, velocity_gradient, target_vm_strain, increments)
     end function
 end module

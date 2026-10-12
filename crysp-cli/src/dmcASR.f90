@@ -4,10 +4,6 @@ module dmcASR
     use file_io
     use commonUtils
     use logging
-    use file_io
-    use deformation
-    use macro
-    use incrementation
     use libcrysp
     use dmcBasicModule
 
@@ -28,8 +24,9 @@ module dmcASR
     type:: StressDrivenStep
         real(DP), dimension(6):: target_stress_mode
         real(DP):: target_vm_strain
-        type(StressIncrement), dimension(:), allocatable:: stress_increments
-        type(StrainIncrement), dimension(:), allocatable:: strain_increments
+        type(StressIncrementData), dimension(:), allocatable:: stress_increments
+        type(StrainIncrementData), dimension(:), allocatable:: strain_increments
+        type(TexturePoint), dimension(:,:), allocatable:: textures !! Texture after each strain increment, shaped (grains, increments).
     end type
 
     type, extends(BasicModule):: ASRModule
@@ -80,7 +77,6 @@ contains
                    hydro, &
                    dev, &
                    stress_scaling_factor
-        type(Material), target:: mat_
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
         texture_unit = open_texture_evolution_file(this%output_prefix)
@@ -103,24 +99,27 @@ contains
                 if (step%target_vm_strain < TOLERANCE) then
                     allocate(step%stress_increments(1))
                     allocate(step%strain_increments(1))
+                    !The C-compatible increment types have no default initialization.
                     associate (stress_inc => step%stress_increments(1), &
                                strain_inc => step%strain_increments(1))
                         stress_inc%strain_rate = target_dev_stress
                         stress_inc%n_strain_increments = 1
-                        call handle_crysp_status(crysp_simulate_stress_mode(this%material, target_dev_stress, stress_inc%strain_rate, dev_stress, stress_inc%residual))
+                        call handle_crysp_status(crysp_simulate_stress_mode(this%material, target_dev_stress, &
+                                                                            stress_inc%strain_rate, dev_stress, stress_inc%residual))
                         strain_inc%stress = deviatoric_to_tensor(dev_stress)
+                        strain_inc%duration = 0._DP
                         strain_inc%deformation_gradient = UNIT_MATRIX_3X3
+                        strain_inc%vm_strain = 0._DP
+                        strain_inc%taylor_factor = 0._DP
                         n_incs = n_incs + 1
                     end associate
                 else
-                    call handle_crysp_status(crysp_stress_driven_deformation(this%material, target_dev_stress, step%target_vm_strain, step%stress_increments, step%strain_increments))
+                    call handle_crysp_status(crysp_stress_driven_deformation(this%material, target_dev_stress, &
+                                                                             step%target_vm_strain, step%stress_increments, &
+                                                                             step%strain_increments, step%textures))
                     !Write new texture to file
-                    do i_stress = 1, size(step%stress_increments)
-                        n_incs = n_incs + step%stress_increments(i_stress)%n_strain_increments
-                    end do
-                    call mat_%deserialize(this%material)
-                    call write_texture_increment(texture_unit, n_incs, mat_%clusters)
-                    this%material = mat_%serialize()
+                    n_incs = n_incs + size(step%strain_increments)
+                    call write_texture_increment(texture_unit, n_incs, step%textures(:,size(step%strain_increments)))
                 end if
 
                 offset = 0

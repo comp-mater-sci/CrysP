@@ -1,9 +1,7 @@
 module file_io
+    use crysp_material, only: TexturePoint
     use conversions
     use logging
-    use crysp_cluster
-    use crysp_grain
-    use macro
 
     implicit none
 
@@ -313,19 +311,17 @@ contains
         handle = open_result_file(prefix // '_texture_evolution.csv', HEADER)
     end function
 
-    subroutine write_texture_increment(file_handle, increment, clusters)
+    subroutine write_texture_increment(file_handle, increment, texture)
         integer, intent(in):: file_handle
         integer, intent(in):: increment
-        class(Cluster), dimension(:), intent(in):: clusters
+        type(TexturePoint), dimension(:), intent(in):: texture
 
-        integer:: i, j, &
+        integer:: i, &
                   info
 
-        do i=1,size(clusters)
-            do j=1, size(clusters(i)%grains)
-                write (file_handle, '(I0,",",3(G0,:,","))', iostat=info) increment, rad_to_deg(deformation_gradient_to_euler(clusters(i)%grains(j)%orientation))
-                call handle_iostat('write_texture', info)
-            end do
+        do i=1,size(texture)
+            write (file_handle, '(I0,",",3(G0,:,","))', iostat=info) increment, rad_to_deg(real(texture(i)%euler_angles, DP))
+            call handle_iostat('write_texture', info)
         end do
     end subroutine
 

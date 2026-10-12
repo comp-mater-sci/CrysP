@@ -11,7 +11,8 @@ module crysp_material
     implicit none
 
     private
-    public:: Material
+    public:: Material, &
+             TexturePoint
 
     type, extends(State):: Material
           class(MesoModel), allocatable:: meso_model   !! Global state of the meso model
@@ -21,9 +22,38 @@ module crysp_material
         procedure:: size => material_size
         procedure:: serialize => material_serialize
         procedure:: deserialize => material_deserialize
+        procedure:: get_texture => material_get_texture
     end type
 
 contains
+
+    !> Get the current texture of a material.
+    !>
+    !> One texture point per grain, in the order in which the grains were supplied when the material was created, i.e. grouped by
+    !> phase.
+    function material_get_texture(this) result(texture)
+        class(Material), target, intent(in):: this
+        type(TexturePoint), dimension(:), allocatable:: texture
+
+        integer:: i, j, n
+
+        n = 0
+        do i = 1, size(this%clusters)
+            n = n + size(this%clusters(i)%grains)
+        end do
+        allocate(texture(n))
+
+        !Clusters hold the grains in the order in which they were supplied.
+        n = 0
+        do i = 1, size(this%clusters)
+            associate (grains => this%clusters(i)%grains)
+                do j = 1, size(grains)
+                    texture(n+j) = grains(j)%to_texture_point(this%phases)
+                end do
+                n = n + size(grains)
+            end associate
+        end do
+    end function
 
     pure function material_size(this) result(s)
         class(Material), intent(in):: this

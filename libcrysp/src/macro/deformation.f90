@@ -1,9 +1,8 @@
 module deformation
     use base_defs
     use conversions
-    use crysp_cluster
     use omp_lib
-    use meso
+    use crysp_material
     use incrementation
     use crysp_status
 
@@ -13,9 +12,8 @@ module deformation
     public:: deform
 contains
 
-    function deform(model, clusters, velocity_gradient, target_vm_strain, increments, target_stress_mode) result(stat)
-        class(MesoModel), intent(inout):: model
-        class(Cluster), dimension(:), intent(inout)::  clusters
+    function deform(mat, velocity_gradient, target_vm_strain, increments, target_stress_mode) result(stat)
+        type(Material), target, intent(inout)::        mat
         real(DP), dimension(3,3), intent(in)::         velocity_gradient
         real(DP), intent(in)::                         target_vm_strain
         type(StrainIncrement), dimension(:), allocatable, intent(out):: increments
@@ -73,7 +71,7 @@ contains
             end if
 
             !Set model state variables to correspond to end of time step so clusters can use this state to update their own state.
-            call model%update(velocity_gradient, t_inc)
+            call mat%meso_model%update(velocity_gradient, t_inc)
             total_weight = 0._DP
             homogenized_stress = 0._DP
             taylor_factor = 0._DP
@@ -81,13 +79,13 @@ contains
 
             !A worker thread cannot branch out of an !$OMP DO, so the first failure is recorded under a critical section and the
             !remaining iterations short-circuit. See the note on [[mode:simulate_strain_mode]].
-            !$OMP PARALLEL SHARED(model, clusters, velocity_gradient, t_inc, max_stress_inc, any_failed, first_failure) &
+            !$OMP PARALLEL SHARED(mat, velocity_gradient, t_inc, max_stress_inc, any_failed, first_failure) &
             !$OMP          PRIVATE(j, stress_cluster, slip_cluster, weight_cluster, cluster_stat)
                 !$OMP DO SCHEDULE(GUIDED) REDUCTION(+:total_weight, homogenized_stress, taylor_factor)
-                    do i = 1, size(clusters)
+                    do i = 1, size(mat%clusters)
                         if (any_failed) cycle
 
-                        cluster_stat = model%apply_step(clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
+                        cluster_stat = mat%meso_model%apply_step(mat%clusters(i), velocity_gradient, t_inc, stress_cluster, slip_cluster)
                         if (failed(cluster_stat)) then
                             !$OMP CRITICAL (crysp_first_failure)
                                 if (.not. any_failed) then
@@ -98,14 +96,14 @@ contains
                             cycle
                         end if
 
-                        weight_cluster = clusters(i)%weight
+                        weight_cluster = mat%clusters(i)%weight
                         total_weight = total_weight+weight_cluster
                         homogenized_stress = homogenized_stress+stress_cluster*weight_cluster
                         taylor_factor = taylor_factor + slip_cluster * weight_cluster
                         !$OMP CRITICAL
-                            do j=1,size(clusters(i)%grains)
-                                if (clusters(i)%grains(j)%stress_increment > max_stress_inc) &
-                                    max_stress_inc = clusters(i)%grains(j)%stress_increment
+                            do j=1,size(mat%clusters(i)%grains)
+                                if (mat%clusters(i)%grains(j)%stress_increment > max_stress_inc) &
+                                    max_stress_inc = mat%clusters(i)%grains(j)%stress_increment
                             end do
                         !$OMP END CRITICAL
                     end do
@@ -130,7 +128,8 @@ contains
             !Fix minimum estimated remaining increment size to 0.1% because interval likely grows due to hardening
             !Add 1 for current increment. Also makes sure we always have positive padding.
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain) / max(.001_DP, vm_strain_inc * inc_corr)) + 1
-            call incs%add(StrainIncrement(t_inc, def_grad, cur_vm_strain, homogenized_stress, taylor_factor), prob_rem_incs)
+            call incs%add(StrainIncrement(t_inc, def_grad, cur_vm_strain, homogenized_stress, taylor_factor, mat%get_texture()), &
+                          prob_rem_incs)
 
             !Force minimal amount of deformation before checking the stress mode because it is possible that the target stress mode
             !deviates quite a bit from the actual stress mode for the applied strain mode if the trust region solver gets stuck. In

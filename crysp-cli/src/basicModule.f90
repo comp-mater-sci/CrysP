@@ -27,7 +27,7 @@ module dmcBasicModule
     !>       `this%ParentClassName%method()`
     type:: BasicModule
           character(:), allocatable:: output_prefix
-          type(Parameter), dimension(:), allocatable:: material
+          type(MaterialHandle):: material
     contains
           procedure:: initialize =>  BasicModule_initialize
           procedure:: run => BasicModule_run

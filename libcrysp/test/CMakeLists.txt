@@ -31,6 +31,7 @@ endfunction()
 
 crysp_add_test(test_parameter)
 crysp_add_test(test_material_roundtrip)
+crysp_add_test(test_rotations)
 
 # test_parameter deliberately ends by aborting (shape mismatch must be detected), so its exit status is always non-zero.
 # Judge it on its output instead: any failed check prints "FAILED", and the abort must have reported the mismatch.

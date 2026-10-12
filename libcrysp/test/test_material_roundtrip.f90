@@ -1,23 +1,26 @@
 !> Roundtrip a material state through the serialized parameter stream.
 !>
-!> With the new public API the material state is passed as a serialized list of [[Parameter]] objects; libcrysp deserializes and
-!> serializes this list internally on every call. The material is built through the public API (crysp_new_material) with one
+!> Materials are held by libcrysp and referred to by handles; crysp_serialize_material and crysp_deserialize_material move them
+!> out of and into a list of [[Parameter]] objects. The material is built through the public API (crysp_new_material) with one
 !> phase per supported constitutive model (so every model's and hardening state's serialization is covered), using varying slip
 !> system sets, so that the grain -> phase index resolution in the serializer is exercised. It is deformed before serialization
 !> so that the serialized state is non-trivial (rotated grains, hardened CRSS, evolved dislocation densities, cluster weights).
 !>
 !> Equivalence is verified in two independent ways:
-!>  1. Structurally: a stream deserialized into a Material and serialized back is compared element by element to a pristine
-!>     stream of an identically built material. This is exhaustive over everything the serializer writes.
+!>  1. Structurally: a stream deserialized into a material and serialized back is compared element by element to the stream of
+!>     an identically built and deformed material. This is exhaustive over everything the serializer writes.
 !>  2. Behaviorally: two identically built materials are subjected to the same deformation and must produce the same stresses.
 !>     This catches wiring errors that the stream comparison cannot see (e.g. a grain pointing to the wrong phase object).
 !>
-!> Both mesoscopic models are tested since they serialize different cluster types.
+!> Both mesoscopic models are tested since they serialize different cluster types. The texture reported for a new material is
+!> checked against the orientations it was built from.
 program test_material_roundtrip
-    use iso_c_binding, only: C_INT
+    use iso_c_binding, only: C_INT, c_associated
     use base_defs, only: DP, TOLERANCE
-    use conversions, only: deg_to_rad
-    use libcrysp, only: crysp_new_material, crysp_strain_driven_deformation, crysp_simulate_strain_mode
+    use conversions, only: deg_to_rad, euler_to_rotation_matrix
+    use libcrysp, only: MaterialHandle, crysp_new_material, crysp_destroy_material, crysp_serialize_material, &
+                        crysp_deserialize_material, crysp_get_texture, crysp_strain_driven_deformation, crysp_simulate_strain_mode, &
+                        StrainIncrementData
     use crysp_status, only: Status, failed
     use conversions, only: from_c_string
     use micro, only: micro_get_signature, &
@@ -25,8 +28,7 @@ program test_material_roundtrip
                      HARDENING_DSH_EDGE, HARDENING_DSH_SCREW, HARDENING_DSH_LOOP, &
                      SLIP_SYSTEMS_FCC, SLIP_SYSTEMS_BCC24, SLIP_SYSTEMS_BCC48
     use meso, only: MESO_MODEL_ALAMEL, MESO_MODEL_FCTAYLOR
-    use incrementation, only: StrainIncrement
-    use crysp_material, only: Material
+    use crysp_material, only: TexturePoint
     use crysp_serialization
     use testing
 
@@ -74,15 +76,20 @@ contains
         integer, intent(in):: cp_model_id
         character(*), intent(in):: label
 
-        type(Parameter), dimension(:), allocatable:: original, restored, roundtripped
-        type(StrainIncrement), dimension(:), allocatable:: increments_original, increments_restored
+        type(MaterialHandle):: original, restored, material_
+        type(Parameter), dimension(:), allocatable:: stream, restored_stream, roundtripped
+        type(StrainIncrementData), dimension(:), allocatable:: increments_original, increments_restored
+        type(TexturePoint), dimension(:,:), allocatable:: textures_original, textures_restored
         real(DP), dimension(5):: strain_mode, stress_original, stress_restored
-        type(Material), target:: material_
+        type(TexturePoint), dimension(:), allocatable:: texture
         type(Status):: stat
+        integer:: i
 
         !Build two independent but identical material states through the public API.
         call make_material(cp_model_id, original)
         call make_material(cp_model_id, restored)
+
+        call check_texture(original, label)
 
         !Behavioral equivalence: a pure query first ...
         strain_mode = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP]
@@ -95,9 +102,9 @@ contains
                          tolerance=2._DP*TOLERANCE)
 
         !... then an evolution of the full state.
-        stat = crysp_strain_driven_deformation(original, V_GRAD, POST_STRAIN, increments_original)
+        stat = crysp_strain_driven_deformation(original, V_GRAD, POST_STRAIN, increments_original, textures_original)
         call check_ok(stat, label // ': strain_driven_deformation (original)')
-        stat = crysp_strain_driven_deformation(restored, V_GRAD, POST_STRAIN, increments_restored)
+        stat = crysp_strain_driven_deformation(restored, V_GRAD, POST_STRAIN, increments_restored, textures_restored)
         call check_ok(stat, label // ': strain_driven_deformation (restored)')
         call check_equal(size(increments_restored), size(increments_original), label // ': same number of increments')
         if (size(increments_restored) == size(increments_original)) then
@@ -111,10 +118,76 @@ contains
             end associate
         end if
 
-        !The deformed state must roundtrip (stream -> Material -> stream) to an identical stream.
-        call material_%deserialize(original)
-        roundtripped = material_%serialize()
-        call check_streams_equal(restored, roundtripped, label // ' (after continued deformation)')
+        !One texture per increment, and the last one is the texture of the deformed material.
+        stat = crysp_get_texture(original, texture)
+        call check_ok(stat, label // ': get_texture (deformed)')
+        call check_equal(size(textures_original, 1), size(texture), label // ': one texture point per grain per increment')
+        call check_equal(size(textures_original, 2), size(increments_original), label // ': one texture per increment')
+        if (size(textures_original, 1) == size(texture) .and. size(textures_original, 2) == size(increments_original)) then
+            associate (snapshot => textures_original(:,size(increments_original)))
+                do i = 1, size(texture)
+                    call check_equal(real(snapshot(i)%euler_angles, DP), real(texture(i)%euler_angles, DP), &
+                                     label // ': last texture matches the deformed material')
+                    call check_equal(int(snapshot(i)%phase_id), int(texture(i)%phase_id), &
+                                     label // ': last texture has the phases of the deformed material')
+                end do
+            end associate
+        end if
+
+        !The deformed state must roundtrip (material -> stream -> material -> stream) to an identical stream.
+        stat = crysp_serialize_material(original, stream)
+        call check_ok(stat, label // ': serialize (original)')
+        call check(.not. c_associated(original%ptr), label // ': serializing frees the material')
+        stat = crysp_deserialize_material(stream, material_)
+        call check_ok(stat, label // ': deserialize')
+
+        !A restored material reports a texture as well.
+        stat = crysp_get_texture(material_, texture)
+        call check_ok(stat, label // ': get_texture (roundtripped)')
+        if (.not. failed(stat)) &
+            call check_equal(size(texture), GRAINS_PER_PHASE*size(MODEL_IDS), label // ': texture has one point per grain')
+
+        stat = crysp_serialize_material(material_, roundtripped)
+        call check_ok(stat, label // ': serialize (roundtripped)')
+        stat = crysp_serialize_material(restored, restored_stream)
+        call check_ok(stat, label // ': serialize (restored)')
+        call check_streams_equal(restored_stream, roundtripped, label // ' (after continued deformation)')
+
+        !Destroying a handle that serialization already destroyed does nothing.
+        call crysp_destroy_material(material_)
+        call check(.not. c_associated(material_%ptr), label // ': a destroyed handle is null')
+
+        !A null handle is reported, not dereferenced.
+        stat = crysp_get_texture(material_, texture)
+        call check(failed(stat), label // ': get_texture rejects a null handle')
+    end subroutine
+
+    !> The texture of a new material is the texture it was built from, and every grain reports the phase it was supplied for.
+    !>
+    !> Orientations are compared as rotation matrices, since Euler angles are not unique, to single precision since that is what the
+    !> texture is reported in.
+    subroutine check_texture(mat, label)
+        type(MaterialHandle), intent(in):: mat
+        character(*), intent(in):: label
+
+        type(TexturePoint), dimension(:), allocatable:: texture
+        real(DP), dimension(3, GRAINS_PER_PHASE*size(MODEL_IDS)):: expected
+        type(Status):: stat
+        integer:: i
+
+        expected = reshape(deg_to_rad(ORIENTATIONS_DEG), shape(expected))
+
+        stat = crysp_get_texture(mat, texture)
+        call check_ok(stat, label // ': get_texture')
+        if (failed(stat)) return
+        call check_equal(size(texture), size(expected, 2), label // ': texture has one point per grain')
+        if (size(texture) /= size(expected, 2)) return
+
+        do i = 1, size(expected, 2)
+            call check_equal(euler_to_rotation_matrix(real(texture(i)%euler_angles, DP)), euler_to_rotation_matrix(expected(:,i)), &
+                             label // ': texture matches the input orientations', tolerance=1.e-6_DP)
+            call check_equal(int(texture(i)%phase_id), (i-1)/GRAINS_PER_PHASE + 1, label // ': texture point has the phase of its grain')
+        end do
     end subroutine
 
     !> Tolerance for comparing quantities computed with OpenMP reductions: tiny relative to the magnitude, huge relative to any
@@ -131,7 +204,7 @@ contains
     !> The material is assembled through the public API from the flat, C-compatible input lists.
     subroutine make_material(cp_model_id, mat)
         integer, intent(in):: cp_model_id
-        type(Parameter), dimension(:), allocatable, intent(out):: mat
+        type(MaterialHandle), intent(out):: mat
 
         integer(C_INT), dimension(size(MODEL_IDS)):: phase_sizes, deformation_mechanisms, hardening_model_ids
         real(DP), dimension(3, GRAINS_PER_PHASE*size(MODEL_IDS)):: orientations
