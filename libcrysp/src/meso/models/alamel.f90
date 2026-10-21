@@ -14,6 +14,7 @@ module alamel
     use micro
     use simplex
     use crysp_meso_model
+    use crysp_model
     use crysp_serialization
     use, intrinsic:: iso_c_binding, only: C_INT
     use crysp_input
@@ -43,10 +44,7 @@ module alamel
     type, extends(MesoModel):: AlamelModel
         real(DP), dimension(3, 3):: deformation_gradient                    !! Description of the current grain shape (at the beginning of the current time step). Considered identical for all grains.
     contains
-        procedure, nopass:: get_name       => alamel_get_name
-        procedure, nopass:: get_description => alamel_get_description
-        procedure, nopass:: get_signature  => alamel_get_signature
-        procedure, nopass:: get_input => alamel_get_input         !! Inherited from [[MesoModel]]
+        procedure:: describe               => alamel_describe
         procedure, nopass:: make_cluster => alamel_make_cluster
         procedure:: init                   => alamel_init                   !! Inherited from [[MesoModel]]
         procedure:: get_stress             => alamel_get_stress             !! Inherited from [[MesoModel]]
@@ -59,34 +57,28 @@ module alamel
 
 contains
 
-    pure function alamel_get_name() result(name)
-        character(:), allocatable:: name
+    function alamel_describe(this) result(desc)
+        class(AlamelModel), intent(in):: this
+        type(ModelDescriptor):: desc
 
-        name = "ALAMEL"
-    end function
+        desc = this%MesoModel%Model%describe()
+        desc%name = "ALAMEL"
+        desc%description = "Applies the global velocity gradient to clusters of 2 grains. 2 of the shear components " // &
+                           "along their boundary plane are relaxed such that the grains may deform independently, " // &
+                           "but the cluster as a whole still follows the imposed deformation. " // &
+                           "This implements partial stress equilibrium at the grain boundaries. " // &
+                           "The boundary orientation evolution is tracked during deformation."
+        desc%inputs = [Input("Boundaries", &
+                             "List of Euler angles in Bunge convention denoting the orientation of the grain " // &
+                             "boundary plane normals.", &
+                             INPUT_ANGLES_LIST)]
 
-    pure function alamel_get_description() result(description)
-        character(:), allocatable:: description
-
-        description = "Applies the global velocity gradient to clusters of 2 grains. 2 of the shear components " // &
-                      "along their boundary plane are relaxed such that the grains may deform independently, " // &
-                      "but the cluster as a whole still follows the imposed deformation. " // &
-                      "This implements partial stress equilibrium at the grain boundaries. " // &
-                      "The boundary orientation evolution is tracked during deformation."
-    end function
-
-    pure function alamel_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        signature = [INPUT_ANGLES_LIST]
-    end function
-
-    !> See [[MesoModel:get_parameters]]
-    pure function alamel_get_input() result(inputs)
-        type(Input), dimension(:), allocatable:: inputs !! - **Boundaries**: List of Euler angles in Bunge convention
-                                                            !! denoting the orientation of the grain boundary plane normals.
-
-        inputs = [Input(to_c_string("Boundaries",NAME_LEN), INPUT_ANGLES_LIST)]
+        !Mirrors alamel_serialize.
+        desc%model_state = [desc%model_state, &
+                            StateDescriptor("Deformation gradient", &
+                                            "Current cluster shape at the start of the time step, taken to be identical " // &
+                                            "for all clusters.", &
+                                            TYPE_REAL_MATRIX)]
     end function
 
     function alamel_make_cluster() result(clstr)
@@ -523,7 +515,7 @@ contains
     end function
 
     subroutine alamel_deserialize(this, params)
-        class(AlamelModel), target, intent(out):: this
+        class(AlamelModel), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         this%deformation_gradient = params(1)

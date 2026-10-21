@@ -27,10 +27,7 @@ module voce
         real(DP)   ::  transition_slip = 0._DP !! Value for total slip at which to transition from stage 1 to stage 2.
         type(Stage), dimension(2):: stages
     contains
-        procedure, nopass:: get_name        => voce_get_name
-        procedure, nopass:: get_description => voce_get_description
-        procedure, nopass:: get_signature   => voce_get_signature
-        procedure, nopass:: get_input       => voce_get_input          !! Inherited from [[ConstitutiveModel]]
+        procedure:: describe => voce_describe
         procedure:: init                    => voce_init                    !! Inherited from [[ConstitutiveModel]]
         procedure:: deform                  => voce_deform                  !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => voce_make_state
@@ -42,43 +39,66 @@ module voce
 
 contains
 
+    function voce_describe(this) result(desc)
+        class(ConstitutiveModelVoce), intent(in):: this
+        type(ModelDescriptor):: desc
 
-    pure function voce_get_name() result(name)
-        character(:), allocatable:: name
-
-        name = "VOCE"
-    end function
-
-    pure function voce_get_description() result(description)
-        character(:), allocatable:: description
-
-        description = "2-stage VOCE hardening law. Can also be used as 1-stage VOCE by setting the saturation stress of stage 1 equal to the initial stress of stage 1."
-    end function
-
-    pure function voce_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
-
-        allocate(signature(5), source=INPUT_REAL)
-    end function
-
-    !> See [[ConstitutiveModel:get_parameters]]
-    function voce_get_input() result(inputs)
-        type(Input), dimension(:), allocatable:: inputs !! - **TIII1**: Initial flow stress.
-                                                        !! - **TIIIS**: Saturation flow stress for the first stage.
-                                                        !! - **TIVS**: Saturation flow stress for the second stage.
-                                                        !! - **THIII1**: Initial hardening rate.
-                                                        !! - **THT**: Hardening rate at which to transition from stage 1 to stage 2.
-
-        inputs = [Input(to_c_string('TIII1',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("TIIIS")), &
-                  Input(to_c_string('TIIIS',NAME_LEN),  INPUT_REAL, upper_bound=serialize("TIVS"), upper_bound_inclusive=.true.), &
-                  Input(to_c_string('TIVS',NAME_LEN),   INPUT_REAL, lower_bound=serialize("TIIIS"), lower_bound_inclusive=.true.), &
-                  Input(to_c_string('THIII1',NAME_LEN), INPUT_REAL), &
-                  Input(to_c_string('THT',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize("THIII1"))]
+        desc = this%ConstitutiveModel%describe()
+        desc%name = "Voce"
+        desc%description = "2-stage Voce hardening law. Can also be used as single-stage by setting the stage 1 saturation CRSS equal to the stage 2 initial CRSS."
+        desc%inputs = [Input("Initial CRSS", &
+                             "Critical resolved shear stress on all slip systems before deformation", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize("TIIIS")), &
+                       Input("Stage 1 saturation CRSS", &
+                             "Maximum critical resolved shear stress on the slip systems in the first hardening stage.", &
+                             INPUT_REAL, &
+                             upper_bound=serialize("TIVS"), &
+                             upper_bound_inclusive=.true.), &
+                       Input('Saturation CRSS',  &
+                             "Maximum critical resolved shear stress the slip systems can reach.", &
+                             INPUT_REAL, &
+                             lower_bound=serialize("TIIIS"), &
+                             lower_bound_inclusive=.true.), &
+                       Input("Initial hardening rate", &
+                              type=INPUT_REAL), &
+                       Input('Transition hardening rate', &
+                             "Hardening rate at which to transition between stage 1 and stage 2.", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize("THIII1"))]
+       desc%model_state = [desc%model_state, &
+                           StateDescriptor("Transition slip", &
+                                           "Total accumulated slip at which the hardening regime transitions between stage 1 and 2.", &
+                                           TYPE_REAL), &
+                           StateDescriptor("Stage 1 saturation CRSS", &
+                                           "Maximum critical resolved shear stress for all systems at stage 1.", &
+                                           TYPE_REAL), &
+                           StateDescriptor("Stage 1 initial CRSS", &
+                                           "Critcal resolved shear stress for all systems in undeformed state.", &
+                                           TYPE_REAL), &
+                           StateDescriptor("Stage 1 initial hardening rate", &
+                                           "Initial hardening rate for all systems.", &
+                                           TYPE_REAL), &
+                           StateDescriptor("Stage 2 saturation CRSS", &
+                                           "Maximum critical resolved shear stress for all systems.", &
+                                           TYPE_REAL), &
+                           StateDescriptor("Stage 2 initial CRSS", &
+                                           "Critcal resolved shear stress for all systems at the transition between stage 1 and 2.", &
+                                           TYPE_REAL), &
+                           StateDescriptor("Stage 2 initial hardening rate", &
+                                           "Hardening rate for all systems at the transition between stage 1 and 2.", &
+                                           TYPE_REAL)]
+        desc%element_state = [desc%element_state, &
+                              StateDescriptor("Total slip", &
+                                              "Sum of total slip across all slip systems", &
+                                              TYPE_REAL)]
     end function
 
     !> See [[ConstitutiveModel:init]]
     subroutine voce_init(this, miller_indices, params)
-        class(ConstitutiveModelVoce), intent(out):: this
+        class(ConstitutiveModelVoce), intent(inout):: this
         integer, dimension(:,:,:), intent(in):: miller_indices
         type(Parameter), dimension(:), intent(in):: params
 
@@ -175,7 +195,7 @@ contains
     end function
 
     subroutine voce_deserialize(this, params)
-        class(ConstitutiveModelVoce), target, intent(out):: this
+        class(ConstitutiveModelVoce), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: i, &

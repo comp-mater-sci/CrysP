@@ -101,7 +101,7 @@ module crysp_serialization
             import State
             import Parameter
 
-            class(State), target, intent(out):: this
+            class(State), target, intent(inout):: this
             type(Parameter), dimension(:), intent(in):: params
         end subroutine
     end interface

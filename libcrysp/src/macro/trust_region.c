@@ -10,7 +10,7 @@
 
 //C view of crysp_status::Status (src/utils/status.f90), with NAME_LEN/MSG_LEN from src/utils/base_defs.f90 and only the status codes
 //used here. Keep them in sync: the struct is passed by value across the language boundary, so any mismatch corrupts it silently.
-#define CRYSP_NAME_LEN 32
+#define CRYSP_NAME_LEN 56
 #define CRYSP_MSG_LEN  128
 
 enum

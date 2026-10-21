@@ -1,5 +1,5 @@
 module crysp_input
-    use iso_c_binding
+    use iso_c_binding, only: C_NULL_PTR
     use crysp_serialization
 
     implicit none
@@ -22,16 +22,22 @@ module crysp_input
     !>
     !> Contains all needed information to enforce sanitization at the front-end.
     !> Any parameters needed by models should be described using this type.
-    type, bind(C):: Input
-        character(kind=C_CHAR), dimension(32)  :: name                    !! Name of the parameter
-        integer(C_INT)                         :: type                    !! Type of the parameter. Must exist in enum list at the
-                                                                          !! top of this module
-        character(kind=C_CHAR), dimension(1024):: description           = ""      !! Description of the parameter
-        logical(C_BOOL)                        :: optional              = .false. !! Indicate if the parameter is optional
-        type(Parameter)       :: lower_bound  = Parameter(C_NULL_PTR)!! Lower bound. May be a numerical value or the name of another parameter.
-        logical(C_BOOL)                        :: lower_bound_inclusive = .false. !! Ignored if lower_bound == ""
-        type(Parameter)       :: upper_bound   = Parameter(C_NULL_PTR)!! Upper bound. May be a numerical value or the name of another parameter.
-        logical(C_BOOL)                        :: upper_bound_inclusive = .false. !! Ignored if upper_bound == ""
-        type(Parameter):: default_value = Parameter(C_NULL_PTR)
+    !>
+    !> @note
+    !> This type is deliberately not `bind(C)`: it is the representation the core uses, so the text is held as ordinary
+    !> deferred-length Fortran strings rather than fixed NUL-terminated buffers. [[libcrysp]] converts to an interoperable
+    !> representation at the API boundary. Because the type is not interoperable, it can carry default initialization, which is
+    !> what lets the default structure constructor stand in for the hand-written one this type used to need.
+    !> @endnote
+    type:: Input
+        character(:), allocatable:: name                       !! Name of the parameter
+        character(:), allocatable:: description                !! Description of the parameter
+        integer:: type                                         !! Type of the parameter. Must exist in enum list at the
+                                                               !! top of this module
+        type(Parameter):: lower_bound = Parameter(C_NULL_PTR)  !! Lower bound. May be a numerical value or the name of another parameter.
+        logical:: lower_bound_inclusive = .false.              !! Ignored if lower_bound is unset
+        type(Parameter):: upper_bound = Parameter(C_NULL_PTR)  !! Upper bound. May be a numerical value or the name of another parameter.
+        logical:: upper_bound_inclusive = .false.              !! Ignored if upper_bound is unset
+        type(Parameter):: default_value = Parameter(C_NULL_PTR)!! Value to use when the caller supplies none.
     end type
 end module

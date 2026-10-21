@@ -50,7 +50,8 @@ contains
                   n_grains, &
                   i, &
                   n_params
-        integer, dimension(:), allocatable:: signature
+        class(ConstitutiveModel), allocatable:: hardening_model
+        type(ModelDescriptor):: desc
         integer(C_INT):: phase_sizes(1)
         integer(C_INT), allocatable:: deformation_mechanisms(:), &
                                        hardening_model_ids(:)
@@ -94,8 +95,9 @@ contains
 
         !Read hardening section
         call read_value(cnfunit, hardening_model_id)
-        call handle_crysp_status(micro_get_signature(hardening_model_id, signature))
-        n_params = size(signature)
+        call handle_crysp_status(micro_get_model(hardening_model_id, hardening_model))
+        desc = hardening_model%describe()
+        n_params = size(desc%inputs)
 
         !Hardening parameters must be provided in the order in which they are defined in the hardening models.
         if (n_params > 0) then

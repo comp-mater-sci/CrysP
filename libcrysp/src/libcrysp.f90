@@ -29,7 +29,11 @@ module libcrysp
 
     public
     private:: dereference_material, &
-             split_strain_increments
+             split_strain_increments, &
+             c_malloc, &
+             to_model_descriptor_c, &
+             to_inputs_c, &
+             to_state_descriptors_c
 
     character(*), parameter, private:: MOD_NAME = 'crysp'
 
@@ -65,7 +69,92 @@ module libcrysp
         integer(C_INT):: n_strain_increments !! Number of consecutive strain increments belonging to this stress increment.
     end type
 
+    type, bind(C):: Input_C
+        character(C_CHAR), dimension(NAME_LEN):: name
+        character(C_CHAR), dimension(DESC_LEN):: description
+        integer(C_INT):: type
+        type(Parameter):: lower_bound
+        logical(C_BOOL):: lower_bound_inclusive
+        type(Parameter):: upper_bound
+        logical(C_BOOL):: upper_bound_inclusive
+        type(Parameter):: default_value
+    end type
+
+    type, bind(C):: StateDescriptor_C
+        character(C_CHAR), dimension(NAME_LEN):: name
+        character(C_CHAR), dimension(DESC_LEN):: description
+        integer(C_INT):: type
+    end type
+
+    !> General information about a model supported by libCrysP, as reported to callers.
+    !>
+    !> The C-compatible counterpart of [[crysp_model:ModelDescriptor]]. Each list is a malloc'ed array of `n_...` elements, or
+    !> null if it is empty, and is released by the caller with `free()`. The bounds and default value of each input are owned by
+    !> the caller as well, and every non-null one must be released with [[parameter_destroy]].
+    type, bind(C):: ModelDescriptor_C
+        integer(C_INT):: id
+        character(C_CHAR), dimension(NAME_LEN):: name
+        character(C_CHAR), dimension(DESC_LEN):: description
+        integer(C_INT):: n_inputs
+        type(C_PTR):: inputs
+        integer(C_INT):: n_model_state
+        type(C_PTR):: model_state
+        integer(C_INT):: n_element_state
+        type(C_PTR):: element_state
+    end type
+
+    interface
+        !> Lists referenced through a `C_PTR` are malloc'ed, so that C can release them with `free()`.
+        function c_malloc(size) bind(C, name='malloc') result(ptr)
+            import C_SIZE_T, C_PTR
+            integer(C_SIZE_T), value:: size
+            type(C_PTR):: ptr
+        end function
+    end interface
+
 contains
+
+    !> List the mesoscopic models libCrysP supports.
+    !>
+    !> One descriptor per model. The IDs are those accepted as `meso_model_id` by [[crysp_new_material]]. See [[ModelDescriptor_C]] for
+    !> what the caller has to release.
+    function crysp_get_meso_models(model_descs) bind(C) result(stat)
+        type(ModelDescriptor_C), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported meso model
+        type(Status):: stat                                                           !! Return status. Should always be OK
+
+        integer:: i
+        class(MesoModel), allocatable:: model
+
+        allocate(model_descs(size(SUPPORTED_MESO_MODELS)))
+
+        do i = 1, size(SUPPORTED_MESO_MODELS)
+            stat = meso_get_model(SUPPORTED_MESO_MODELS(i), model)
+            if (failed(stat)) return
+
+            model_descs(i) = to_model_descriptor_c(model%describe())
+        end do
+    end function
+
+    !> List the microscopic (hardening) models libCrysP supports.
+    !>
+    !> One descriptor per model. The IDs are those accepted as `hardening_model_ids` by [[crysp_new_material]]. See [[ModelDescriptor_C]] for
+    !> what the caller has to release.
+    function crysp_get_micro_models(model_descs) bind(C) result(stat)
+        type(ModelDescriptor_C), dimension(:), allocatable, intent(out):: model_descs !! Descriptor for each supported micro model
+        type(Status):: stat                                                           !! Return status. Should always be OK
+
+        integer:: i
+        class(ConstitutiveModel), allocatable:: model
+
+        allocate(model_descs(size(SUPPORTED_HARDENING_MODELS)))
+
+        do i = 1, size(SUPPORTED_HARDENING_MODELS)
+            stat = micro_get_model(SUPPORTED_HARDENING_MODELS(i), model)
+            if (failed(stat)) return
+
+            model_descs(i) = to_model_descriptor_c(model%describe())
+        end do
+    end function
 
     !> Initialize a new material state.
     !>
@@ -369,5 +458,70 @@ contains
         end if
 
         call c_f_pointer(mat%ptr, mat_)
+    end function
+
+    !> Convert a model descriptor to its C-compatible counterpart. See [[ModelDescriptor_C]] for who owns what.
+    function to_model_descriptor_c(desc) result(desc_c)
+        type(ModelDescriptor), intent(in):: desc
+        type(ModelDescriptor_C):: desc_c
+
+        desc_c = ModelDescriptor_C(int(desc%id, C_INT), &
+                                   to_c_string(desc%name, NAME_LEN), &
+                                   to_c_string(desc%description, DESC_LEN), &
+                                   int(size(desc%inputs), C_INT), &
+                                   to_inputs_c(desc%inputs), &
+                                   int(size(desc%model_state), C_INT), &
+                                   to_state_descriptors_c(desc%model_state), &
+                                   int(size(desc%element_state), C_INT), &
+                                   to_state_descriptors_c(desc%element_state))
+    end function
+
+    !> Copy a list of inputs into a malloc'ed array of their C-compatible counterparts. Null if the list is empty.
+    !>
+    !> The bounds and default values are not copied but handed over: the result owns them.
+    function to_inputs_c(inputs) result(ptr)
+        type(Input), dimension(:), intent(in):: inputs
+        type(C_PTR):: ptr
+
+        integer:: i
+        type(Input_C):: mold
+        type(Input_C), dimension(:), pointer:: inputs_c
+
+        ptr = C_NULL_PTR
+        if (size(inputs) == 0) return
+
+        ptr = c_malloc(int(size(inputs), C_SIZE_T) * c_sizeof(mold))
+        call c_f_pointer(ptr, inputs_c, [size(inputs)])
+        do i = 1, size(inputs)
+            inputs_c(i) = Input_C(to_c_string(inputs(i)%name, NAME_LEN), &
+                                  to_c_string(inputs(i)%description, DESC_LEN), &
+                                  int(inputs(i)%type, C_INT), &
+                                  inputs(i)%lower_bound, &
+                                  logical(inputs(i)%lower_bound_inclusive, C_BOOL), &
+                                  inputs(i)%upper_bound, &
+                                  logical(inputs(i)%upper_bound_inclusive, C_BOOL), &
+                                  inputs(i)%default_value)
+        end do
+    end function
+
+    !> Copy a list of state descriptors into a malloc'ed array of their C-compatible counterparts. Null if the list is empty.
+    function to_state_descriptors_c(states) result(ptr)
+        type(StateDescriptor), dimension(:), intent(in):: states
+        type(C_PTR):: ptr
+
+        integer:: i
+        type(StateDescriptor_C):: mold
+        type(StateDescriptor_C), dimension(:), pointer:: states_c
+
+        ptr = C_NULL_PTR
+        if (size(states) == 0) return
+
+        ptr = c_malloc(int(size(states), C_SIZE_T) * c_sizeof(mold))
+        call c_f_pointer(ptr, states_c, [size(states)])
+        do i = 1, size(states)
+            states_c(i) = StateDescriptor_C(to_c_string(states(i)%name, NAME_LEN), &
+                                            to_c_string(states(i)%description, DESC_LEN), &
+                                            int(states(i)%type, C_INT))
+        end do
     end function
 end module

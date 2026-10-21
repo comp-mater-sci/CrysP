@@ -79,7 +79,7 @@ contains
     end function
 
     subroutine relaxation_deserialize(this, params)
-        class(Relaxation), target, intent(out):: this
+        class(Relaxation), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         this%type = params(1)

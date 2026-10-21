@@ -14,6 +14,7 @@ module dsh
     use base_defs
     use math_utils
     use constitutive_model
+    use crysp_model
     use crysp_status
     use slip_systems
     use conversions
@@ -54,7 +55,8 @@ module dsh
         procedure:: deserialize => dsh_state_deserialize
     end type
 
-    type, extends(ConstitutiveModel), abstract:: ConstitutiveModelDSH !! Model state common to all DSH models.
+    !Not abstract: variants call `this%ConstitutiveModelDSH%describe()`, which F2018 19.4.5 forbids on an abstract parent.
+    type, extends(ConstitutiveModel):: ConstitutiveModelDSH !! Model state common to all DSH models.
                                                                      !! Each DSH model variant extends this base model.
                                                                      !! See PhD thesis Peeters for the meaning of the fields.
         real(DP):: b            !! Magnitude of Burgers vector
@@ -80,61 +82,202 @@ module dsh
         real(DP), dimension(24, 6):: effslashb    = 0._DP
         real(DP), dimension(24, 6):: alfa_G_b_eff = 0._DP
     contains
-        procedure, nopass:: get_signature => dsh_get_signature  !! Inherited from ConstitutiveModel
-        procedure, nopass:: get_input => dsh_get_input  !! Inherited from ConstitutiveModel
         procedure:: deform                      => dsh_deform              !! Inherited from ConstitutiveModel
         procedure, nopass:: make_hardening_state => dsh_make_state
         procedure:: init_hardening_state => dsh_init_state
         procedure:: size => dsh_size
         procedure:: serialize  => dsh_serialize
         procedure:: deserialize => dsh_deserialize
+        procedure:: describe => dsh_describe
         procedure:: init_common, &
                     update_crss
     end type
 
 contains
 
-    pure function dsh_get_signature() result(signature)
-        integer, dimension(:), allocatable:: signature
+    !> Everything the DSH variants have in common. Each variant adds its own name and description.
+    function dsh_describe(this) result(desc)
+        class(ConstitutiveModelDSH), intent(in):: this
+        type(ModelDescriptor):: desc
 
-        allocate(signature(16), source=INPUT_REAL)
-    end function
+        integer:: i
 
-    !> See [[ConstitutiveModel:get_parameters]]
-    function dsh_get_input() result(inputs)
-        type(Input), dimension(:), allocatable:: inputs !! - **b**:     Magnitude of burgers vector [m]
-                                                        !! - **G**:     Shear modulus [MPa]
-                                                        !! - **alfa**:  Dislocation interaction parameter
-                                                        !! - **f**:     Volume fraction of Cell Block Boundaries
-                                                        !! - **tau0**:  Initial critical resolved shear stress on all slip systems [MPa]
-                                                        !! - **I**:     Immobilization coefficient of Cell Boundaries
-                                                        !! - **R**:     Recovery coefficient of cell boundaries [m]
-                                                        !! - **Iwd**:   Immobilization coefficient of CBBs
-                                                        !! - **Rwd**:   Recovery coefficient of CBBs [m]
-                                                        !! - **Rncg**:  Recovery coefficient of old CBBs and polarity of old CBBs [m]
-                                                        !! - **beta1**: 1st coeff. micro shear band cut-through of old CBBs
-                                                        !! - **beta2**: 2nd coeff. micro shear band cut-through of old CBBs
-                                                        !! - **Iwp**:   Immobilization coefficient of polarity of CBBs
-                                                        !! - **Rwp**:   Recovery coefficient of polarity of CBBs [m]
-                                                        !! - **Rrev**:  Recovery coefficient of polarity CBBs during bauschinger [m]
-                                                        !! - **R2**:    Recovery coefficient of CBs due to reversal polarity flux [m]
+        desc = this%ConstitutiveModel%describe()
+        desc%inputs = [Input('b', &
+                             "Magnitude of the Burgers vector [m]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E-8_C_DOUBLE)), &
+                       Input('G', &
+                             "Shear modulus [MPa]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(1.E4_C_DOUBLE), &
+                             upper_bound=serialize(5.E5_C_DOUBLE)), &
+                       Input('alfa', &
+                             "Dislocation interaction parameter", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(5._C_DOUBLE)), &
+                       Input('f', &
+                             "Volume fraction of cell block boundaries", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1._C_DOUBLE)), &
+                       Input('tau0', &
+                             "Initial critical resolved shear stress on all slip systems [MPa]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E4_C_DOUBLE)), &
+                       Input('I', &
+                             "Immobilization coefficient of cell boundaries", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(10._C_DOUBLE)), &
+                       Input('R', &
+                             "Recovery coefficient of cell boundaries [m]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(10._C_DOUBLE)), &
+                       Input('Iwd', &
+                             "Immobilization coefficient of cell block boundaries", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(10._C_DOUBLE)), &
+                       Input('Rwd', &
+                             "Recovery coefficient of cell block boundaries [m]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                       Input('Rncg', &
+                             "Recovery coefficient of old cell block boundaries and their polarity [m]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                       Input('beta1', &
+                             "1st coefficient of micro shear band cut-through of old cell block boundaries", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                       Input('beta2', &
+                             "2nd coefficient of micro shear band cut-through of old cell block boundaries", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                       Input('Iwp', &
+                             "Immobilization coefficient of the polarity of cell block boundaries", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                       Input('Rwp', &
+                             "Recovery coefficient of the polarity of cell block boundaries [m]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(1.E-6_C_DOUBLE)), &
+                       Input('Rrev', &
+                             "Recovery coefficient of cell block boundary polarity during Bauschinger [m]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(100._C_DOUBLE)), &
+                       Input('R2', &
+                             "Recovery coefficient of cell boundaries due to reversal polarity flux [m]", &
+                             INPUT_REAL, &
+                             lower_bound=serialize(0._C_DOUBLE), &
+                             upper_bound=serialize(100._C_DOUBLE))]
 
-        inputs = [Input(to_c_string('b',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-8_C_DOUBLE)), &
-                  Input(to_c_string('G',NAME_LEN),     INPUT_REAL, lower_bound=serialize(1.E4_C_DOUBLE), upper_bound=serialize(5.E5_C_DOUBLE)), &
-                  Input(to_c_string('alfa',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(5._C_DOUBLE)), &
-                  Input(to_c_string('f',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1._C_DOUBLE)), &
-                  Input(to_c_string('tau0',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E4_C_DOUBLE)), &
-                  Input(to_c_string('I',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  Input(to_c_string('R',NAME_LEN),     INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  Input(to_c_string('Iwd',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(10._C_DOUBLE)), &
-                  Input(to_c_string('Rwd',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Rncg',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('beta1',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('beta2',NAME_LEN), INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Iwp',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Rwp',NAME_LEN),   INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(1.E-6_C_DOUBLE)), &
-                  Input(to_c_string('Rrev',NAME_LEN),  INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE)), &
-                  Input(to_c_string('R2',NAME_LEN),    INPUT_REAL, lower_bound=serialize(0._C_DOUBLE), upper_bound=serialize(100._C_DOUBLE))]
+        !Mirrors dsh_serialize, in the same order.
+        desc%model_state = [desc%model_state, &
+                            StateDescriptor("b", &
+                                            "Magnitude of the Burgers vector [m]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("G", &
+                                            "Shear modulus [MPa]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("alfa", &
+                                            "Dislocation interaction parameter", &
+                                            TYPE_REAL), &
+                            StateDescriptor("f", &
+                                            "Volume fraction of cell block boundaries", &
+                                            TYPE_REAL), &
+                            StateDescriptor("tau0", &
+                                            "Initial critical resolved shear stress on all slip systems [MPa]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("I", &
+                                            "Immobilization coefficient of cell boundaries", &
+                                            TYPE_REAL), &
+                            StateDescriptor("R", &
+                                            "Recovery coefficient of cell boundaries [m]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("Iwd", &
+                                            "Immobilization coefficient of cell block boundaries", &
+                                            TYPE_REAL), &
+                            StateDescriptor("Rwd", &
+                                            "Recovery coefficient of cell block boundaries [m]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("Rncg", &
+                                            "Recovery coefficient of old cell block boundaries and their polarity [m]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("beta1", &
+                                            "1st coefficient of micro shear band cut-through of old cell block boundaries", &
+                                            TYPE_REAL), &
+                            StateDescriptor("beta2", &
+                                            "2nd coefficient of micro shear band cut-through of old cell block boundaries", &
+                                            TYPE_REAL), &
+                            StateDescriptor("Iwp", &
+                                            "Immobilization coefficient of the polarity of cell block boundaries", &
+                                            TYPE_REAL), &
+                            StateDescriptor("Rwp", &
+                                            "Recovery coefficient of the polarity of cell block boundaries [m]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("Rrev", &
+                                            "Recovery coefficient of cell block boundary polarity during Bauschinger [m]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("R2", &
+                                            "Recovery coefficient of cell boundaries due to reversal polarity flux [m]", &
+                                            TYPE_REAL), &
+                            StateDescriptor("RHOwpSAT", &
+                                            "Saturation value of the cell block boundary polarity. See PhD thesis Peeters.", &
+                                            TYPE_REAL), &
+                            StateDescriptor("RHOwdMIN", &
+                                            "Lower bound on the cell block boundary dislocation density. See PhD thesis Peeters.", &
+                                            TYPE_REAL), &
+                            StateDescriptor("RHOwpMIN", &
+                                            "Lower bound on the cell block boundary polarity. See PhD thesis Peeters.", &
+                                            TYPE_REAL), &
+                            StateDescriptor("RHOwpLOW", &
+                                            "Threshold on the cell block boundary polarity. See PhD thesis Peeters.", &
+                                            TYPE_REAL), &
+                            StateDescriptor("effslashb", &
+                                            "Per slip system and cell block boundary: effective boundary strength divided by the Burgers vector.", &
+                                            TYPE_REAL_MATRIX), &
+                            StateDescriptor("alfa_G_b_eff", &
+                                            "Per slip system and cell block boundary: product of interaction parameter, shear modulus and effective Burgers vector.", &
+                                            TYPE_REAL_MATRIX)]
+
+        !Mirrors dsh_state_serialize, including its loop over the six cell block boundaries.
+        desc%element_state = [desc%element_state, &
+                              StateDescriptor("RHOcb", "Dislocation density of the cell boundaries.", TYPE_REAL)]
+        do i = 1, 6
+            desc%element_state = [desc%element_state, &
+                                  StateDescriptor("CBB " // int_to_str(i) // ": RHOwd", &
+                                                  "Dislocation density of cell block boundary " // int_to_str(i) // ".", &
+                                                  TYPE_REAL), &
+                                  StateDescriptor("CBB " // int_to_str(i) // ": RHOwp", &
+                                                  "Polarity of cell block boundary " // int_to_str(i) // ".", &
+                                                  TYPE_REAL), &
+                                  StateDescriptor("CBB " // int_to_str(i) // ": RHOwdHOM", &
+                                                  "Homogeneous part of the dislocation density of cell block boundary " // int_to_str(i) // ".", &
+                                                  TYPE_REAL), &
+                                  StateDescriptor("CBB " // int_to_str(i) // ": accGAMMA_new", &
+                                                  "Slip accumulated on cell block boundary " // int_to_str(i) // " since it was formed.", &
+                                                  TYPE_REAL), &
+                                  StateDescriptor("CBB " // int_to_str(i) // ": RHOwd_ini", &
+                                                  "Dislocation density of cell block boundary " // int_to_str(i) // " when it was formed.", &
+                                                  TYPE_REAL)]
+        end do
+        desc%element_state = [desc%element_state, &
+                              StateDescriptor("Active CBBs", &
+                                              "Indices of the currently active cell block boundaries.", &
+                                              TYPE_INT_ARRAY)]
     end function
 
     !> Convert a generic HardeningState to a pointer to a DSHState object
@@ -455,7 +598,7 @@ contains
     end function
 
     subroutine dsh_deserialize(this, params)
-        class(ConstitutiveModelDSH), target, intent(out):: this
+        class(ConstitutiveModelDSH), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: offset
@@ -524,7 +667,7 @@ contains
     end function
 
     subroutine dsh_state_deserialize(this, params)
-        class(DSHState), target, intent(out):: this
+        class(DSHState), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
         integer:: i, offset
