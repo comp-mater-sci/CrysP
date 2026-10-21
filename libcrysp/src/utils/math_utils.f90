@@ -93,6 +93,15 @@ contains
         cross(3)=v1(1)*v2(2)-v1(2)*v2(1)
     end function
 
+    !> Find the number of angles corresponding to a particular angular interval.
+    pure function n_angles(res) result(pts)
+        real(DP), intent(in):: res
+        integer:: pts
+
+        pts = ceiling(2*PI / res - TOLERANCE)
+    end function
+
+
     !> Normalize an array of integer column vectors.
     !>
     !> Each column vector is normalized independently
@@ -257,7 +266,7 @@ contains
         real(DP), dimension(:), intent(in):: u
         real(DP), dimension(size(u)), intent(in):: v
 
-        vec_angle = acos((u .dot. v) / sqrt((u .dot. u) * (v .dot. v)))
+        vec_angle = acos((u .dot. v) / norm2(u) / norm2(v))
     end function
 
     !>4th order Runge-Kutta approximation of the differential equation given by d(x)/dt = F(x)

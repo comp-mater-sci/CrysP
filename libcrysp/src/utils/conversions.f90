@@ -189,6 +189,20 @@ module conversions
             real(DP), dimension(3,3), intent(in):: deformation_gradient  !! Deformation gradient
             real(DP)::                             von_mises_true_strain !! Von mises equivalent strain of the input.
         end function
+
+        !> Decompose an unscaled voigt vector into a deviatoric and hydrostatic part
+        module subroutine decompose_voigt(voigt, dev, hydro)
+            real(DP), dimension(6), intent(in):: voigt
+            real(DP), dimension(5), intent(out):: dev
+            real(DP), intent(out):: hydro
+        end subroutine
+         !> Decompose an unscaled voigt vector into a deviatoric and hydrostatic part
+        module subroutine recompose_voigt(voigt, dev, hydro)
+            real(DP), dimension(6), intent(out):: voigt
+            real(DP), dimension(5), intent(in):: dev
+            real(DP), intent(in):: hydro
+        end subroutine
+
     end interface
 end module
 
@@ -424,5 +438,15 @@ contains
 
     module procedure deformation_gradient_to_von_mises_true_strain
         von_mises_true_strain = strain_tensor_to_von_mises(deformation_gradient_to_true_strain(deformation_gradient))
+    end procedure
+
+    module procedure decompose_voigt
+        dev = unscaled_voigt_to_deviatoric(voigt)
+        hydro = sum(voigt(1:3)) / 3._DP
+    end procedure
+
+    module procedure recompose_voigt
+        voigt = deviatoric_to_unscaled_voigt(dev)
+        voigt(1:3) = voigt(1:3) + hydro
     end procedure
 end submodule

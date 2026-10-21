@@ -57,48 +57,38 @@ contains
         class(YldModule), target, intent(inout):: this
 
         integer:: i, &
-                  n_points, &
-                  out_unit
+                  out_unit, &
+                  points
 
         real(DP):: angle, &
-                   stress_norm
-        real(DP), allocatable:: angles(:), &
-                                target_stress_norms(:), &
-                                target_stress_modes(:,:), &
-                                strain_modes(:,:), &
-                                dev_stresses(:,:), &
-                                stress_mode_deviations(:,:)
+                   angles(n_angles(this%angular_resolution)), &
+                   target_stress_modes(6,n_angles(this%angular_resolution)), &
+                   stresses(6,n_angles(this%angular_resolution)), &
+                   strain_modes(6,n_angles(this%angular_resolution)), &
+                   stress_mode_deviations(n_angles(this%angular_resolution))
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
-
-        n_points = ceiling(2*PI / this%angular_resolution - TOLERANCE)
-        allocate(angles(n_points), target_stress_norms(n_points), target_stress_modes(5,n_points), strain_modes(5,n_points), &
-                 dev_stresses(5,n_points), stress_mode_deviations(5,n_points))
+        points = n_angles(this%angular_resolution)
 
         angle = 0._DP
-        do i=1,n_points
+        do i=1,points
             angles(i) = angle
             !Target stress mode is combination of basis vectors according to current angle
-            target_stress_modes(:,i) = unscaled_voigt_to_deviatoric(this%base(:,1)*cos(angle) + this%base(:,2)*sin(angle))
-            target_stress_norms(i) = norm2(target_stress_modes(:,i))
-            target_stress_modes(:,i) = target_stress_modes(:,i) / target_stress_norms(i)
-
+            target_stress_modes(:,i) = this%base(:,1)*cos(angle) + this%base(:,2)*sin(angle)
             angle = angle + this%angular_resolution
         end do
 
-        call handle_crysp_status(crysp_simulate_stress_modes(this%material, target_stress_modes, strain_modes, dev_stresses, &
-                                                             stress_mode_deviations))
+        call handle_crysp_status(crysp_simulate_stress_modes(this%material, &
+                                                             target_stress_modes, &
+                                                             strain_modes, &
+                                                             stresses, &
+                                                             residuals))
 
-        do i=1,n_points
-            !Because the direcion remains identical, ||stress||/||dev(stress)|| == ||stress_mode||/||dev(stress_mode)||
-            !Therefore, scaling ||dev_stress|| by ||stress_mode||/||dev(stress_mode)|| yields ||stress||.
-            !Since ||stress_mode|| == 1, ||stress|| == ||dev(stress)|| / ||dev(stress_mode)||
-            stress_norm = norm2(dev_stresses(:,i))/target_stress_norms(i)
-
+        do i=1,points
             call write_output_increment(out_unit, [rad_to_deg(angles(i)), &
-                                                   stress_norm, &
-                                                   deviatoric_to_unscaled_voigt(strain_modes(:,i)), &
-                                                   norm2(stress_mode_deviations(:,i))])
+                                                   norm2(stresses(:,i)), &
+                                                   strain_modes(:,i), &
+                                                   norm2(stress_mode_deviations(i))])
         end do
 
         close(out_unit)

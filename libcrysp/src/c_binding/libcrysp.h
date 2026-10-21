@@ -182,7 +182,7 @@ typedef struct {
 /* One increment of a deformation. */
 typedef struct {
     double velocity_gradient[3][3];
-    double residual[5];
+    double residual;
     double duration;
     double deformation_gradient[3][3];
     double vm_strain;
@@ -209,11 +209,14 @@ CryspStatus crysp_new_material(const CryspModelData *meso_model_data, int n_phas
  * holds the state reached when the failure occurred. *incs is a list of *n_incs increments, empty (NULL) on failure.
  */
 CryspStatus crysp_strain_driven_deformation(CryspMaterial *mat, double velocity_gradient[3][3], double target_vm_strain, int *n_incs, CryspIncrement **incs);
-CryspStatus crysp_stress_driven_deformation(CryspMaterial *mat, const double target_stress_mode[5], double target_vm_strain,
+CryspStatus crysp_stress_driven_deformation(CryspMaterial *mat, const double target_stress_mode[6], double target_vm_strain,
                                             int *n_incs, CryspIncrement **incs);
 
 /*
- * Mode arrays are 5 x n_modes. An n_modes below 1 is rejected with CRYSP_ERR_ARG. *mat is not modified.
+ * Modes are unscaled Voigt vectors (xx, yy, zz, yz, xz, xy); they do not need to have norm 1. Mode arrays are 6 x n_modes and
+ * residuals holds n_modes values. A stress mode is rejected with CRYSP_ERR_ARG if its deviatoric part is zero; returned stresses
+ * include the hydrostatic part, scaled with the deviatoric one. The hydrostatic part of a strain mode is ignored.
+ * An n_modes below 1 is rejected with CRYSP_ERR_ARG. *mat is not modified.
  */
 CryspStatus crysp_simulate_stress_modes(const CryspMaterial *mat, int n_modes, const double *target_stress_modes, double *strain_modes,
                                         double *stresses, double *residuals);

@@ -48,11 +48,25 @@ static int near(double a, double b, double tol) {
     return fabs(a - b) <= tol;
 }
 
-static void unit(const double v[5], double u[5]) {
+static void unit(const double v[6], double u[6]) {
     double length = 0.;
-    for (int i = 0; i < 5; i++) length += v[i] * v[i];
+    for (int i = 0; i < 6; i++) length += v[i] * v[i];
     length = sqrt(length);
-    for (int i = 0; i < 5; i++) u[i] = v[i] / length;
+    for (int i = 0; i < 6; i++) u[i] = v[i] / length;
+}
+
+/* Ratio of the hydrostatic part of a symmetric tensor to the norm of its deviatoric part. */
+static double hydro_ratio(const double t[3][3]) {
+    double hydro = (t[0][0] + t[1][1] + t[2][2]) / 3., dev = 0.;
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++) dev += pow(t[i][j] - (i == j ? hydro : 0.), 2);
+    return hydro / sqrt(dev);
+}
+
+/* hydro_ratio of a stress in unscaled Voigt notation. */
+static double hydro_ratio_voigt(const double v[6]) {
+    double t[3][3] = {{v[0], v[5], v[4]}, {v[5], v[1], v[3]}, {v[4], v[3], v[2]}};
+    return hydro_ratio(t);
 }
 
 /* Whether a fixed-size buffer holds a NUL-terminated string. */
@@ -332,7 +346,7 @@ static void test_simulation(void) {
 
     const CryspHardeningState *hs = &mat.clusters[0].grains[0].hardening_state;
     double crss_before = hs->crss[0];
-    double strain_mode[5] = {1., 0., 0., 0., 0.}, stress[5], stress_again[5];
+    double strain_mode[6] = {1., -1., 0., 0., 0., 0.}, stress[6], stress_again[6];
 
     if (check_ok(crysp_simulate_strain_modes(&mat, 1, strain_mode, stress), "crysp_simulate_strain_modes") &&
         check_ok(crysp_simulate_strain_modes(&mat, 1, strain_mode, stress_again), "crysp_simulate_strain_modes (again)")) {
@@ -340,31 +354,40 @@ static void test_simulation(void) {
         check(hs->crss[0] == crss_before, "simulate_strain_modes: the material is not modified");
     }
 
-    /* Two modes at once give the same result as each on its own: modes are 5 x n_modes, one after the other. */
-    double strain_modes[2][5] = {{0., 1., 0., 0., 0.}, {1., 0., 0., 0., 0.}}, stresses[2][5];
+    /* Two modes at once give the same result as each on its own: modes are 6 x n_modes, one after the other. */
+    double strain_modes[2][6] = {{0., 0., 0., 0., 0., 1.}, {1., -1., 0., 0., 0., 0.}}, stresses[2][6];
     if (check_ok(crysp_simulate_strain_modes(&mat, 2, &strain_modes[0][0], &stresses[0][0]), "crysp_simulate_strain_modes (2 modes)"))
         check(memcmp(stresses[1], stress, sizeof stress) == 0, "simulate_strain_modes: second of two modes matches a single call");
 
-    double target[5], residual[5];
+    double target[6], residual[1];
     unit(stress, target);
     check_ok(crysp_simulate_stress_modes(&mat, 1, target, strain_mode, stress, residual), "crysp_simulate_stress_modes");
 
-    double targets[2][5], found[2][5], residuals[2][5];
+    /* A hydrostatic part in the target comes back scaled with the deviatoric part; the norm of the target does not matter. */
+    double hydro_target[6], hydro_stress[6];
+    for (int i = 0; i < 6; i++) hydro_target[i] = 3. * target[i] + (i < 3 ? 0.5 : 0.);
+    if (check_ok(crysp_simulate_stress_modes(&mat, 1, hydro_target, strain_mode, hydro_stress, residual),
+                 "crysp_simulate_stress_modes (hydrostatic part)"))
+        check(near(hydro_ratio_voigt(hydro_stress), hydro_ratio_voigt(hydro_target), 1e-9),
+              "simulate_stress_modes: hydrostatic part scales with the deviatoric part: %.12g vs %.12g",
+              hydro_ratio_voigt(hydro_stress), hydro_ratio_voigt(hydro_target));
+
+    double targets[2][6], found[2][6], residuals[2];
     unit(stresses[0], targets[0]);
     unit(stresses[1], targets[1]);
-    check_ok(crysp_simulate_stress_modes(&mat, 2, &targets[0][0], &found[0][0], &stresses[0][0], &residuals[0][0]),
+    check_ok(crysp_simulate_stress_modes(&mat, 2, &targets[0][0], &found[0][0], &stresses[0][0], residuals),
              "crysp_simulate_stress_modes (2 modes)");
 
     /* Rejected before anything is simulated: the outputs are left alone. */
-    double untouched[5] = {7., 7., 7., 7., 7.}, out[5];
+    double untouched[6] = {7., 7., 7., 7., 7., 7.}, out[6];
     memcpy(out, untouched, sizeof out);
     CryspStatus stat = crysp_simulate_strain_modes(&mat, -1, strain_mode, out);
     check(stat.code == CRYSP_ERR_ARG, "simulate_strain_modes: negative n_modes: expected CRYSP_ERR_ARG, got %d", stat.code);
     stat = crysp_simulate_stress_modes(&mat, -1, target, strain_mode, out, residual);
     check(stat.code == CRYSP_ERR_ARG, "simulate_stress_modes: negative n_modes: expected CRYSP_ERR_ARG, got %d", stat.code);
-    targets[1][0] += 1.;
-    stat = crysp_simulate_stress_modes(&mat, 2, &targets[0][0], &found[0][0], &stresses[0][0], &residuals[0][0]);
-    check(stat.code == CRYSP_ERR_ARG, "simulate_stress_modes: non-unit mode: expected CRYSP_ERR_ARG, got %d", stat.code);
+    for (int i = 0; i < 6; i++) targets[1][i] = i < 3 ? 1. : 0.;
+    stat = crysp_simulate_stress_modes(&mat, 2, &targets[0][0], &found[0][0], &stresses[0][0], residuals);
+    check(stat.code == CRYSP_ERR_ARG, "simulate_stress_modes: hydrostatic mode: expected CRYSP_ERR_ARG, got %d", stat.code);
     check(memcmp(out, untouched, sizeof out) == 0, "simulate_*_modes: outputs untouched on a rejected call");
 
     stat = crysp_simulate_strain_modes(&mat, 0, NULL, NULL);
@@ -411,24 +434,29 @@ static void test_deformation(void) {
     crysp_destroy_material(&copy);
 
     /*
-     * Target the stress direction the material produces for strain mode (1,0,0,0,0). A hand-picked direction such as
-     * (0.6, -0.8, 0, 0, 0) fails in detect_taylor_ambiguity under gfortran, a core issue unrelated to the binding.
+     * Target the stress direction the material produces for strain mode (1,-1,0,0,0,0), plus a hydrostatic part. A hand-picked
+     * direction such as (0.6, -0.8, 0, 0, 0) in deviatoric space fails in detect_taylor_ambiguity under gfortran, a core issue
+     * unrelated to the binding.
      */
-    double strain_mode[5] = {1., 0., 0., 0., 0.}, stress[5], target[5];
+    double strain_mode[6] = {1., -1., 0., 0., 0., 0.}, stress[6], target[6];
     if (!check_ok(crysp_simulate_strain_modes(&mat, 1, strain_mode, stress), "crysp_simulate_strain_modes")) {
         crysp_destroy_material(&mat);
         return;
     }
     unit(stress, target);
+    for (int i = 0; i < 3; i++) target[i] += 0.5;
     int n_incs = -1;
     CryspIncrement *incs = NULL;
     if (check_ok(crysp_stress_driven_deformation(&mat, target, 1.5 * TARGET_VM_STRAIN, &n_incs, &incs),
                  "stress driven deformation")) {
-        int no_texture = 0, decreasing = 0;
+        int no_texture = 0, decreasing = 0, bad_hydro = 0;
         for (int i = 0; i < n_incs; i++) no_texture += incs[i].n_grains != 2 * N_GRAINS;
+        for (int i = 0; i < n_incs; i++) bad_hydro += !near(hydro_ratio(incs[i].stress), hydro_ratio_voigt(target), 1e-9);
         for (int i = 1; i < n_incs; i++) decreasing += incs[i].vm_strain < incs[i - 1].vm_strain;
         check(n_incs > 0 && no_texture == 0, "stress driven deformation: every increment has a texture");
         check(decreasing == 0, "stress driven deformation: the strain accumulates over all increments");
+        check(bad_hydro == 0, "stress driven deformation: hydrostatic part scales with the deviatoric part (%d of %d off)",
+              bad_hydro, n_incs);
         for (int i = 0; i < n_incs; i++) crysp_destroy_increment(&incs[i]);
         free(incs);
     }

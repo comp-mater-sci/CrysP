@@ -145,7 +145,7 @@ contains
     function crysp_stress_driven_deformation_c(mat, target_stress_mode, target_vm_strain, n_incs, incs) &
             bind(C, name='crysp_stress_driven_deformation') result(stat)
         type(Material_C), intent(inout):: mat
-        real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode
+        real(C_DOUBLE), dimension(6), intent(in):: target_stress_mode
         real(C_DOUBLE), value, intent(in):: target_vm_strain
         integer(C_INT), intent(out):: n_incs
         type(C_PTR), intent(out):: incs !! n_incs * type(Increment_C)
@@ -179,10 +179,10 @@ contains
             bind(C, name='crysp_simulate_stress_modes') result(stat)
         type(Material_C), intent(in):: mat
         integer(C_INT), value, intent(in):: n_modes
-        real(C_DOUBLE), dimension(5, n_modes), intent(in):: target_stress_modes
-        real(C_DOUBLE), dimension(5, n_modes), intent(out):: strain_modes
-        real(C_DOUBLE), dimension(5, n_modes), intent(out):: stresses
-        real(C_DOUBLE), dimension(5, n_modes), intent(out):: stress_mode_deviations
+        real(C_DOUBLE), dimension(6, n_modes), intent(in):: target_stress_modes
+        real(C_DOUBLE), dimension(6, n_modes), intent(out):: strain_modes
+        real(C_DOUBLE), dimension(6, n_modes), intent(out):: stresses
+        real(C_DOUBLE), dimension(n_modes), intent(out):: stress_mode_deviations
         type(Status_C):: stat
 
         type(Material), target:: mat_fort
@@ -200,8 +200,8 @@ contains
     function crysp_simulate_strain_modes_c(mat, n_modes, strain_modes, stresses) bind(C, name='crysp_simulate_strain_modes') result(stat)
         type(Material_C), intent(in):: mat
         integer(C_INT), value, intent(in):: n_modes
-        real(C_DOUBLE), dimension(5, n_modes), intent(in):: strain_modes
-        real(C_DOUBLE), dimension(5, n_modes), intent(out):: stresses
+        real(C_DOUBLE), dimension(6, n_modes), intent(in):: strain_modes
+        real(C_DOUBLE), dimension(6, n_modes), intent(out):: stresses
         type(Status_C):: stat
 
         type(Material), target:: mat_fort
