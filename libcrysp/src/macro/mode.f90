@@ -7,6 +7,7 @@ module mode
     use omp_lib
     use meso
     use crysp_status
+    use crysp_utils_c, only: Status_C, assignment(=)
 
     implicit none
 
@@ -29,13 +30,13 @@ module mode
 
     !> Interface of the trust region solver in C.
     !>
-    !> Needed because Fortran bindings for MKL are broken. MKL error codes are translated into a [[crysp_status:Status]] on the C side;
-    !> a failure reported by [[get_stress]] aborts the solver and is returned unchanged.
+    !> Needed because Fortran bindings for MKL are broken. MKL error codes are translated into a [[crysp_utils_c:Status_C]] on the C
+    !> side; a failure reported by [[get_stress]] aborts the solver and is returned unchanged.
     interface
         function trust_region_solve(clusters_ptr, target_stress_mode, strain_mode, stress, residual) bind(C) result(stat)
             import C_DOUBLE, &
                    C_PTR, &
-                   Status
+                   Status_C
 
             type(C_PTR)::                     clusters_ptr       !! Pointer to the wrapper of the clusters so the callback in
                                                                  !! Fortran can calculate the stress state
@@ -45,7 +46,7 @@ module mode
             real(C_DOUBLE), dimension(5)::    stress             !! Actuall stress state found. Normalizing it should yield
                                                                  !! something very close, but not identical to the target stress mode.
             real(C_DOUBLE), dimension(5)::    residual           !! Residual of the optimization
-            type(Status)::                    stat
+            type(Status_C)::                  stat
         end function
     end interface
 
@@ -58,7 +59,7 @@ contains
         type(C_PTR), intent(in):: wrapper_ptr          !! C pointer to the clusters wrapper object needed for simulation.
         real(C_DOUBLE), dimension(5), intent(in):: strain_rate  !! Strain rate for which to calculate the stress state.
         real(C_DOUBLE), dimension(5):: stress                   !! Stress state for the provided strain rate.
-        type(Status):: stat                                     !! `CRYSP_OK`, or the failure reported by the simulation.
+        type(Status_C):: stat                                   !! `CRYSP_OK`, or the failure reported by the simulation.
 
         type(Wrapper), pointer:: wrap
         class(MesoModel), pointer:: model

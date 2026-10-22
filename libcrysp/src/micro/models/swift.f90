@@ -2,9 +2,9 @@
 
 module swift
     use base_defs
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_status
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
     use conversions
     use crysp_model
@@ -14,6 +14,8 @@ module swift
 
     private
     public:: ConstitutiveModelSwift
+
+    integer, parameter:: STATE_SIZE = 3
 
     !> Classic isotropic SWIFT hardening model.
     type, extends(ConstitutiveModel):: ConstitutiveModelSwift
@@ -26,7 +28,6 @@ module swift
         procedure:: deform                 => swift_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => swift_make_state
         procedure:: init_hardening_state => swift_init_state
-        procedure:: size => swift_size
         procedure:: serialize => swift_serialize
         procedure:: deserialize => swift_deserialize
     end type
@@ -43,29 +44,29 @@ contains
         desc%inputs = [Input('crss0', &
                              "Critical resolved shear stress on all slip systems in undeformed state.", &
                              INPUT_REAL, &
-                             lower_bound = serialize(0._C_DOUBLE)),  &
+                             lower_bound = serialize(0._DP)),  &
                        Input('gamma0', &
                               "Pre-existing accumulated slip over all slip systems", &
                               INPUT_REAL, &
-                              lower_bound = serialize(0._C_DOUBLE)), &
+                              lower_bound = serialize(0._DP)), &
                        Input('n', &
                              "Hardening exponent", &
                              INPUT_REAL, &
-                             lower_bound = serialize(0._C_DOUBLE))]
+                             lower_bound = serialize(0._DP))]
         desc%model_state = [desc%model_state, &
                             StateDescriptor("k", &
                                             "Scaling factor", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("gammma_0", &
                                             "Pre-existing accumulated slip over all slip systems", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("n", &
                                             "Hardening exponent", &
-                                            TYPE_REAL)]
+                                            TYPE_REAL, 0)]
         desc%element_state = [desc%element_state, &
                               StateDescriptor("Total slip", &
                                               "Sum of total slip across all slip systems", &
-                                              TYPE_REAL)]
+                                              TYPE_REAL, 0)]
 
     end function
 
@@ -117,13 +118,6 @@ contains
         state%crss = this%k * (this%gamma0**this%n)
     end subroutine
 
-    pure function swift_size(this) result(size)
-        class(ConstitutiveModelSwift), intent(in):: this
-        integer:: size
-
-        size = this%ConstitutiveModel%size() + 3
-    end function
-
     function swift_serialize(this) result(params)
         class(ConstitutiveModelSwift), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
@@ -131,10 +125,10 @@ contains
         integer:: offset
         type(Parameter), dimension(:), allocatable:: base
 
-        allocate(params(this%size()))
-
         base = this%ConstitutiveModel%serialize()
         offset = size(base)
+
+        allocate(params(offset+STATE_SIZE))
         params(:offset) = base
 
         params(offset+1) = this%k
@@ -148,9 +142,8 @@ contains
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params)
-
-        offset = this%ConstitutiveModel%size()
+        offset = size(params)-STATE_SIZE
+        call this%ConstitutiveModel%deserialize(params(:offset))
 
         this%k = params(offset+1)
         this%gamma0 = params(offset+2)

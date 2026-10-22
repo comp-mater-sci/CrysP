@@ -15,7 +15,7 @@ module meso
     use crysp_meso_model
     use crysp_grain
     use crysp_model
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
     use crysp_status
     use conversions
@@ -51,12 +51,9 @@ module meso
         !> creation of temporaries passed through the stack by IFX, which may lead to a stack overflow/segfault. Only the
         !> [[crysp_status:Status]] is returned by value.
         !> @endnote
-        module function meso_init(model_id, grains, params, model, clusters) result(stat)
-            integer, intent(in):: model_id                               !! ID of the model to be initialized. Must exist in the enum defined in this module.
+        module function meso_init(model_data, grains, model, clusters) result(stat)
+            type(ModelData), intent(in):: model_data                               !! ID of the model to be initialized. Must exist in the enum defined in this module.
             type(Grain), dimension(:), intent(in):: grains  !! Initialized grains to be distributed among the clusters.
-            type(Parameter), dimension(:), intent(in):: params   !! List of parameters with which to initialize the model. Must correspond
-                                                                              !! to the parameter list obtained by calling
-                                                                              !! meso_get_parameters(model_id) and be properly initialized.
             class(MesoModel), allocatable, intent(out):: model                !! The initialized mesoscopic model.
             class(Cluster), dimension(:), allocatable, intent(out):: clusters !! Initialized clusters which form the unit of
                                                                               !! simulation at the mesoscopic level.
@@ -104,9 +101,9 @@ contains
 
     !> See interface definition in meso module.
     module procedure meso_init
-        stat = meso_get_model(model_id, model)
+        stat = meso_get_model(model_data%id, model)
         if (failed(stat)) return
 
-        call model%init(grains, params, clusters)
+        call model%init(grains, model_data%parameters, clusters)
     end procedure
 end submodule

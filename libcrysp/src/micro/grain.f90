@@ -1,15 +1,14 @@
 module crysp_grain
     use conversions
     use crysp_status
-    use constitutive_model
-    use crysp_serialization
+    use crysp_constitutive_model
+    use crysp_parameters
     use iso_c_binding
 
     implicit none
 
     private
-    public:: Grain, &
-             TexturePoint
+    public:: Grain
 
 
     !>Texture-related state variables for single grain
@@ -28,18 +27,7 @@ module crysp_grain
     contains
         procedure:: init   => grain_init
         procedure:: deform => grain_deform
-        procedure:: size => grain_get_size
-        procedure:: serialize => grain_serialize
-        procedure:: deserialize => grain_deserialize
-        procedure:: to_texture_point => grain_to_texture_point
     end type grain
-
-    !> Orientation of a single grain.
-    type, bind(C):: TexturePoint
-        real(C_FLOAT), dimension(3):: euler_angles !! Euler angle triplet in Bunge convention, in radians.
-        integer(C_INT):: phase_id                  !! Index of the grain's phase in the phase list of the material.
-    end type
-
 contains
 
     !Initialize grain.
@@ -89,71 +77,5 @@ contains
         !Upper bound on stress increment is max relative increment of CRSS multiplied by rotated stress tensor.
         stress_new = maxval(this%hardening_state%crss/crss_old) * (stress .toframe. transformation_matrix(this%orientation, orientation_old))
         this%stress_increment = norm2(stress_new-stress) / norm2(stress)
-    end function
-
-
-    pure function grain_get_size(this) result(size)
-        class(Grain), intent(in):: this
-        integer:: size
-
-        size = 3 + this%hardening_state%size()
-    end function
-
-    function grain_serialize(this, phases) result(params)
-        class(Grain), target, intent(in):: this
-        type(Phase), dimension(:), target, intent(in):: phases
-        type(Parameter), dimension(:), allocatable:: params
-
-        integer:: i
-
-        allocate(params(this%size()))
-
-        do i = 1, size(phases)
-            if (c_associated(c_loc(phases(i)), c_loc(this%phase))) then
-                params(1) = i
-                exit
-            end if
-        end do
-
-        params(2) = this%orientation
-        params(3) = this%stress_increment
-        params(4:) = this%hardening_state%serialize()
-    end function
-
-    subroutine grain_deserialize(this, params, phases)
-        class(Grain), target, intent(out):: this
-        type(Parameter), dimension(:), intent(in):: params
-        type(Phase), dimension(:), target, intent(in):: phases
-
-        integer:: phase_id
-
-        phase_id = params(1)
-        this%phase => phases(phase_id)
-
-        this%orientation = params(2)
-        this%stress_increment = params(3)
-        this%hardening_state = this%phase%model%make_hardening_state()
-
-        call this%hardening_state%deserialize(params(4:))
-    end subroutine
-
-    !> Get the orientation of a grain as a texture point.
-    function grain_to_texture_point(this, phases) result(point)
-        class(Grain), intent(in):: this
-        type(Phase), dimension(:), target, intent(in):: phases !! Phases of the material the grain belongs to.
-        type(TexturePoint):: point
-
-        integer:: i
-
-        do i=1,size(phases)
-            if (c_associated(c_loc(phases(i)), c_loc(this%phase))) then
-                point%phase_id = i
-                exit
-            end if
-        end do
-
-        !A grain orientation is a proper rotation by construction, so the cheap conversion applies: it is called once per grain
-        !per increment when textures are snapshotted, where the polar decomposition would dominate the cost.
-        point%euler_angles = real(rotation_matrix_to_euler_angles(this%orientation), C_FLOAT)
     end function
 end module

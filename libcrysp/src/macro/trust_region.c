@@ -1,14 +1,14 @@
 #include <assert.h>
 #include <mkl.h>
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 
 /*
  * This library calculates finds the strain mode corresponding to a given imposed stress state using a trust-region method. This library is implemented in C because it relies on Intel MKL and the Fortran interface for the specific MKL procedures used contains bugs (as of 2025.0.1).
  *
  */
 
-//C view of crysp_status::Status (src/utils/status.f90), with NAME_LEN/MSG_LEN from src/utils/base_defs.f90 and only the status codes
+//C view of crysp_status::Status_C (src/utils/status.f90), with NAME_LEN/MSG_LEN from src/utils/base_defs.f90 and only the status codes
 //used here. Keep them in sync: the struct is passed by value across the language boundary, so any mismatch corrupts it silently.
 #define CRYSP_NAME_LEN 56
 #define CRYSP_MSG_LEN  128
@@ -55,14 +55,17 @@ inline void normalize(double* stress_state)
         stress_state[i] /= norm;
 }
 
-//Build a failed status for an MKL routine that did not return TR_SUCCESS. Like crysp_status::fail, all strings are truncated to fit and
-//unused characters are NUL.
+//Build a failed status for an MKL routine that did not return TR_SUCCESS. All strings are truncated to fit and unused characters are NUL.
 static crysp_status mkl_failure(const char* proc_name, const char* mkl_routine, MKL_INT mkl_code)
 {
+    const char* reason = mkl_code == TR_INVALID_OPTION ? "invalid option"
+                       : mkl_code == TR_OUT_OF_MEMORY  ? "out of memory"
+                       :                                 "unknown error";
+
     crysp_status stat = {.code = CRYSP_ERR};
     snprintf(stat.mod_name, sizeof stat.mod_name, "%s", MOD_NAME);
     snprintf(stat.proc_name, sizeof stat.proc_name, "%s", proc_name);
-    snprintf(stat.message, sizeof stat.message, "MKL %s failed with code %d", mkl_routine, (int)mkl_code);
+    snprintf(stat.message, sizeof stat.message, "MKL %s failed: %s (code %d)", mkl_routine, reason, (int)mkl_code);
     return stat;
 }
 
@@ -139,6 +142,7 @@ crysp_status calc_jacobi(const void* clusters, const double* strain_mode, double
 }
 
 //Calculate the strain mode corresponding as closely as possible to the imposed stress state. All inputs and outputs must be initialized externally and are of dimension DIM, except for jacobi, which is of dimension DIM*DIM.
+//Returns an OK status, the status returned by get_stress if it failed, or a CRYSP_ERR status describing the MKL routine that failed.
 crysp_status trust_region_solve(const void* clusters, const double* target_stress_mode, double* strain_mode, double* stress, double* residual)
 {
     const char PROC_NAME[] = "trust_region_solve";

@@ -9,11 +9,11 @@ module full_constraints_taylor
     use crysp_cluster
     use crysp_status
     use taylor_ambiguity
-    use micro
+    use crysp_micro
     use simplex
     use crysp_meso_model
     use crysp_model
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
 
     implicit none
@@ -23,6 +23,8 @@ module full_constraints_taylor
 
     character(*), parameter:: MOD_NAME = "full_constraints_taylor"
 
+    integer, parameter:: CLUSTER_STATE_SIZE = 2 !! ind_basis_systems, inverse_basis
+
     !> Cluster-specific state needed for full constraints Taylor simulations.
     !>
     !> A Taylor cluster only holds 1 grain.
@@ -30,7 +32,6 @@ module full_constraints_taylor
         integer, dimension(5):: ind_basis_systems
         real(DP), dimension(5, 5):: inverse_basis
     contains
-        procedure:: size => taylor_cluster_size
         procedure:: serialize => taylor_cluster_serialize
         procedure:: deserialize => taylor_cluster_deserialize
     end type
@@ -218,41 +219,33 @@ contains
         real(DP), intent(in):: time                              !! Duration of the time step.
     end subroutine
 
-    pure function taylor_cluster_size(this) result(size)
-        class(TaylorCluster), intent(in):: this
-        integer:: size
-
-        size = this%Cluster%size() + 2
-    end function
-
-    function taylor_cluster_serialize(this, phases) result(params)
+    function taylor_cluster_serialize(this) result(params)
         class(TaylorCluster), target, intent(in):: this
-        type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(:), allocatable:: params
 
-        integer:: base_size
+        integer:: offset
         type(Parameter), dimension(:), allocatable:: base
 
-        allocate(params(this%size()))
+        base = this%Cluster%serialize()
+        offset = size(base)
 
-        base = this%Cluster%serialize(phases)
-        base_size = size(base)
-        params(:base_size) = base
-        params(base_size+1) = this%ind_basis_systems
-        params(base_size+2) = this%inverse_basis
+        allocate(params(offset+CLUSTER_STATE_SIZE))
+        params(:offset) = base
+
+        params(offset+1) = this%ind_basis_systems
+        params(offset+2) = this%inverse_basis
     end function
 
-    subroutine taylor_cluster_deserialize(this, params, phases)
-        class(TaylorCluster), target, intent(out):: this
+    subroutine taylor_cluster_deserialize(this, params)
+        class(TaylorCluster), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
-        type(Phase), dimension(:), target, intent(in):: phases
 
-        integer:: base_size
+        integer:: offset
 
-        call this%Cluster%deserialize(params, phases)
+        offset = size(params)-CLUSTER_STATE_SIZE
+        call this%Cluster%deserialize(params(:offset))
 
-        base_size = this%Cluster%size()
-        this%ind_basis_systems = params(base_size+1)
-        this%inverse_basis = params(base_size+2)
+        this%ind_basis_systems = params(offset+1)
+        this%inverse_basis = params(offset+2)
     end subroutine
 end module

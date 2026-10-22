@@ -30,7 +30,7 @@ module dmcQRS
 contains
 
     subroutine qrs_initialize(this, cnfunit)
-        class(QRSModule), intent(inout):: this
+        class(QRSModule), target, intent(inout):: this
         integer, intent(in)::             cnfunit
 
         character(*), parameter:: PROC_NAME = 'QRSModule_readconfig'
@@ -45,7 +45,7 @@ contains
     end subroutine
 
     subroutine qrs_run(this)
-        class(QRSModule), intent(inout)      :: this
+        class(QRSModule), target, intent(inout)      :: this
 
         integer:: i, &
                   out_unit, &

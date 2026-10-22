@@ -1,7 +1,40 @@
 module crysp_model
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
+
     implicit none
+
+    !> Interface implemented by every serializable type.
+    !>
+    !> @note
+    !> `serialize` returns an allocatable array rather than an explicit-shape result `dimension(this%size())`. With the latter,
+    !> the shape of the result is a specification expression that the *caller* evaluates, and IFX (as of 2026.1) evaluates
+    !> `this%size()` there using the declared rather than the dynamic type of `this`. A call through a polymorphic object then
+    !> yields an array of the parent type's size, silently truncating the state. Letting the callee allocate the result avoids any
+    !> dependence on how the compiler resolves the spec expression, and also avoids walking the state tree twice per call.
+    !> @endnote
+    type, abstract:: State
+    contains
+        procedure(state_serialize), deferred:: serialize
+        procedure(state_deserialize), deferred:: deserialize
+    end type
+
+    abstract interface
+        function state_serialize(this) result(params)
+            import State
+            import Parameter
+
+            class(State), target, intent(in):: this
+            type(Parameter), dimension(:), allocatable:: params !! Allocated to this%size() by the callee.
+        end function
+        subroutine state_deserialize(this, params)
+            import State
+            import Parameter
+
+            class(State), target, intent(inout):: this
+            type(Parameter), dimension(:), intent(in):: params
+        end subroutine
+    end interface
 
     !> Base type for all models (micro-, meso- and macro-scopic).
     !>
@@ -16,7 +49,6 @@ module crysp_model
         integer:: id
     contains
         procedure:: describe => model_describe
-        procedure:: size => model_size
         procedure:: serialize => model_serialize
         procedure:: deserialize => model_deserialize
     end type
@@ -24,7 +56,8 @@ module crysp_model
     type:: StateDescriptor
         character(:), allocatable:: name
         character(:), allocatable:: description
-        integer:: type
+        integer:: type  !! Element type, one of the `TYPE_*` constants in [[crysp_parameters]].
+        integer:: rank  !! 0 for scalars and strings, 1 for arrays, 2 for matrices, as in [[crysp_parameters:Parameter]].
     end type
 
     type:: ModelDescriptor
@@ -34,6 +67,11 @@ module crysp_model
         type(Input), dimension(:), allocatable:: Inputs
         type(StateDescriptor), dimension(:), allocatable:: model_state
         type(StateDescriptor), dimension(:), allocatable:: element_state
+    end type
+
+    type:: ModelData
+        integer:: id
+        type(Parameter), dimension(:), allocatable:: parameters
     end type
 
 contains
@@ -51,22 +89,15 @@ contains
         allocate(desc%element_state(0))
     end function
 
-    pure function model_size(this) result(size)
-        class(Model), intent(in):: this
-        integer:: size
-
-        size = 0
-    end function
-
     function model_serialize(this) result(params)
         class(Model), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
-        allocate(params(this%size()))
+        allocate(params(0))
     end function
 
     subroutine model_deserialize(this, params)
         class(Model), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
     end subroutine
-end module
+ end module

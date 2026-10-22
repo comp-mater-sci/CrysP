@@ -1,9 +1,8 @@
-module constitutive_model
+module crysp_constitutive_model
     use base_defs
     use math_utils
     use conversions
-    use crysp_serialization
-    use, intrinsic:: iso_c_binding, only: C_INT
+    use crysp_parameters
     use crysp_model
     use crysp_status
     implicit none
@@ -26,9 +25,8 @@ module constitutive_model
     type, extends(State):: HardeningState
         real(DP), dimension(:,:), allocatable:: crss
     contains
-        procedure:: size => hs_size
-        procedure:: serialize => hs_serialize
-        procedure:: deserialize => hs_deserialize
+        procedure:: serialize => hard_stat_serialize
+        procedure:: deserialize => hard_stat_deserialize
     end type
 
     !> Base constitutive model
@@ -50,9 +48,6 @@ module constitutive_model
         procedure, nopass:: make_hardening_state => cm_make_hardening_state
         procedure:: init => cm_init
         procedure:: init_hardening_state => cm_init_hardening_state
-        procedure:: size => cm_size
-        procedure:: serialize => cm_serialize
-        procedure:: deserialize => cm_deserialize
         procedure:: describe => cm_describe
     end type
 
@@ -66,6 +61,23 @@ module constitutive_model
     end type
 
 contains
+
+    !> Base of the serialization chain for hardening states. Serialization only covers model-specific state, and the CRSS is
+    !> common to all hardening states, so there is nothing to serialize here.
+    !>
+    !> The result is allocated empty rather than left unallocated so that extensions can append to it unconditionally.
+    function hard_stat_serialize(this) result(params)
+        class(HardeningState), target, intent(in):: this
+        type(Parameter), dimension(:), allocatable:: params
+
+        allocate(params(0))
+    end function
+
+    !> Counterpart of [[hard_stat_serialize]]: there is nothing to restore here.
+    subroutine hard_stat_deserialize(this, params)
+        class(HardeningState), target, intent(inout):: this
+        type(Parameter), dimension(:), intent(in):: params
+    end subroutine
 
     !> Basic iniitialization common to all constitutive models.
     !>
@@ -124,89 +136,10 @@ contains
         allocate(state)
     end function
 
-    pure function cm_size(this) result(size)
-        class(ConstitutiveModel), intent(in):: this
-        integer:: size
-
-        size = 3
-    end function
-
-    function cm_serialize(this) result(params)
-        class(ConstitutiveModel), target, intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
-
-        allocate(params(this%size()))
-
-        !Assigned one by one: an array constructor of serialize() results yields a duplicated element with IFX as of 2026.1.1.19
-        params(1) = this%taylor_coeffs
-        params(2) = this%spin_coeffs
-        params(3) = this%basis
-    end function
-
-    subroutine cm_deserialize(this, params)
-        class(ConstitutiveModel), target, intent(inout):: this
-        type(Parameter), dimension(:), intent(in):: params
-
-        integer(C_INT), dimension(2):: s
-
-        call shape_of(params(1), s)
-        if (allocated(this%taylor_coeffs)) deallocate(this%taylor_coeffs)
-        allocate(this%taylor_coeffs(s(1), s(2)))
-        this%taylor_coeffs = params(1)
-        call shape_of(params(2), s)
-        if (allocated(this%spin_coeffs)) deallocate(this%spin_coeffs)
-        allocate(this%spin_coeffs(s(1), s(2)))
-        this%spin_coeffs = params(2)
-        this%basis = params(3)
-    end subroutine
-
-    pure function hs_size(this) result(size)
-        class(HardeningState), intent(in):: this
-        integer:: size
-
-        size = 1
-    end function
-
-    function hs_serialize(this) result(params)
-        class(HardeningState), target, intent(in):: this
-        type(Parameter), dimension(:), allocatable:: params
-
-        allocate(params(this%size()))
-
-        params(1) = serialize(this%crss)
-    end function
-
-    subroutine hs_deserialize(this, params)
-        class(HardeningState), target, intent(inout):: this
-        type(Parameter), dimension(:), intent(in):: params
-
-        integer(C_INT), dimension(2):: s
-
-        call shape_of(params(1), s)
-        if (allocated(this%crss)) deallocate(this%crss)
-        allocate(this%crss(s(1), s(2)))
-        this%crss = params(1)
-    end subroutine
-
     function cm_describe(this) result(desc)
         class(ConstitutiveModel), intent(in):: this
         type(ModelDescriptor):: desc
 
         desc = this%Model%describe()
-        desc%model_state = [desc%model_state, &
-                            StateDescriptor("Taylor coefficients", &
-                                            "Normalized symmetric part of the schmidt matrix of the slip systems", &
-                                            TYPE_REAL_MATRIX), &
-                            StateDescriptor("Spin coefficients", &
-                                            "Normalized antisymmetric part of the schmidt matrix of the slip systems", &
-                                            TYPE_REAL_MATRIX), &
-                            StateDescriptor("Basis", &
-                                            "Indices of 5 arbitrary linearly independent columns in the taylor coefficient matrix.", &
-                                            TYPE_INT_ARRAY)]
-        desc%element_state = [desc%element_state, &
-                              StateDescriptor("Critical resolved shear stress", &
-                                              "Resolved shear stress at which yielding occurs for each slip system, &
-                                              &in both positive and negative directions.", &
-                                              TYPE_REAL_MATRIX)]
     end function
 end module

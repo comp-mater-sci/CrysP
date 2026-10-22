@@ -2,9 +2,9 @@
 
 module hockett_sherby
     use base_defs
-    use constitutive_model
+    use crysp_constitutive_model
     use crysp_status
-    use crysp_serialization
+    use crysp_parameters
     use crysp_input
     use conversions
     use crysp_model
@@ -14,6 +14,8 @@ module hockett_sherby
 
     private
     public:: ConstitutiveModelHockettSherby
+
+    integer, parameter:: STATE_SIZE = 4
 
     !> Classic isotropic Hockett-Sherby hardening model.
     type, extends(ConstitutiveModel):: ConstitutiveModelHockettSherby
@@ -27,7 +29,6 @@ module hockett_sherby
         procedure:: deform                  => hs_deform              !! Inherited from [[ConstitutiveModel]]
         procedure, nopass:: make_hardening_state => hs_make_state
         procedure:: init_hardening_state => hs_init_state
-        procedure:: size => hs_size
         procedure:: serialize => hs_serialize
         procedure:: deserialize => hs_deserialize
     end type
@@ -44,7 +45,7 @@ contains
         desc%inputs = [Input('tau_0', &
                             "Initial critical resolved shear stress on all slip systems", &
                             INPUT_REAL, &
-                            lower_bound=serialize(0._C_DOUBLE)),   &
+                            lower_bound=serialize(0._DP)),   &
                        Input('tau_sat', &
                              "Maximum critical resolved shear stress on all slip systems", &
                              INPUT_REAL, &
@@ -59,20 +60,20 @@ contains
         desc%model_state = [desc%model_state, &
                             StateDescriptor("tau_0", &
                                             "Initial critical resolved shear stress on all slip systems", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("tau_sat", &
                                             "Maximum critical resolved shear stress on all slip systems", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("b", &
                                             "Hardening exponent", &
-                                            TYPE_REAL), &
+                                            TYPE_REAL, 0), &
                             StateDescriptor("n", &
                                             "Hardening exponent on slip", &
-                                            TYPE_REAL)]
+                                            TYPE_REAL, 0)]
         desc%element_state = [desc%element_state, &
                               StateDescriptor("Total slip", &
                                               "Sum of total slip across all slip systems", &
-                                              TYPE_REAL)]
+                                              TYPE_REAL, 0)]
     end function
 
     !> See [[ConstitutiveModel:init]]
@@ -121,13 +122,6 @@ contains
         state%crss = this%tau_0
     end subroutine
 
-    pure function hs_size(this) result(size)
-        class(ConstitutiveModelHockettSherby), intent(in):: this
-        integer:: size
-
-        size = this%ConstitutiveModel%size() + 4
-    end function
-
     function hs_serialize(this) result(params)
         class(ConstitutiveModelHockettSherby), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
@@ -135,10 +129,10 @@ contains
         integer:: offset
         type(Parameter), dimension(:), allocatable:: base
 
-        allocate(params(this%size()))
-
         base = this%ConstitutiveModel%serialize()
         offset = size(base)
+
+        allocate(params(offset+STATE_SIZE))
         params(:offset) = base
 
         params(offset+1) = this%tau_0
@@ -153,9 +147,8 @@ contains
 
         integer:: offset
 
-        call this%ConstitutiveModel%deserialize(params)
-
-        offset = this%ConstitutiveModel%size()
+        offset = size(params)-STATE_SIZE
+        call this%ConstitutiveModel%deserialize(params(:offset))
 
         this%tau_0 = params(offset+1)
         this%tau_sat = params(offset+2)

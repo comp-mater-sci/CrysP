@@ -15,7 +15,7 @@ module macro
     use math_utils
     use crysp_cluster
     use meso
-    use micro
+    use crysp_micro
     use incrementation
     use deformation
     use mode

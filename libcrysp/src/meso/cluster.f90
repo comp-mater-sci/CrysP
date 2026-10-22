@@ -6,8 +6,9 @@
 module crysp_cluster
     use base_defs
     use crysp_grain
-    use constitutive_model
-    use crysp_serialization
+    use crysp_constitutive_model
+    use crysp_parameters
+    use crysp_model
     implicit none
 
     private
@@ -22,73 +23,30 @@ module crysp_cluster
     !> clusters call their parent's procedures via `this%Cluster%...`, and the Fortran standard only permits such a type-bound
     !> procedure reference when the parent part-name is not of abstract type (F2018 19.4.5).
     !> @endnote
-    type:: Cluster
+    type, extends(State):: Cluster
         type(Grain), dimension(:), allocatable:: grains !! List of grains making up this cluster.
         real(DP):: weight !! Measure of importance of the cluster with respect to the whole microstructure
     contains
-        procedure:: size => cluster_size
         procedure:: serialize => cluster_serialize
         procedure:: deserialize => cluster_deserialize
     end type
 
 contains
 
-    pure function cluster_size(this) result(n)
-        class(Cluster), intent(in):: this
-        integer:: n
-
-        integer:: i
-
-        n = 1
-        do i=1,size(this%grains)
-            n = n + this%grains(i)%size()
-        end do
-        n = n + 1
-    end function
-
-    function cluster_serialize(this, phases) result(params)
+    !> Base of the serialization chain for clusters. Serialization only covers state added by concrete clusters; the grains and
+    !> weight are common to all clusters, so there is nothing to serialize here.
+    !>
+    !> The result is allocated empty rather than left unallocated so that extensions can append to it unconditionally.
+    function cluster_serialize(this) result(params)
         class(Cluster), target, intent(in):: this
-        type(Phase), dimension(:), target, intent(in):: phases
         type(Parameter), dimension(:), allocatable:: params
 
-        integer:: i, &
-                  offset, &
-                  size_grain
-        type(Parameter), dimension(:), allocatable:: grain
-
-        allocate(params(this%size()))
-
-        params(1) = size(this%grains)
-        offset = 1
-        do i=1,size(this%grains)
-            grain = this%grains(i)%serialize(phases)
-            size_grain = size(grain)
-            params(offset+1:offset+size_grain) = grain
-            offset = offset + size_grain
-        end do
-        params(offset+1) = this%weight
+        allocate(params(0))
     end function
 
-    subroutine cluster_deserialize(this, params, phases)
-        class(Cluster), target, intent(out):: this
+    !> Counterpart of [[cluster_serialize]]: there is nothing to restore here.
+    subroutine cluster_deserialize(this, params)
+        class(Cluster), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
-        type(Phase), dimension(:), target, intent(in):: phases
-
-        integer:: i, &
-                  offset, &
-                  size_grain, &
-                  n_grains
-
-        n_grains = params(1)
-        allocate(this%grains(n_grains))
-
-        offset=1
-        do i=1,n_grains
-            call this%grains(i)%deserialize(params(offset+1:), phases)
-
-            offset = offset + this%grains(i)%size()
-        end do
-
-        this%weight = params(offset+1)
     end subroutine
 end module

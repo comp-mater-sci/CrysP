@@ -24,9 +24,7 @@ module dmcASR
     type:: StressDrivenStep
         real(DP), dimension(6):: target_stress_mode
         real(DP):: target_vm_strain
-        type(StressIncrementData), dimension(:), allocatable:: stress_increments
-        type(StrainIncrementData), dimension(:), allocatable:: strain_increments
-        type(TexturePoint), dimension(:,:), allocatable:: textures !! Texture after each strain increment, shaped (grains, increments).
+        type(StressIncrement), dimension(:), allocatable:: increments
     end type
 
     type, extends(BasicModule):: ASRModule
@@ -39,7 +37,7 @@ module dmcASR
 contains
 
     subroutine asr_initialize(this, cnfunit)
-        class(ASRModule), intent(inout)            :: this
+        class(ASRModule), target, intent(inout)    :: this
         integer, intent(in)                        :: cnfunit
 
         character(*), parameter:: PROC_NAME = 'asrmodule_readconfig'
@@ -64,12 +62,11 @@ contains
     end subroutine
 
     subroutine asr_run(this)
-        class(ASRModule), intent(inout):: this
+        class(ASRModule), target, intent(inout):: this
 
         integer:: i_step, i_stress, i_strain, &
                   out_unit, texture_unit, &
-                  n_incs, &
-                  offset
+                  n_incs
         real(DP):: dev_stress(5), &
                    stress(6), &
                    target_dev_stress(5), &
@@ -97,37 +94,33 @@ contains
                 !Run deformation
                 target_dev_stress = target_dev_stress / norm2(target_dev_stress)
                 if (step%target_vm_strain < TOLERANCE) then
-                    allocate(step%stress_increments(1))
-                    allocate(step%strain_increments(1))
-                    !The C-compatible increment types have no default initialization.
-                    associate (stress_inc => step%stress_increments(1), &
-                               strain_inc => step%strain_increments(1))
+                    allocate(step%increments(1))
+                    associate (stress_inc => step%increments(1))
+                        !The strain increment keeps its default initialization apart from the stress: no duration, no deformation.
+                        allocate(stress_inc%strain_increments(1))
                         stress_inc%strain_rate = target_dev_stress
-                        stress_inc%n_strain_increments = 1
                         call handle_crysp_status(crysp_simulate_stress_mode(this%material, target_dev_stress, &
                                                                             stress_inc%strain_rate, dev_stress, stress_inc%residual))
-                        strain_inc%stress = deviatoric_to_tensor(dev_stress)
-                        strain_inc%duration = 0._DP
-                        strain_inc%deformation_gradient = UNIT_MATRIX_3X3
-                        strain_inc%vm_strain = 0._DP
-                        strain_inc%taylor_factor = 0._DP
+                        stress_inc%strain_increments(1)%stress = deviatoric_to_tensor(dev_stress)
                         n_incs = n_incs + 1
                     end associate
                 else
                     call handle_crysp_status(crysp_stress_driven_deformation(this%material, target_dev_stress, &
-                                                                             step%target_vm_strain, step%stress_increments, &
-                                                                             step%strain_increments, step%textures))
+                                                                             step%target_vm_strain, step%increments))
                     !Write new texture to file
-                    n_incs = n_incs + size(step%strain_increments)
-                    call write_texture_increment(texture_unit, n_incs, step%textures(:,size(step%strain_increments)))
+                    do i_stress = 1, size(step%increments)
+                        n_incs = n_incs + size(step%increments(i_stress)%strain_increments)
+                    end do
+                    associate (last => step%increments(size(step%increments))%strain_increments)
+                        call write_texture_increment(texture_unit, n_incs, last(size(last))%texture)
+                    end associate
                 end if
 
-                offset = 0
                 !Write increments to file
-                do i_stress = 1, size(step%stress_increments)
-                    associate (stress_inc => step%stress_increments(i_stress))
-                        do i_strain=offset+1, offset+stress_inc%n_strain_increments
-                            associate (strain_inc => step%strain_increments(i_strain))
+                do i_stress = 1, size(step%increments)
+                    associate (stress_inc => step%increments(i_stress))
+                        do i_strain = 1, size(stress_inc%strain_increments)
+                            associate (strain_inc => stress_inc%strain_increments(i_strain))
                                 stress = tensor_to_unscaled_voigt(strain_inc%stress)
                                 stress(1:3) = stress(1:3) + stress_scaling_factor * norm2(strain_inc%stress)
 
@@ -139,8 +132,8 @@ contains
                                                                        deviatoric_to_unscaled_voigt(stress_inc%strain_rate)])
                             end associate
                         end do
-                        offset = offset + stress_inc%n_strain_increments
-                        def_grad = matmul(step%strain_increments(offset)%deformation_gradient, def_grad)
+                        def_grad = matmul(stress_inc%strain_increments(size(stress_inc%strain_increments))%deformation_gradient, &
+                                          def_grad)
                     end associate
                 end do
             end associate

@@ -1,9 +1,9 @@
 module crysp_isotropic_state
     use base_defs
     use crysp_status
-    use crysp_serialization
+    use crysp_parameters
     use crysp_grain
-    use constitutive_model
+    use crysp_constitutive_model
 
     implicit none
 
@@ -13,11 +13,12 @@ module crysp_isotropic_state
 
     character(*), parameter:: MOD_NAME = 'isotropic_state'
 
+    integer, parameter:: STATE_SIZE = 1
+
     !> Hardening state used by many simple isotropic hardening models
     type, extends(HardeningState):: IsotropicState
         real(DP):: total_slip = 0._DP !! Sum of all the slip on all the slip systems of the grain.
     contains
-        procedure:: size => isotropic_state_size
         procedure:: serialize => isotropic_state_serialize
         procedure:: deserialize => isotropic_state_deserialize
     end type
@@ -43,32 +44,31 @@ contains
         end select
     end function
 
-    pure function isotropic_state_size(this) result(size)
-        class(IsotropicState), intent(in):: this
-        integer:: size
-
-        size = this%HardeningState%size() + 1
-    end function
-
     function isotropic_state_serialize(this) result(params)
         class(IsotropicState), target, intent(in):: this
         type(Parameter), dimension(:), allocatable:: params
 
+        integer:: offset
         type(Parameter), dimension(:), allocatable:: base
 
-        allocate(params(this%size()))
-
         base = this%HardeningState%serialize()
-        params(:size(base)) = base
-        params(this%size()) = serialize(this%total_slip)
+        offset = size(base)
+
+        allocate(params(offset+STATE_SIZE))
+        params(:offset) = base
+
+        params(offset+1) = serialize(this%total_slip)
     end function
 
     subroutine isotropic_state_deserialize(this, params)
         class(IsotropicState), target, intent(inout):: this
         type(Parameter), dimension(:), intent(in):: params
 
-        call this%HardeningState%deserialize(params)
+        integer:: offset
 
-        this%total_slip = params(this%size())
+        offset = size(params)-STATE_SIZE
+        call this%HardeningState%deserialize(params(:offset))
+
+        this%total_slip = params(offset+1)
     end subroutine
 end module

@@ -5,8 +5,8 @@ module dsh_edge
     use crysp_model
     use slip_systems
     use crysp_grain
-    use constitutive_model
-    use crysp_serialization
+    use crysp_constitutive_model
+    use crysp_parameters
 
     implicit none
     private

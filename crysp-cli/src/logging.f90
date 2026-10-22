@@ -7,7 +7,6 @@
 !> @endnote
 module logging
     use base_defs
-    use conversions, only: from_c_string
     use crysp_status
 
     implicit none
@@ -50,6 +49,6 @@ contains
     module procedure handle_crysp_status
         if (.not. failed(stat)) return
 
-        call log_error(from_c_string(stat%mod_name), from_c_string(stat%proc_name), stat%code, from_c_string(stat%message))
+        call log_error(trim(stat%mod_name), trim(stat%proc_name), stat%code, trim(stat%message))
     end procedure
 end submodule log_imp
