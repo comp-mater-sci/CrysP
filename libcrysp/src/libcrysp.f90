@@ -176,7 +176,7 @@ contains
     !> All modes are validated before any is simulated. On a simulation failure, the outputs of the modes after the failing one are
     !> undefined.
     function crysp_simulate_stress_modes(mat, target_stress_modes, strain_modes, stresses, stress_mode_deviations) result(stat)
-        type(Material), target, intent(inout):: mat              !! Material state.
+        type(Material), target, intent(inout):: mat                    !! Material state.
         real(DP), dimension(:,:), intent(in)::  target_stress_modes    !! 6xn: intended stress modes, each with norm 1.
         real(DP), dimension(:,:), intent(out):: strain_modes           !! 6xn: strain modes found.
         real(DP), dimension(:,:), intent(out):: stresses               !! 6xn: actual stress states found.
@@ -186,12 +186,16 @@ contains
 
         character(*), parameter:: PROC_NAME = 'crysp_simulate_stress_modes'
 
+        logical:: von_mises_guess
         integer:: i, &
                    closest
         real(DP):: target_dev_stress(5), &
                    dev_stress(5), &
                    hydro, &
-                   res(5)
+                   res(5), &
+                   retry_strain(5), &
+                   retry_stress(5), &
+                   retry_res(5)
         real(DP), dimension(5, size(target_stress_modes,2)):: unit_dev_stress_modes, &
                                                               dev_strain_modes
 
@@ -204,6 +208,7 @@ contains
         end if
 
         do i = 1, size(target_stress_modes, 2)
+            von_mises_guess = .true.
             call decompose_voigt(target_stress_modes(:,i), target_dev_stress, hydro)
             if (norm2(target_dev_stress) < TOLERANCE) then
                 stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_ARG, 'Stress mode ' // int_to_str(i) // &
@@ -215,11 +220,17 @@ contains
 
             dev_strain_modes(:,i) = unit_dev_stress_modes(:,i)
             ! From 2nd mode onwards, we can use the result of the closest previously calculated mode as initial guess, if it is
-            ! closer than MAX_GUESS_ANGLE to the mode to be simulated.
+            ! closer than MAX_GUESS_ANGLE to the mode to be simulated and its search converged to within ACCURACY.
             if (i > 1) then
-                closest = maxloc(matmul(unit_dev_stress_modes(:,i), unit_dev_stress_modes(:,:i-1)), 1)
-                if ((unit_dev_stress_modes(:,i) .dot. unit_dev_stress_modes(:,closest)) >= cos(MAX_GUESS_ANGLE)) &
-                    dev_strain_modes(:,i) = dev_strain_modes(:,closest)
+                closest = maxloc(matmul(unit_dev_stress_modes(:,i), unit_dev_stress_modes(:,:i-1)), 1, &
+                                 mask=residuals(:i-1) <= ACCURACY)
+                ! maxloc returns 0 if no previous mode is accurate enough.
+                if (closest > 0) then
+                    if ((unit_dev_stress_modes(:,i) .dot. unit_dev_stress_modes(:,closest)) >= cos(MAX_GUESS_ANGLE)) then
+                        dev_strain_modes(:,i) = dev_strain_modes(:,closest)
+                        von_mises_guess = .false.
+                    end if
+                end if
             end if
 
             stat = macro_simulate_stress_mode(mat, &
@@ -228,6 +239,18 @@ contains
                                               dev_stress, &
                                               stress_mode_deviations(:,i))
             if (failed(stat)) return
+
+            !If we used a previous result as initial guess and did not converge, retry with von mises guess. Keep the best result.
+            if (norm2(res) > ACCURACY .and. .not. von_mises_guess) then
+                retry_strain = unit_dev_stress_modes(:,i)
+                stat = macro_simulate_stress_mode(mat, unit_dev_stress_modes(:,i), retry_strain, retry_stress, retry_res)
+                if (failed(stat)) return
+                if (norm2(retry_res) < norm2(res)) then
+                    dev_strain_modes(:,i) = retry_strain
+                    dev_stress = retry_stress
+                    res = retry_res
+                end if
+            end if
 
             strain_modes(:,i) = deviatoric_to_unscaled_voigt(dev_strain_modes(:,i))
             !Because the direction of the stress does not change, the hydrostatic component scales together with the deviatoric one.
