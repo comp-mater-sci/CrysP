@@ -66,6 +66,7 @@ endif()
 # This tells CMake exactly where the headers are depending on how it's consumed
 target_include_directories(crysp PUBLIC
     $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/include>  # Used when building locally
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/c_binding>  # C header, when building locally
     $<INSTALL_INTERFACE:include>                            # Used after running 'make install'
 )
 
@@ -93,6 +94,7 @@ install(EXPORT cryspTargets
 )
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION "include")
+install(FILES src/c_binding/libcrysp.h DESTINATION "include")
 
 set(CONFIG_CONTENT "
 include(\"\${CMAKE_CURRENT_LIST_DIR}/libcryspTargets.cmake\")"

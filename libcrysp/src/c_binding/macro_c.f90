@@ -15,11 +15,7 @@ module crysp_macro_c
 
     public
 
-
     !> C-compatible counterpart of [[Material]].
-    !>
-    !> The `phase` pointer of every grain in `clusters` points to an element of `phases`. A `Material_C` produced by libCrysP owns
-    !> all of its pointers, malloc'ed so that C can release them with `free()`.
     type, bind(C):: Material_C
         type(ModelData_C):: meso_model
         integer(C_INT):: n_phases
@@ -47,18 +43,24 @@ module crysp_macro_c
         type(C_PTR):: strain_increments !! n_strain_increments * type(StrainIncrement_C)
     end type
 
+    !> See [[crysp_utils_c]].
     interface assignment(=)
         module procedure material_to_c, material_from_c, &
                          strain_increment_to_c, &
                          stress_increment_to_c
     end interface
 
+    !> See [[crysp_utils_c:destroy]].
+    interface destroy
+        module procedure material_c_destroy, &
+                         strain_increment_c_destroy, &
+                         stress_increment_c_destroy
+    end interface
+
 contains
 
-    !> Convert a material to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of all pointers. The phase pointer of each grain is resolved to the element of `mat_c%phases`
-    !> that backs it.
+    !> Convert a material to its C-compatible counterpart, resolving the phase pointer of each grain to an element of
+    !> `mat_c%phases`.
     subroutine material_to_c(mat_c, mat)
         type(Material_C), intent(out):: mat_c
         type(Material), target, intent(in):: mat
@@ -101,10 +103,7 @@ contains
         end do
     end subroutine
 
-    !> Restore a material from its C-compatible counterpart.
-    !>
-    !> All allocated buffers on the C side are freed and the pointers are left dangling.
-    !> `mat_c` is assumed to be well-formed: it is not validated here.
+    !> Restore a material from its C-compatible counterpart, resolving the phase of each grain.
     subroutine material_from_c(mat, mat_c)
         type(Material), target, intent(out):: mat
         type(Material_C), intent(in):: mat_c
@@ -130,7 +129,6 @@ contains
             mat%phases(i)%model = phases_ptr(i)
         end do
 
-        !The grains' phases point into `phases_ptr`, so the clusters are converted before it is freed.
         allocate(mat%clusters(size(clusters_ptr)), mold=mat%meso_model%make_cluster())
         do i = 1, size(clusters_ptr)
             call c_f_pointer(clusters_ptr(i)%grains, grains_ptr, [int(clusters_ptr(i)%n_grains)])
@@ -146,14 +144,9 @@ contains
 
             mat%clusters(i) = clusters_ptr(i)
         end do
-
-        call free(mat_c%clusters)
-        call free(mat_c%phases)
     end subroutine
 
-    !> Convert a strain increment to its C-compatible counterpart. The caller takes ownership of `inc_c%texture`.
-    !>
-    !> The caller takes ownership of `inc_c%strain_increments` of allocated buffers.
+    !> Convert a strain increment to its C-compatible counterpart.
     subroutine strain_increment_to_c(inc_c, inc)
         type(StrainIncrement_C), intent(out):: inc_c
         type(StrainIncrement), intent(in):: inc
@@ -176,8 +169,6 @@ contains
     end subroutine
 
     !> Convert a stress increment to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of `inc_c%strain_increments` of allocated buffers.
     subroutine stress_increment_to_c(inc_c, inc)
         type(StressIncrement_C), intent(out):: inc_c
         type(StressIncrement), intent(in):: inc
@@ -197,5 +188,49 @@ contains
         do i = 1, n
             strain_increments(i) = inc%strain_increments(i)
         end do
+    end subroutine
+
+    !> Release the meso model state, phases and clusters of a C-compatible material, including everything they own.
+    subroutine material_c_destroy(mat_c) bind(C, name='crysp_destroy_material')
+        type(Material_C), intent(in):: mat_c
+
+        integer:: i
+        type(ConstitutiveModel_C), dimension(:), pointer:: phases_ptr
+        type(Cluster_C), dimension(:), pointer:: clusters_ptr
+
+        call model_data_c_destroy(mat_c%meso_model)
+
+        call c_f_pointer(mat_c%clusters, clusters_ptr, [int(mat_c%n_clusters)])
+        do i = 1, size(clusters_ptr)
+            call cluster_c_destroy(clusters_ptr(i))
+        end do
+        call free(mat_c%clusters)
+
+        call c_f_pointer(mat_c%phases, phases_ptr, [int(mat_c%n_phases)])
+        do i = 1, size(phases_ptr)
+            call cm_c_destroy(phases_ptr(i))
+        end do
+        call free(mat_c%phases)
+    end subroutine
+
+    !> Release the texture of a C-compatible strain increment.
+    subroutine strain_increment_c_destroy(inc_c) bind(C, name='crysp_destroy_strain_increment')
+        type(StrainIncrement_C), intent(in):: inc_c
+
+        call free(inc_c%texture)
+    end subroutine
+
+    !> Release the strain increments of a C-compatible stress increment, including the texture of each of them.
+    subroutine stress_increment_c_destroy(inc_c) bind(C, name='crysp_destroy_stress_increment')
+        type(StressIncrement_C), intent(in):: inc_c
+
+        integer:: i
+        type(StrainIncrement_C), dimension(:), pointer:: strain_increments
+
+        call c_f_pointer(inc_c%strain_increments, strain_increments, [int(inc_c%n_strain_increments)])
+        do i = 1, size(strain_increments)
+            call strain_increment_c_destroy(strain_increments(i))
+        end do
+        call free(inc_c%strain_increments)
     end subroutine
 end module

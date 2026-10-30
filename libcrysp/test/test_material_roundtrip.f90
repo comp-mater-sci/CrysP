@@ -28,7 +28,7 @@ program test_material_roundtrip
     use meso, only: MESO_MODEL_ALAMEL, MESO_MODEL_FCTAYLOR
     use crysp_material, only: Material
     use incrementation, only: StrainIncrement
-    use crysp_macro_c, only: Material_C, assignment(=)
+    use crysp_macro_c, only: Material_C, assignment(=), destroy
     use crysp_parameters
     use testing
 
@@ -83,9 +83,10 @@ contains
             call check_equal(reshape(increments_original(size(increments_original))%texture, [size(texture)]), &
                              reshape(texture, [size(texture)]), label // ': last increment has the texture of the material')
 
-        !Roundtrip. Converting to C leaves the original intact; converting back consumes mat_c.
+        !Roundtrip. Neither conversion modifies its source.
         mat_c = original
         restored = mat_c
+        call destroy(mat_c)
 
         call check_materials_equal(restored, original, label)
 

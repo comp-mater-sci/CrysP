@@ -9,7 +9,7 @@ module crysp_utils_c
     public
 
     interface
-        !> Lists referenced through a `C_PTR` are malloc'ed, so that C can release them with `free()`.
+        !> C's allocator, used for everything referenced through a `C_PTR`, see `src/c_binding/libcrysp.h`.
         function malloc(size) bind(C, name='malloc') result(ptr)
             import C_SIZE_T, C_PTR
             integer(C_SIZE_T), value:: size
@@ -23,15 +23,6 @@ module crysp_utils_c
     end interface
 
     !> C-compatible counterpart of [[crysp_parameters:Parameter]].
-    !>
-    !> `data` points to the elements in column-major order: `extents(1)*extents(2)` values of `int` (`TYPE_INTEGER`) or `double`
-    !> (`TYPE_REAL`). Scalars have extents (1,1), arrays (n,1) and matrices (m,n). A string (`TYPE_STRING`, rank 0) is
-    !> `extents(1)` characters. A parameter that was never set has rank -1 and a null `data`, as does any parameter without
-    !> elements.
-    !>
-    !> A `Parameter_C` produced by libCrysP owns its `data`, malloc'ed so that C can release it with `free()`. Strings produced by
-    !> libCrysP are NUL-terminated for convenience, but the terminator is not counted in `extents` and is not required on input.
-    !> Converting from C copies the data and then frees it, so a C caller must pass malloc'ed data and not touch it afterwards.
     type, bind(C):: Parameter_C
         integer(C_INT):: type
         integer(C_INT):: rank
@@ -51,7 +42,7 @@ module crysp_utils_c
         type(Parameter_C):: default_value
     end type
 
-    !> C-compatible counterpart of [[StateDescriptor]]. Name and description are NUL-terminated and truncated to fit.
+    !> C-compatible counterpart of [[StateDescriptor]].
     type, bind(C):: StateDescriptor_C
         character(C_CHAR), dimension(NAME_LEN):: name
         character(C_CHAR), dimension(DESC_LEN):: description
@@ -60,9 +51,6 @@ module crysp_utils_c
     end type
 
     !> C-compatible counterpart of [[ModelDescriptor]].
-    !>
-    !> Each list is a malloc'ed array of `n_...` elements. A `ModelDescriptor_C` produced by libCrysP owns these lists and, through
-    !> the inputs, the data of their bounds and default values: C releases those with `free()`, then the lists themselves.
     type, bind(C):: ModelDescriptor_C
         integer(C_INT):: id
         character(C_CHAR), dimension(NAME_LEN):: name
@@ -84,9 +72,6 @@ module crysp_utils_c
 
     !> C-compatible counterpart of [[Status]], returned by value by every entry point of [[libcrysp_c_binding]].
     !>
-    !> `code` is `CRYSP_OK` on success. The three buffers are NUL-terminated C strings, truncated to fit, and all-NUL when `code` is
-    !> `CRYSP_OK`.
-    !>
     !> @note
     !> Returned by value, so keep it small.
     !> @endnote
@@ -97,6 +82,10 @@ module crysp_utils_c
         character(kind=C_CHAR):: message(MSG_LEN)    = C_NULL_CHAR !! Human-readable description of the failure.
     end type
 
+    !> Conversions between the core types and their C-compatible counterparts, here and in the other `*_c` modules.
+    !>
+    !> Converting to C allocates the C-side buffers with [[malloc]], see `src/c_binding/libcrysp.h`. Converting from C copies: it
+    !> never frees or modifies its source, and assumes the source is well-formed, so C input must be validated beforehand.
     interface assignment(=)
         module procedure status_to_c, status_from_c, &
                          input_to_c, &
@@ -106,8 +95,17 @@ module crysp_utils_c
                          parameter_to_c, parameter_from_c
     end interface
 
+    !> Release everything a C-compatible type owns, here and in the other `*_c` modules. Each is exported to C as
+    !> `crysp_destroy_<type>`, see the ownership section of `src/c_binding/libcrysp.h`.
+    interface destroy
+        module procedure parameter_c_destroy, &
+                         input_c_destroy, &
+                         model_descriptor_c_destroy, &
+                         model_data_c_destroy
+    end interface
+
 contains
-    !> Convert a parameter to its C-compatible counterpart. The caller takes ownership of `param_c%data`.
+    !> Convert a parameter to its C-compatible counterpart.
     subroutine parameter_to_c(param_c, param)
         type(Parameter_C), intent(out):: param_c
         type(Parameter), intent(in):: param
@@ -171,10 +169,7 @@ contains
         end subroutine
     end subroutine
 
-    !> Convert a C-compatible parameter to a parameter. The data is copied and then freed, so `param_c%data` must have been
-    !> malloc'ed and is dangling afterwards.
-    !>
-    !> `param_c` is assumed to be well-formed: it is not validated here.
+    !> Convert a C-compatible parameter to a parameter.
     subroutine parameter_from_c(param, param_c)
         type(Parameter), intent(out):: param
         type(Parameter_C), intent(in):: param_c
@@ -189,7 +184,6 @@ contains
             case (TYPE_STRING)
                 call string_from_c()
         end select
-        call free(param_c%data)
     contains
         subroutine ints_from_c()
             integer(C_INT), dimension(:,:), pointer:: ints
@@ -265,16 +259,18 @@ contains
         end do
     end function
 
-    !> Convert an input to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of the data of the bounds and default value.
-    !> String inputs are truncted to fit
+    !> Convert an input to its C-compatible counterpart. Strings are truncated to fit; an input without a description gets an empty
+    !> one.
     subroutine input_to_c(inp_c, inp)
         type(Input_C), intent(out):: inp_c
         type(Input), intent(in):: inp
 
         inp_c%name = string_to_chars(inp%name, size(inp_c%name))
-        inp_c%description = string_to_chars(inp%description, size(inp_c%description))
+        if (allocated(inp%description)) then
+            inp_c%description = string_to_chars(inp%description, size(inp_c%description))
+        else
+            inp_c%description = C_NULL_CHAR
+        end if
         inp_c%type = int(inp%type, C_INT)
         inp_c%lower_bound = inp%lower_bound
         inp_c%lower_bound_inclusive = logical(inp%lower_bound_inclusive, C_BOOL)
@@ -283,7 +279,7 @@ contains
         inp_c%default_value = inp%default_value
     end subroutine
 
-   !> Convert a state descriptor to its C-compatible counterpart.
+    !> Convert a state descriptor to its C-compatible counterpart. Strings are truncated to fit.
     subroutine state_descriptor_to_c(desc_c, desc)
         type(StateDescriptor_C), intent(out):: desc_c
         type(StateDescriptor), intent(in):: desc
@@ -294,9 +290,7 @@ contains
         desc_c%rank = int(desc%rank, C_INT)
     end subroutine
 
-    !> Convert a model descriptor to its C-compatible counterpart.
-    !>
-    !> The caller takes ownership of the pointers.
+    !> Convert a model descriptor to its C-compatible counterpart. Strings are truncated to fit.
     subroutine model_descriptor_to_c(desc_c, desc)
         type(ModelDescriptor_C), intent(out):: desc_c
         type(ModelDescriptor), intent(in):: desc
@@ -334,7 +328,7 @@ contains
         end do
     end subroutine
 
-    !> Convert model data to its C-compatible counterpart. The caller takes ownership of the parameters, see [[ModelData_C]].
+    !> Convert model data to its C-compatible counterpart.
     subroutine model_data_to_c(model_data_c, model_data)
         type(ModelData_C), intent(out):: model_data_c
         type(ModelData), intent(in):: model_data
@@ -352,10 +346,7 @@ contains
         end do
     end subroutine
 
-    !> Convert C-compatible model data to model data. The parameters are copied and then freed, see [[parameter_from_c]], and so is
-    !> the list holding them: `model_data_c%parameters` must have been malloc'ed and is dangling afterwards.
-    !>
-    !> `model_data_c` is assumed to be well-formed: it is not validated here.
+    !> Convert C-compatible model data to model data.
     subroutine model_data_from_c(model_data, model_data_c)
         type(ModelData), intent(out):: model_data
         type(ModelData_C), intent(in):: model_data_c
@@ -370,7 +361,6 @@ contains
         do i = 1, size(params)
             model_data%parameters(i) = params(i)
         end do
-        call free(model_data_c%parameters)
     end subroutine
 
     !> Convert a status to its C-compatible counterpart.
@@ -397,5 +387,51 @@ contains
             stat%proc_name = chars_to_string(stat_c%proc_name)
             stat%message = chars_to_string(stat_c%message)
         end if
+    end subroutine
+
+    !> Release the data of a C-compatible parameter.
+    subroutine parameter_c_destroy(param_c) bind(C, name='crysp_destroy_parameter')
+        type(Parameter_C), intent(in):: param_c
+
+        call free(param_c%data)
+    end subroutine
+
+    !> Release the data of the bounds and default value of a C-compatible input.
+    subroutine input_c_destroy(inp_c) bind(C, name='crysp_destroy_input')
+        type(Input_C), intent(in):: inp_c
+
+        call parameter_c_destroy(inp_c%lower_bound)
+        call parameter_c_destroy(inp_c%upper_bound)
+        call parameter_c_destroy(inp_c%default_value)
+    end subroutine
+
+    !> Release the lists of a C-compatible model descriptor, including the data of each input.
+    subroutine model_descriptor_c_destroy(desc_c) bind(C, name='crysp_destroy_model_descriptor')
+        type(ModelDescriptor_C), intent(in):: desc_c
+
+        integer:: i
+        type(Input_C), dimension(:), pointer:: inputs
+
+        call c_f_pointer(desc_c%inputs, inputs, [int(desc_c%n_inputs)])
+        do i = 1, size(inputs)
+            call input_c_destroy(inputs(i))
+        end do
+        call free(desc_c%inputs)
+        call free(desc_c%model_state)
+        call free(desc_c%element_state)
+    end subroutine
+
+    !> Release the parameters of C-compatible model data, including the data of each parameter.
+    subroutine model_data_c_destroy(model_data_c) bind(C, name='crysp_destroy_model_data')
+        type(ModelData_C), intent(in):: model_data_c
+
+        integer:: i
+        type(Parameter_C), dimension(:), pointer:: params
+
+        call c_f_pointer(model_data_c%parameters, params, [int(model_data_c%n_parameters)])
+        do i = 1, size(params)
+            call parameter_c_destroy(params(i))
+        end do
+        call free(model_data_c%parameters)
     end subroutine
 end module
