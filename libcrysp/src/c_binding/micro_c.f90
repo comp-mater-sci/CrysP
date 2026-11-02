@@ -7,6 +7,13 @@ module crysp_micro_c
 
     implicit none
 
+    !> C-compatible counterpart of [[SlipSystemDescriptor]].
+    type, bind(C):: SlipSystemDescriptor_C
+        integer(C_INT):: id
+        character(C_CHAR), dimension(NAME_LEN):: name
+        character(C_CHAR), dimension(DESC_LEN):: description
+    end type
+
     !> C-compatible counterpart of [[HardeningState]]. `params` holds the state added by the concrete hardening state, as produced
     !> by its `serialize`.
     type, bind(C):: HardeningState_C
@@ -44,13 +51,13 @@ module crysp_micro_c
         integer(C_INT), dimension(5):: basis
     end type
 
-
     !> See [[crysp_utils_c]].
     interface assignment(=)
         module procedure phase_data_from_c, &
                          cm_to_c, cm_from_c, &
                          hard_stat_to_c, hard_stat_from_c, &
-                         grain_to_c, grain_from_c
+                         grain_to_c, grain_from_c, &
+                         slip_system_descriptor_to_c
     end interface
 
     !> See [[crysp_utils_c:destroy]].
@@ -61,6 +68,16 @@ module crysp_micro_c
                          cm_c_destroy
     end interface
 contains
+
+    !> Convert a slip system descriptor to its C-compatible counterpart. Strings are truncated to fit.
+    subroutine slip_system_descriptor_to_c(desc_c, desc)
+        type(SlipSystemDescriptor_C), intent(out):: desc_c
+        type(SlipSystemDescriptor), intent(in):: desc
+
+        desc_c%id = int(desc%id, C_INT)
+        desc_c%name = string_to_chars(desc%name, size(desc_c%name))
+        desc_c%description = string_to_chars(desc%description, size(desc_c%description))
+    end subroutine
 
     !> Convert a grain to its C-compatible counterpart. The phase pointer is left null: it is resolved at material level.
     subroutine grain_to_c(gr_c, gr)

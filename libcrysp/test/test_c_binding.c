@@ -21,7 +21,7 @@
 #define TARGET_VM_STRAIN 0.02
 
 /* Implemented in c_binding_sizes.f90. */
-void crysp_test_sizes(size_t sizes[14]);
+void crysp_test_sizes(size_t sizes[15]);
 
 static int n_checks = 0;
 static int n_failed = 0;
@@ -60,15 +60,16 @@ static int terminated(const char *buffer, size_t size) {
     return memchr(buffer, '\0', size) != NULL;
 }
 
-/* ---- Model IDs, looked up by name as a C caller would. ---- */
+/* ---- Model and slip system IDs, looked up by name as a C caller would. ---- */
 
 static int alamel = -1, voce = -1, dsh_edge = -1;
+static int fcc = -1, bcc24 = -1;
 
-static int find_model(CryspStatus (*get)(int *, CryspModelDescriptor **), const char *name) {
+static int find_model(void (*get)(int *, CryspModelDescriptor **), const char *name) {
     int n = 0, id = -1;
     CryspModelDescriptor *descs = NULL;
 
-    if (!check_ok(get(&n, &descs), "listing models")) return -1;
+    get(&n, &descs);
     for (int i = 0; i < n; i++) {
         if (strcmp(descs[i].name, name) == 0) id = descs[i].id;
         crysp_destroy_model_descriptor(&descs[i]);
@@ -78,11 +79,25 @@ static int find_model(CryspStatus (*get)(int *, CryspModelDescriptor **), const 
     return id;
 }
 
+static int find_slip_systems(const char *name) {
+    int n = 0, id = -1;
+    CryspSlipSystemDescriptor *descs = NULL;
+
+    crysp_get_slip_systems(&n, &descs);
+    for (int i = 0; i < n; i++)
+        if (strcmp(descs[i].name, name) == 0) id = descs[i].id;
+    free(descs);
+    check(id >= 0, "slip systems '%s' are described", name);
+    return id;
+}
+
 static int find_models(void) {
     alamel = find_model(crysp_get_meso_models, "ALAMEL");
     voce = find_model(crysp_get_micro_models, "Voce");
     dsh_edge = find_model(crysp_get_micro_models, "Dislocation Substructural Hardening (edge variant)");
-    return alamel >= 0 && voce >= 0 && dsh_edge >= 0;
+    fcc = find_slip_systems("FCC");
+    bcc24 = find_slip_systems("BCC24");
+    return alamel >= 0 && voce >= 0 && dsh_edge >= 0 && fcc >= 0 && bcc24 >= 0;
 }
 
 /* ---- Caller-built copies, allocated with malloc as the ownership convention requires. ---- */
@@ -183,9 +198,9 @@ static void make_inputs(MaterialInputs *in, int meso_model_id, int hardening_mod
             in->orientations[p][g][1] = (1 + 53 * k % 179) * PI / 180;
             in->orientations[p][g][2] = (131 * k % 360) * PI / 180;
         }
-    in->phases[0] = (CryspPhaseData){{hardening_model_id, 5, in->voce_params}, CRYSP_SLIP_SYSTEMS_FCC, N_GRAINS,
+    in->phases[0] = (CryspPhaseData){{hardening_model_id, 5, in->voce_params}, fcc, N_GRAINS,
                                      &in->orientations[0][0][0]};
-    in->phases[1] = (CryspPhaseData){{dsh_edge, 16, in->dsh_params}, CRYSP_SLIP_SYSTEMS_BCC24, N_GRAINS,
+    in->phases[1] = (CryspPhaseData){{dsh_edge, 16, in->dsh_params}, bcc24, N_GRAINS,
                                      &in->orientations[1][0][0]};
     /* Grain boundary normals as (theta, phi) columns. */
     in->normals[0][0] = PI / 2; in->normals[0][1] = 0.;
@@ -203,58 +218,69 @@ static CryspStatus new_material(int meso_model_id, CryspMaterial *mat) {
 /* ---- Tests. ---- */
 
 static void test_layout(void) {
-    static const char *FORTRAN_TYPES[14] = {"Status_C", "Parameter_C", "Input_C", "StateDescriptor_C", "ModelDescriptor_C",
+    static const char *FORTRAN_TYPES[15] = {"Status_C", "Parameter_C", "Input_C", "StateDescriptor_C", "ModelDescriptor_C",
                                             "ModelData_C", "PhaseData_C", "ConstitutiveModel_C", "HardeningState_C", "Grain_C",
-                                            "Cluster_C", "Material_C", "StrainIncrement_C", "StressIncrement_C"};
-    const size_t c_sizes[14] = {sizeof(CryspStatus), sizeof(CryspParameter), sizeof(CryspInput), sizeof(CryspStateDescriptor),
+                                            "Cluster_C", "Material_C", "StrainIncrement_C", "StressIncrement_C",
+                                            "SlipSystemDescriptor_C"};
+    const size_t c_sizes[15] = {sizeof(CryspStatus), sizeof(CryspParameter), sizeof(CryspInput), sizeof(CryspStateDescriptor),
                                 sizeof(CryspModelDescriptor), sizeof(CryspModelData), sizeof(CryspPhaseData),
                                 sizeof(CryspConstitutiveModel), sizeof(CryspHardeningState), sizeof(CryspGrain),
                                 sizeof(CryspCluster), sizeof(CryspMaterial), sizeof(CryspStrainIncrement),
-                                sizeof(CryspStressIncrement)};
-    size_t fortran_sizes[14];
+                                sizeof(CryspStressIncrement), sizeof(CryspSlipSystemDescriptor)};
+    size_t fortran_sizes[15];
 
     crysp_test_sizes(fortran_sizes);
-    for (int i = 0; i < 14; i++)
+    for (int i = 0; i < 15; i++)
         check(c_sizes[i] == fortran_sizes[i], "layout: size of %s is %zu in libcrysp.h but %zu in the library", FORTRAN_TYPES[i],
               c_sizes[i], fortran_sizes[i]);
+}
+
+static void test_slip_systems(void) {
+    int n = -1;
+    CryspSlipSystemDescriptor *descs = NULL;
+
+    crysp_get_slip_systems(&n, &descs);
+    check(n == 3, "slip systems: expected 3 sets, got %d", n);
+    for (int i = 0; i < n; i++)
+        check(terminated(descs[i].name, CRYSP_NAME_LEN) && terminated(descs[i].description, CRYSP_DESC_LEN),
+              "slip systems %d: strings are NUL-terminated", descs[i].id);
+    free(descs);
 }
 
 static void test_model_descriptors(void) {
     int n = -1;
     CryspModelDescriptor *descs = NULL;
 
-    if (check_ok(crysp_get_meso_models(&n, &descs), "crysp_get_meso_models")) {
-        for (int i = 0; i < n; i++) {
-            check(terminated(descs[i].name, CRYSP_NAME_LEN) && terminated(descs[i].description, CRYSP_DESC_LEN),
-                  "meso model %d: strings are NUL-terminated", descs[i].id);
-            crysp_destroy_model_descriptor(&descs[i]);
-        }
-        free(descs);
+    crysp_get_meso_models(&n, &descs);
+    for (int i = 0; i < n; i++) {
+        check(terminated(descs[i].name, CRYSP_NAME_LEN) && terminated(descs[i].description, CRYSP_DESC_LEN),
+              "meso model %d: strings are NUL-terminated", descs[i].id);
+        crysp_destroy_model_descriptor(&descs[i]);
     }
+    free(descs);
 
-    if (check_ok(crysp_get_micro_models(&n, &descs), "crysp_get_micro_models")) {
-        for (int i = 0; i < n; i++) {
-            CryspModelDescriptor *d = &descs[i];
-            for (int j = 0; j < d->n_inputs; j++)
-                check(terminated(d->inputs[j].name, CRYSP_NAME_LEN) && terminated(d->inputs[j].description, CRYSP_DESC_LEN),
-                      "micro model %d, input %d: strings are NUL-terminated", d->id, j);
-            if (d->id != voce || !check(d->n_inputs == 5, "Voce: expected 5 inputs, got %d", d->n_inputs)) continue;
+    crysp_get_micro_models(&n, &descs);
+    for (int i = 0; i < n; i++) {
+        CryspModelDescriptor *d = &descs[i];
+        for (int j = 0; j < d->n_inputs; j++)
+            check(terminated(d->inputs[j].name, CRYSP_NAME_LEN) && terminated(d->inputs[j].description, CRYSP_DESC_LEN),
+                  "micro model %d, input %d: strings are NUL-terminated", d->id, j);
+        if (d->id != voce || !check(d->n_inputs == 5, "Voce: expected 5 inputs, got %d", d->n_inputs)) continue;
 
-            /* One input of each kind of parameter: a real bound, a string bound and an unset default. */
-            CryspInput *crss = &d->inputs[0];
-            check(strcmp(crss->name, "Initial CRSS") == 0, "Voce: first input is 'Initial CRSS', got '%s'", crss->name);
-            check(crss->lower_bound.type == CRYSP_TYPE_REAL && crss->lower_bound.rank == 0 &&
-                      *(double *)crss->lower_bound.data == 0.,
-                  "Voce: 'Initial CRSS' has lower bound 0");
-            check(crss->upper_bound.type == CRYSP_TYPE_STRING && crss->upper_bound.extents[0] == 5 &&
-                      strcmp(crss->upper_bound.data, "TIIIS") == 0,
-                  "Voce: 'Initial CRSS' is bounded above by the NUL-terminated input name 'TIIIS'");
-            check(crss->default_value.rank == -1 && crss->default_value.data == NULL, "Voce: 'Initial CRSS' has no default");
-            check(d->inputs[3].description[0] == '\0', "Voce: an input without a description gets an empty one");
-        }
-        for (int i = 0; i < n; i++) crysp_destroy_model_descriptor(&descs[i]);
-        free(descs);
+        /* One input of each kind of parameter: a real bound, a string bound and an unset default. */
+        CryspInput *crss = &d->inputs[0];
+        check(strcmp(crss->name, "Initial CRSS") == 0, "Voce: first input is 'Initial CRSS', got '%s'", crss->name);
+        check(crss->lower_bound.type == CRYSP_TYPE_REAL && crss->lower_bound.rank == 0 &&
+                  *(double *)crss->lower_bound.data == 0.,
+              "Voce: 'Initial CRSS' has lower bound 0");
+        check(crss->upper_bound.type == CRYSP_TYPE_STRING && crss->upper_bound.extents[0] == 5 &&
+                  strcmp(crss->upper_bound.data, "TIIIS") == 0,
+              "Voce: 'Initial CRSS' is bounded above by the NUL-terminated input name 'TIIIS'");
+        check(crss->default_value.rank == -1 && crss->default_value.data == NULL, "Voce: 'Initial CRSS' has no default");
+        check(d->inputs[3].description[0] == '\0', "Voce: an input without a description gets an empty one");
     }
+    for (int i = 0; i < n; i++) crysp_destroy_model_descriptor(&descs[i]);
+    free(descs);
 }
 
 static void test_new_material(void) {
@@ -419,6 +445,7 @@ static void test_destroy_parts(void) {
 
 int main(void) {
     test_layout();
+    test_slip_systems();
     if (find_models()) {
         test_model_descriptors();
         test_new_material();

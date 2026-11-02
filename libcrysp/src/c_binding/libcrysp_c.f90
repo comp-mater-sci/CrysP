@@ -6,12 +6,14 @@ module libcrysp_c_binding
     use iso_c_binding
     use libcrysp
     use crysp_utils_c
+    use crysp_micro_c
     use crysp_macro_c
 
     implicit none
 
     private
-    public:: crysp_get_meso_models_c, &
+    public:: crysp_get_slip_systems_c, &
+             crysp_get_meso_models_c, &
              crysp_get_micro_models_c, &
              crysp_new_material_c, &
              crysp_strain_driven_deformation_c, &
@@ -21,21 +23,37 @@ module libcrysp_c_binding
 
 contains
 
+    !> C binding of [[libcrysp:crysp_get_slip_systems]].
+    subroutine crysp_get_slip_systems_c(n_systems, descs) bind(C, name='crysp_get_slip_systems')
+        integer(C_INT), intent(out):: n_systems
+        type(C_PTR), intent(out):: descs !! n_systems * type(SlipSystemDescriptor_C)
+
+        integer:: i
+        type(SlipSystemDescriptor), dimension(:), allocatable:: descs_
+        type(SlipSystemDescriptor_C):: mold
+        type(SlipSystemDescriptor_C), dimension(:), pointer:: descs_ptr
+
+        descs_ = crysp_get_slip_systems()
+
+        n_systems = int(size(descs_), C_INT)
+        descs = malloc(int(size(descs_), C_SIZE_T) * c_sizeof(mold))
+        call c_f_pointer(descs, descs_ptr, [size(descs_)])
+        do i = 1, size(descs_)
+            descs_ptr(i) = descs_(i)
+        end do
+    end subroutine
+
     !> C binding of [[libcrysp:crysp_get_meso_models]].
-    function crysp_get_meso_models_c(n_models, model_descs) bind(C, name='crysp_get_meso_models') result(stat)
+    subroutine crysp_get_meso_models_c(n_models, model_descs) bind(C, name='crysp_get_meso_models')
         integer(C_INT), intent(out):: n_models
         type(C_PTR), intent(out):: model_descs !! n_models * type(ModelDescriptor_C)
-        type(Status_C):: stat
 
         integer:: i
         type(ModelDescriptor), dimension(:), allocatable:: model_descs_
         type(ModelDescriptor_C):: mold
         type(ModelDescriptor_C), dimension(:), pointer:: descs_ptr
 
-        n_models = 0
-        model_descs = C_NULL_PTR
-
-        stat = crysp_get_meso_models(model_descs_)
+        model_descs_ = crysp_get_meso_models()
 
         n_models = int(size(model_descs_), C_INT)
         model_descs = malloc(int(size(model_descs_), C_SIZE_T) * c_sizeof(mold))
@@ -43,23 +61,19 @@ contains
         do i = 1, size(model_descs_)
             descs_ptr(i) = model_descs_(i)
         end do
-    end function
+    end subroutine
 
     !> C binding of [[libcrysp:crysp_get_micro_models]].
-    function crysp_get_micro_models_c(n_models, model_descs) bind(C, name='crysp_get_micro_models') result(stat)
+    subroutine crysp_get_micro_models_c(n_models, model_descs) bind(C, name='crysp_get_micro_models')
         integer(C_INT), intent(out):: n_models
         type(C_PTR), intent(out):: model_descs !! n_models * type(ModelDescriptor_C)
-        type(Status_C):: stat
 
         integer:: i
         type(ModelDescriptor), dimension(:), allocatable:: model_descs_
         type(ModelDescriptor_C):: mold
         type(ModelDescriptor_C), dimension(:), pointer:: descs_ptr
 
-        n_models = 0
-        model_descs = C_NULL_PTR
-
-        stat = crysp_get_micro_models(model_descs_)
+        model_descs_ = crysp_get_micro_models()
 
         n_models = int(size(model_descs_), C_INT)
         model_descs = malloc(int(size(model_descs_), C_SIZE_T) * c_sizeof(mold))
@@ -67,7 +81,7 @@ contains
         do i = 1, size(model_descs_)
             descs_ptr(i) = model_descs_(i)
         end do
-    end function
+    end subroutine
 
     !> C binding of [[libcrysp:crysp_new_material]].
     function crysp_new_material_c(meso_model_data, n_phases, phase_data, mat) bind(C, name='crysp_new_material') result(stat)
