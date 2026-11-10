@@ -50,12 +50,12 @@ contains
         integer:: i, &
                   out_unit, &
                   n_points
-        real(DP):: fi2, &
+        real(DP):: phi_2, &
                    strain_test_frame(3,3), &
                    stress_test_frame(3,3), &
                    sigma_t(3,3), &
                    r_value
-        real(DP), allocatable:: fi2s(:), &
+        real(DP), allocatable:: phi_2s(:), &
                                 test_frames(:,:,:), &
                                 target_stress_modes(:,:), &
                                 strain_modes(:,:), &
@@ -65,22 +65,22 @@ contains
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
 
         n_points = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
-        allocate(fi2s(n_points), test_frames(3,3,n_points), target_stress_modes(5,n_points), strain_modes(5,n_points), &
+        allocate(phi_2s(n_points), test_frames(3,3,n_points), target_stress_modes(5,n_points), strain_modes(5,n_points), &
                  stresses(5,n_points), residuals(5,n_points))
 
-        fi2 = 0._DP
+        phi_2 = 0._DP
         sigma_t = 0._DP
         sigma_t(1, 1) = 1._DP
 
         do i=1,n_points
-            fi2s(i) = fi2
-            test_frames(:,:,i) = euler_to_rotation_matrix([0._DP,0._DP, fi2])
+            phi_2s(i) = phi_2
+            test_frames(:,:,i) = euler_to_rotation_matrix([0._DP,0._DP, phi_2])
 
             ! Rotate from "tensile" to material coordinate system
             target_stress_modes(:,i) = tensor_to_deviatoric(sigma_t .fromframe. test_frames(:,:,i))
             target_stress_modes(:,i) = target_stress_modes(:,i) / norm2(target_stress_modes(:,i))
 
-            fi2 = fi2 + this%angular_resolution
+            phi_2 = phi_2 + this%angular_resolution
         enddo
 
         call handle_crysp_status(crysp_simulate_stress_modes(this%material, target_stress_modes, strain_modes, stresses, residuals))
@@ -91,7 +91,7 @@ contains
             stress_test_frame = deviatoric_to_tensor(stresses(:,i))     .toframe. test_frames(:,:,i)
             r_value = strain_test_frame(2,2) / strain_test_frame(3,3)
 
-            call write_output_increment(out_unit, [rad_to_deg(fi2s(i)), &
+            call write_output_increment(out_unit, [rad_to_deg(phi_2s(i)), &
                                                    r_value / (1._DP + r_value), &
                                                    r_value, &
                                                    norm2(stress_test_frame), &
