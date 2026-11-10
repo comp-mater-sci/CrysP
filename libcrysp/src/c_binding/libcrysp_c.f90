@@ -18,8 +18,10 @@ module libcrysp_c_binding
              crysp_new_material_c, &
              crysp_strain_driven_deformation_c, &
              crysp_stress_driven_deformation_c, &
-             crysp_simulate_stress_mode_c, &
-             crysp_simulate_strain_mode_c
+             crysp_simulate_stress_modes_c, &
+             crysp_simulate_strain_modes_c
+
+    character(*), parameter:: MOD_NAME = 'crysp_c'
 
 contains
 
@@ -172,32 +174,44 @@ contains
         end do
     end function
 
-    !> C binding of [[libcrysp:crysp_simulate_stress_mode]].
-    function crysp_simulate_stress_mode_c(mat, target_stress_mode, strain_mode, stress, residual) &
-            bind(C, name='crysp_simulate_stress_mode') result(stat)
+    !> C binding of [[libcrysp:crysp_simulate_stress_modes]].
+    function crysp_simulate_stress_modes_c(mat, n_modes, target_stress_modes, strain_modes, stresses, residuals) &
+            bind(C, name='crysp_simulate_stress_modes') result(stat)
         type(Material_C), intent(in):: mat
-        real(C_DOUBLE), dimension(5), intent(in):: target_stress_mode
-        real(C_DOUBLE), dimension(5), intent(inout):: strain_mode
-        real(C_DOUBLE), dimension(5), intent(out):: stress
-        real(C_DOUBLE), dimension(5), intent(out):: residual
+        integer(C_INT), value, intent(in):: n_modes
+        real(C_DOUBLE), dimension(5, n_modes), intent(in):: target_stress_modes
+        real(C_DOUBLE), dimension(5, n_modes), intent(out):: strain_modes
+        real(C_DOUBLE), dimension(5, n_modes), intent(out):: stresses
+        real(C_DOUBLE), dimension(5, n_modes), intent(out):: residuals
         type(Status_C):: stat
 
         type(Material), target:: mat_fort
 
+        if (n_modes < 1) then
+            stat = fail(MOD_NAME, 'crysp_simulate_stress_modes_c', CRYSP_ERR_ARG, 'Number of modes must be at least 1.')
+            return
+        end if
+
         mat_fort = mat
-        stat = crysp_simulate_stress_mode(mat_fort, target_stress_mode, strain_mode, stress, residual)
+        stat = crysp_simulate_stress_modes(mat_fort, target_stress_modes, strain_modes, stresses, residuals)
     end function
 
-    !> C binding of [[libcrysp:crysp_simulate_strain_mode]].
-    function crysp_simulate_strain_mode_c(mat, strain_mode, stress) bind(C, name='crysp_simulate_strain_mode') result(stat)
+    !> C binding of [[libcrysp:crysp_simulate_strain_modes]].
+    function crysp_simulate_strain_modes_c(mat, n_modes, strain_modes, stresses) bind(C, name='crysp_simulate_strain_modes') result(stat)
         type(Material_C), intent(in):: mat
-        real(C_DOUBLE), dimension(5), intent(in):: strain_mode
-        real(C_DOUBLE), dimension(5), intent(out):: stress
+        integer(C_INT), value, intent(in):: n_modes
+        real(C_DOUBLE), dimension(5, n_modes), intent(in):: strain_modes
+        real(C_DOUBLE), dimension(5, n_modes), intent(out):: stresses
         type(Status_C):: stat
 
         type(Material), target:: mat_fort
 
+        if (n_modes < 1) then
+            stat = fail(MOD_NAME, 'crysp_simulate_strain_modes_c', CRYSP_ERR_ARG, 'Number of modes must be at least 1.')
+            return
+        end if
+
         mat_fort = mat
-        stat = crysp_simulate_strain_mode(mat_fort, strain_mode, stress)
+        stat = crysp_simulate_strain_modes(mat_fort, strain_modes, stresses)
     end function
 end module

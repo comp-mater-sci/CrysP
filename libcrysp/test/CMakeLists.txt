@@ -32,6 +32,7 @@ endfunction()
 crysp_add_test(test_parameter)
 crysp_add_test(test_material_roundtrip)
 crysp_add_test(test_rotations)
+crysp_add_test(test_simulate_modes)
 
 # The C API test is a C program written against libcrysp.h. c_binding_sizes.f90 reports the sizes of the bind(C) types so that it
 # can check the header. It is linked by the Fortran compiler to bring in the Fortran runtime; ifx must be told main is not Fortran.

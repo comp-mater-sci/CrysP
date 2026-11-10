@@ -24,6 +24,8 @@ module libcrysp
     public
 
     character(*), parameter, private:: MOD_NAME = 'crysp'
+    !> Largest angle (rad) between two stress modes for which the strain mode of one is a good initial guess for the other.
+    real(DP), parameter, private:: MAX_GUESS_ANGLE = 0.1_DP
 
 contains
 
@@ -151,39 +153,78 @@ contains
         stat = macro_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments)
     end function
 
-    !> Calculate strain mode and stress corresponding to a desired stress mode.
+    !> Calculate strain modes and stresses corresponding to a set of desired stress modes.
     !>
     !> The material has to be pre-initialized via crysp_new_material
-    !> Uses iterative search to find an accurate match for the strain mode and stress state corresponding to the desired stress mode.
-    !> An accurate initial guess for the strain mode should be provided to improve convergence and performance. The residual of the search is returned to provide
-    !> an estimation of search accuracy.
-    function crysp_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual) result(stat)
-        type(Material), target, intent(inout):: mat                          !! Material state.
-        real(DP), dimension(5), intent(in)::  target_stress_mode   !! Intended stress mode
-        real(DP), dimension(5), intent(inout):: strain_mode !! On entry, contains an initial guess of the strain mode matching the
-                                                            !! target stress mode. On exit, contains the actual strain mode.
-        real(DP), dimension(5), intent(out):: stress        !! Actual stress state found.
-        real(DP), dimension(5), intent(out):: residual      !! Residual of the the search.
-        type(Status):: stat                                       !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected input, or a
-                                                                  !! simulation failure.
+    !> Each mode is simulated using iterative search to find an accurate match for the strain mode and stress state corresponding
+    !> to the desired stress mode. The residual of each search is returned to provide an estimation of search accuracy.
+        !> All modes are validated before any is simulated. On a simulation failure, the outputs of the modes after the failing one are
+    !> undefined.
+    function crysp_simulate_stress_modes(mat, target_stress_modes, strain_modes, stresses, residuals) result(stat)
+        type(Material), target, intent(inout):: mat              !! Material state.
+        real(DP), dimension(:,:), intent(in)::  target_stress_modes  !! 5 x n: intended stress modes, each with norm 1.
+        real(DP), dimension(:,:), intent(out):: strain_modes     !! 5 x n: strain modes found.
+        real(DP), dimension(:,:), intent(out):: stresses         !! 5 x n: actual stress states found.
+        real(DP), dimension(:,:), intent(out):: residuals        !! 5 x n: residuals of the searches.
+        type(Status):: stat                                      !! `CRYSP_OK`, `CRYSP_ERR_DIMS` for mismatched shapes,
+                                                                 !! `CRYSP_ERR_ARG` for a rejected input, or a simulation failure.
 
-        character(*), parameter:: PROC_NAME = 'crysp_simulate_stress_mode'
+        character(*), parameter:: PROC_NAME = 'crysp_simulate_stress_modes'
 
-        if (abs(norm2(target_stress_mode) - 1._DP) > TOLERANCE) then
-            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_ARG, 'Norm of stress mode must be 1.')
+        integer:: i, &
+                   closest
+
+        if (size(target_stress_modes, 1) /= 5 &
+                .or. any(shape(strain_modes) /= shape(target_stress_modes)) &
+                .or. any(shape(stresses) /= shape(target_stress_modes)) &
+                .or. any(shape(residuals) /= shape(target_stress_modes))) then
+            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'All mode arrays must have shape 5 x n.')
+            return
+        end if
+        do i = 1, size(target_stress_modes, 2)
+            if (abs(norm2(target_stress_modes(:,i)) - 1._DP) > TOLERANCE) then
+                stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_ARG, 'Norm of stress mode ' // int_to_str(i) // ' must be 1.')
+                return
+            end if
+        end do
+
+        do i = 1, size(target_stress_modes, 2)
+            strain_modes(:,i) = target_stress_modes(:,i)
+            ! From 2nd mode onwards, we can use the result of the closest previously calculated mode as initial guess, if it is
+            ! closer than MAX_GUESS_ANGLE to the mode to be simulated.
+            if (i > 1) then
+                closest = maxloc(matmul(target_stress_modes(:,i), target_stress_modes(:,1:i-1)), 1)
+                if (dot_product(target_stress_modes(:,i), target_stress_modes(:,closest)) >= cos(MAX_GUESS_ANGLE)) &
+                    strain_modes(:,i) = strain_modes(:,closest)
+            end if
+
+            stat = macro_simulate_stress_mode(mat, target_stress_modes(:,i), strain_modes(:,i), stresses(:,i), residuals(:,i))
+            if (failed(stat)) return
+        end do
+    end function
+
+    !> Calculate the stress states corresponding to a set of strain modes.
+    !>
+    !> Each mode is simulated independently. On a simulation failure, the outputs of the modes after the failing one are undefined.
+    function crysp_simulate_strain_modes(mat, strain_modes, stresses) result(stat)
+        type(Material), target, intent(inout):: mat           !! Material state
+        real(DP), dimension(:,:), intent(in)::  strain_modes  !! 5 x n: deviatoric strain modes.
+        real(DP), dimension(:,:), intent(out):: stresses      !! 5 x n: stress state corresponding to each strain mode.
+        type(Status):: stat                                   !! `CRYSP_OK`, `CRYSP_ERR_DIMS` for mismatched shapes, or a
+                                                              !! failure raised during the simulation.
+
+        character(*), parameter:: PROC_NAME = 'crysp_simulate_strain_modes'
+
+        integer:: i
+
+        if (size(strain_modes, 1) /= 5 .or. any(shape(stresses) /= shape(strain_modes))) then
+            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'All mode arrays must have shape 5 x n.')
             return
         end if
 
-        stat = macro_simulate_stress_mode(mat, target_stress_mode, strain_mode, stress, residual)
-    end function
-
-    !> Calculate stress state corresponding to a given strain mode.
-    function crysp_simulate_strain_mode(mat, strain_mode, stress) result(stat)
-        type(Material), target, intent(inout):: mat                          !! Material state
-        real(DP), dimension(5), intent(in)::    strain_mode !! Deviatoric strain mode
-        real(DP), dimension(5), intent(out)::   stress      !! Stress state corresponding to the strain mode.
-        type(Status):: stat                                       !! `CRYSP_OK`, or a failure raised during the simulation.
-
-        stat = macro_simulate_strain_mode(mat, strain_mode, stress)
+        do i = 1, size(strain_modes, 2)
+            stat = macro_simulate_strain_mode(mat, strain_modes(:,i), stresses(:,i))
+            if (failed(stat)) return
+        end do
     end function
 end module

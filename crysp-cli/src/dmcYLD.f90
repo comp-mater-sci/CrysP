@@ -61,42 +61,44 @@ contains
                   out_unit
 
         real(DP):: angle, &
-                   target_stress_mode(5), &
-                   target_stress_norm, &
-                   strain_mode(5), &
-                   stress_norm, &
-                   dev_stress(5), &
-                   residual(5)
+                   stress_norm
+        real(DP), allocatable:: angles(:), &
+                                target_stress_norms(:), &
+                                target_stress_modes(:,:), &
+                                strain_modes(:,:), &
+                                dev_stresses(:,:), &
+                                residuals(:,:)
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
 
         n_points = ceiling(2*PI / this%angular_resolution - TOLERANCE)
+        allocate(angles(n_points), target_stress_norms(n_points), target_stress_modes(5,n_points), strain_modes(5,n_points), &
+                 dev_stresses(5,n_points), residuals(5,n_points))
 
         angle = 0._DP
         do i=1,n_points
+            angles(i) = angle
             !Target stress mode is combination of basis vectors according to current angle
-            target_stress_mode = unscaled_voigt_to_deviatoric(this%base(:,1)*cos(angle) + this%base(:,2)*sin(angle))
-            target_stress_norm = norm2(target_stress_mode)
-            target_stress_mode = target_stress_mode / target_stress_norm
+            target_stress_modes(:,i) = unscaled_voigt_to_deviatoric(this%base(:,1)*cos(angle) + this%base(:,2)*sin(angle))
+            target_stress_norms(i) = norm2(target_stress_modes(:,i))
+            target_stress_modes(:,i) = target_stress_modes(:,i) / target_stress_norms(i)
 
-            !Initial guess for strain mode is stress mode
-            !If first iteration or anguler resolution is too large, stick to von mises guess
-            if (i==1 .or. this%angular_resolution > 0.1_DP) &
-                strain_mode = target_stress_mode
+            angle = angle + this%angular_resolution
+        end do
 
-            call handle_crysp_status(crysp_simulate_stress_mode(this%material, target_stress_mode, strain_mode, dev_stress, residual))
+        call handle_crysp_status(crysp_simulate_stress_modes(this%material, target_stress_modes, strain_modes, dev_stresses, &
+                                                             residuals))
 
+        do i=1,n_points
             !Because the direcion remains identical, ||stress||/||dev(stress)|| == ||stress_mode||/||dev(stress_mode)||
             !Therefore, scaling ||dev_stress|| by ||stress_mode||/||dev(stress_mode)|| yields ||stress||.
             !Since ||stress_mode|| == 1, ||stress|| == ||dev(stress)|| / ||dev(stress_mode)||
-            stress_norm = norm2(dev_stress)/target_stress_norm
+            stress_norm = norm2(dev_stresses(:,i))/target_stress_norms(i)
 
-            call write_output_increment(out_unit, [rad_to_deg(angle), &
+            call write_output_increment(out_unit, [rad_to_deg(angles(i)), &
                                                    stress_norm, &
-                                                   deviatoric_to_unscaled_voigt(strain_mode), &
-                                                   norm2(residual)])
-
-            angle = angle + this%angular_resolution
+                                                   deviatoric_to_unscaled_voigt(strain_modes(:,i)), &
+                                                   norm2(residuals(:,i))])
         end do
 
         close(out_unit)

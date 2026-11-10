@@ -4,6 +4,9 @@
  * Mirrors the bind(C) types and entry points in src/c_binding/{utils,micro,meso,macro,libcrysp}_c.f90. The structs must match
  * their Fortran counterparts field for field: keep both in sync when changing either.
  *
+ * This header only documents what is specific to the C interface. Each function is documented at the Fortran procedure of the
+ * same name in src/libcrysp.f90, and each struct at its Fortran counterpart.
+ *
  * Ownership
  * ---------
  * Every pointer in these structs is owned, except CryspGrain::phase. Owned pointers are allocated with malloc: libCrysP does so
@@ -195,21 +198,17 @@ typedef struct {
     CryspStrainIncrement *strain_increments;  /* List of n_strain_increments. */
 } CryspStressIncrement;
 
-/*
- * Describe the available slip system sets as a list of *n_systems descriptors, including their IDs. The descriptors own nothing,
- * so the list is released with free() alone.
- */
+/* *descs is a list of *n_systems descriptors. They own nothing, so the list is released with free() alone. */
 void crysp_get_slip_systems(int *n_systems, CryspSlipSystemDescriptor **descs);
 
-/* Describe the available meso or micro (hardening) models as a list of *n_models descriptors, including their IDs. */
+/* *model_descs is a list of *n_models descriptors. */
 void crysp_get_meso_models(int *n_models, CryspModelDescriptor **model_descs);
 void crysp_get_micro_models(int *n_models, CryspModelDescriptor **model_descs);
 
-/* Create a material from a meso model and n_phases phases. On failure, *mat is undefined and must not be destroyed. */
+/* On failure, *mat is undefined and must not be destroyed. */
 CryspStatus crysp_new_material(const CryspModelData *meso_model_data, int n_phases, const CryspPhaseData *phase_data, CryspMaterial *mat);
 
 /*
- * Deform *mat under a velocity gradient until the von Mises strain reaches target_vm_strain, or along a stress mode.
  * velocity_gradient is not modified; it is not declared const because C before C23 rejects passing a double[3][3] to a const one.
  *
  * *mat is replaced by the deformed material, and what it owned on entry is destroyed. This also happens on failure, where *mat
@@ -220,11 +219,11 @@ CryspStatus crysp_stress_driven_deformation(CryspMaterial *mat, const double tar
                                             int *n_incs, CryspStressIncrement **incs);
 
 /*
- * Find the strain mode yielding a stress in the direction of target_stress_mode (unit norm), starting from the guess in
- * strain_mode, or compute the stress for a given strain mode. *mat is not modified.
+ * Mode arrays are 5 x n_modes. An n_modes below 1 is rejected with CRYSP_ERR_ARG. *mat is not modified.
  */
-CryspStatus crysp_simulate_stress_mode(const CryspMaterial *mat, const double target_stress_mode[5], double strain_mode[5], double stress[5], double residual[5]);
-CryspStatus crysp_simulate_strain_mode(const CryspMaterial *mat, const double strain_mode[5], double stress[5]);
+CryspStatus crysp_simulate_stress_modes(const CryspMaterial *mat, int n_modes, const double *target_stress_modes, double *strain_modes,
+                                        double *stresses, double *residuals);
+CryspStatus crysp_simulate_strain_modes(const CryspMaterial *mat, int n_modes, const double *strain_modes, double *stresses);
 
 /* Release everything a struct owns, see "Ownership" above. */
 void crysp_destroy_parameter(CryspParameter *param);

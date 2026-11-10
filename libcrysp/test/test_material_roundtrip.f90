@@ -17,7 +17,7 @@
 program test_material_roundtrip
     use base_defs, only: DP, TOLERANCE
     use conversions, only: deg_to_rad, euler_to_rotation_matrix
-    use libcrysp, only: crysp_new_material, crysp_strain_driven_deformation, crysp_simulate_strain_mode
+    use libcrysp, only: crysp_new_material, crysp_strain_driven_deformation, crysp_simulate_strain_modes
     use crysp_status, only: Status, failed
     use crysp_model, only: ModelData, ModelDescriptor
     use crysp_micro, only: PhaseData, micro_get_model, &
@@ -65,7 +65,7 @@ contains
         type(Material), target:: original, restored
         type(Material_C):: mat_c
         type(StrainIncrement), dimension(:), allocatable:: increments_original, increments_restored
-        real(DP), dimension(5):: strain_mode, stress_original, stress_restored
+        real(DP), dimension(5,1):: strain_mode, stress_original, stress_restored
         integer, dimension(:,:), allocatable:: texture
         type(Status):: stat
 
@@ -91,10 +91,10 @@ contains
         call check_materials_equal(restored, original, label)
 
         !Behavioral equivalence: a pure query first ...
-        strain_mode = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP]
-        stat = crysp_simulate_strain_mode(original, strain_mode, stress_original)
+        strain_mode(:,1) = [1._DP, 0._DP, 0._DP, 0._DP, 0._DP]
+        stat = crysp_simulate_strain_modes(original, strain_mode, stress_original)
         call check_ok(stat, label // ': simulate_strain_mode (original)')
-        stat = crysp_simulate_strain_mode(restored, strain_mode, stress_restored)
+        stat = crysp_simulate_strain_modes(restored, strain_mode, stress_restored)
         call check_ok(stat, label // ': simulate_strain_mode (restored)')
         call check_equal(stress_restored, stress_original, label // ': simulate_strain_mode yields the same stress', &
                          tolerance=2._DP*TOLERANCE)
