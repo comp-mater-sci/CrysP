@@ -94,7 +94,7 @@ contains
                                                    r_value / (1._DP + r_value), &
                                                    r_value, &
                                                    norm2(stress_test_frame), &
-                                                   norm2(stress_mode_deviations(:,i))])
+                                                   stress_mode_deviations(i)])
         enddo
 
         close(out_unit)

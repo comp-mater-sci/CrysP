@@ -37,7 +37,7 @@ contains
         real(DP), dimension(5), intent(inout):: strain_mode
 
         real(DP), dimension(5), intent(out):: stress
-        real(DP), dimension(5), intent(out):: stress_mode_deviation
+        real(DP), intent(out):: stress_mode_deviation
         type(Status):: stat
 
         stat = simulate_stress_mode(mat%meso_model, mat%clusters, stress_mode, strain_mode, stress, stress_mode_deviation)
@@ -66,7 +66,7 @@ contains
                    cur_vm_strain, &
                    next_vm_strain, &
                    stress(5), &
-                   stress_mode_deviation(5), &
+                   stress_mode_deviation, &
                    def_grad(3,3)
 
         type(Increment), allocatable:: incs(:)
@@ -87,7 +87,6 @@ contains
                           incs, &
                           target_stress_mode)
             if (failed(stat)) return
-
 
             n_incs = size(incs)
 

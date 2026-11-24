@@ -12,7 +12,7 @@ module incrementation
 
     type:: Increment
         real(DP), dimension(3,3):: velocity_gradient = 0._DP
-        real(DP), dimension(6):: stress_mode_deviation = 0._DP     !! Deviation of stress mode from target stress mode, if applicable.
+        real(DP):: stress_mode_deviation = 0._DP     !! Relative error on deviatoric stress mode
         real(DP):: duration = 0._DP
         real(DP), dimension(3,3):: deformation_gradient = UNIT_MATRIX_3X3 !! Technically redundant but saves a lot of computation
         real(DP):: vm_strain = 0._DP                           !! Von mises true strain. Technically redundant but saves a lot of computation

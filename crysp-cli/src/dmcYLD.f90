@@ -82,13 +82,13 @@ contains
                                                              target_stress_modes, &
                                                              strain_modes, &
                                                              stresses, &
-                                                             residuals))
+                                                             stress_mode_deviations))
 
         do i=1,points
             call write_output_increment(out_unit, [rad_to_deg(angles(i)), &
                                                    norm2(stresses(:,i)), &
                                                    strain_modes(:,i), &
-                                                   norm2(stress_mode_deviations(i))])
+                                                   stress_mode_deviations(i)])
         end do
 
         close(out_unit)

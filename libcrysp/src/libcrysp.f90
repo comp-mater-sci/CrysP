@@ -180,7 +180,7 @@ contains
         real(DP), dimension(:,:), intent(in)::  target_stress_modes    !! 6xn: intended stress modes, each with norm 1.
         real(DP), dimension(:,:), intent(out):: strain_modes           !! 6xn: strain modes found.
         real(DP), dimension(:,:), intent(out):: stresses               !! 6xn: actual stress states found.
-        real(DP), dimension(:,:), intent(out):: stress_mode_deviations !! 6xn: residuals of the searches.
+        real(DP), dimension(:), intent(out):: stress_mode_deviations   !! n: residuals of the searches.
         type(Status):: stat                                            !! `CRYSP_OK`, `CRYSP_ERR_DIMS` for mismatched shapes,
                                                                        !! `CRYSP_ERR_ARG` for a rejected input, or a simulation failure.
 
@@ -192,18 +192,17 @@ contains
         real(DP):: target_dev_stress(5), &
                    dev_stress(5), &
                    hydro, &
-                   res(5), &
                    retry_strain(5), &
                    retry_stress(5), &
-                   retry_res(5)
-        real(DP), dimension(5, size(target_stress_modes,2)):: unit_dev_stress_modes, &
-                                                              dev_strain_modes
+                   retry_res, &
+                   unit_dev_stress_modes(5,size(target_stress_modes,2)), &
+                   dev_strain_modes(5,size(target_stress_modes,2))
 
         if (size(target_stress_modes, 1) /= 6 &
                 .or. any(shape(strain_modes) /= shape(target_stress_modes)) &
                 .or. any(shape(stresses) /= shape(target_stress_modes)) &
-                .or. any(shape(stress_mode_deviations) /= shape(target_stress_modes))) then
-            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'All mode arrays must have shape 6 x n.')
+                .or. size(stress_mode_deviations) /= size(target_stress_modes,2)) then
+            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'Incorrect input dimensions')
             return
         end if
 
@@ -223,7 +222,7 @@ contains
             ! closer than MAX_GUESS_ANGLE to the mode to be simulated and its search converged to within ACCURACY.
             if (i > 1) then
                 closest = maxloc(matmul(unit_dev_stress_modes(:,i), unit_dev_stress_modes(:,:i-1)), 1, &
-                                 mask=residuals(:i-1) <= ACCURACY)
+                                 mask=stress_mode_deviations(:i-1) <= ACCURACY)
                 ! maxloc returns 0 if no previous mode is accurate enough.
                 if (closest > 0) then
                     if ((unit_dev_stress_modes(:,i) .dot. unit_dev_stress_modes(:,closest)) >= cos(MAX_GUESS_ANGLE)) then
@@ -237,18 +236,18 @@ contains
                                               unit_dev_stress_modes(:,i), &
                                               dev_strain_modes(:,i), &
                                               dev_stress, &
-                                              stress_mode_deviations(:,i))
+                                              stress_mode_deviations(i))
             if (failed(stat)) return
 
             !If we used a previous result as initial guess and did not converge, retry with von mises guess. Keep the best result.
-            if (norm2(res) > ACCURACY .and. .not. von_mises_guess) then
+            if (stress_mode_deviations(i) > ACCURACY .and. .not. von_mises_guess) then
                 retry_strain = unit_dev_stress_modes(:,i)
                 stat = macro_simulate_stress_mode(mat, unit_dev_stress_modes(:,i), retry_strain, retry_stress, retry_res)
                 if (failed(stat)) return
-                if (norm2(retry_res) < norm2(res)) then
+                if (retry_res < stress_mode_deviations(i)) then
                     dev_strain_modes(:,i) = retry_strain
                     dev_stress = retry_stress
-                    res = retry_res
+                    stress_mode_deviations(i) = retry_res
                 end if
             end if
 

@@ -92,7 +92,7 @@ contains
                                                                              stress_mode_deviation))
                         inc%velocity_gradient = unscaled_voigt_to_tensor(strain_mode(:,1))
                         inc%stress = unscaled_voigt_to_tensor(stress(:,1))
-                        inc%residual = residual(1)
+                        inc%stress_mode_deviation = stress_mode_deviation(1)
                         n_incs = n_incs + 1
                     end associate
                 else
@@ -109,7 +109,7 @@ contains
                         call write_output_increment(out_unit, [stretch_to_von_mises_true_strain(matmul(inc%deformation_gradient, def_grad)), &
                                                                sqrt(3._DP/2._DP) * norm2(tensor_to_deviatoric(inc%stress)), &
                                                                inc%velocity_gradient .dot. inc%stress, &
-                                                               norm2(inc%stress_mode_deviation), &
+                                                               inc%stress_mode_deviation, &
                                                                tensor_to_unscaled_voigt(inc%stress), &
                                                                tensor_to_unscaled_voigt(inc%velocity_gradient)])
                     end associate

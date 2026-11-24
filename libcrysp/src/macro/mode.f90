@@ -143,15 +143,18 @@ contains
         real(DP), dimension(5), intent(in)::  stress_mode              !! Requested stress mode
         real(DP), dimension(5), intent(inout):: strain_mode            !! Strain mode (approx.) yielding the requested stress mode.
         real(DP), dimension(5), intent(out):: stress                   !! Actual stress state found
-        real(DP), dimension(5), intent(out):: stress_mode_deviation    !! Residual of the iterative solver.
+        real(DP), intent(out):: stress_mode_deviation    !! Residual of the iterative solver.
         type(Status):: stat                                            !! `CRYSP_OK`, a failure raised inside the callback, or `CRYSP_ERR`
                                                                        !! if the MKL trust region solver itself failed.
 
+        real(DP):: residual(5)
         type(Wrapper), target:: wrap
 
         wrap%model => model
         wrap%clusters => clusters
 
-        stat = trust_region_solve(c_loc(wrap), stress_mode, strain_mode, stress, stress_mode_deviation)
+        stat = trust_region_solve(c_loc(wrap), stress_mode, strain_mode, stress, residual)
+        if (failed(stat)) return
+        stress_mode_deviation = norm2(residual)
     end function
 end module
