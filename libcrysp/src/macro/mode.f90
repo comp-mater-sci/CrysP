@@ -137,13 +137,13 @@ contains
     !>
     !> Iteratively finds a strain mode that yields a stress state of which the mode closely matches the requested stress mode.
     !> Does not alter the state of the material
-    function simulate_stress_mode(model, clusters, stress_mode, strain_mode, stress, residual) result(stat)
+    function simulate_stress_mode(model, clusters, stress_mode, strain_mode, stress, stress_mode_deviation) result(stat)
         class(MesoModel), target, intent(in):: model
         class(Cluster), dimension(:), target, intent(inout):: clusters !! Material state
         real(DP), dimension(5), intent(in)::  stress_mode              !! Requested stress mode
         real(DP), dimension(5), intent(inout):: strain_mode            !! Strain mode (approx.) yielding the requested stress mode.
         real(DP), dimension(5), intent(out):: stress                   !! Actual stress state found
-        real(DP), dimension(5), intent(out):: residual                 !! Residual of the iterative solver.
+        real(DP), dimension(5), intent(out):: stress_mode_deviation    !! Residual of the iterative solver.
         type(Status):: stat                                            !! `CRYSP_OK`, a failure raised inside the callback, or `CRYSP_ERR`
                                                                        !! if the MKL trust region solver itself failed.
 
@@ -152,6 +152,6 @@ contains
         wrap%model => model
         wrap%clusters => clusters
 
-        stat = trust_region_solve(c_loc(wrap), stress_mode, strain_mode, stress, residual)
+        stat = trust_region_solve(c_loc(wrap), stress_mode, strain_mode, stress, stress_mode_deviation)
     end function
 end module

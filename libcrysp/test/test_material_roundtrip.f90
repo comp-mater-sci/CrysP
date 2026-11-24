@@ -27,7 +27,7 @@ program test_material_roundtrip
     use crysp_constitutive_model, only: ConstitutiveModel
     use meso, only: MESO_MODEL_ALAMEL, MESO_MODEL_FCTAYLOR
     use crysp_material, only: Material
-    use incrementation, only: StrainIncrement
+    use incrementation, only: Increment
     use crysp_macro_c, only: Material_C, assignment(=), destroy
     use crysp_parameters
     use testing
@@ -64,7 +64,7 @@ contains
 
         type(Material), target:: original, restored
         type(Material_C):: mat_c
-        type(StrainIncrement), dimension(:), allocatable:: increments_original, increments_restored
+        type(Increment), dimension(:), allocatable:: increments_original, increments_restored
         real(DP), dimension(5,1):: strain_mode, stress_original, stress_restored
         integer, dimension(:,:), allocatable:: texture
         type(Status):: stat

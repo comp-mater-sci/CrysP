@@ -101,9 +101,9 @@ contains
         type(Material), target, intent(inout):: mat
         real(DP), dimension(3,3), intent(in):: velocity_gradient !! Assumed not to contain volumetric component.
         real(DP), intent(in)::                 target_vm_strain  !! Total von mises equivalent true strain to be reached.
-        type(StrainIncrement), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps
-                                                                                       !! that were applied. See
-                                                                                       !! [[StrainIncrementData]] for details.
+        type(Increment), dimension(:), allocatable, intent(out):: increments !! Reporting of individual deformation steps
+                                                                             !! that were applied. See
+                                                                             !! [[Increment]] for details.
         type(Status):: stat                                                        !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected input,
                                                                                    !! or a failure raised during the simulation.
 
@@ -132,9 +132,9 @@ contains
         type(Material), target, intent(inout):: mat                                            !! Initialized material
         real(DP), dimension(5), intent(in):: target_stress_mode                     !! Norm must be 1
         real(DP), intent(in):: target_vm_strain                                     !! Target true von mises strain
-        type(StressIncrement), dimension(:), allocatable, intent(out):: increments !! Step-wise reporting of the mapping
-                                                                                          !! between requested stress mode and strain
-                                                                                          !! mode. See [[StressIncrementData]].
+        type(Increment), dimension(:), allocatable, intent(out):: increments !! Step-wise reporting of the mapping
+                                                                             !! between requested stress mode and strain
+                                                                             !! mode. See [[Increment]].
         type(Status):: stat                                                               !! `CRYSP_OK`, `CRYSP_ERR_ARG` for a rejected
                                                                                           !! input, or a simulation failure.
 
@@ -157,17 +157,17 @@ contains
     !>
     !> The material has to be pre-initialized via crysp_new_material
     !> Each mode is simulated using iterative search to find an accurate match for the strain mode and stress state corresponding
-    !> to the desired stress mode. The residual of each search is returned to provide an estimation of search accuracy.
+    !> to the desired stress mode. The residual of each search is returned as 'stress_mode_deviation' to provide an estimation of search accuracy.
         !> All modes are validated before any is simulated. On a simulation failure, the outputs of the modes after the failing one are
     !> undefined.
-    function crysp_simulate_stress_modes(mat, target_stress_modes, strain_modes, stresses, residuals) result(stat)
+    function crysp_simulate_stress_modes(mat, target_stress_modes, strain_modes, stresses, stress_mode_deviations) result(stat)
         type(Material), target, intent(inout):: mat              !! Material state.
-        real(DP), dimension(:,:), intent(in)::  target_stress_modes  !! 5 x n: intended stress modes, each with norm 1.
-        real(DP), dimension(:,:), intent(out):: strain_modes     !! 5 x n: strain modes found.
-        real(DP), dimension(:,:), intent(out):: stresses         !! 5 x n: actual stress states found.
-        real(DP), dimension(:,:), intent(out):: residuals        !! 5 x n: residuals of the searches.
-        type(Status):: stat                                      !! `CRYSP_OK`, `CRYSP_ERR_DIMS` for mismatched shapes,
-                                                                 !! `CRYSP_ERR_ARG` for a rejected input, or a simulation failure.
+        real(DP), dimension(:,:), intent(in)::  target_stress_modes    !! 5 x n: intended stress modes, each with norm 1.
+        real(DP), dimension(:,:), intent(out):: strain_modes           !! 5 x n: strain modes found.
+        real(DP), dimension(:,:), intent(out):: stresses               !! 5 x n: actual stress states found.
+        real(DP), dimension(:,:), intent(out):: stress_mode_deviations !! 5 x n: residuals of the searches.
+        type(Status):: stat                                            !! `CRYSP_OK`, `CRYSP_ERR_DIMS` for mismatched shapes,
+                                                                       !! `CRYSP_ERR_ARG` for a rejected input, or a simulation failure.
 
         character(*), parameter:: PROC_NAME = 'crysp_simulate_stress_modes'
 
@@ -177,7 +177,7 @@ contains
         if (size(target_stress_modes, 1) /= 5 &
                 .or. any(shape(strain_modes) /= shape(target_stress_modes)) &
                 .or. any(shape(stresses) /= shape(target_stress_modes)) &
-                .or. any(shape(residuals) /= shape(target_stress_modes))) then
+                .or. any(shape(stress_mode_deviations) /= shape(target_stress_modes))) then
             stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'All mode arrays must have shape 5 x n.')
             return
         end if
@@ -198,7 +198,11 @@ contains
                     strain_modes(:,i) = strain_modes(:,closest)
             end if
 
-            stat = macro_simulate_stress_mode(mat, target_stress_modes(:,i), strain_modes(:,i), stresses(:,i), residuals(:,i))
+            stat = macro_simulate_stress_mode(mat, &
+                                              target_stress_modes(:,i), &
+                                              strain_modes(:,i), &
+                                              stresses(:,i), &
+                                              stress_mode_deviations(:,i))
             if (failed(stat)) return
         end do
     end function

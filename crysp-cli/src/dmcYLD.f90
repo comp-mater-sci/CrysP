@@ -18,7 +18,7 @@ module dmcYLD
     character(9), dimension(9), parameter:: OUTPUT_HEADER = [character(9):: 'angle', &
                                                              'stress', &
                                                              'strain_11', 'strain_22', 'strain_33', 'strain_23', 'strain_13','strain_12', &
-                                                             'residual']
+                                                             'stress_mode_deviation']
 
     !> Class responsible for calculations of yield locus sections
     type, extends(BasicModule):: YLDModule
@@ -67,13 +67,13 @@ contains
                                 target_stress_modes(:,:), &
                                 strain_modes(:,:), &
                                 dev_stresses(:,:), &
-                                residuals(:,:)
+                                stress_mode_deviations(:,:)
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
 
         n_points = ceiling(2*PI / this%angular_resolution - TOLERANCE)
         allocate(angles(n_points), target_stress_norms(n_points), target_stress_modes(5,n_points), strain_modes(5,n_points), &
-                 dev_stresses(5,n_points), residuals(5,n_points))
+                 dev_stresses(5,n_points), stress_mode_deviations(5,n_points))
 
         angle = 0._DP
         do i=1,n_points
@@ -87,7 +87,7 @@ contains
         end do
 
         call handle_crysp_status(crysp_simulate_stress_modes(this%material, target_stress_modes, strain_modes, dev_stresses, &
-                                                             residuals))
+                                                             stress_mode_deviations))
 
         do i=1,n_points
             !Because the direcion remains identical, ||stress||/||dev(stress)|| == ||stress_mode||/||dev(stress_mode)||
@@ -98,7 +98,7 @@ contains
             call write_output_increment(out_unit, [rad_to_deg(angles(i)), &
                                                    stress_norm, &
                                                    deviatoric_to_unscaled_voigt(strain_modes(:,i)), &
-                                                   norm2(residuals(:,i))])
+                                                   norm2(stress_mode_deviations(:,i))])
         end do
 
         close(out_unit)
