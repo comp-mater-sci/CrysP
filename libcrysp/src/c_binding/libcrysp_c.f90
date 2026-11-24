@@ -175,14 +175,14 @@ contains
     end function
 
     !> C binding of [[libcrysp:crysp_simulate_stress_modes]].
-    function crysp_simulate_stress_modes_c(mat, n_modes, target_stress_modes, strain_modes, stresses, residuals) &
+    function crysp_simulate_stress_modes_c(mat, n_modes, target_stress_modes, strain_modes, stresses, stress_mode_deviations) &
             bind(C, name='crysp_simulate_stress_modes') result(stat)
         type(Material_C), intent(in):: mat
         integer(C_INT), value, intent(in):: n_modes
         real(C_DOUBLE), dimension(5, n_modes), intent(in):: target_stress_modes
         real(C_DOUBLE), dimension(5, n_modes), intent(out):: strain_modes
         real(C_DOUBLE), dimension(5, n_modes), intent(out):: stresses
-        real(C_DOUBLE), dimension(5, n_modes), intent(out):: residuals
+        real(C_DOUBLE), dimension(5, n_modes), intent(out):: stress_mode_deviations
         type(Status_C):: stat
 
         type(Material), target:: mat_fort
@@ -193,7 +193,7 @@ contains
         end if
 
         mat_fort = mat
-        stat = crysp_simulate_stress_modes(mat_fort, target_stress_modes, strain_modes, stresses, residuals)
+        stat = crysp_simulate_stress_modes(mat_fort, target_stress_modes, strain_modes, stresses, stress_mode_deviations)
     end function
 
     !> C binding of [[libcrysp:crysp_simulate_strain_modes]].

@@ -31,16 +31,16 @@ module macro
 
 contains
 
-    function macro_simulate_stress_mode(mat, stress_mode, strain_mode, stress, residual) result(stat)
+    function macro_simulate_stress_mode(mat, stress_mode, strain_mode, stress, stress_mode_deviation) result(stat)
         type(Material), intent(inout):: mat
         real(DP), dimension(5), intent(in)::  stress_mode
         real(DP), dimension(5), intent(inout):: strain_mode
 
         real(DP), dimension(5), intent(out):: stress
-        real(DP), dimension(5), intent(out):: residual
+        real(DP), dimension(5), intent(out):: stress_mode_deviation
         type(Status):: stat
 
-        stat = simulate_stress_mode(mat%meso_model, mat%clusters, stress_mode, strain_mode, stress, residual)
+        stat = simulate_stress_mode(mat%meso_model, mat%clusters, stress_mode, strain_mode, stress, stress_mode_deviation)
     end function
 
     function macro_simulate_strain_mode(mat, strain_mode, stress) result(stat)
@@ -66,7 +66,7 @@ contains
                    cur_vm_strain, &
                    next_vm_strain, &
                    stress(5), &
-                   residual(5), &
+                   stress_mode_deviation(5), &
                    def_grad(3,3)
 
         type(Increment), allocatable:: incs(:)
@@ -78,7 +78,7 @@ contains
         strain_rate = target_stress_mode
 
         do while (cur_vm_strain < target_vm_strain - TOLERANCE)
-            stat = simulate_stress_mode(mat%meso_model, mat%clusters, target_stress_mode, strain_rate, stress, residual)
+            stat = simulate_stress_mode(mat%meso_model, mat%clusters, target_stress_mode, strain_rate, stress, stress_mode_deviation)
             if (failed(stat)) return
 
             stat = deform(mat, &

@@ -45,7 +45,7 @@ contains
                    max_stress_inc, &
                    inc_corr, &                   !Correction on the increment to get the desired accuarcy
                    max_t_inc, &
-                   residual(5)
+                   stress_mode_deviation(5)
         type(IncrementFactory):: incs
 
         !Limit time increment so that maximum change in deformation gradient per time step is approx. ACCURACY
@@ -129,16 +129,16 @@ contains
             if (present(target_stress_mode)) then
                 stress_mode = tensor_to_deviatoric(homogenized_stress)
                 stress_mode = stress_mode / norm2(stress_mode)
-                residual = target_stress_mode - stress_mode
+                stress_mode_deviation = target_stress_mode - stress_mode
             else
-                residual = 0._DP
+                stress_mode_deviation = 0._DP
             end if
 
             !Fix minimum estimated remaining increment size to 0.1% because interval likely grows due to hardening
             !Add 1 for current increment. Also makes sure we always have positive padding.
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain) / max(.001_DP, vm_strain_inc * inc_corr)) + 1
             call incs%add([Increment(velocity_gradient, &
-                                     residual, &
+                                     stress_mode_deviation, &
                                      t_inc, &
                                      def_grad, &
                                      cur_vm_strain, &
@@ -152,7 +152,7 @@ contains
             !that case, we want at least some deformation to happen so that the solver can recover.
             !After testing, the exit condition triggers roughly every 0.06 VM_strain in the non-degenerate case. This makes ACCURACY
             !a good bound.
-            if (cur_vm_strain > ACCURACY .and. norm2(residual) > ACCURACY) exit
+            if (cur_vm_strain > ACCURACY .and. norm2(stress_mode_deviation) > ACCURACY) exit
 
             t_inc = t_inc * inc_corr
         end do

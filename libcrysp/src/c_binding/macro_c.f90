@@ -27,7 +27,7 @@ module crysp_macro_c
     !> C-compatible counterpart of [[Increment]].
     type, bind(C):: Increment_C
         real(C_DOUBLE), dimension(3,3):: velocity_gradient
-        real(C_DOUBLE), dimension(5):: residual
+        real(C_DOUBLE), dimension(5):: stress_mode_deviation
         real(C_DOUBLE):: duration
         real(C_DOUBLE), dimension(3,3):: deformation_gradient
         real(C_DOUBLE):: vm_strain
@@ -147,7 +147,7 @@ contains
         integer(C_INT), dimension(:,:), pointer:: texture
 
         inc_c%velocity_gradient = real(inc%velocity_gradient, C_DOUBLE)
-        inc_c%residual = real(inc%residual, C_DOUBLE)
+        inc_c%stress_mode_deviation = real(inc%stress_mode_deviation, C_DOUBLE)
         inc_c%duration = real(inc%duration, C_DOUBLE)
         inc_c%deformation_gradient = real(inc%deformation_gradient, C_DOUBLE)
         inc_c%vm_strain = real(inc%vm_strain, C_DOUBLE)

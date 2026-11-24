@@ -18,7 +18,7 @@ module dmcQRS
                                                   'q-value', &
                                                   'r-value', &
                                                   's-value', &
-                                                  'residual']
+                                                  'stress_mode_deviation']
 
     type, extends(BasicModule):: QRSModule
         real(DP):: angular_resolution
@@ -60,13 +60,17 @@ contains
                                 target_stress_modes(:,:), &
                                 strain_modes(:,:), &
                                 stresses(:,:), &
-                                residuals(:,:)
+                                stress_mode_deviations(:,:)
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
 
         n_points = ceiling(2._DP*PI / this%angular_resolution - TOLERANCE)
-        allocate(phi_2s(n_points), test_frames(3,3,n_points), target_stress_modes(5,n_points), strain_modes(5,n_points), &
-                 stresses(5,n_points), residuals(5,n_points))
+        allocate(phi_2s(n_points), &
+                 test_frames(3,3,n_points), &
+                 target_stress_modes(5,n_points), &
+                 strain_modes(5,n_points), &
+                 stresses(5,n_points), &
+                 stress_mode_deviations(5,n_points))
 
         phi_2 = 0._DP
         sigma_t = 0._DP
@@ -83,7 +87,11 @@ contains
             phi_2 = phi_2 + this%angular_resolution
         enddo
 
-        call handle_crysp_status(crysp_simulate_stress_modes(this%material, target_stress_modes, strain_modes, stresses, residuals))
+        call handle_crysp_status(crysp_simulate_stress_modes(this%material, &
+                                                             target_stress_modes, &
+                                                             strain_modes, &
+                                                             stresses, &
+                                                             stress_mode_deviations))
 
         do i=1,n_points
             !Rotate results such that the stress mode aligns with the virtual tensile test direction.
@@ -95,7 +103,7 @@ contains
                                                    r_value / (1._DP + r_value), &
                                                    r_value, &
                                                    norm2(stress_test_frame), &
-                                                   norm2(residuals(:,i))])
+                                                   norm2(stress_mode_deviations(:,i))])
         enddo
 
         close(out_unit)
