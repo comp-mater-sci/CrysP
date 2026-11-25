@@ -62,9 +62,9 @@ contains
 
         real(DP):: angle, &
                    angles(n_angles(this%angular_resolution)), &
-                   target_stress_modes(6,n_angles(this%angular_resolution)), &
-                   stresses(6,n_angles(this%angular_resolution)), &
-                   strain_modes(6,n_angles(this%angular_resolution)), &
+                   target_stress_modes(3,3,n_angles(this%angular_resolution)), &
+                   stresses(3,3,n_angles(this%angular_resolution)), &
+                   strain_modes(3,3,n_angles(this%angular_resolution)), &
                    stress_mode_deviations(n_angles(this%angular_resolution))
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
@@ -73,8 +73,8 @@ contains
         angle = 0._DP
         do i=1,points
             angles(i) = angle
-            !Target stress mode is combination of basis vectors according to current angle
-            target_stress_modes(:,i) = this%base(:,1)*cos(angle) + this%base(:,2)*sin(angle)
+            !Target stress mode is combination of basis vectors (unscaled Voigt) according to current angle
+            target_stress_modes(:,:,i) = unscaled_voigt_to_tensor(this%base(:,1)*cos(angle) + this%base(:,2)*sin(angle))
             angle = angle + this%angular_resolution
         end do
 
@@ -86,8 +86,8 @@ contains
 
         do i=1,points
             call write_output_increment(out_unit, [rad_to_deg(angles(i)), &
-                                                   norm2(stresses(:,i)), &
-                                                   strain_modes(:,i), &
+                                                   norm2(tensor_to_unscaled_voigt(stresses(:,:,i))), &
+                                                   tensor_to_unscaled_voigt(strain_modes(:,:,i)), &
                                                    stress_mode_deviations(i)])
         end do
 

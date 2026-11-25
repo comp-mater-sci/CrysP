@@ -131,7 +131,7 @@ contains
     !> Modes are interpreted as 'directions in stress/strain space'. They do not need to have norm 1.
     function crysp_stress_driven_deformation(mat, target_stress_mode, target_vm_strain, increments) result(stat)
         type(Material), target, intent(inout):: mat                                            !! Initialized material
-        real(DP), dimension(6), intent(in):: target_stress_mode                     !! Desired stress mode
+        real(DP), dimension(3,3), intent(in):: target_stress_mode                     !! Desired stress mode
         real(DP), intent(in):: target_vm_strain                                     !! Target true von mises strain
         type(Increment), dimension(:), allocatable, intent(out):: increments !! Step-wise reporting of the mapping
                                                                              !! between requested stress mode and strain
@@ -150,7 +150,7 @@ contains
             return
         end if
 
-        call decompose_voigt(target_stress_mode, target_dev_stress, hydro)
+        call decompose_stress(target_stress_mode, target_dev_stress, hydro)
         if (norm2(target_dev_stress) < TOLERANCE) then
             stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_ARG, 'Stress mode must have a non-zero deviatoric part.')
             return
@@ -177,9 +177,9 @@ contains
     !> undefined.
     function crysp_simulate_stress_modes(mat, target_stress_modes, strain_modes, stresses, stress_mode_deviations) result(stat)
         type(Material), target, intent(inout):: mat                    !! Material state.
-        real(DP), dimension(:,:), intent(in)::  target_stress_modes    !! 6xn: intended stress modes, each with norm 1.
-        real(DP), dimension(:,:), intent(out):: strain_modes           !! 6xn: strain modes found.
-        real(DP), dimension(:,:), intent(out):: stresses               !! 6xn: actual stress states found.
+        real(DP), dimension(:,:,:), intent(in)::  target_stress_modes    !! 3x3xn: intended stress modes, each with norm 1.
+        real(DP), dimension(:,:,:), intent(out):: strain_modes         !! 3x3xn: strain modes found.
+        real(DP), dimension(:,:,:), intent(out):: stresses             !! 3x3xn: actual stress states found.
         real(DP), dimension(:), intent(out):: stress_mode_deviations   !! n: residuals of the searches.
         type(Status):: stat                                            !! `CRYSP_OK`, `CRYSP_ERR_DIMS` for mismatched shapes,
                                                                        !! `CRYSP_ERR_ARG` for a rejected input, or a simulation failure.
@@ -195,20 +195,21 @@ contains
                    retry_strain(5), &
                    retry_stress(5), &
                    retry_res, &
-                   unit_dev_stress_modes(5,size(target_stress_modes,2)), &
-                   dev_strain_modes(5,size(target_stress_modes,2))
+                   unit_dev_stress_modes(5,size(target_stress_modes,3)), &
+                   dev_strain_modes(5,size(target_stress_modes,3))
 
-        if (size(target_stress_modes, 1) /= 6 &
-                .or. any(shape(strain_modes) /= shape(target_stress_modes)) &
-                .or. any(shape(stresses) /= shape(target_stress_modes)) &
-                .or. size(stress_mode_deviations) /= size(target_stress_modes,2)) then
+        if (size(target_stress_modes, 1) /= 3 &
+            .or. size(target_stress_modes, 2) /= 3 &
+            .or. any(shape(strain_modes) /= shape(target_stress_modes)) &
+            .or. any(shape(stresses) /= shape(target_stress_modes)) &
+            .or. size(stress_mode_deviations) /= size(target_stress_modes,3)) then
             stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'Incorrect input dimensions')
             return
         end if
 
-        do i = 1, size(target_stress_modes, 2)
+        do i = 1, size(target_stress_modes, 3)
             von_mises_guess = .true.
-            call decompose_voigt(target_stress_modes(:,i), target_dev_stress, hydro)
+            call decompose_stress(target_stress_modes(:,:,i), target_dev_stress, hydro)
             if (norm2(target_dev_stress) < TOLERANCE) then
                 stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_ARG, 'Stress mode ' // int_to_str(i) // &
                             ' must have a non-zero deviatoric part.')
@@ -251,9 +252,9 @@ contains
                 end if
             end if
 
-            strain_modes(:,i) = deviatoric_to_unscaled_voigt(dev_strain_modes(:,i))
+            strain_modes(:,:,i) = deviatoric_to_tensor(dev_strain_modes(:,i))
             !Because the direction of the stress does not change, the hydrostatic component scales together with the deviatoric one.
-            call recompose_voigt(stresses(:,i), dev_stress, hydro * norm2(dev_stress)/norm2(target_dev_stress))
+            call recompose_stress(stresses(:,:,i), dev_stress, hydro * norm2(dev_stress)/norm2(target_dev_stress))
         end do
     end function
 
@@ -262,8 +263,8 @@ contains
     !> Each mode is simulated independently. On a simulation failure, the outputs of the modes starting at the failing one are undefined.
     function crysp_simulate_strain_modes(mat, strain_modes, stresses) result(stat)
         type(Material), target, intent(inout):: mat           !! Material state
-        real(DP), dimension(:,:), intent(in)::  strain_modes  !! 6 x n: strain modes. The hydrostatic part is ignored.
-        real(DP), dimension(:,:), intent(out):: stresses      !! 6 x n: stress state corresponding to each strain mode.
+        real(DP), dimension(:,:,:), intent(in)::  strain_modes  !! 3x3xn: strain modes. The hydrostatic part is ignored.
+        real(DP), dimension(:,:,:), intent(out):: stresses      !! 3x3xn: stress state corresponding to each strain mode.
         type(Status):: stat                                   !! `CRYSP_OK`, `CRYSP_ERR_DIMS` for mismatched shapes, or a
                                                               !! failure raised during the simulation.
 
@@ -273,15 +274,17 @@ contains
 
         integer:: i
 
-        if (size(strain_modes, 1) /= 6 .or. any(shape(stresses) /= shape(strain_modes))) then
-            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'All mode arrays must have shape 6 x n.')
+        if (size(strain_modes, 1) /= 3 &
+            .or. size(strain_modes,2) /= 3 &
+            .or. any(shape(stresses) /= shape(strain_modes))) then
+            stat = fail(MOD_NAME, PROC_NAME, CRYSP_ERR_DIMS, 'All mode arrays must have shape 3 x 3 x n.')
             return
         end if
 
-        do i = 1, size(strain_modes, 2)
-            stat = macro_simulate_strain_mode(mat, unscaled_voigt_to_deviatoric(strain_modes(:,i)), dev_stress)
+        do i = 1, size(strain_modes, 3)
+            stat = macro_simulate_strain_mode(mat, tensor_to_deviatoric(strain_modes(:,:,i)), dev_stress)
             if (failed(stat)) return
-            stresses(:,i) = deviatoric_to_unscaled_voigt(dev_stress)
+            stresses(:,:,i) = deviatoric_to_tensor(dev_stress)
         end do
     end function
 end module

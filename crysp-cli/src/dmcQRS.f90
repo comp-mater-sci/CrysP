@@ -57,9 +57,9 @@ contains
                    r_value, &
                    phi_2s(n_angles(this%angular_resolution)), &
                    test_frames(3,3,n_angles(this%angular_resolution)), &
-                   target_stress_modes(6,n_angles(this%angular_resolution)), &
-                   strain_modes(6,n_angles(this%angular_resolution)), &
-                   stresses(6,n_angles(this%angular_resolution)), &
+                   target_stress_modes(3,3,n_angles(this%angular_resolution)), &
+                   strain_modes(3,3,n_angles(this%angular_resolution)), &
+                   stresses(3,3,n_angles(this%angular_resolution)), &
                    stress_mode_deviations(n_angles(this%angular_resolution))
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
@@ -74,7 +74,7 @@ contains
             test_frames(:,:,i) = euler_to_rotation_matrix([0._DP,0._DP, phi_2])
 
             ! Rotate from "tensile" to material coordinate system
-            target_stress_modes(:,i) = tensor_to_unscaled_voigt(sigma_t .fromframe. test_frames(:,:,i))
+            target_stress_modes(:,:,i) = sigma_t .fromframe. test_frames(:,:,i)
             phi_2 = phi_2 + this%angular_resolution
         enddo
 
@@ -86,8 +86,8 @@ contains
 
         do i=1,n_points
             !Rotate results such that the stress mode aligns with the virtual tensile test direction.
-            strain_test_frame = unscaled_voigt_to_tensor(strain_modes(:,i)) .toframe. test_frames(:,:,i)
-            stress_test_frame = unscaled_voigt_to_tensor(stresses(:,i))     .toframe. test_frames(:,:,i)
+            strain_test_frame = strain_modes(:,:,i) .toframe. test_frames(:,:,i)
+            stress_test_frame = stresses(:,:,i)     .toframe. test_frames(:,:,i)
             r_value = strain_test_frame(2,2) / strain_test_frame(3,3)
 
             call write_output_increment(out_unit, [rad_to_deg(phi_2s(i)), &

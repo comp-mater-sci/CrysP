@@ -22,7 +22,7 @@ module dmcASR
                                                                'A_11','A_22','A_33','A_23','A_13','A_12']
 
     type:: StressDrivenStep
-        real(DP), dimension(6):: target_stress_mode
+        real(DP), dimension(3,3):: target_stress_mode
         real(DP):: target_vm_strain
         type(Increment), dimension(:), allocatable:: increments
     end type
@@ -43,6 +43,7 @@ contains
         character(*), parameter:: PROC_NAME = 'asrmodule_readconfig'
 
         integer:: i, n_steps
+        real(DP):: stress_mode_voigt(6)
 
         call this%BasicModule%initialize(cnfunit)
 
@@ -53,9 +54,10 @@ contains
         allocate(this%steps(n_steps))
         do i = 1, n_steps
             associate (step => this%steps(i))
-                call read_value(cnfunit, step%target_stress_mode)
+                !The configuration file holds the stress mode in unscaled Voigt notation.
+                call read_value(cnfunit, stress_mode_voigt)
                 !There is no real reason to normalize but we do anyway for concistency
-                step%target_stress_mode = step%target_stress_mode / norm2(step%target_stress_mode)
+                step%target_stress_mode = unscaled_voigt_to_tensor(stress_mode_voigt / norm2(stress_mode_voigt))
                 call read_value(cnfunit, step%target_vm_strain)
             end associate
         enddo
@@ -67,9 +69,9 @@ contains
         integer:: i_step, i_inc, &
                   out_unit, texture_unit, &
                   n_incs
-        real(DP):: strain_mode(6,1), &
+        real(DP):: strain_mode(3,3,1), &
                    stress_mode_deviation(1), &
-                   stress(6,1), &
+                   stress(3,3,1), &
                    def_grad(3,3)
 
         out_unit = open_output_file(this%output_prefix, OUTPUT_HEADER)
@@ -86,17 +88,17 @@ contains
                         !The increment keeps its default initialization apart from the strain rate,
                         !residual and stress: no duration, no deformation.
                         call handle_crysp_status(crysp_simulate_stress_modes(this%material, &
-                                                                             reshape(step%target_stress_mode,[6,1]), &
+                                                                             reshape(step%target_stress_mode,[3,3,1]), &
                                                                              strain_mode, &
                                                                              stress, &
                                                                              stress_mode_deviation))
-                        inc%velocity_gradient = unscaled_voigt_to_tensor(strain_mode(:,1))
-                        inc%stress = unscaled_voigt_to_tensor(stress(:,1))
+                        inc%velocity_gradient = strain_mode(:,:,1)
+                        inc%stress = stress(:,:,1)
                         inc%stress_mode_deviation = stress_mode_deviation(1)
                         n_incs = n_incs + 1
                     end associate
                 else
-                    call handle_crysp_status(crysp_stress_driven_deformation(this%material, [step%target_stress_mode], &
+                    call handle_crysp_status(crysp_stress_driven_deformation(this%material, step%target_stress_mode, &
                                                                              step%target_vm_strain, step%increments))
                     !Write new texture to file
                     n_incs = n_incs + size(step%increments)

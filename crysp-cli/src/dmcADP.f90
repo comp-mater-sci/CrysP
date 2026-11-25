@@ -79,7 +79,7 @@ contains
                   n_incs
         real(DP):: v_grad_inc(3,3), &
                    taylor_factor, &
-                   stress(6,1), &
+                   stress(3,3,1), &
                    def_grad(3,3)
 
         !Open output files
@@ -94,10 +94,10 @@ contains
                 if (step%target_strain < TOLERANCE) then
                     allocate(step%increments(1))
                     call handle_crysp_status(crysp_simulate_strain_modes(this%material, &
-                                                                         reshape(tensor_to_unscaled_voigt(step%velocity_gradient), [6,1]), &
+                                                                         reshape(step%velocity_gradient, [3,3,1]), &
                                                                          stress))
                     !The other fields keep their default initialization: no duration, no deformation.
-                    step%increments(1)%stress = unscaled_voigt_to_tensor(stress(:,1))
+                    step%increments(1)%stress = stress(:,:,1)
                     n_incs = n_incs + 1
                 else
                     call handle_crysp_status(crysp_strain_driven_deformation(this%material, step%velocity_gradient, &

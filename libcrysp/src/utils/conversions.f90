@@ -190,15 +190,15 @@ module conversions
             real(DP)::                             von_mises_true_strain !! Von mises equivalent strain of the input.
         end function
 
-        !> Decompose an unscaled voigt vector into a deviatoric and hydrostatic part
-        module subroutine decompose_voigt(voigt, dev, hydro)
-            real(DP), dimension(6), intent(in):: voigt
+        !> Decompose a stress tensor into a deviatoric (5D) and hydrostatic part. The antisymmetric part is ignored.
+        module subroutine decompose_stress(stress, dev, hydro)
+            real(DP), dimension(3,3), intent(in):: stress
             real(DP), dimension(5), intent(out):: dev
             real(DP), intent(out):: hydro
         end subroutine
-         !> Decompose an unscaled voigt vector into a deviatoric and hydrostatic part
-        module subroutine recompose_voigt(voigt, dev, hydro)
-            real(DP), dimension(6), intent(out):: voigt
+        !> Compose a symmetric stress tensor from a deviatoric (5D) and hydrostatic part. Inverse of decompose_stress.
+        module subroutine recompose_stress(stress, dev, hydro)
+            real(DP), dimension(3,3), intent(out):: stress
             real(DP), dimension(5), intent(in):: dev
             real(DP), intent(in):: hydro
         end subroutine
@@ -440,13 +440,18 @@ contains
         von_mises_true_strain = strain_tensor_to_von_mises(deformation_gradient_to_true_strain(deformation_gradient))
     end procedure
 
-    module procedure decompose_voigt
-        dev = unscaled_voigt_to_deviatoric(voigt)
-        hydro = sum(voigt(1:3)) / 3._DP
+    module procedure decompose_stress
+        dev = tensor_to_deviatoric(stress)
+        hydro = math_trace33(stress) / 3._DP
     end procedure
 
-    module procedure recompose_voigt
-        voigt = deviatoric_to_unscaled_voigt(dev)
-        voigt(1:3) = voigt(1:3) + hydro
+    module procedure recompose_stress
+        integer:: i
+
+        stress = deviatoric_to_tensor(dev)
+
+        do i=1,3
+            stress(i,i) = stress(i,i) + hydro
+        end do
     end procedure
 end submodule
