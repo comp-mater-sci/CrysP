@@ -27,7 +27,7 @@ module crysp_macro_c
     !> C-compatible counterpart of [[Increment]].
     type, bind(C):: Increment_C
         real(C_DOUBLE), dimension(3,3):: velocity_gradient
-        real(C_DOUBLE), dimension(5):: stress_mode_deviation
+        real(C_DOUBLE):: stress_mode_deviation
         real(C_DOUBLE):: duration
         real(C_DOUBLE), dimension(3,3):: deformation_gradient
         real(C_DOUBLE):: vm_strain

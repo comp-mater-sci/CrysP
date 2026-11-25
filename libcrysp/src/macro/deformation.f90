@@ -138,7 +138,7 @@ contains
             !Add 1 for current increment. Also makes sure we always have positive padding.
             prob_rem_incs = ceiling((target_vm_strain - cur_vm_strain) / max(.001_DP, vm_strain_inc * inc_corr)) + 1
             call incs%add([Increment(velocity_gradient, &
-                                     stress_mode_deviation, &
+                                     norm2(stress_mode_deviation), &
                                      t_inc, &
                                      def_grad, &
                                      cur_vm_strain, &

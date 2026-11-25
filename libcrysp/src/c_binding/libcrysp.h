@@ -182,7 +182,7 @@ typedef struct {
 /* One increment of a deformation. */
 typedef struct {
     double velocity_gradient[3][3];
-    double residual[5];
+    double stress_mode_deviation;
     double duration;
     double deformation_gradient[3][3];
     double vm_strain;
@@ -203,21 +203,22 @@ void crysp_get_micro_models(int *n_models, CryspModelDescriptor **model_descs);
 CryspStatus crysp_new_material(const CryspModelData *meso_model_data, int n_phases, const CryspPhaseData *phase_data, CryspMaterial *mat);
 
 /*
- * velocity_gradient is not modified; it is not declared const because C before C23 rejects passing a double[3][3] to a const one.
+ * Input matrices are not modified; they are not declared const because C before C23 rejects passing a double[3][3] to a const one.
  *
  * *mat is replaced by the deformed material, and what it owned on entry is destroyed. This also happens on failure, where *mat
  * holds the state reached when the failure occurred. *incs is a list of *n_incs increments, empty (NULL) on failure.
  */
 CryspStatus crysp_strain_driven_deformation(CryspMaterial *mat, double velocity_gradient[3][3], double target_vm_strain, int *n_incs, CryspIncrement **incs);
-CryspStatus crysp_stress_driven_deformation(CryspMaterial *mat, const double target_stress_mode[5], double target_vm_strain,
+CryspStatus crysp_stress_driven_deformation(CryspMaterial *mat, double target_stress_mode[3][3], double target_vm_strain,
                                             int *n_incs, CryspIncrement **incs);
 
 /*
- * Mode arrays are 5 x n_modes. An n_modes below 1 is rejected with CRYSP_ERR_ARG. *mat is not modified.
+ * Modes are 3x3 tensors, stored as (double[n_modes][3][3]). They do not need to be normalized.
+ * The deviatoric component must be nonzero; returned stresses include the hydrostatic part.
  */
-CryspStatus crysp_simulate_stress_modes(const CryspMaterial *mat, int n_modes, const double *target_stress_modes, double *strain_modes,
-                                        double *stresses, double *residuals);
-CryspStatus crysp_simulate_strain_modes(const CryspMaterial *mat, int n_modes, const double *strain_modes, double *stresses);
+CryspStatus crysp_simulate_stress_modes(const CryspMaterial *mat, int n_modes, double (*target_stress_modes)[3][3],
+                                        double (*strain_modes)[3][3], double (*stresses)[3][3], double *stress_mode_deviations);
+CryspStatus crysp_simulate_strain_modes(const CryspMaterial *mat, int n_modes, double (*strain_modes)[3][3], double (*stresses)[3][3]);
 
 /* Release everything a struct owns, see "Ownership" above. */
 void crysp_destroy_parameter(CryspParameter *param);

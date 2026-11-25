@@ -189,6 +189,20 @@ module conversions
             real(DP), dimension(3,3), intent(in):: deformation_gradient  !! Deformation gradient
             real(DP)::                             von_mises_true_strain !! Von mises equivalent strain of the input.
         end function
+
+        !> Decompose a stress tensor into a deviatoric (5D) and hydrostatic part. The antisymmetric part is ignored.
+        module subroutine decompose_stress(stress, dev, hydro)
+            real(DP), dimension(3,3), intent(in):: stress
+            real(DP), dimension(5), intent(out):: dev
+            real(DP), intent(out):: hydro
+        end subroutine
+        !> Compose a symmetric stress tensor from a deviatoric (5D) and hydrostatic part. Inverse of decompose_stress.
+        module subroutine recompose_stress(stress, dev, hydro)
+            real(DP), dimension(3,3), intent(out):: stress
+            real(DP), dimension(5), intent(in):: dev
+            real(DP), intent(in):: hydro
+        end subroutine
+
     end interface
 end module
 
@@ -424,5 +438,20 @@ contains
 
     module procedure deformation_gradient_to_von_mises_true_strain
         von_mises_true_strain = strain_tensor_to_von_mises(deformation_gradient_to_true_strain(deformation_gradient))
+    end procedure
+
+    module procedure decompose_stress
+        dev = tensor_to_deviatoric(stress)
+        hydro = math_trace33(stress) / 3._DP
+    end procedure
+
+    module procedure recompose_stress
+        integer:: i
+
+        stress = deviatoric_to_tensor(dev)
+
+        do i=1,3
+            stress(i,i) = stress(i,i) + hydro
+        end do
     end procedure
 end submodule
